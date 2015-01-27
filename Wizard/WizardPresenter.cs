@@ -14,6 +14,40 @@ namespace Teltec.Forms.Wizard
 		protected internal int _CurrentFormIndex = 0;
 		protected internal Form _Owner;
 
+		protected object _Model;
+		protected internal virtual object Model
+		{
+			get { return _Model; }
+			set
+			{
+				_Model = value;
+				foreach (var form in _InstantiatedForms)
+				{
+					form.Model = _Model;
+				}
+			}
+		}
+
+		~WizardPresenter()
+		{
+			Dispose(false);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposing)
+				return;
+			_Owner = null; // Break cyclic reference.
+			CloseAndDiposeAllForms();
+			_RegisteredFormTypes.Clear();
+		}
+
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
 		public virtual void RegisterFormClass<T>(T wizardFormType) where T : Type
 		{
 			bool isCompatible = typeof(WizardForm).IsAssignableFrom(wizardFormType);
@@ -27,9 +61,10 @@ namespace Teltec.Forms.Wizard
 
 		public virtual void ShowDialog(Form owner)
 		{
-			_CurrentFormIndex = 0; 
+			_CurrentFormIndex = 0;
 			_Owner = owner;
 			CurrentForm.ShowDialog(owner);
+			GC.ReRegisterForFinalize(this);
 		}
 
 		public virtual void Close()
@@ -58,6 +93,7 @@ namespace Teltec.Forms.Wizard
 			form.FinishEvent += form_FinishEvent;
 			form.PreviousEvent += form_PreviousEvent;
 			form.NextEvent += form_NextEvent;
+			form.Model = Model;
 			return form;
 		}
 
@@ -116,18 +152,12 @@ namespace Teltec.Forms.Wizard
 
 		protected virtual void CloseAndDiposeAllForms()
 		{
-			foreach (WizardForm form in _InstantiatedForms)
+			foreach (var form in _InstantiatedForms)
 			{
 				form.Close();
 				form.Dispose();
 			}
 			_InstantiatedForms.Clear();
-		}
-
-		public virtual void Dispose()
-		{
-			CloseAndDiposeAllForms();
-			_RegisteredFormTypes.Clear();
 		}
 	}
 }

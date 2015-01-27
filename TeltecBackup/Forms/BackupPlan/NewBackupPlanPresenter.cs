@@ -7,13 +7,16 @@ using Teltec.Forms.Wizard;
 
 namespace Teltec.Backup.Forms.BackupPlan
 {
-	class NewBackupPlanPresenter : WizardPresenter
+	sealed class NewBackupPlanPresenter : WizardPresenter
 	{
 		public NewBackupPlanPresenter() : base()
 		{
-			RegisterFormClass(typeof(BackupPlanAccountSelectionForm));
-			RegisterFormClass(typeof(BackupPlanAccountSelectionForm));
-			RegisterFormClass(typeof(BackupPlanAccountSelectionForm));
+			var plan = new Models.BackupPlan();
+			plan.Name = "Testing name";
+			Model = plan;
+			RegisterFormClass(typeof(BackupPlanSelectAccountForm));
+			RegisterFormClass(typeof(BackupPlanGiveNameForm));
+			RegisterFormClass(typeof(BackupPlanSelectSourceForm));
 		}
 	}
 }

@@ -18,10 +18,14 @@ namespace Teltec.Backup.Forms.S3
             InitializeComponent();
             _account = account;
             // Setup data bindings
-            tbDisplayName.DataBindings.Add(new Binding("Text", _account, this.GetPropertyName((AmazonS3Account x) => x.DisplayName), false, DataSourceUpdateMode.OnPropertyChanged));
-            tbAccessKey.DataBindings.Add(new Binding("Text", _account, this.GetPropertyName((AmazonS3Account x) => x.AccessKey), false, DataSourceUpdateMode.OnPropertyChanged));
-            tbSecretKey.DataBindings.Add(new Binding("Text", _account, this.GetPropertyName((AmazonS3Account x) => x.SecretKey), false, DataSourceUpdateMode.OnPropertyChanged));
-            cbBucketName.DataBindings.Add(new Binding("Text", _account, this.GetPropertyName((AmazonS3Account x) => x.BucketName), false, DataSourceUpdateMode.OnPropertyChanged));
+            tbDisplayName.DataBindings.Add(new Binding("Text", _account,
+				this.GetPropertyName((AmazonS3Account x) => x.DisplayName)));
+            tbAccessKey.DataBindings.Add(new Binding("Text", _account,
+				this.GetPropertyName((AmazonS3Account x) => x.AccessKey)));
+            tbSecretKey.DataBindings.Add(new Binding("Text", _account,
+				this.GetPropertyName((AmazonS3Account x) => x.SecretKey)));
+            cbBucketName.DataBindings.Add(new Binding("Text", _account,
+				this.GetPropertyName((AmazonS3Account x) => x.BucketName)));
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
@@ -58,9 +62,12 @@ namespace Teltec.Backup.Forms.S3
 
         private bool HasValidCredentials()
         {
-            bool hasValidAccessKey = _account.AccessKey.Length >= AmazonS3Account.ACCESS_KEY_NAME_MIN_LEN
+			bool hasAccessKey = _account.AccessKey != null;
+			bool hasValidAccessKey = hasAccessKey
+				&& _account.AccessKey.Length >= AmazonS3Account.ACCESS_KEY_NAME_MIN_LEN
                 && _account.AccessKey.Length <= AmazonS3Account.ACCESS_KEY_NAME_MAX_LEN;
-            bool hasValidSecretKey = _account.SecretKey.Length > 0;
+			bool hasSecretKey = _account.SecretKey != null;
+			bool hasValidSecretKey = hasSecretKey && _account.SecretKey.Length > 0;
             
             return hasValidAccessKey && hasValidSecretKey;
         }

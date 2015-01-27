@@ -20,16 +20,18 @@ namespace Teltec.Backup.Forms
 
         private void amazonS3ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var form = new CloudStorageAccountsForm();
-            form.ShowDialog(this);
-            form.Dispose();
+            using (var form = new CloudStorageAccountsForm())
+			{
+				form.ShowDialog(this);
+			}
         }
 
         private void backupPlansToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var presenter = new NewBackupPlanPresenter();
-			presenter.ShowDialog(this);
-			presenter.Dispose();
+            using (var presenter = new NewBackupPlanPresenter())
+			{
+				presenter.ShowDialog(this);
+			}
         }
     }
 }

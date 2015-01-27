@@ -20,13 +20,34 @@ namespace Teltec.Forms.Wizard
 			InitializeComponent();
 
 			// Setup data bindings
-			btnPrevious.DataBindings.Add(new Binding("Enabled", this, this.GetPropertyName((WizardForm x) => x.PreviousEnabled), false, DataSourceUpdateMode.OnPropertyChanged));
-			btnNext.DataBindings.Add(new Binding("Enabled", this, this.GetPropertyName((WizardForm x) => x.NextEnabled), false, DataSourceUpdateMode.OnPropertyChanged));
-			btnNext.DataBindings.Add(new NegateBinding("Visible", this, this.GetPropertyName((WizardForm x) => x.IsLastForm), false, DataSourceUpdateMode.OnPropertyChanged));
-			btnFinish.DataBindings.Add(new Binding("Visible", this, this.GetPropertyName((WizardForm x) => x.IsLastForm), false, DataSourceUpdateMode.OnPropertyChanged));
+			btnPrevious.DataBindings.Add(new Binding("Enabled", this,
+				this.GetPropertyName((WizardForm x) => x.PreviousEnabled)));
+			btnNext.DataBindings.Add(new Binding("Enabled", this,
+				this.GetPropertyName((WizardForm x) => x.NextEnabled)));
+			btnNext.DataBindings.Add(new NegateBinding("Visible",
+				this, this.GetPropertyName((WizardForm x) => x.IsLastForm)));
+			btnFinish.DataBindings.Add(new Binding("Visible", this,
+				this.GetPropertyName((WizardForm x) => x.IsLastForm)));
 		}
 
 		#region Custom properties
+
+		[
+		Bindable(true),
+		Category("Misc"),
+		DefaultValue(null),
+		DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)
+		]
+		protected object _Model;
+		public virtual object Model
+		{
+			get { return _Model; }
+			set
+			{
+				SetField(ref _Model, value);
+				OnModelChanged(this, new ModelChangedEventArgs(_Model));
+			}
+		}
 
 		[
 		Bindable(true),
@@ -71,15 +92,37 @@ namespace Teltec.Forms.Wizard
 
 		#region Custom events
 
+		public class ModelChangedEventArgs : EventArgs
+		{
+			private object _model;
+			public object Model
+			{
+				get { return _model; }
+			}
+
+			public ModelChangedEventArgs(object model)
+			{
+				_model = model;
+			}
+		}
+
+		public delegate void ModelChangedEventHandler(WizardForm sender, ModelChangedEventArgs e);
 		public delegate void CancelEventHandler(WizardForm sender, EventArgs e);
 		public delegate void FinishEventHandler(WizardForm sender, EventArgs e);
 		public delegate void NextEventHandler(WizardForm sender, EventArgs e);
 		public delegate void PreviousEventHandler(WizardForm sender, EventArgs e);
 
+		public event ModelChangedEventHandler ModelChangedEvent;
 		public event CancelEventHandler CancelEvent;
 		public event FinishEventHandler FinishEvent;
 		public event NextEventHandler NextEvent;
 		public event PreviousEventHandler PreviousEvent;
+
+		protected virtual void OnModelChanged(object sender, ModelChangedEventArgs e)
+		{
+			if (ModelChangedEvent != null)
+				ModelChangedEvent(this, e);
+		}
 
 		protected virtual void OnCancel(object sender, EventArgs e)
 		{

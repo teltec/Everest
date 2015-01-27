@@ -15,25 +15,24 @@ namespace Teltec.Backup.Forms
         public CloudStorageAccountsForm()
         {
             InitializeComponent();
-            logger.Debug("Created form {0}", this.GetType().Name);
         }
 
         protected void LoadAccounts()
         {
             this.lvAccounts.Items.Clear();
+			
+			//var query = from acc in _dbContextScope.AmazonS3Accounts.Objects
+			//            where acc.DisplayName == "Jardel"
+			//            select acc;
+			var query = from acc in _dbContextScope.AmazonS3Accounts.Objects select acc;
+			var accounts = query.ToList<AmazonS3Account>();
 
-            //var query = from acc in _dbContextScope.AmazonS3Accounts.Objects
-            //            where acc.DisplayName == "Jardel"
-            //            select acc;
-            var query = from acc in _dbContextScope.AmazonS3Accounts.Objects select acc;
-
-            var accounts = query.ToList<AmazonS3Account>();
-            foreach (var account in accounts)
-            {
-                ListViewItem item = new ListViewItem(account.DisplayName, 0);
-                item.Tag = account.Id;
-                this.lvAccounts.Items.Add(item);
-            }
+			foreach (var account in accounts)
+			{
+				ListViewItem item = new ListViewItem(account.DisplayName, 0);
+				item.Tag = account.Id;
+				lvAccounts.Items.Add(item);
+			}
         }
 
         protected override void OnShown(EventArgs e)
@@ -66,11 +65,12 @@ namespace Teltec.Backup.Forms
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
-            var form = new AmazonS3AccountForm(new AmazonS3Account());
-            form.AccountSaved += form_AccountSaved;
-            form.AccountCancelled += form_AccountCancelled;
-            form.ShowDialog(this);
-            form.Dispose();
+			using (var form = new AmazonS3AccountForm(new AmazonS3Account()))
+			{
+				form.AccountSaved += form_AccountSaved;
+				form.AccountCancelled += form_AccountCancelled;
+				form.ShowDialog(this);
+			}
         }
 
         private void btnEdit_Click(object sender, EventArgs e)
@@ -80,11 +80,12 @@ namespace Teltec.Backup.Forms
 
             var item = lvAccounts.SelectedItems[0];
             var selectedAcount = _dbContextScope.AmazonS3Accounts.Get(item.Tag);
-            var form = new AmazonS3AccountForm(selectedAcount);
-            form.AccountSaved += form_AccountChanged;
-            form.AccountCancelled += form_AccountCancelled;
-            form.ShowDialog(this);
-            form.Dispose();
+			using (var form = new AmazonS3AccountForm(selectedAcount))
+			{
+				form.AccountSaved += form_AccountChanged;
+				form.AccountCancelled += form_AccountCancelled;
+				form.ShowDialog(this);
+            }
         }
 
         void form_AccountCancelled(object sender, AmazonS3AccountSaveEventArgs e)
@@ -113,11 +114,13 @@ namespace Teltec.Backup.Forms
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing)
             {
-                components.Dispose();
+				if (components != null)
+					components.Dispose();
+				if (_dbContextScope != null)
+					_dbContextScope.Dispose();
             }
-            _dbContextScope.Dispose();
             base.Dispose(disposing);
         }
 
