@@ -22,15 +22,27 @@
 
 		#region Component Designer generated code
 
-		/// <summary> 
+		/// <summary>
 		/// Required method for Designer support - do not modify 
 		/// the contents of this method with the code editor.
 		/// </summary>
 		private void InitializeComponent()
 		{
-			components = new System.ComponentModel.Container();
+			this.components = new System.ComponentModel.Container();
+			this.stateImageList = new System.Windows.Forms.ImageList(this.components);
+			this.SuspendLayout();
+			// 
+			// stateImageList
+			// 
+			this.stateImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
+			this.stateImageList.ImageSize = new System.Drawing.Size(16, 16);
+			this.stateImageList.TransparentColor = System.Drawing.Color.Transparent;
+			this.ResumeLayout(false);
+
 		}
 
 		#endregion
+
+		private System.Windows.Forms.ImageList stateImageList;
 	}
 }

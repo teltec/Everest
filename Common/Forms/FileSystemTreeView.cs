@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using Teltec.Common.Forms;
+using System.Runtime.InteropServices;
+using System.Windows.Forms.VisualStyles;
+using System.Collections;
 
 namespace Teltec.Common.Forms
 {
@@ -18,12 +21,158 @@ namespace Teltec.Common.Forms
 		{
 			InitializeComponent();
 			PopulateTreeView();
-			this.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.handle_AfterCheck);
+
 			this.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.handle_BeforeExpand);
 		}
 
-		private const int WM_LBUTTONDBLCLK = 0x0203;
-		private const int WM_RBUTTONDOWN = 0x0204;
+		public enum CheckState
+		{
+			Unchecked = 1,
+			Checked = 2,
+			PartiallyChecked = CheckState.Unchecked | CheckState.Checked,
+		}
+
+		protected override void OnHandleCreated(EventArgs e)
+		{
+			base.OnHandleCreated(e);
+
+			Action<CheckBoxState> AddToImageList = new Action<CheckBoxState>(state =>
+			{
+				Bitmap image = new Bitmap(16, 16);
+				Graphics gfx = Graphics.FromImage(image);
+				CheckBoxRenderer.DrawCheckBox(gfx, new Point(0, 0), state);
+				this.stateImageList.Images.Add(image);
+				gfx.Dispose();
+			});
+
+			AddToImageList(System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedNormal); // 0 - Not used?
+			AddToImageList(System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedNormal); // 1
+			AddToImageList(System.Windows.Forms.VisualStyles.CheckBoxState.CheckedNormal);   // 2
+			AddToImageList(System.Windows.Forms.VisualStyles.CheckBoxState.MixedNormal);     // 3
+
+			SetStateImageList(stateImageList);
+		}
+
+		private void SetStateImageList(ImageList list)
+		{
+			if (list != null)
+			{
+				Message message = Message.Create(Handle, (int)Native.TVM_SETIMAGELIST, (IntPtr)Native.TVSIL_STATE, list.Handle);
+				DefWndProc(ref message);
+			}
+		}
+
+		internal void SetStateImage(TreeNode node, int index)
+		{
+			if (!IsHandleCreated)
+				return;
+			if (node == null)
+				throw new ArgumentNullException("node", "Node can not be null");
+			if (index < 0)
+				throw new ArgumentException("index", "Index must be greater than zero.");
+			if (node.Handle == null)
+				return;
+
+			Native.TVITEMEX tvi = new Native.TVITEMEX();
+			tvi.mask = Native.TVIF_HANDLE | Native.TVIF_STATE;
+			tvi.state = (uint)index;
+			tvi.state = tvi.state << 12;
+			tvi.stateMask = Native.TVIS_STATEIMAGEMASK;
+			tvi.hItem = node.Handle;
+			tvi.pszText = IntPtr.Zero;
+			tvi.cchTextMax = 0;
+			tvi.iImage = 0;
+			tvi.iSelectedImage = 0;
+			tvi.cChildren = 0;
+			tvi.lParam = IntPtr.Zero;
+			tvi.iIntegral = 0;
+
+			Native.SendMessage(new HandleRef(this, Handle), Native.TVM_SETITEM, IntPtr.Zero, ref tvi);
+		}
+
+		public CheckState GetCheckState(TreeNode node)
+		{
+			return node.ImageIndex < 0 ? CheckState.Unchecked : (CheckState)node.ImageIndex;
+		}
+
+		public void SetCheckState(TreeNode node, CheckState state)
+		{
+			if (!InternalSetCheckedState(node, state))
+				return;
+			CheckNode(node, state);
+			UpdateParentNode(node.Parent);
+		}
+
+		private void CheckNode(TreeNode node, CheckState state)
+		{
+			InternalSetCheckedState(node, state);
+			foreach (TreeNode child in node.Nodes)
+				CheckNode(child, state);
+		}
+
+		private void UpdateParentNode(TreeNode node)
+		{
+			if (node == null)
+				return;
+
+			CheckState state = GetCheckState(node.FirstNode);
+			foreach (TreeNode child in node.Nodes)
+				state |= GetCheckState(child);
+
+			if (InternalSetCheckedState(node, state))
+				UpdateParentNode(node.Parent);
+		}
+
+		private bool InternalSetCheckedState(TreeNode node, CheckState state)
+		{
+			TreeViewCancelEventArgs args = new TreeViewCancelEventArgs(node, false, TreeViewAction.Unknown);
+			OnBeforeCheck(args);
+			if (args.Cancel)
+				return false;
+
+			node.ImageIndex = (int)state;
+			node.SelectedImageIndex = (int)state;
+			SetStateImage(node, (int)state);
+
+			OnAfterCheck(new TreeViewEventArgs(node, TreeViewAction.Unknown));
+			return true;
+		}
+
+		protected void ChangeNodeState(TreeNode node)
+		{
+			BeginUpdate();
+			CheckState newState;
+			if (node.ImageIndex == (int)CheckState.Unchecked || node.ImageIndex < 0)
+				newState = CheckState.Checked;
+			else
+				newState = CheckState.Unchecked;
+			CheckNode(node, newState);
+			UpdateParentNode(node.Parent);
+			EndUpdate();
+		}
+
+		protected override void OnClick(EventArgs e)
+		{
+			base.OnClick(e);
+
+			Point pt = PointToClient(Control.MousePosition);
+
+			TreeViewHitTestInfo info = this.HitTest(pt);
+			TreeViewHitTestLocations loc = info.Location;
+			if (loc == TreeViewHitTestLocations.StateImage)
+			{
+				if (info.Node != null)
+					ChangeNodeState(info.Node);
+			}
+		}
+
+		protected override void OnKeyDown(KeyEventArgs e)
+		{
+			base.OnKeyDown(e);
+
+			if (e.KeyCode == Keys.Space)
+				ChangeNodeState(SelectedNode);
+		}
 
 		protected override void WndProc(ref Message m)
 		{
@@ -35,7 +184,7 @@ namespace Teltec.Common.Forms
 
 			switch (m.Msg)
 			{
-				case WM_LBUTTONDBLCLK:
+				case Native.WM_LBUTTONDBLCLK:
 					{
 						// Disable double-click on checkbox to fix Microsoft Vista bug.
 						TreeViewHitTestInfo hitInfo = HitTest(new Point((int)m.LParam));
@@ -46,7 +195,7 @@ namespace Teltec.Common.Forms
 						}
 						break;
 					}
-				case WM_RBUTTONDOWN:
+				case Native.WM_RBUTTONDOWN:
 					{
 						// Set focus to node on right-click - another Microsoft bug?
 						TreeViewHitTestInfo hitInfo = HitTest(new Point((int)m.LParam));
@@ -59,14 +208,25 @@ namespace Teltec.Common.Forms
 			base.WndProc(ref m);
 		}
 
+		#region Populate methods
+
 		private void PopulateTreeView()
 		{
-			DriveInfo[] drives = DriveInfo.GetDrives();
-			foreach (var drive in drives)
+			SuspendLayout();
+			try
 			{
-				TreeNode driveNode = AddDriveNode(this, drive);
-				AddLazyLoadingNode(driveNode);
+				DriveInfo[] drives = DriveInfo.GetDrives();
+				foreach (var drive in drives)
+				{
+					TreeNode driveNode = AddDriveNode(this, drive);
+					AddLazyLoadingNode(driveNode);
+				}
 			}
+			catch (System.SystemException e)
+			{
+				ShowErrorMessage(e, null);
+			}
+			ResumeLayout();
 		}
 
 		private void PopulateDrive(TreeNode parentNode, DriveInfo parentDrive)
@@ -76,6 +236,7 @@ namespace Teltec.Common.Forms
 
 		private void PopuplateDirectory(TreeNode parentNode, DirectoryInfo parentDir)
 		{
+			SuspendLayout();
 			try
 			{
 				DirectoryInfo[] subDirs = parentDir.GetDirectories();
@@ -92,15 +253,19 @@ namespace Teltec.Common.Forms
 			}
 			catch (System.SystemException e)
 			{
-				ShowErrorMessage(this, parentNode, e);
+				ShowErrorMessage(e, parentNode);
 			}
+			ResumeLayout();
 		}
 
-		private void ShowErrorMessage(TreeView view, TreeNode node, Exception exception)
+		private void ShowErrorMessage(Exception exception, TreeNode node)
 		{
-			MessageBox.Show(view, exception.Message, "Error");
-			node.Checked = false;
-			node.Collapse();
+			MessageBox.Show(this, exception.Message, "Error");
+			if (node != null)
+			{
+				SetCheckState(node, CheckState.Unchecked);
+				node.Collapse();
+			}
 		}
 
 		private TreeNode AddDriveNode(TreeView view, DriveInfo drive)
@@ -115,7 +280,7 @@ namespace Teltec.Common.Forms
 				nodeName = drive.Name;
 			}
 			TreeNode node = new TreeNode(nodeName, 0, 0);
-			node.Tag = drive;
+			node.Tag = new TreeNodeTag(TreeNodeTag.ItemType.DRIVE, drive);
 			node.ImageKey = "drive";
 			view.Nodes.Add(node);
 			return node;
@@ -124,29 +289,29 @@ namespace Teltec.Common.Forms
 		private TreeNode AddFolderNode(TreeNode parentNode, DirectoryInfo folder)
 		{
 			TreeNode node = new TreeNode(folder.Name, 0, 0);
-			node.Tag = folder;
+			node.Tag = new TreeNodeTag(TreeNodeTag.ItemType.FOLDER, folder);
 			node.ImageKey = "folder";
-			if (parentNode.Checked)
-				node.Checked = true;
 			parentNode.Nodes.Add(node);
+			if (GetCheckState(parentNode) == CheckState.Checked)
+				SetCheckState(node, CheckState.Checked);
 			return node;
 		}
 
 		private TreeNode AddFileNode(TreeNode parentNode, FileInfo file)
 		{
 			TreeNode node = new TreeNode(file.Name, 0, 0);
-			node.Tag = file;
+			node.Tag = new TreeNodeTag(TreeNodeTag.ItemType.FILE, file);
 			node.ImageKey = "file";
-			if (parentNode.Checked)
-				node.Checked = true;
 			parentNode.Nodes.Add(node);
+			if (GetCheckState(parentNode) == CheckState.Checked)
+				SetCheckState(node, CheckState.Checked);
 			return node;
 		}
 
 		private TreeNode AddLazyLoadingNode(TreeNode parentNode)
 		{
 			TreeNode node = new TreeNode("Retrieving data...", 0, 0);
-			node.Tag = null;
+			node.Tag = new TreeNodeTag(TreeNodeTag.ItemType.LOADING, null);
 			node.ImageKey = "loading";
 			parentNode.Nodes.Add(node);
 			return node;
@@ -154,123 +319,107 @@ namespace Teltec.Common.Forms
 
 		private void RemoveLazyLoadingNode(TreeNode parentNode)
 		{
-			foreach (TreeNode node in parentNode.Nodes)
-			{
-				if (node.ImageKey == "loading")
-					node.Remove();
-			}
-		}
-
-		private void CheckNodesRecursively(TreeNode node)
-		{
-			if (node.Tag == null)
+			TreeNode firstChildNode = parentNode.FirstNode;
+			if (firstChildNode == null)
 				return;
 
-			//Console.WriteLine("checking {0}", node.Text);
-			if (!node.Checked)
-				node.Checked = true;
-
-			node.ForeColor = Color.Black;
-
-			foreach (TreeNode subNode in node.Nodes)
-				CheckNodesRecursively(subNode);
+			TreeNodeTag tag = firstChildNode.Tag as TreeNodeTag;
+			if (tag != null && tag.Type == TreeNodeTag.ItemType.LOADING)
+				firstChildNode.Remove();
 		}
 
-		private void UncheckNodesRecursively(TreeNode node)
+		#endregion
+
+		public class TreeNodeTag
 		{
-			if (node.Tag == null)
-				return;
-
-			//Console.WriteLine("unchecking {0}", node.Text);
-			if (node.Checked)
-				node.Checked = false;
-
-			node.ForeColor = Color.Black;
-
-			foreach (TreeNode subNode in node.Nodes)
-				UncheckNodesRecursively(subNode);
-		}
-
-		private void UpdateParentNodes(TreeNode changedNode, int countCheckedNodes)
-		{
-			if (changedNode.Parent == null)
-				return;
-
-			if (countCheckedNodes > 0)
+			public enum ItemType
 			{
-				changedNode.Parent.ForeColor = Color.LightGray;
-				UpdateParentNodes(changedNode.Parent, countCheckedNodes);
+				LOADING = 0,
+				DRIVE = 1,
+				FOLDER = 2,
+				FILE = 3,
 			}
-			else
+
+			public ItemType Type { get; private set; }
+			public object InfoObject { get; private set; }
+
+			public TreeNodeTag(ItemType type, object infoObject)
 			{
-				int updatedCountCheckedNodes = CountCheckedNodes(changedNode.Parent);
-				if (updatedCountCheckedNodes > 0 && !changedNode.Checked)
-					changedNode.Parent.ForeColor = Color.LightGray;
-				else
-					changedNode.Parent.ForeColor = Color.Black;
-				UpdateParentNodes(changedNode.Parent, updatedCountCheckedNodes);
+				Type = type;
+				InfoObject = infoObject;
 			}
-		}
 
-		private int CountCheckedNodes(TreeNode parentNode)
-		{
-			if (parentNode == null)
-				return 0;
-
-			int count = 0;
-			foreach (TreeNode node in parentNode.Nodes)
+			public string Name
 			{
-				if (node.Checked)
+				get
 				{
-					count++;
-				}
-				else if (node.Nodes.Count > 0)
-				{
-					count += CountCheckedNodes(node);
+					if (this.InfoObject == null)
+						return "";
+
+					switch (this.Type)
+					{
+						case ItemType.FILE:
+							return (this.InfoObject as FileInfo).Name;
+						case ItemType.FOLDER:
+							return (this.InfoObject as DirectoryInfo).Name;
+						case ItemType.DRIVE:
+							return (this.InfoObject as DriveInfo).Name;
+						default:
+							return "";
+					}
+					
 				}
 			}
-			return count;
-		}
-
-		private void handle_AfterCheck(object sender, TreeViewEventArgs e)
-		{
-			OnFileSystemFetchStarted(this, null);
-			TreeNode changedNode = e.Node;
-			this.AfterCheck -= handle_AfterCheck;
-			if (changedNode.Checked)
-			{
-				CheckNodesRecursively(changedNode);
-				UpdateParentNodes(changedNode, CountCheckedNodes(changedNode.Parent));
-			}
-			else
-			{
-				UncheckNodesRecursively(changedNode);
-				UpdateParentNodes(changedNode, CountCheckedNodes(changedNode.Parent));
-			}
-			this.AfterCheck += handle_AfterCheck;
-			OnFileSystemFetchEnded(this, null);
 		}
 
 		private void handle_BeforeExpand(object sender, TreeViewCancelEventArgs e)
 		{
 			OnFileSystemFetchStarted(this, null);
+
 			//Thread.Sleep(2000);
 			TreeNode expandingNode = e.Node;
-			if (expandingNode.ImageKey == "folder")
+			TreeNodeTag tag = expandingNode.Tag as TreeNodeTag;
+			switch (tag.Type)
 			{
-				DirectoryInfo expandingNodeInfo = expandingNode.Tag as DirectoryInfo;
-				RemoveLazyLoadingNode(expandingNode);
-				if (expandingNode.Nodes.Count == 0)
-					PopuplateDirectory(expandingNode, expandingNodeInfo);
+				default:
+					break;
+				case TreeNodeTag.ItemType.FOLDER:
+					{
+						DirectoryInfo expandingNodeInfo = tag.InfoObject as DirectoryInfo;
+						RemoveLazyLoadingNode(expandingNode);
+						if (expandingNode.Nodes.Count == 0)
+							PopuplateDirectory(expandingNode, expandingNodeInfo);
+						break;
+					}
+				case TreeNodeTag.ItemType.DRIVE:
+					{
+						DriveInfo expandingNodeInfo = tag.InfoObject as DriveInfo;
+						RemoveLazyLoadingNode(expandingNode);
+						if (expandingNode.Nodes.Count == 0)
+							PopulateDrive(expandingNode, expandingNodeInfo);
+						break;
+					}
 			}
-			else if (expandingNode.ImageKey == "drive")
-			{
-				DriveInfo expandingNodeInfo = expandingNode.Tag as DriveInfo;
-				RemoveLazyLoadingNode(expandingNode);
-				if (expandingNode.Nodes.Count == 0)
-					PopulateDrive(expandingNode, expandingNodeInfo);
-			}
+
 			OnFileSystemFetchEnded(this, null);
+		}
+
+		private void BuildTagDataList(TreeNode node, List<TreeNodeTag> list)
+		{
+			TreeNodeTag nodeTag = node.Tag as TreeNodeTag;
+			if (GetCheckState(node) == CheckState.Checked && nodeTag != null && nodeTag.Type != TreeNodeTag.ItemType.LOADING)
+				list.Add(node.Tag as TreeNodeTag);
+
+			foreach (TreeNode child in node.Nodes)
+				BuildTagDataList(child, list);
+		}
+
+		public List<TreeNodeTag> GetCheckedTagData()
+		{
+			List<TreeNodeTag> list = new List<TreeNodeTag>();
+			foreach (TreeNode node in Nodes)
+				BuildTagDataList(node, list);
+			return list;
 		}
 
 		#region Custom events
@@ -294,5 +443,96 @@ namespace Teltec.Common.Forms
 		}
 
 		#endregion
+
+		#region Hide some properties from the Designer
+
+		[Browsable(false)]
+		public new bool CheckBoxes
+		{
+			get { return base.CheckBoxes; }
+			set { base.CheckBoxes = value; }
+		}
+
+		[Browsable(false)]
+		public new ImageList ImageList
+		{
+			get { return base.ImageList; }
+			set { base.ImageList = value; }
+		}
+
+		[Browsable(false)]
+		public new string ImageKey
+		{
+			get { return base.ImageKey; }
+			set { base.ImageKey = value; }
+		}
+
+		[Browsable(false)]
+		public new int ImageIndex
+		{
+			get { return base.ImageIndex; }
+			set { base.ImageIndex = value; }
+		}
+
+		[Browsable(false)]
+		public new int SelectedImageIndex
+		{
+			get { return base.SelectedImageIndex; }
+			set { base.SelectedImageIndex = value; }
+		}
+
+		[Browsable(false)]
+		public new string SelectedImageKey
+		{
+			get { return base.SelectedImageKey; }
+			set { base.SelectedImageKey = value; }
+		}
+
+		[Browsable(false)]
+		public new ImageList StateImageList
+		{
+			get { return base.StateImageList; }
+			set { base.StateImageList = value; }
+		}
+
+		#endregion
+	}
+
+	internal static class Native
+	{
+		public const int WM_LBUTTONDBLCLK = 0x0203;
+		public const int WM_RBUTTONDOWN = 0x0204;
+
+		public const UInt32 TV_FIRST = 0x1100;
+		public const UInt32 TVSIL_STATE = 2;
+		public const UInt32 TVM_SETIMAGELIST = TV_FIRST + 9;
+		public const UInt32 TVM_SETITEM = TV_FIRST + 63;
+
+		public const UInt32 TVIF_STATE = 0x0008;
+		public const UInt32 TVIF_HANDLE = 0x0010;
+
+		public const UInt32 TVIS_STATEIMAGEMASK = 0xF000;
+
+		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+		public struct TVITEMEX
+		{
+			public UInt32 mask;
+			public IntPtr hItem;
+			public UInt32 state;
+			public UInt32 stateMask;
+			public IntPtr pszText;
+			public int cchTextMax;
+			public int iImage;
+			public int iSelectedImage;
+			public int cChildren;
+			public IntPtr lParam;
+			public int iIntegral;
+		}
+
+		[DllImport("user32.dll", CharSet = CharSet.Auto)]
+		public static extern IntPtr SendMessage(HandleRef hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+		[DllImport("user32.dll", CharSet = CharSet.Auto)]
+		public static extern IntPtr SendMessage(HandleRef hWnd, uint Msg, IntPtr wParam, ref TVITEMEX lParam);
 	}
 }
