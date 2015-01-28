@@ -2,16 +2,10 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.IO;
-using Teltec.Common.Forms;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
-using System.Collections;
 
 namespace Teltec.Common.Forms
 {
@@ -19,9 +13,13 @@ namespace Teltec.Common.Forms
 	{
 		public FileSystemTreeView()
 		{
+			UseWaitCursor = true;
+			
 			InitializeComponent();
 			PopulateTreeView();
-
+			
+			UseWaitCursor = false;
+			
 			this.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.handle_BeforeExpand);
 		}
 
@@ -29,7 +27,7 @@ namespace Teltec.Common.Forms
 		{
 			Unchecked = 1,
 			Checked = 2,
-			PartiallyChecked = CheckState.Unchecked | CheckState.Checked,
+			Mixed = CheckState.Unchecked | CheckState.Checked,
 		}
 
 		protected override void OnHandleCreated(EventArgs e)
@@ -159,6 +157,7 @@ namespace Teltec.Common.Forms
 
 			TreeViewHitTestInfo info = this.HitTest(pt);
 			TreeViewHitTestLocations loc = info.Location;
+			// Is the click on the checkbox? If not, ignore it.
 			if (loc == TreeViewHitTestLocations.StateImage)
 			{
 				if (info.Node != null)
@@ -349,7 +348,7 @@ namespace Teltec.Common.Forms
 				InfoObject = infoObject;
 			}
 
-			public string Name
+			public string Path
 			{
 				get
 				{
@@ -359,9 +358,9 @@ namespace Teltec.Common.Forms
 					switch (this.Type)
 					{
 						case ItemType.FILE:
-							return (this.InfoObject as FileInfo).Name;
+							return (this.InfoObject as FileInfo).FullName;
 						case ItemType.FOLDER:
-							return (this.InfoObject as DirectoryInfo).Name;
+							return (this.InfoObject as DirectoryInfo).FullName;
 						case ItemType.DRIVE:
 							return (this.InfoObject as DriveInfo).Name;
 						default:
@@ -374,6 +373,7 @@ namespace Teltec.Common.Forms
 
 		private void handle_BeforeExpand(object sender, TreeViewCancelEventArgs e)
 		{
+			UseWaitCursor = true;
 			OnFileSystemFetchStarted(this, null);
 
 			//Thread.Sleep(2000);
@@ -402,16 +402,33 @@ namespace Teltec.Common.Forms
 			}
 
 			OnFileSystemFetchEnded(this, null);
+			UseWaitCursor = false;
 		}
 
 		private void BuildTagDataList(TreeNode node, List<TreeNodeTag> list)
 		{
 			TreeNodeTag nodeTag = node.Tag as TreeNodeTag;
-			if (GetCheckState(node) == CheckState.Checked && nodeTag != null && nodeTag.Type != TreeNodeTag.ItemType.LOADING)
-				list.Add(node.Tag as TreeNodeTag);
+			// Skip over loading nodes and nodes without a tag.
+			if (nodeTag == null || nodeTag.Type == TreeNodeTag.ItemType.LOADING)
+				return;
 
-			foreach (TreeNode child in node.Nodes)
-				BuildTagDataList(child, list);
+			CheckState state = GetCheckState(node);
+			switch (state)
+			{
+				case CheckState.Unchecked:
+					// If it's unchecked, ignore it and its child nodes.
+					return;
+				case CheckState.Checked:
+					// If it's checked, add it and ignore its child nodes.
+					// This means the entire folder is checked - regardless of what it contains.
+					list.Add(node.Tag as TreeNodeTag);
+					break;
+				case CheckState.Mixed:
+					// Ignore it, but verify its child nodes.
+					foreach (TreeNode child in node.Nodes)
+						BuildTagDataList(child, list);
+					break;
+			}
 		}
 
 		public List<TreeNodeTag> GetCheckedTagData()
