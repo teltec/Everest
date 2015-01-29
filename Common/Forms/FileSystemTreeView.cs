@@ -283,7 +283,7 @@ namespace Teltec.Common.Forms
 				nodeName = drive.Name;
 			}
 			TreeNode node = new TreeNode(nodeName, 0, 0);
-			node.Tag = new TreeNodeTag(TreeNodeTag.ItemType.DRIVE, drive);
+			node.Tag = new TreeNodeTag(TreeNodeTag.InfoType.DRIVE, drive);
 			node.ImageKey = "drive";
 			view.Nodes.Add(node);
 			return node;
@@ -292,7 +292,7 @@ namespace Teltec.Common.Forms
 		private TreeNode AddFolderNode(TreeNode parentNode, DirectoryInfo folder)
 		{
 			TreeNode node = new TreeNode(folder.Name, 0, 0);
-			node.Tag = new TreeNodeTag(TreeNodeTag.ItemType.FOLDER, folder);
+			node.Tag = new TreeNodeTag(TreeNodeTag.InfoType.FOLDER, folder);
 			node.ImageKey = "folder";
 			parentNode.Nodes.Add(node);
 			if (GetCheckState(parentNode) == CheckState.Checked)
@@ -303,7 +303,7 @@ namespace Teltec.Common.Forms
 		private TreeNode AddFileNode(TreeNode parentNode, FileInfo file)
 		{
 			TreeNode node = new TreeNode(file.Name, 0, 0);
-			node.Tag = new TreeNodeTag(TreeNodeTag.ItemType.FILE, file);
+			node.Tag = new TreeNodeTag(TreeNodeTag.InfoType.FILE, file);
 			node.ImageKey = "file";
 			parentNode.Nodes.Add(node);
 			if (GetCheckState(parentNode) == CheckState.Checked)
@@ -314,7 +314,7 @@ namespace Teltec.Common.Forms
 		private TreeNode AddLazyLoadingNode(TreeNode parentNode)
 		{
 			TreeNode node = new TreeNode("Retrieving data...", 0, 0);
-			node.Tag = new TreeNodeTag(TreeNodeTag.ItemType.LOADING, null);
+			node.Tag = new TreeNodeTag(TreeNodeTag.InfoType.LOADING, null);
 			node.ImageKey = "loading";
 			parentNode.Nodes.Add(node);
 			return node;
@@ -327,7 +327,7 @@ namespace Teltec.Common.Forms
 				return;
 
 			TreeNodeTag tag = firstChildNode.Tag as TreeNodeTag;
-			if (tag != null && tag.Type == TreeNodeTag.ItemType.LOADING)
+			if (tag != null && tag.Type == TreeNodeTag.InfoType.LOADING)
 				firstChildNode.Remove();
 		}
 
@@ -335,7 +335,7 @@ namespace Teltec.Common.Forms
 
 		public class TreeNodeTag
 		{
-			public enum ItemType
+			public enum InfoType
 			{
 				LOADING = 0,
 				DRIVE = 1,
@@ -343,34 +343,33 @@ namespace Teltec.Common.Forms
 				FILE = 3,
 			}
 
-			public ItemType Type { get; private set; }
-			public object InfoObject { get; private set; }
-
-			public TreeNodeTag(ItemType type, object infoObject)
+			public TreeNodeTag(InfoType infoType, object infoObject)
 			{
-				Type = type;
+				Type = infoType;
 				InfoObject = infoObject;
 			}
+
+			public InfoType Type { get; private set; }
+			public object InfoObject { get; private set; }
 
 			public string Path
 			{
 				get
 				{
 					if (this.InfoObject == null)
-						return "";
+						return null;
 
 					switch (this.Type)
 					{
-						case ItemType.FILE:
+						case InfoType.FILE:
 							return (this.InfoObject as FileInfo).FullName;
-						case ItemType.FOLDER:
+						case InfoType.FOLDER:
 							return (this.InfoObject as DirectoryInfo).FullName;
-						case ItemType.DRIVE:
+						case InfoType.DRIVE:
 							return (this.InfoObject as DriveInfo).Name;
 						default:
-							return "";
+							return null;
 					}
-					
 				}
 			}
 		}
@@ -387,7 +386,7 @@ namespace Teltec.Common.Forms
 			{
 				default:
 					break;
-				case TreeNodeTag.ItemType.FOLDER:
+				case TreeNodeTag.InfoType.FOLDER:
 					{
 						DirectoryInfo expandingNodeInfo = tag.InfoObject as DirectoryInfo;
 						RemoveLazyLoadingNode(expandingNode);
@@ -395,7 +394,7 @@ namespace Teltec.Common.Forms
 							PopuplateDirectory(expandingNode, expandingNodeInfo);
 						break;
 					}
-				case TreeNodeTag.ItemType.DRIVE:
+				case TreeNodeTag.InfoType.DRIVE:
 					{
 						DriveInfo expandingNodeInfo = tag.InfoObject as DriveInfo;
 						RemoveLazyLoadingNode(expandingNode);
@@ -413,7 +412,7 @@ namespace Teltec.Common.Forms
 		{
 			TreeNodeTag nodeTag = node.Tag as TreeNodeTag;
 			// Skip over loading nodes and nodes without a tag.
-			if (nodeTag == null || nodeTag.Type == TreeNodeTag.ItemType.LOADING)
+			if (nodeTag == null || nodeTag.Type == TreeNodeTag.InfoType.LOADING)
 				return;
 
 			CheckState state = GetCheckState(node);
