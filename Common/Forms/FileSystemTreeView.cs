@@ -272,7 +272,11 @@ namespace Teltec.Common.Forms
 			String nodeName = null;
 			try
 			{
-				nodeName = String.Format("{0} ({1})", drive.VolumeLabel, drive.Name);
+				string driveLabel = drive.VolumeLabel;
+				if (string.IsNullOrEmpty(driveLabel))
+					nodeName = drive.Name;
+				else
+					nodeName = String.Format("{0} ({1})", drive.Name, driveLabel);
 			}
 			catch (Exception)
 			{
