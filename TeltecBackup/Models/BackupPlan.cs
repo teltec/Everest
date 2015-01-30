@@ -52,8 +52,8 @@ namespace Teltec.Backup.Models
 
 		#region Sources
 
-		private IList<FileSystemTreeView.TreeNodeTag> _SelectedSources;
-		public IList<FileSystemTreeView.TreeNodeTag> SelectedSources
+		private IList<BackupPlanSourceEntry> _SelectedSources;
+		public IList<BackupPlanSourceEntry> SelectedSources
 		{
 			get { return _SelectedSources; }
 			set { SetField(ref _SelectedSources, value); }

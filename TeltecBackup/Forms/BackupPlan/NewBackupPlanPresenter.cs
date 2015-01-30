@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Teltec.Backup.Models;
 using Teltec.Common.Forms;
 using Teltec.Forms.Wizard;
 
@@ -30,8 +31,8 @@ namespace Teltec.Backup.Forms.BackupPlan
 			base.OnFinish();
 
 			Console.WriteLine("Name = {0}", Plan.Name);
-			foreach (FileSystemTreeView.TreeNodeTag tag in Plan.SelectedSources)
-				Console.WriteLine("SelectedSource => {0}", tag.Path);
+			foreach (BackupPlanSourceEntry entry in Plan.SelectedSources)
+				Console.WriteLine("SelectedSource => {0} {1}", entry.Type.ToString(), entry.Path);
 			Console.WriteLine("RunManually = {0}", Plan.RunManually);
 		}
 		

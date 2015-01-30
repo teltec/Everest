@@ -114,6 +114,7 @@
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AmazonS3Account.cs" />
     <Compile Include="Models\BackupPlan.cs" />
+    <Compile Include="Models\BackupPlanSourceEntry.cs" />
     <Compile Include="Models\ICloudStorageAccount.cs" />
     <Compile Include="Forms\CloudStorageAccountsForm.cs">
       <SubType>Form</SubType>
