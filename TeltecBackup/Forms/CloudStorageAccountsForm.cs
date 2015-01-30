@@ -10,7 +10,7 @@ namespace Teltec.Backup.Forms
     public partial class CloudStorageAccountsForm : Form
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        private DbContextScope _dbContextScope = new DbContextScope();
+        private DBContextScope _dbContextScope = new DBContextScope();
 
         public CloudStorageAccountsForm()
         {
@@ -68,7 +68,7 @@ namespace Teltec.Backup.Forms
 			using (var form = new AmazonS3AccountForm(new AmazonS3Account()))
 			{
 				form.AccountSaved += form_AccountSaved;
-				form.AccountCancelled += form_AccountCancelled;
+				form.AccountCanceled += form_AccountCancelled;
 				form.ShowDialog(this);
 			}
         }
@@ -83,7 +83,7 @@ namespace Teltec.Backup.Forms
 			using (var form = new AmazonS3AccountForm(selectedAcount))
 			{
 				form.AccountSaved += form_AccountChanged;
-				form.AccountCancelled += form_AccountCancelled;
+				form.AccountCanceled += form_AccountCancelled;
 				form.ShowDialog(this);
             }
         }

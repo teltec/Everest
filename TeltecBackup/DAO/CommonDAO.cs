@@ -10,9 +10,9 @@ namespace Teltec.Backup.DAO
 {
 	public class CommonDAO
 	{
-		protected internal DbContextScope _dbContextScope;
+		protected DBContextScope _dbContextScope;
 
-		public CommonDAO(DbContextScope scope)
+		public CommonDAO(DBContextScope scope)
 		{
 			_dbContextScope = scope;
 		}

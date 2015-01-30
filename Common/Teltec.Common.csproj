@@ -65,6 +65,7 @@
     </Compile>
     <Compile Include="IObservableObject.cs" />
     <Compile Include="Extensions\ObjectExtension.cs" />
+    <Compile Include="NativeMethods.cs" />
     <Compile Include="ObservableForm.cs">
       <SubType>Form</SubType>
     </Compile>

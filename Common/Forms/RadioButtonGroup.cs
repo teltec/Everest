@@ -23,6 +23,12 @@ namespace Teltec.Common.Forms
 			_group.Add(button);
 		}
 
+		public void RemoveRadioButton(RadioButton button)
+		{
+			button.CheckedChanged -= radioButton_CheckedChanged;
+			_group.Remove(button);
+		}
+
 		protected internal void radioButton_CheckedChanged(object sender, EventArgs e)
 		{
 			RadioButton rb = (RadioButton)sender;

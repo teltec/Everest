@@ -1,6 +1,7 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
 using System;
+using System.Globalization;
 using System.Windows.Forms;
 using Teltec.Backup.Models;
 using Teltec.Common.Extensions;
@@ -9,9 +10,9 @@ namespace Teltec.Backup.Forms.S3
 {
     public partial class AmazonS3AccountForm : Form
     {
-        public event AccountSavedEventHandler AccountSaved;
-        public event AccountCancelledEventHandler AccountCancelled;
-        public AmazonS3Account _account;
+        public event EventHandler<AmazonS3AccountSaveEventArgs> AccountSaved;
+		public event EventHandler<AmazonS3AccountSaveEventArgs> AccountCanceled;
+        private AmazonS3Account _account;
 
         public AmazonS3AccountForm(AmazonS3Account account)
         {
@@ -30,8 +31,8 @@ namespace Teltec.Backup.Forms.S3
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            if (AccountCancelled != null)
-                AccountCancelled(this, new AmazonS3AccountSaveEventArgs(_account));
+            if (AccountCanceled != null)
+                AccountCanceled(this, new AmazonS3AccountSaveEventArgs(_account));
             this.Close();
         }
 
@@ -52,7 +53,7 @@ namespace Teltec.Backup.Forms.S3
 
         private void CleanData()
         {
-            _account.BucketName = _account.BucketName.ToLower();
+            _account.BucketName = _account.BucketName.ToLower(CultureInfo.CurrentCulture);
         }
 
         private bool IsValid()
@@ -64,8 +65,8 @@ namespace Teltec.Backup.Forms.S3
         {
 			bool hasAccessKey = _account.AccessKey != null;
 			bool hasValidAccessKey = hasAccessKey
-				&& _account.AccessKey.Length >= AmazonS3Account.ACCESS_KEY_NAME_MIN_LEN
-                && _account.AccessKey.Length <= AmazonS3Account.ACCESS_KEY_NAME_MAX_LEN;
+				&& _account.AccessKey.Length >= AmazonS3Account.AccessKeyNameMinLen
+                && _account.AccessKey.Length <= AmazonS3Account.AccessKeyNameMaxLen;
 			bool hasSecretKey = _account.SecretKey != null;
 			bool hasValidSecretKey = hasSecretKey && _account.SecretKey.Length > 0;
             
@@ -102,9 +103,6 @@ namespace Teltec.Backup.Forms.S3
             }
         }
     }
-
-    public delegate void AccountSavedEventHandler(object sender, AmazonS3AccountSaveEventArgs e);
-    public delegate void AccountCancelledEventHandler(object sender, AmazonS3AccountSaveEventArgs e);
 
     public class AmazonS3AccountSaveEventArgs : EventArgs
     {

@@ -9,7 +9,13 @@ namespace Teltec.Forms.Wizard
 {
 	public class WizardPresenter : IDisposable
 	{
-		protected internal List<Type> _RegisteredFormTypes = new List<Type>();
+		public class WizardFormOptions
+		{
+			public Type Type { get; set; }
+			public bool DoValidate { get; set; }
+		}
+
+		protected internal List<WizardFormOptions> _RegisteredForms = new List<WizardFormOptions>();
 		protected internal List<WizardForm> _InstantiatedForms = new List<WizardForm>();
 		protected internal int _CurrentFormIndex = 0;
 		protected internal Form _Owner;
@@ -39,7 +45,7 @@ namespace Teltec.Forms.Wizard
 				return;
 			_Owner = null; // Break cyclic reference.
 			CloseAndDiposeAllForms();
-			_RegisteredFormTypes.Clear();
+			_RegisteredForms.Clear();
 		}
 
 		public void Dispose()
@@ -48,7 +54,7 @@ namespace Teltec.Forms.Wizard
 			GC.SuppressFinalize(this);
 		}
 
-		public virtual void RegisterFormClass<T>(T wizardFormType) where T : Type
+		public virtual void RegisterFormClass(Type wizardFormType, WizardFormOptions options=null)
 		{
 			bool isCompatible = typeof(WizardForm).IsAssignableFrom(wizardFormType);
 			if (!isCompatible)
@@ -56,55 +62,45 @@ namespace Teltec.Forms.Wizard
 				var message = String.Format("Type must be compatible with {0}", typeof(WizardForm).FullName);
 				throw new ArgumentException(message, "wizardFormType");
 			}
-			_RegisteredFormTypes.Add(wizardFormType);
+			bool validate = options != null && options.DoValidate;
+			_RegisteredForms.Add(new WizardFormOptions { Type = wizardFormType, DoValidate = validate });
 		}
 
 		public virtual void ShowDialog(Form owner)
 		{
-			_CurrentFormIndex = 0;
 			_Owner = owner;
-			CurrentForm.ShowDialog(owner);
+			_CurrentFormIndex = 0;
+			CurrentForm.ShowDialog(_Owner);
 			GC.ReRegisterForFinalize(this);
-		}
-
-		public virtual void Close()
-		{
-			CloseAndDiposeAllForms();
-			// TODO: fire event?
-		}
-
-		public virtual void Cancel()
-		{
-			CloseAndDiposeAllForms();
-			// TODO: fire event?
 		}
 
 		protected virtual WizardForm InstantiateForm(int index, Form owner)
 		{
 			// Instantiate it.
-			Type type = _RegisteredFormTypes.ElementAt(index);
-			object instance = Activator.CreateInstance(type);
+			WizardFormOptions options = _RegisteredForms.ElementAt(index);
+			object instance = Activator.CreateInstance(options.Type);
 			WizardForm form = (WizardForm)instance;
 			form.Owner = owner;
-			form.NextEnabled = index < _RegisteredFormTypes.Count - 1;
+			form.NextEnabled = index < _RegisteredForms.Count - 1;
 			form.PreviousEnabled = index > 0;
-			form.IsLastForm = index == _RegisteredFormTypes.Count - 1;
+			form.IsLastForm = index == _RegisteredForms.Count - 1;
 			form.CancelEvent += form_CancelEvent;
 			form.FinishEvent += form_FinishEvent;
 			form.PreviousEvent += form_PreviousEvent;
 			form.NextEvent += form_NextEvent;
 			form.Model = Model;
+			form.DoValidate = options.DoValidate;
 			return form;
 		}
 
 		protected virtual void form_CancelEvent(WizardForm sender, EventArgs e)
 		{
-			CloseAndDiposeAllForms();
+			OnCancel();
 		}
 
 		protected virtual void form_FinishEvent(WizardForm sender, EventArgs e)
 		{
-			CloseAndDiposeAllForms();
+			OnFinish();
 		}
 
 		protected virtual void form_PreviousEvent(WizardForm sender, EventArgs e)
@@ -158,6 +154,16 @@ namespace Teltec.Forms.Wizard
 				form.Dispose();
 			}
 			_InstantiatedForms.Clear();
+		}
+
+		public virtual void OnFinish()
+		{
+			CloseAndDiposeAllForms();
+		}
+
+		public virtual void OnCancel()
+		{
+			CloseAndDiposeAllForms();
 		}
 	}
 }

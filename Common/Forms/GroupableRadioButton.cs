@@ -17,13 +17,7 @@ namespace Teltec.Common.Forms
 			InitializeComponent();
 		}
 
-		protected override void OnPaint(PaintEventArgs pe)
-		{
-			base.OnPaint(pe);
-		}
-
 		[
-		//Bindable(true),
 		Category("Misc"),
 		DefaultValue(null),
 		DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)
@@ -34,8 +28,25 @@ namespace Teltec.Common.Forms
 			get { return _RadioGroup; }
 			//set { SetField(ref _RadioGroup, value); }
 			set {
+				// Did not change?
+				if (_RadioGroup == value)
+					return;
+
+				// Adding to a group?
+				if (value != null)
+				{
+					// Has previous group?
+					if (_RadioGroup != null)
+						_RadioGroup.RemoveRadioButton(this);
+					value.AddRadioButton(this);
+				}
+				else // Removing from a group?
+				{
+					// Has previous group?
+					if (_RadioGroup != null)
+						_RadioGroup.RemoveRadioButton(this);
+				}
 				_RadioGroup = value;
-				_RadioGroup.AddRadioButton(this);
 			}
 		}
 	}

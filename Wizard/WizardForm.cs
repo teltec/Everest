@@ -30,6 +30,32 @@ namespace Teltec.Forms.Wizard
 				this.GetPropertyName((WizardForm x) => x.IsLastForm)));
 		}
 
+		#region Validation
+
+		protected internal bool _DoValidate = true;
+		protected internal bool DoValidate
+		{
+			get { return _DoValidate; }
+			set { _DoValidate = value; }
+		}
+
+		protected virtual bool IsValid()
+		{
+			return true;
+		}
+
+		protected virtual void ShowErrorMessage(string caption, string message)
+		{
+			MessageBox.Show(message, caption);
+		}
+
+		protected virtual void ShowErrorMessage(string message)
+		{
+			MessageBox.Show(message);
+		}
+
+		#endregion
+
 		#region Custom properties
 
 		[
@@ -107,16 +133,15 @@ namespace Teltec.Forms.Wizard
 		}
 
 		public delegate void ModelChangedEventHandler(WizardForm sender, ModelChangedEventArgs e);
-		public delegate void CancelEventHandler(WizardForm sender, EventArgs e);
-		public delegate void FinishEventHandler(WizardForm sender, EventArgs e);
-		public delegate void NextEventHandler(WizardForm sender, EventArgs e);
-		public delegate void PreviousEventHandler(WizardForm sender, EventArgs e);
+		public delegate void WizardActionEventHandler(WizardForm sender, EventArgs e);
+		public delegate void WizardCancellableActionEventHandler(WizardForm sender, CancelEventArgs e);
 
 		public event ModelChangedEventHandler ModelChangedEvent;
-		public event CancelEventHandler CancelEvent;
-		public event FinishEventHandler FinishEvent;
-		public event NextEventHandler NextEvent;
-		public event PreviousEventHandler PreviousEvent;
+		public event WizardActionEventHandler CancelEvent;
+		public event WizardActionEventHandler PreviousEvent;
+		public event WizardCancellableActionEventHandler NextEvent;
+		public event WizardCancellableActionEventHandler FinishEvent;
+		public event WizardCancellableActionEventHandler BeforeNextOrFinishEvent;
 
 		protected virtual void OnModelChanged(object sender, ModelChangedEventArgs e)
 		{
@@ -130,22 +155,28 @@ namespace Teltec.Forms.Wizard
 				CancelEvent(this, e);
 		}
 
-		protected virtual void OnFinish(object sender, EventArgs e)
-		{
-			if (FinishEvent != null)
-				FinishEvent(this, e);
-		}
-
-		protected virtual void OnNext(object sender, EventArgs e)
-		{
-			if (NextEvent != null)
-				NextEvent(this, e);
-		}
-
 		protected virtual void OnPrevious(object sender, EventArgs e)
 		{
 			if (PreviousEvent != null)
 				PreviousEvent(this, e);
+		}
+
+		protected virtual void OnNext(object sender, CancelEventArgs e)
+		{
+			if (!e.Cancel && NextEvent != null)
+				NextEvent(this, e);
+		}
+		
+		protected virtual void OnFinish(object sender, CancelEventArgs e)
+		{
+			if (!e.Cancel && FinishEvent != null)
+				FinishEvent(this, e);
+		}
+
+		protected virtual void OnBeforeNextOrFinish(object sender, CancelEventArgs e)
+		{
+			if (!e.Cancel && BeforeNextOrFinishEvent != null)
+				BeforeNextOrFinishEvent(this, e);
 		}
 
 		#endregion
@@ -157,19 +188,25 @@ namespace Teltec.Forms.Wizard
 			OnCancel(sender, e);
 		}
 
-		private void btnFinish_Click(object sender, EventArgs e)
-		{
-			OnFinish(sender, e);
-		}
-
 		private void btnPrevious_Click(object sender, EventArgs e)
 		{
 			OnPrevious(sender, e);
 		}
 
+		private void btnFinish_Click(object sender, EventArgs e)
+		{
+			CancelEventArgs args = new CancelEventArgs();
+			OnBeforeNextOrFinish(sender, args);
+			if (!args.Cancel)
+				OnFinish(sender, args);
+		}
+
 		private void btnNext_Click(object sender, EventArgs e)
 		{
-			OnNext(sender, e);
+			CancelEventArgs args = new CancelEventArgs();
+			OnBeforeNextOrFinish(sender, args);
+			if (!args.Cancel)
+				OnNext(sender, args);
 		}
 
 		#endregion

@@ -44,14 +44,14 @@ namespace Teltec.Backup.Models
             modelBuilder.Entity<AmazonS3Account>()
                 .Property(t => t.DisplayName)
                 .HasColumnName("display_name")
-                .HasMaxLength(AmazonS3Account.DISPLAY_NAME_MAX_LEN)
+                .HasMaxLength(AmazonS3Account.DisplayNameMaxLen)
                 .IsRequired()
                 .HasColumnAnnotation("Index", new IndexAnnotation(new IndexAttribute("ix_display_name") { IsUnique = true }));
                 ;
             modelBuilder.Entity<AmazonS3Account>()
                 .Property(t => t.AccessKey)
                 .HasColumnName("access_key")
-                .HasMaxLength(AmazonS3Account.ACCESS_KEY_NAME_MAX_LEN)
+                .HasMaxLength(AmazonS3Account.AccessKeyNameMaxLen)
                 .IsRequired()
                 ;
             modelBuilder.Entity<AmazonS3Account>()
@@ -63,7 +63,7 @@ namespace Teltec.Backup.Models
             modelBuilder.Entity<AmazonS3Account>()
                 .Property(t => t.BucketName)
                 .HasColumnName("bucket_name")
-                .HasMaxLength(AmazonS3Account.BUCKET_NAME_NAME_MAX_LEN)
+                .HasMaxLength(AmazonS3Account.BucketNameMaxLen)
                 .IsRequired()
                 ;
 

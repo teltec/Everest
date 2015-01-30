@@ -3,20 +3,37 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Teltec.Common.Forms;
 using Teltec.Forms.Wizard;
 
 namespace Teltec.Backup.Forms.BackupPlan
 {
 	sealed class NewBackupPlanPresenter : WizardPresenter
 	{
+		private Models.BackupPlan Plan = new Models.BackupPlan();
+
 		public NewBackupPlanPresenter() : base()
 		{
-			var plan = new Models.BackupPlan();
-			plan.Name = "Testing name";
-			Model = plan;
-			RegisterFormClass(typeof(BackupPlanSelectAccountForm));
-			RegisterFormClass(typeof(BackupPlanGiveNameForm));
-			RegisterFormClass(typeof(BackupPlanSelectSourceForm));
+			Plan.Name = "Testing name";
+			Plan.RunManually = true;
+			Model = Plan;
+			
+			WizardFormOptions options = new WizardFormOptions { DoValidate = false };
+			RegisterFormClass(typeof(BackupPlanSelectAccountForm), options);
+			RegisterFormClass(typeof(BackupPlanGiveNameForm), options);
+			RegisterFormClass(typeof(BackupPlanSelectSourceForm), options);
+			RegisterFormClass(typeof(BackupPlanScheduleForm), options);
 		}
+
+		public override void OnFinish()
+		{
+			base.OnFinish();
+
+			Console.WriteLine("Name = {0}", Plan.Name);
+			foreach (FileSystemTreeView.TreeNodeTag tag in Plan.SelectedSources)
+				Console.WriteLine("SelectedSource => {0}", tag.Path);
+			Console.WriteLine("RunManually = {0}", Plan.RunManually);
+		}
+		
 	}
 }

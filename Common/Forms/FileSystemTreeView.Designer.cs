@@ -37,6 +37,10 @@
 			this.stateImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
 			this.stateImageList.ImageSize = new System.Drawing.Size(16, 16);
 			this.stateImageList.TransparentColor = System.Drawing.Color.Transparent;
+			// 
+			// FileSystemTreeView
+			// 
+			this.StateImageList = this.stateImageList;
 			this.ResumeLayout(false);
 
 		}
@@ -44,5 +48,6 @@
 		#endregion
 
 		private System.Windows.Forms.ImageList stateImageList;
+
 	}
 }

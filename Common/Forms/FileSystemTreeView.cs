@@ -16,13 +16,32 @@ namespace Teltec.Common.Forms
 			UseWaitCursor = true;
 			
 			InitializeComponent();
+			CreateStateImages();
 			PopulateTreeView();
-			
+
 			UseWaitCursor = false;
-			
-			this.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.handle_BeforeExpand);
+
+			this.BeforeExpand += new TreeViewCancelEventHandler(this.handle_BeforeExpand);
 		}
 
+		protected override void OnHandleCreated(EventArgs e)
+		{
+			base.OnHandleCreated(e);
+
+			Action<TreeNode> RecursivelySetStateImage = null;
+			// Recursively set the checkbox images according to nodes states.
+			RecursivelySetStateImage = new Action<TreeNode>(node =>
+			{
+				SetStateImage(node, node.ImageIndex);
+				foreach (TreeNode n in node.Nodes)
+					RecursivelySetStateImage(n);
+			});
+
+			foreach (TreeNode n in Nodes)
+				RecursivelySetStateImage(n);
+		}
+
+		// Our replacement for System.Windows.Forms.CheckState.Indeterminate
 		public enum CheckState
 		{
 			Unchecked = 1,
@@ -30,34 +49,21 @@ namespace Teltec.Common.Forms
 			Mixed = CheckState.Unchecked | CheckState.Checked,
 		}
 
-		protected override void OnHandleCreated(EventArgs e)
+		private void CreateStateImages()
 		{
-			base.OnHandleCreated(e);
-
 			Action<CheckBoxState> AddToImageList = new Action<CheckBoxState>(state =>
 			{
 				Bitmap image = new Bitmap(16, 16);
-				Graphics gfx = Graphics.FromImage(image);
-				CheckBoxRenderer.DrawCheckBox(gfx, new Point(0, 0), state);
-				this.stateImageList.Images.Add(image);
-				gfx.Dispose();
+				using (Graphics gfx = Graphics.FromImage(image))
+					CheckBoxRenderer.DrawCheckBox(gfx, new Point(0, 0), state);
+				this.StateImageList.Images.Add(image);
 			});
 
-			AddToImageList(System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedNormal); // 0 - Not used?
-			AddToImageList(System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedNormal); // 1
-			AddToImageList(System.Windows.Forms.VisualStyles.CheckBoxState.CheckedNormal);   // 2
-			AddToImageList(System.Windows.Forms.VisualStyles.CheckBoxState.MixedNormal);     // 3
-
-			SetStateImageList(stateImageList);
-		}
-
-		private void SetStateImageList(ImageList list)
-		{
-			if (list != null)
-			{
-				Message message = Message.Create(Handle, (int)Native.TVM_SETIMAGELIST, (IntPtr)Native.TVSIL_STATE, list.Handle);
-				DefWndProc(ref message);
-			}
+			this.SuspendLayout();
+			AddToImageList(CheckBoxState.UncheckedNormal); // 0
+			AddToImageList(CheckBoxState.CheckedNormal);   // 1
+			AddToImageList(CheckBoxState.MixedNormal);     // 2
+			this.ResumeLayout();
 		}
 
 		internal void SetStateImage(TreeNode node, int index)
@@ -66,16 +72,17 @@ namespace Teltec.Common.Forms
 				return;
 			if (node == null)
 				throw new ArgumentNullException("node", "Node can not be null");
-			if (index < 0)
-				throw new ArgumentException("index", "Index must be greater than zero.");
 			if (node.Handle == null)
 				return;
+			if (index < 0)
+				//throw new ArgumentException("index", "Index must be greater than zero.");
+				index = (int)CheckState.Unchecked;
 
-			Native.TVITEMEX tvi = new Native.TVITEMEX();
-			tvi.mask = Native.TVIF_HANDLE | Native.TVIF_STATE;
-			tvi.state = (uint)index;
+			NativeMethods.TV_ITEM tvi = new NativeMethods.TV_ITEM();
+			tvi.mask = NativeMethods.TVIF_HANDLE | NativeMethods.TVIF_STATE;
+			tvi.state = index;
 			tvi.state = tvi.state << 12;
-			tvi.stateMask = Native.TVIS_STATEIMAGEMASK;
+			tvi.stateMask = NativeMethods.TVIS_STATEIMAGEMASK;
 			tvi.hItem = node.Handle;
 			tvi.pszText = IntPtr.Zero;
 			tvi.cchTextMax = 0;
@@ -83,9 +90,9 @@ namespace Teltec.Common.Forms
 			tvi.iSelectedImage = 0;
 			tvi.cChildren = 0;
 			tvi.lParam = IntPtr.Zero;
-			tvi.iIntegral = 0;
 
-			Native.SendMessage(new HandleRef(this, Handle), Native.TVM_SETITEM, IntPtr.Zero, ref tvi);
+			node.ImageIndex = index;
+			NativeMethods.SendMessage(new HandleRef(this, Handle), NativeMethods.TVM_SETITEM, IntPtr.Zero, ref tvi);
 		}
 
 		public CheckState GetCheckState(TreeNode node)
@@ -128,8 +135,6 @@ namespace Teltec.Common.Forms
 			if (args.Cancel)
 				return false;
 
-			node.ImageIndex = (int)state;
-			node.SelectedImageIndex = (int)state;
 			SetStateImage(node, (int)state);
 
 			OnAfterCheck(new TreeViewEventArgs(node, TreeViewAction.Unknown));
@@ -183,7 +188,7 @@ namespace Teltec.Common.Forms
 
 			switch (m.Msg)
 			{
-				case Native.WM_LBUTTONDBLCLK:
+				case NativeMethods.WM_LBUTTONDBLCLK:
 					{
 						// Disable double-click on checkbox to fix Microsoft Vista bug.
 						TreeViewHitTestInfo hitInfo = HitTest(new Point((int)m.LParam));
@@ -194,7 +199,7 @@ namespace Teltec.Common.Forms
 						}
 						break;
 					}
-				case Native.WM_RBUTTONDOWN:
+				case NativeMethods.WM_RBUTTONDOWN:
 					{
 						// Set focus to node on right-click - another Microsoft bug?
 						TreeViewHitTestInfo hitInfo = HitTest(new Point((int)m.LParam));
@@ -408,7 +413,7 @@ namespace Teltec.Common.Forms
 			UseWaitCursor = false;
 		}
 
-		private void BuildTagDataList(TreeNode node, List<TreeNodeTag> list)
+		private void BuildTagDataList(TreeNode node, IList<TreeNodeTag> list)
 		{
 			TreeNodeTag nodeTag = node.Tag as TreeNodeTag;
 			// Skip over loading nodes and nodes without a tag.
@@ -434,9 +439,9 @@ namespace Teltec.Common.Forms
 			}
 		}
 
-		public List<TreeNodeTag> GetCheckedTagData()
+		public IList<TreeNodeTag> GetCheckedTagData()
 		{
-			List<TreeNodeTag> list = new List<TreeNodeTag>();
+			IList<TreeNodeTag> list = new List<TreeNodeTag>();
 			foreach (TreeNode node in Nodes)
 				BuildTagDataList(node, list);
 			return list;
@@ -516,43 +521,5 @@ namespace Teltec.Common.Forms
 		}
 
 		#endregion
-	}
-
-	internal static class Native
-	{
-		public const int WM_LBUTTONDBLCLK = 0x0203;
-		public const int WM_RBUTTONDOWN = 0x0204;
-
-		public const UInt32 TV_FIRST = 0x1100;
-		public const UInt32 TVSIL_STATE = 2;
-		public const UInt32 TVM_SETIMAGELIST = TV_FIRST + 9;
-		public const UInt32 TVM_SETITEM = TV_FIRST + 63;
-
-		public const UInt32 TVIF_STATE = 0x0008;
-		public const UInt32 TVIF_HANDLE = 0x0010;
-
-		public const UInt32 TVIS_STATEIMAGEMASK = 0xF000;
-
-		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-		public struct TVITEMEX
-		{
-			public UInt32 mask;
-			public IntPtr hItem;
-			public UInt32 state;
-			public UInt32 stateMask;
-			public IntPtr pszText;
-			public int cchTextMax;
-			public int iImage;
-			public int iSelectedImage;
-			public int cChildren;
-			public IntPtr lParam;
-			public int iIntegral;
-		}
-
-		[DllImport("user32.dll", CharSet = CharSet.Auto)]
-		public static extern IntPtr SendMessage(HandleRef hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-
-		[DllImport("user32.dll", CharSet = CharSet.Auto)]
-		public static extern IntPtr SendMessage(HandleRef hWnd, uint Msg, IntPtr wParam, ref TVITEMEX lParam);
 	}
 }

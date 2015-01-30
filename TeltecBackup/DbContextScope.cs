@@ -4,7 +4,7 @@ using Teltec.Data;
 
 namespace Teltec.Backup
 {
-	public class DbContextScope : IDisposable
+	public class DBContextScope : IDisposable
 	{
 		private DatabaseContext _context = new DatabaseContext();
 		private GenericRepository<AmazonS3Account> _AmazonS3Accounts;
@@ -26,7 +26,7 @@ namespace Teltec.Backup
 
 		private bool _disposed = false;
 
-		~DbContextScope()
+		~DBContextScope()
 		{
 			Dispose(false);
 		}

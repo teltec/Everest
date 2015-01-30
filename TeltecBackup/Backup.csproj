@@ -21,7 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>true</Prefer32Bit>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -56,9 +56,11 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -70,6 +72,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DAO\CommonDAO.cs" />
+    <Compile Include="Forms\BackupPlan\BackupPlanScheduleForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\BackupPlan\BackupPlanScheduleForm.Designer.cs">
+      <DependentUpon>BackupPlanScheduleForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\BackupPlan\BackupPlanSelectAccountForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -122,7 +130,10 @@
     <Compile Include="Models\DatabaseContext.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="DbContextScope.cs" />
+    <Compile Include="DBContextScope.cs" />
+    <EmbeddedResource Include="Forms\BackupPlan\BackupPlanScheduleForm.resx">
+      <DependentUpon>BackupPlanScheduleForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanSelectAccountForm.resx">
       <DependentUpon>BackupPlanSelectAccountForm.cs</DependentUpon>
     </EmbeddedResource>

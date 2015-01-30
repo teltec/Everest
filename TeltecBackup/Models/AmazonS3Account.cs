@@ -13,7 +13,7 @@ namespace Teltec.Backup.Models
             set { SetField(ref _Id, value); }
         }
 
-        public const int DISPLAY_NAME_MAX_LEN = 16;
+        public const int DisplayNameMaxLen = 16;
         private String _DisplayName;
         public String DisplayName
         {
@@ -22,13 +22,13 @@ namespace Teltec.Backup.Models
         }
 
         // http://docs.aws.amazon.com/IAM/latest/APIReference/API_AccessKey.html
-        public const int ACCESS_KEY_NAME_MIN_LEN = 16;
-        public const int ACCESS_KEY_NAME_MAX_LEN = 32;
+        public const int AccessKeyNameMinLen = 16;
+        public const int AccessKeyNameMaxLen = 32;
         private String _AccessKey;
         public String AccessKey
         {
             get { return _AccessKey; }
-            set { SetField(ref _AccessKey, value); NotifyPropertyChanged(() => AccessKey);  }
+            set { SetField(ref _AccessKey, value); }
         }
 
         private String _SecretKey;
@@ -39,8 +39,8 @@ namespace Teltec.Backup.Models
         }
 
         // http://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
-        public const int BUCKET_NAME_NAME_MIN_LEN = 3;
-        public const int BUCKET_NAME_NAME_MAX_LEN = 63;
+        public const int BucketNameMinLen = 3;
+        public const int BucketNameMaxLen = 63;
         private String _BucketName;
         public String BucketName
         {
