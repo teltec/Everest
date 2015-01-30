@@ -35,6 +35,8 @@ namespace Teltec.Common.Forms
 				SetStateImage(node, node.ImageIndex);
 				foreach (TreeNode n in node.Nodes)
 					RecursivelySetStateImage(n);
+				if (AutoExpandMixedNodes && node.ImageIndex == (int)CheckState.Mixed)
+					node.Expand();
 			});
 
 			foreach (TreeNode n in Nodes)
@@ -465,6 +467,22 @@ namespace Teltec.Common.Forms
 		{
 			if (FileSystemFetchEnded != null)
 				FileSystemFetchEnded(this, e);
+		}
+
+		#endregion
+
+		#region Custom properties
+
+		[
+		Category("Custom"),
+		DefaultValue(true),
+		DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)
+		]
+		public bool _AutoExpandMixedNodes = true;
+		public bool AutoExpandMixedNodes
+		{
+			get { return _AutoExpandMixedNodes; }
+			set { _AutoExpandMixedNodes = value; }
 		}
 
 		#endregion

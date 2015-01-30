@@ -32,6 +32,12 @@ namespace Teltec.Forms.Wizard
 
 		#region Validation
 
+		[
+		Bindable(true),
+		Category("Validation"),
+		DefaultValue(true),
+		DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)
+		]
 		protected internal bool _DoValidate = true;
 		protected internal bool DoValidate
 		{
@@ -60,7 +66,7 @@ namespace Teltec.Forms.Wizard
 
 		[
 		Bindable(true),
-		Category("Misc"),
+		Category("Data"),
 		DefaultValue(null),
 		DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)
 		]

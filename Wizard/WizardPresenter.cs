@@ -62,8 +62,10 @@ namespace Teltec.Forms.Wizard
 				var message = String.Format("Type must be compatible with {0}", typeof(WizardForm).FullName);
 				throw new ArgumentException(message, "wizardFormType");
 			}
-			bool validate = options != null && options.DoValidate;
-			_RegisteredForms.Add(new WizardFormOptions { Type = wizardFormType, DoValidate = validate });
+			if (options != null)
+				_RegisteredForms.Add(new WizardFormOptions { Type = wizardFormType, DoValidate = options.DoValidate });
+			else
+				_RegisteredForms.Add(new WizardFormOptions { Type = wizardFormType });
 		}
 
 		public virtual void ShowDialog(Form owner)
