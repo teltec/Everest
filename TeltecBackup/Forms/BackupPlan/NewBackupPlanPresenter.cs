@@ -16,7 +16,7 @@ namespace Teltec.Backup.Forms.BackupPlan
 		public NewBackupPlanPresenter() : base()
 		{
 			Plan.Name = "Testing name";
-			Plan.RunManually = true;
+			Plan.ScheduleType = Models.BackupPlan.ScheduleTypeE.RunManually;
 			Model = Plan;
 			
 			WizardFormOptions options = new WizardFormOptions { DoValidate = false };
@@ -33,7 +33,7 @@ namespace Teltec.Backup.Forms.BackupPlan
 			Console.WriteLine("Name = {0}", Plan.Name);
 			foreach (BackupPlanSourceEntry entry in Plan.SelectedSources)
 				Console.WriteLine("SelectedSource => {0} {1}", entry.Type.ToString(), entry.Path);
-			Console.WriteLine("RunManually = {0}", Plan.RunManually);
+			Console.WriteLine("RunManually = {0}", Plan.ScheduleType == Models.BackupPlan.ScheduleTypeE.RunManually);
 		}
 		
 	}

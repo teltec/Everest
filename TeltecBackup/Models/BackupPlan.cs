@@ -63,11 +63,21 @@ namespace Teltec.Backup.Models
 
 		#region Schedule
 
-		private bool _RunManually;
-		public bool RunManually
+		public enum ScheduleTypeE
 		{
-			get { return _RunManually; }
-			set { SetField(ref _RunManually, value); }
+			RunManually = 0,
+		}
+
+		private ScheduleTypeE _ScheduleType;
+		public ScheduleTypeE ScheduleType
+		{
+			get { return _ScheduleType; }
+			set { SetField(ref _ScheduleType, value); }
+		}
+
+		public bool RunsManually
+		{
+			get { return ScheduleType == ScheduleTypeE.RunManually;  }
 		}
 
 		#endregion
