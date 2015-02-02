@@ -192,7 +192,9 @@ namespace Teltec.Common.Forms
 			{
 				case NativeMethods.WM_LBUTTONDBLCLK:
 					{
-						// Disable double-click on checkbox to fix Microsoft Vista bug.
+						//
+						// Disable double-click on checkbox to fix Windows Vista/7/8/8.1 bug.
+						//
 						TreeViewHitTestInfo hitInfo = HitTest(new Point((int)m.LParam));
 						if (hitInfo != null && hitInfo.Location == TreeViewHitTestLocations.StateImage)
 						{
@@ -203,7 +205,10 @@ namespace Teltec.Common.Forms
 					}
 				case NativeMethods.WM_RBUTTONDOWN:
 					{
-						// Set focus to node on right-click - another Microsoft bug?
+						//
+						// Fix for another Microsoft bug.
+						// Right-clicking a node doesn't make it the selected node.
+						//
 						TreeViewHitTestInfo hitInfo = HitTest(new Point((int)m.LParam));
 						if (hitInfo != null)
 							this.SelectedNode = hitInfo.Node;
@@ -218,6 +223,9 @@ namespace Teltec.Common.Forms
 
 		private void PopulateTreeView()
 		{
+			if (DesignMode)
+				return;
+
 			SuspendLayout();
 			try
 			{
