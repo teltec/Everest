@@ -41,8 +41,15 @@ namespace Teltec.Backup.Models
 			set { SetField(ref _StorageAccountType, value); }
 		}
 
+		private Guid _StorageAccountId;
+		public Guid StorageAccountId
+		{
+			get { return _StorageAccountId; }
+			set { SetField(ref _StorageAccountId, value); }
+		}
+
 		private ICloudStorageAccount _StorageAccount;
-		public ICloudStorageAccount StorageAccount
+		public virtual ICloudStorageAccount StorageAccount
 		{
 			get { return _StorageAccount; }
 			set { SetField(ref _StorageAccount, value); }
@@ -52,8 +59,8 @@ namespace Teltec.Backup.Models
 
 		#region Sources
 
-		private IList<BackupPlanSourceEntry> _SelectedSources;
-		public IList<BackupPlanSourceEntry> SelectedSources
+		private IList<BackupPlanSourceEntry> _SelectedSources = new List<BackupPlanSourceEntry>();
+		public virtual IList<BackupPlanSourceEntry> SelectedSources
 		{
 			get { return _SelectedSources; }
 			set { SetField(ref _SelectedSources, value); }
@@ -75,7 +82,7 @@ namespace Teltec.Backup.Models
 			set { SetField(ref _ScheduleType, value); }
 		}
 
-		public bool RunsManually
+		public bool IsRunManually
 		{
 			get { return ScheduleType == ScheduleTypeE.RunManually;  }
 		}

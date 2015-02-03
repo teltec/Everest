@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Teltec.Backup.Models;
 using Teltec.Common.Forms;
 using Teltec.Forms.Wizard;
@@ -11,6 +12,7 @@ namespace Teltec.Backup.Forms.BackupPlan
 {
 	sealed class NewBackupPlanPresenter : WizardPresenter
 	{
+		private DBContextScope _dbContextScope = new DBContextScope();
 		private Models.BackupPlan Plan = new Models.BackupPlan();
 
 		public NewBackupPlanPresenter() : base()
@@ -33,7 +35,18 @@ namespace Teltec.Backup.Forms.BackupPlan
 			Console.WriteLine("Name = {0}", Plan.Name);
 			foreach (BackupPlanSourceEntry entry in Plan.SelectedSources)
 				Console.WriteLine("SelectedSource => {0} {1}", entry.Type.ToString(), entry.Path);
-			Console.WriteLine("RunManually = {0}", Plan.ScheduleType == Models.BackupPlan.ScheduleTypeE.RunManually);
+			Console.WriteLine("IsRunManually = {0}", Plan.IsRunManually);
+
+			Plan.Id = Guid.NewGuid();
+			_dbContextScope.BackupPlans.Insert(Plan);
+			try
+			{
+				_dbContextScope.Save();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message, "Error");
+			} 
 		}
 		
 	}

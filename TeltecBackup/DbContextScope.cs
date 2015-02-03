@@ -7,8 +7,8 @@ namespace Teltec.Backup
 	public class DBContextScope : IDisposable
 	{
 		private DatabaseContext _context = new DatabaseContext();
-		private GenericRepository<AmazonS3Account> _AmazonS3Accounts;
 
+		private GenericRepository<AmazonS3Account> _AmazonS3Accounts;
 		public GenericRepository<AmazonS3Account> AmazonS3Accounts
 		{
 			get
@@ -16,6 +16,17 @@ namespace Teltec.Backup
 				if (_AmazonS3Accounts == null)
 					_AmazonS3Accounts = new GenericRepository<AmazonS3Account>(_context);
 				return _AmazonS3Accounts;
+			}
+		}
+
+		private GenericRepository<BackupPlan> _BackupPlans;
+		public GenericRepository<BackupPlan> BackupPlans
+		{
+			get
+			{
+				if (_BackupPlans == null)
+					_BackupPlans = new GenericRepository<BackupPlan>(_context);
+				return _BackupPlans;
 			}
 		}
 

@@ -72,6 +72,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DAO\CommonDAO.cs" />
+    <Compile Include="Forms\BackupPlan\BackupPlanListControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\BackupPlan\BackupPlanListControl.Designer.cs">
+      <DependentUpon>BackupPlanListControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\BackupPlan\BackupPlanScheduleForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -96,6 +102,12 @@
     <Compile Include="Forms\BackupPlan\BackupPlanSelectSourceForm.Designer.cs">
       <DependentUpon>BackupPlanSelectSourceForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\BackupPlan\BackupPlanViewControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\BackupPlan\BackupPlanViewControl.Designer.cs">
+      <DependentUpon>BackupPlanViewControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\BackupPlan\NewBackupPlanPresenter.cs" />
     <Compile Include="Forms\S3\AmazonS3AccountForm.cs">
       <SubType>Form</SubType>
@@ -111,10 +123,17 @@
     <Compile Include="Migrations\201501161626127_TestMigration.Designer.cs">
       <DependentUpon>201501161626127_TestMigration.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201502031145542_AddBackupPlanAndRelated.cs" />
+    <Compile Include="Migrations\201502031145542_AddBackupPlanAndRelated.Designer.cs">
+      <DependentUpon>201502031145542_AddBackupPlanAndRelated.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AmazonS3Account.cs" />
+    <Compile Include="Models\BackupTask.cs" />
+    <Compile Include="Models\Backup.cs" />
     <Compile Include="Models\BackupPlan.cs" />
     <Compile Include="Models\BackupPlanSourceEntry.cs" />
+    <Compile Include="Models\BackupStatus.cs" />
     <Compile Include="Models\ICloudStorageAccount.cs" />
     <Compile Include="Forms\CloudStorageAccountsForm.cs">
       <SubType>Form</SubType>
@@ -132,6 +151,9 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DBContextScope.cs" />
+    <EmbeddedResource Include="Forms\BackupPlan\BackupPlanListControl.resx">
+      <DependentUpon>BackupPlanListControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanScheduleForm.resx">
       <DependentUpon>BackupPlanScheduleForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -143,6 +165,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanSelectSourceForm.resx">
       <DependentUpon>BackupPlanSelectSourceForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\BackupPlan\BackupPlanViewControl.resx">
+      <DependentUpon>BackupPlanViewControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\S3\AmazonS3AccountForm.resx">
       <DependentUpon>AmazonS3AccountForm.cs</DependentUpon>
@@ -158,6 +183,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201501161626127_TestMigration.resx">
       <DependentUpon>201501161626127_TestMigration.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201502031145542_AddBackupPlanAndRelated.resx">
+      <DependentUpon>201502031145542_AddBackupPlanAndRelated.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

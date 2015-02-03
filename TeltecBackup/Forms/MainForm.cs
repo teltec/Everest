@@ -16,6 +16,7 @@ namespace Teltec.Backup.Forms
         public MainForm()
         {
             InitializeComponent();
+			backupPlanListControl1.LoadPlans();
         }
 
         private void amazonS3ToolStripMenuItem_Click(object sender, EventArgs e)

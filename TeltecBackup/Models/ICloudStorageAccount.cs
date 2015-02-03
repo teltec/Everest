@@ -7,10 +7,20 @@ using System.Threading.Tasks;
 
 namespace Teltec.Backup.Models
 {
+	public enum CloudStorageAccountType
+	{
+		AMAZON_S3 = 1,
+		FILESYSTEM = 2,
+	}
+
     public interface ICloudStorageAccount
     {
         Guid Id { get; set; }
 
+		CloudStorageAccountType Type { get; set; }
+
         String DisplayName { get; set; }
+
+		//IList<BackupPlan> BackupPlans { get; set; }
     }
 }

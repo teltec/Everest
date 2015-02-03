@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Teltec.Common;
 using Teltec.Forms.Wizard;
 
@@ -6,12 +7,19 @@ namespace Teltec.Backup.Models
 {
     public class AmazonS3Account : ObservableObject, ICloudStorageAccount
     {
-        private Guid _Id;
-        public Guid Id
-        {
-            get { return _Id; }
-            set { SetField(ref _Id, value); }
-        }
+		private Guid _Id;
+		public Guid Id
+		{
+			get { return _Id; }
+			set { SetField(ref _Id, value); }
+		}
+
+		private CloudStorageAccountType _Type;
+		public CloudStorageAccountType Type
+		{
+			get { return _Type; }
+			set { SetField(ref _Type, value); }
+		}
 
         public const int DisplayNameMaxLen = 16;
         private String _DisplayName;
@@ -47,5 +55,12 @@ namespace Teltec.Backup.Models
             get { return _BucketName; }
             set { SetField(ref _BucketName, value); }
         }
+
+		//private IList<BackupPlan> _BackupPlans = new List<BackupPlan>();
+		//public virtual IList<BackupPlan> BackupPlans
+		//{
+		//	get { return _BackupPlans; }
+		//	set { SetField(ref _BackupPlans, value); }
+		//}
     }
 }
