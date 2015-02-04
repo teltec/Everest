@@ -20,16 +20,19 @@ namespace Teltec.Backup.Models
 			set { SetField(ref _Id, value); }
 		}
 
-		public BackupPlanSourceEntry(EntryType type, string path)
+		public BackupPlanSourceEntry()
+		{
+		}
+
+		public BackupPlanSourceEntry(EntryType type, string path) : this()
 		{
 			Type = type;
 			Path = path;
 		}
 
 		public BackupPlanSourceEntry(Teltec.Common.Forms.FileSystemTreeView.TreeNodeTag tag)
+			: this(tag.ToEntryType(), tag.Path)
 		{
-			Type = tag.ToEntryType();
-			Path = tag.Path;
 		}
 
 		private EntryType _Type;

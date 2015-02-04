@@ -13,6 +13,8 @@ namespace Teltec.Backup.Forms
 {
     public partial class MainForm : Form
     {
+		private DBContextScope DBContextScope = new DBContextScope();
+
         public MainForm()
         {
             InitializeComponent();
@@ -31,8 +33,13 @@ namespace Teltec.Backup.Forms
         {
             using (var presenter = new NewBackupPlanPresenter())
 			{
+				presenter.DBContextScope = DBContextScope;
 				presenter.ShowDialog(this);
 			}
+			backupPlanListControl1.RefreshPlans();
+			// Focusing is needed in some cases to avoid the mouse scrolling to stops working.
+			// One case I confirmed is after going through all the `NewBackupPlanPresenter` process.
+			backupPlanListControl1.Focus();
         }
     }
 }

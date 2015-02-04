@@ -60,7 +60,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
-    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -127,6 +126,14 @@
     <Compile Include="Migrations\201502031145542_AddBackupPlanAndRelated.Designer.cs">
       <DependentUpon>201502031145542_AddBackupPlanAndRelated.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201502041712319_RenameBackupPlanScheduleType.cs" />
+    <Compile Include="Migrations\201502041712319_RenameBackupPlanScheduleType.Designer.cs">
+      <DependentUpon>201502041712319_RenameBackupPlanScheduleType.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201502041721361_RenameBackupPlanSourceEntryId.cs" />
+    <Compile Include="Migrations\201502041721361_RenameBackupPlanSourceEntryId.Designer.cs">
+      <DependentUpon>201502041721361_RenameBackupPlanSourceEntryId.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AmazonS3Account.cs" />
     <Compile Include="Models\BackupTask.cs" />
@@ -187,6 +194,12 @@
     <EmbeddedResource Include="Migrations\201502031145542_AddBackupPlanAndRelated.resx">
       <DependentUpon>201502031145542_AddBackupPlanAndRelated.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201502041712319_RenameBackupPlanScheduleType.resx">
+      <DependentUpon>201502041712319_RenameBackupPlanScheduleType.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201502041721361_RenameBackupPlanSourceEntryId.resx">
+      <DependentUpon>201502041721361_RenameBackupPlanSourceEntryId.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -214,7 +227,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AmazonIcon.bmp" />

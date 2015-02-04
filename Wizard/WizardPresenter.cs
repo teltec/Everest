@@ -34,6 +34,13 @@ namespace Teltec.Forms.Wizard
 			}
 		}
 
+		protected bool _IsEditingModel = true;
+		protected internal bool IsEditingModel
+		{
+			get { return _IsEditingModel; }
+			set { _IsEditingModel = value; }
+		}
+
 		~WizardPresenter()
 		{
 			Dispose(false);

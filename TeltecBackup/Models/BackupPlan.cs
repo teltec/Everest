@@ -7,8 +7,8 @@ namespace Teltec.Backup.Models
 {
 	public enum EStorageAccountType
 	{
-		AmazonS3,
-		FileSystem
+		AmazonS3	= 1,
+		FileSystem	= 2,
 	};
 
 	public class BackupPlan : ObservableObject
@@ -46,6 +46,17 @@ namespace Teltec.Backup.Models
 		{
 			get { return _StorageAccountId; }
 			set { SetField(ref _StorageAccountId, value); }
+		}
+
+		public static ICloudStorageAccount GetStorageAccount(BackupPlan plan, DBContextScope scope)
+		{
+			switch (plan.StorageAccountType)
+			{
+				default:
+					throw new ArgumentException("Unhandled StorageAccountType", "plan");
+				case EStorageAccountType.AmazonS3:
+					return scope.AmazonS3Accounts.Get(plan.StorageAccountId);
+			}
 		}
 
 		private ICloudStorageAccount _StorageAccount;

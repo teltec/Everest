@@ -1,11 +1,11 @@
 namespace Teltec.Backup.Models
 {
-    using System;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Entity;
-using System.Data.Entity.Infrastructure.Annotations;
-using System.Data.Entity.ModelConfiguration;
-using System.Linq;
+	using System;
+	using System.ComponentModel.DataAnnotations.Schema;
+	using System.Data.Entity;
+	using System.Data.Entity.Infrastructure.Annotations;
+	using System.Data.Entity.ModelConfiguration;
+	using System.Linq;
 
     public class DatabaseContext : DbContext
     {
@@ -16,8 +16,15 @@ using System.Linq;
         // If you wish to target a different database and/or database provider, modify the 'DatabaseContext' 
         // connection string in the application configuration file.
         public DatabaseContext()
-            : base("name=TeltecBackup.Properties.Settings.TeltecBackupDatabaseConnectionString")
+			: base("name=TeltecBackupExpress")
         {
+			// Set |DataDirectory| value
+			string AppDataDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+			string DataDirectory = System.IO.Path.Combine(AppDataDirectory, "TeltecBackup");
+			bool exists = System.IO.Directory.Exists(DataDirectory);
+			if (!exists)
+				System.IO.Directory.CreateDirectory(DataDirectory);
+			AppDomain.CurrentDomain.SetData("DataDirectory", DataDirectory);
         }
 
         // Add a DbSet for each entity type that you want to include in your model. For more information 
@@ -122,12 +129,9 @@ using System.Linq;
 				// Columns
 				mapping
 					.Property(p => p.Id)
-					.HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity)
-					;
-				mapping
-					.Property(p => p.Id)
 					.HasColumnName("id")
 					.IsRequired()
+					.HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity)
 					;
 				mapping
 					.Property(p => p.Name)
@@ -157,6 +161,11 @@ using System.Linq;
 					.Map(p => p.MapKey("backup_plan_id"))
 					.WillCascadeOnDelete(true)
 					;
+				mapping
+					.Property(p => p.ScheduleType)
+					.HasColumnName("schedule_type")
+					.IsRequired()
+					;
 
 				// Constraints
 				mapping.HasKey(p => p.Id);
@@ -183,6 +192,8 @@ using System.Linq;
 				// Columns
 				mapping
 					.Property(p => p.Id)
+					.IsRequired()
+					.HasColumnName("id")
 					.HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity)
 					;
 				mapping

@@ -81,9 +81,10 @@
 			// backupPlanListControl1
 			// 
 			this.backupPlanListControl1.AutoSize = true;
-			this.backupPlanListControl1.Location = new System.Drawing.Point(12, 27);
+			this.backupPlanListControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.backupPlanListControl1.Location = new System.Drawing.Point(0, 24);
 			this.backupPlanListControl1.Name = "backupPlanListControl1";
-			this.backupPlanListControl1.Size = new System.Drawing.Size(424, 80);
+			this.backupPlanListControl1.Size = new System.Drawing.Size(670, 316);
 			this.backupPlanListControl1.TabIndex = 2;
 			// 
 			// MainForm
