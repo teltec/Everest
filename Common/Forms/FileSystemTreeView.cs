@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
@@ -14,7 +15,7 @@ namespace Teltec.Common.Forms
 		public FileSystemTreeView()
 		{
 			UseWaitCursor = true;
-			
+
 			InitializeComponent();
 			CreateStateImages();
 			PopulateTreeView();
@@ -43,14 +44,6 @@ namespace Teltec.Common.Forms
 				RecursivelySetStateImage(n);
 		}
 
-		// Our replacement for System.Windows.Forms.CheckState.Indeterminate
-		public enum CheckState
-		{
-			Unchecked = 1,
-			Checked = 2,
-			Mixed = CheckState.Unchecked | CheckState.Checked,
-		}
-
 		private void CreateStateImages()
 		{
 			Action<CheckBoxState> AddToImageList = new Action<CheckBoxState>(state =>
@@ -77,24 +70,17 @@ namespace Teltec.Common.Forms
 			if (node.Handle == null)
 				return;
 			if (index < 0)
-				//throw new ArgumentException("index", "Index must be greater than zero.");
+				//throw new ArgumentException("Index must be greater than zero.", "index");
 				index = (int)CheckState.Unchecked;
 
-			NativeMethods.TV_ITEM tvi = new NativeMethods.TV_ITEM();
-			tvi.mask = NativeMethods.TVIF_HANDLE | NativeMethods.TVIF_STATE;
-			tvi.state = index;
-			tvi.state = tvi.state << 12;
-			tvi.stateMask = NativeMethods.TVIS_STATEIMAGEMASK;
-			tvi.hItem = node.Handle;
-			tvi.pszText = IntPtr.Zero;
-			tvi.cchTextMax = 0;
-			tvi.iImage = 0;
-			tvi.iSelectedImage = 0;
-			tvi.cChildren = 0;
-			tvi.lParam = IntPtr.Zero;
-
 			node.ImageIndex = index;
-			NativeMethods.SendMessage(new HandleRef(this, Handle), NativeMethods.TVM_SETITEM, IntPtr.Zero, ref tvi);
+
+			NativeMethods.TV_ITEM item = new NativeMethods.TV_ITEM();
+			item.mask = NativeMethods.TVIF_HANDLE | NativeMethods.TVIF_STATE;
+			item.hItem = node.Handle;
+			item.stateMask = NativeMethods.TVIS_STATEIMAGEMASK;
+			item.state |= index << 12;
+			NativeMethods.SendMessage(new HandleRef(this, Handle), NativeMethods.TVM_SETITEM, IntPtr.Zero, ref item);
 		}
 
 		public CheckState GetCheckState(TreeNode node)
@@ -221,12 +207,13 @@ namespace Teltec.Common.Forms
 
 		#region Populate methods
 
-		private void PopulateTreeView()
+		public void PopulateTreeView()
 		{
 			if (DesignMode)
 				return;
 
 			SuspendLayout();
+			this.Nodes.Clear();
 			try
 			{
 				DriveInfo[] drives = DriveInfo.GetDrives();
@@ -240,7 +227,7 @@ namespace Teltec.Common.Forms
 			{
 				ShowErrorMessage(e, null);
 			}
-			ResumeLayout();
+			ResumeLayout(false);
 		}
 
 		private void PopulateDrive(TreeNode parentNode, DriveInfo parentDrive)
@@ -298,38 +285,43 @@ namespace Teltec.Common.Forms
 				nodeName = drive.Name;
 			}
 			TreeNode node = new TreeNode(nodeName, 0, 0);
-			node.Tag = new TreeNodeTag(TreeNodeTag.InfoType.DRIVE, drive);
+			node.Tag = new FileSystemTreeNodeTag(FileSystemTreeNodeTag.InfoType.DRIVE, drive);
 			node.ImageKey = "drive";
 			view.Nodes.Add(node);
+			RestoreNodeState(FileSystemTreeNodeTag.InfoType.DRIVE, node);
 			return node;
 		}
 
 		private TreeNode AddFolderNode(TreeNode parentNode, DirectoryInfo folder)
 		{
 			TreeNode node = new TreeNode(folder.Name, 0, 0);
-			node.Tag = new TreeNodeTag(TreeNodeTag.InfoType.FOLDER, folder);
+			node.Tag = new FileSystemTreeNodeTag(FileSystemTreeNodeTag.InfoType.FOLDER, folder);
 			node.ImageKey = "folder";
 			parentNode.Nodes.Add(node);
 			if (GetCheckState(parentNode) == CheckState.Checked)
 				SetCheckState(node, CheckState.Checked);
+			else
+				RestoreNodeState(FileSystemTreeNodeTag.InfoType.FOLDER, node);
 			return node;
 		}
 
 		private TreeNode AddFileNode(TreeNode parentNode, FileInfo file)
 		{
 			TreeNode node = new TreeNode(file.Name, 0, 0);
-			node.Tag = new TreeNodeTag(TreeNodeTag.InfoType.FILE, file);
+			node.Tag = new FileSystemTreeNodeTag(FileSystemTreeNodeTag.InfoType.FILE, file);
 			node.ImageKey = "file";
 			parentNode.Nodes.Add(node);
 			if (GetCheckState(parentNode) == CheckState.Checked)
 				SetCheckState(node, CheckState.Checked);
+			else
+				RestoreNodeState(FileSystemTreeNodeTag.InfoType.FILE, node);
 			return node;
 		}
 
 		private TreeNode AddLazyLoadingNode(TreeNode parentNode)
 		{
 			TreeNode node = new TreeNode("Retrieving data...", 0, 0);
-			node.Tag = new TreeNodeTag(TreeNodeTag.InfoType.LOADING, null);
+			node.Tag = new FileSystemTreeNodeTag(FileSystemTreeNodeTag.InfoType.LOADING, null);
 			node.ImageKey = "loading";
 			parentNode.Nodes.Add(node);
 			return node;
@@ -341,53 +333,12 @@ namespace Teltec.Common.Forms
 			if (firstChildNode == null)
 				return;
 
-			TreeNodeTag tag = firstChildNode.Tag as TreeNodeTag;
-			if (tag != null && tag.Type == TreeNodeTag.InfoType.LOADING)
+			FileSystemTreeNodeTag tag = firstChildNode.Tag as FileSystemTreeNodeTag;
+			if (tag != null && tag.Type == FileSystemTreeNodeTag.InfoType.LOADING)
 				firstChildNode.Remove();
 		}
 
 		#endregion
-
-		public class TreeNodeTag
-		{
-			public enum InfoType
-			{
-				LOADING = 0,
-				DRIVE = 1,
-				FOLDER = 2,
-				FILE = 3,
-			}
-
-			public TreeNodeTag(InfoType infoType, object infoObject)
-			{
-				Type = infoType;
-				InfoObject = infoObject;
-			}
-
-			public InfoType Type { get; private set; }
-			public object InfoObject { get; private set; }
-
-			public string Path
-			{
-				get
-				{
-					if (this.InfoObject == null)
-						return null;
-
-					switch (this.Type)
-					{
-						case InfoType.FILE:
-							return (this.InfoObject as FileInfo).FullName;
-						case InfoType.FOLDER:
-							return (this.InfoObject as DirectoryInfo).FullName;
-						case InfoType.DRIVE:
-							return (this.InfoObject as DriveInfo).Name;
-						default:
-							return null;
-					}
-				}
-			}
-		}
 
 		private void handle_BeforeExpand(object sender, TreeViewCancelEventArgs e)
 		{
@@ -396,12 +347,12 @@ namespace Teltec.Common.Forms
 
 			//Thread.Sleep(2000);
 			TreeNode expandingNode = e.Node;
-			TreeNodeTag tag = expandingNode.Tag as TreeNodeTag;
+			FileSystemTreeNodeTag tag = expandingNode.Tag as FileSystemTreeNodeTag;
 			switch (tag.Type)
 			{
 				default:
 					break;
-				case TreeNodeTag.InfoType.FOLDER:
+				case FileSystemTreeNodeTag.InfoType.FOLDER:
 					{
 						DirectoryInfo expandingNodeInfo = tag.InfoObject as DirectoryInfo;
 						RemoveLazyLoadingNode(expandingNode);
@@ -409,7 +360,7 @@ namespace Teltec.Common.Forms
 							PopuplateDirectory(expandingNode, expandingNodeInfo);
 						break;
 					}
-				case TreeNodeTag.InfoType.DRIVE:
+				case FileSystemTreeNodeTag.InfoType.DRIVE:
 					{
 						DriveInfo expandingNodeInfo = tag.InfoObject as DriveInfo;
 						RemoveLazyLoadingNode(expandingNode);
@@ -423,11 +374,11 @@ namespace Teltec.Common.Forms
 			UseWaitCursor = false;
 		}
 
-		private void BuildTagDataList(TreeNode node, IList<TreeNodeTag> list)
+		private void BuildTagDataList(TreeNode node, List<FileSystemTreeNodeTag> list)
 		{
-			TreeNodeTag nodeTag = node.Tag as TreeNodeTag;
+			FileSystemTreeNodeTag nodeTag = node.Tag as FileSystemTreeNodeTag;
 			// Skip over loading nodes and nodes without a tag.
-			if (nodeTag == null || nodeTag.Type == TreeNodeTag.InfoType.LOADING)
+			if (nodeTag == null || nodeTag.Type == FileSystemTreeNodeTag.InfoType.LOADING)
 				return;
 
 			CheckState state = GetCheckState(node);
@@ -439,7 +390,7 @@ namespace Teltec.Common.Forms
 				case CheckState.Checked:
 					// If it's checked, add it and ignore its child nodes.
 					// This means the entire folder is checked - regardless of what it contains.
-					list.Add(node.Tag as TreeNodeTag);
+					list.Add(node.Tag as FileSystemTreeNodeTag);
 					break;
 				case CheckState.Mixed:
 					// Ignore it, but verify its child nodes.
@@ -449,9 +400,93 @@ namespace Teltec.Common.Forms
 			}
 		}
 
-		public IList<TreeNodeTag> GetCheckedTagData()
+		#region CheckState restoring
+
+		private Dictionary<string, FileSystemTreeNodeTag> _CheckedDataSource;
+		public Dictionary<string, FileSystemTreeNodeTag> CheckedDataSource
 		{
-			IList<TreeNodeTag> list = new List<TreeNodeTag>();
+			get { return _CheckedDataSource; }
+			set { _CheckedDataSource = ExpandCheckedDataSource(value); PopulateTreeView(); }
+		}
+
+		private Dictionary<string, FileSystemTreeNodeTag> ExpandCheckedDataSource(
+			Dictionary<string, FileSystemTreeNodeTag> dict)
+		{
+			Dictionary<string, FileSystemTreeNodeTag> expandedDict =
+				new Dictionary<string, FileSystemTreeNodeTag>(dict.Count * 2);
+
+			// Expand paths into their respective parts.
+			foreach (var obj in dict)
+			{
+				switch (obj.Value.Type)
+				{
+					case FileSystemTreeNodeTag.InfoType.DRIVE:
+					case FileSystemTreeNodeTag.InfoType.FILE:
+						{
+							expandedDict.Add(obj.Key, obj.Value);
+							break;
+						}
+					case FileSystemTreeNodeTag.InfoType.FOLDER:
+						{
+							DirectoryInfo info = new DirectoryInfo(obj.Value.Path);
+							DirectoryInfo parentInfo = info.Parent;
+							while (parentInfo != null)
+							{
+								FileSystemTreeNodeTag.InfoType type = parentInfo.Parent != null
+									? FileSystemTreeNodeTag.InfoType.FOLDER
+									: FileSystemTreeNodeTag.InfoType.DRIVE;
+								FileSystemTreeNodeTag newTag = new FileSystemTreeNodeTag(type, parentInfo, CheckState.Mixed);
+								switch (type)
+								{
+									case FileSystemTreeNodeTag.InfoType.FOLDER:
+										expandedDict.Add(
+											FileSystemTreeNodeTag.BuildPath(type, parentInfo), newTag);
+										break;
+									case FileSystemTreeNodeTag.InfoType.DRIVE:
+										expandedDict.Add(
+											FileSystemTreeNodeTag.BuildPath(type,
+												new DriveInfo(parentInfo.Name)), newTag);
+										break;
+								}
+								parentInfo = parentInfo.Parent;
+							}
+							expandedDict.Add(obj.Key, obj.Value);
+							break;
+						}
+				}
+			}
+			
+			return expandedDict;
+		}
+
+		private void RestoreNodeState(FileSystemTreeNodeTag.InfoType type, TreeNode node)
+		{
+			if (CheckedDataSource == null)
+				return;
+
+			switch (type)
+			{
+				default:
+					throw new ArgumentException("Unhandled InfoType", "type");
+				case FileSystemTreeNodeTag.InfoType.DRIVE:
+				case FileSystemTreeNodeTag.InfoType.FOLDER:
+				case FileSystemTreeNodeTag.InfoType.FILE:
+				{
+					string path = FileSystemTreeNodeTag.BuildPath(node.Tag as FileSystemTreeNodeTag);
+					FileSystemTreeNodeTag match;
+					bool found = CheckedDataSource.TryGetValue(path, out match);
+					if (found && match.Type == type)
+						SetStateImage(node, (int)match.State);
+					break;
+				}
+			}
+		}
+
+		#endregion
+
+		public List<FileSystemTreeNodeTag> GetCheckedTagData()
+		{
+			List<FileSystemTreeNodeTag> list = new List<FileSystemTreeNodeTag>();
 			foreach (TreeNode node in Nodes)
 				BuildTagDataList(node, list);
 			return list;

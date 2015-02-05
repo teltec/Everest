@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Teltec.Common;
+using System.Linq;
 using Teltec.Common.Forms;
 
 namespace Teltec.Backup.Models
@@ -70,8 +71,8 @@ namespace Teltec.Backup.Models
 
 		#region Sources
 
-		private IList<BackupPlanSourceEntry> _SelectedSources = new List<BackupPlanSourceEntry>();
-		public virtual IList<BackupPlanSourceEntry> SelectedSources
+		private List<BackupPlanSourceEntry> _SelectedSources = new List<BackupPlanSourceEntry>();
+		public virtual List<BackupPlanSourceEntry> SelectedSources
 		{
 			get { return _SelectedSources; }
 			set { SetField(ref _SelectedSources, value); }
@@ -99,6 +100,14 @@ namespace Teltec.Backup.Models
 		}
 
 		#endregion
+
+		public Dictionary<string, FileSystemTreeNodeTag> SelectedSourcesAsCheckedDataSource()
+		{
+			return SelectedSources.ToDictionary(
+				e => e.Path,
+				e => new FileSystemTreeNodeTag(e.Type.ToInfoType(), e.Path, CheckState.Checked)
+			);
+		}
 
 	}
 }

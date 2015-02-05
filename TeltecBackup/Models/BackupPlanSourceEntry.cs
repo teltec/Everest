@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Teltec.Common;
+using Teltec.Common.Forms;
 
 namespace Teltec.Backup.Models
 {
@@ -30,7 +31,7 @@ namespace Teltec.Backup.Models
 			Path = path;
 		}
 
-		public BackupPlanSourceEntry(Teltec.Common.Forms.FileSystemTreeView.TreeNodeTag tag)
+		public BackupPlanSourceEntry(FileSystemTreeNodeTag tag)
 			: this(tag.ToEntryType(), tag.Path)
 		{
 		}
@@ -51,29 +52,46 @@ namespace Teltec.Backup.Models
 		}
 	}
 
+	public static class EntryTypeExtensions
+	{
+		public static FileSystemTreeNodeTag.InfoType ToInfoType(
+			this BackupPlanSourceEntry.EntryType obj)
+		{
+			switch (obj)
+			{
+				case BackupPlanSourceEntry.EntryType.DRIVE:
+					return FileSystemTreeNodeTag.InfoType.DRIVE;
+				case BackupPlanSourceEntry.EntryType.FOLDER:
+					return FileSystemTreeNodeTag.InfoType.FOLDER;
+				case BackupPlanSourceEntry.EntryType.FILE:
+					return FileSystemTreeNodeTag.InfoType.FILE;
+				default:
+					throw new ArgumentException("Unhandled EntryType", "obj");
+			}
+		}
+	}
+
 	public static class TreeNodeTagExtensions
 	{
 		// Convert collection of `FileSystemTreeView.TreeNodeTag` to `BackupPlanSourceEntry`.
-		public static IList<BackupPlanSourceEntry> ToBackupPlanSourceEntry(
-			this IList<Teltec.Common.Forms.FileSystemTreeView.TreeNodeTag> tags)
+		public static List<BackupPlanSourceEntry> ToBackupPlanSourceEntry(this List<FileSystemTreeNodeTag> tags)
 		{
-			IList<BackupPlanSourceEntry> entries = new List<BackupPlanSourceEntry>(tags.Count);
-			foreach (Teltec.Common.Forms.FileSystemTreeView.TreeNodeTag tag in tags)
+			List<BackupPlanSourceEntry> entries = new List<BackupPlanSourceEntry>(tags.Count);
+			foreach (Teltec.Common.Forms.FileSystemTreeNodeTag tag in tags)
 				entries.Add(new BackupPlanSourceEntry(tag));
 			return entries;
 		}
 
-		public static BackupPlanSourceEntry.EntryType ToEntryType(
-			this Teltec.Common.Forms.FileSystemTreeView.TreeNodeTag tag)
+		public static BackupPlanSourceEntry.EntryType ToEntryType(this FileSystemTreeNodeTag tag)
 		{
 			switch (tag.Type)
 			{
 				default: throw new ArgumentException("type", "Unhandled TreeNodeTag.InfoType");
-				case Teltec.Common.Forms.FileSystemTreeView.TreeNodeTag.InfoType.DRIVE:
+				case FileSystemTreeNodeTag.InfoType.DRIVE:
 					return BackupPlanSourceEntry.EntryType.DRIVE;
-				case Teltec.Common.Forms.FileSystemTreeView.TreeNodeTag.InfoType.FOLDER:
+				case FileSystemTreeNodeTag.InfoType.FOLDER:
 					return BackupPlanSourceEntry.EntryType.FOLDER;
-				case Teltec.Common.Forms.FileSystemTreeView.TreeNodeTag.InfoType.FILE:
+				case FileSystemTreeNodeTag.InfoType.FILE:
 					return BackupPlanSourceEntry.EntryType.FILE;
 			}
 		}
