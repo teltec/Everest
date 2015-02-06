@@ -400,6 +400,31 @@ namespace Teltec.Common.Forms
 			}
 		}
 
+		public List<FileSystemTreeNodeTag> GetCheckedTagData()
+		{
+			// ...
+			List<FileSystemTreeNodeTag> list = CheckedDataSource != null
+				? CheckedDataSource.Select(e => e.Value).Where(e => e.State == CheckState.Checked).ToList()
+				: new List<FileSystemTreeNodeTag>();
+			// ...
+			foreach (TreeNode node in Nodes)
+			{
+				if (CheckedDataSource != null)
+				{
+					string path = FileSystemTreeNodeTag.BuildPath(node.Tag as FileSystemTreeNodeTag);
+					FileSystemTreeNodeTag match;
+					bool found = CheckedDataSource.TryGetValue(path, out match);
+					if (!found)
+						BuildTagDataList(node, list);
+				}
+				else
+				{
+					BuildTagDataList(node, list);
+				}
+			}
+			return list;
+		}
+
 		#region CheckState restoring
 
 		private Dictionary<string, FileSystemTreeNodeTag> _CheckedDataSource;
@@ -421,8 +446,16 @@ namespace Teltec.Common.Forms
 				switch (obj.Value.Type)
 				{
 					case FileSystemTreeNodeTag.InfoType.DRIVE:
+						{
+							if (obj.Value.InfoObject == null)
+								obj.Value.InfoObject = new DriveInfo(obj.Value.Path);
+							expandedDict.Add(obj.Key, obj.Value);
+							break;
+						}
 					case FileSystemTreeNodeTag.InfoType.FILE:
 						{
+							if (obj.Value.InfoObject == null)
+								obj.Value.InfoObject = new FileInfo(obj.Value.Path);
 							expandedDict.Add(obj.Key, obj.Value);
 							break;
 						}
@@ -435,27 +468,32 @@ namespace Teltec.Common.Forms
 								FileSystemTreeNodeTag.InfoType type = parentInfo.Parent != null
 									? FileSystemTreeNodeTag.InfoType.FOLDER
 									: FileSystemTreeNodeTag.InfoType.DRIVE;
-								FileSystemTreeNodeTag newTag = new FileSystemTreeNodeTag(type, parentInfo, CheckState.Mixed);
 								switch (type)
 								{
 									case FileSystemTreeNodeTag.InfoType.FOLDER:
-										expandedDict.Add(
-											FileSystemTreeNodeTag.BuildPath(type, parentInfo), newTag);
-										break;
+										{
+											FileSystemTreeNodeTag newTag = new FileSystemTreeNodeTag(type, parentInfo, CheckState.Mixed);
+											expandedDict.Add(newTag.Path, newTag);
+											break;
+										}
 									case FileSystemTreeNodeTag.InfoType.DRIVE:
-										expandedDict.Add(
-											FileSystemTreeNodeTag.BuildPath(type,
-												new DriveInfo(parentInfo.Name)), newTag);
-										break;
+										{
+											FileSystemTreeNodeTag newTag = new FileSystemTreeNodeTag(type, new DriveInfo(parentInfo.Name), CheckState.Mixed);
+											expandedDict.Add(newTag.Path, newTag);
+											break;
+										}
 								}
 								parentInfo = parentInfo.Parent;
 							}
+
+							if (obj.Value.InfoObject == null)
+								obj.Value.InfoObject = new DirectoryInfo(obj.Value.Path);
 							expandedDict.Add(obj.Key, obj.Value);
 							break;
 						}
 				}
 			}
-			
+
 			return expandedDict;
 		}
 
@@ -471,26 +509,18 @@ namespace Teltec.Common.Forms
 				case FileSystemTreeNodeTag.InfoType.DRIVE:
 				case FileSystemTreeNodeTag.InfoType.FOLDER:
 				case FileSystemTreeNodeTag.InfoType.FILE:
-				{
-					string path = FileSystemTreeNodeTag.BuildPath(node.Tag as FileSystemTreeNodeTag);
-					FileSystemTreeNodeTag match;
-					bool found = CheckedDataSource.TryGetValue(path, out match);
-					if (found && match.Type == type)
-						SetStateImage(node, (int)match.State);
-					break;
-				}
+					{
+						string path = FileSystemTreeNodeTag.BuildPath(node.Tag as FileSystemTreeNodeTag);
+						FileSystemTreeNodeTag match;
+						bool found = CheckedDataSource.TryGetValue(path, out match);
+						if (found && match.Type == type)
+							SetStateImage(node, (int)match.State);
+						break;
+					}
 			}
 		}
 
 		#endregion
-
-		public List<FileSystemTreeNodeTag> GetCheckedTagData()
-		{
-			List<FileSystemTreeNodeTag> list = new List<FileSystemTreeNodeTag>();
-			foreach (TreeNode node in Nodes)
-				BuildTagDataList(node, list);
-			return list;
-		}
 
 		#region Custom events
 

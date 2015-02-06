@@ -6,7 +6,7 @@ namespace Teltec.Backup
 {
 	public class DBContextScope : IDisposable
 	{
-		private DatabaseContext _context = new DatabaseContext();
+		public readonly DatabaseContext Context = Provider.DBContext;
 
 		private GenericRepository<AmazonS3Account> _AmazonS3Accounts;
 		public GenericRepository<AmazonS3Account> AmazonS3Accounts
@@ -14,7 +14,7 @@ namespace Teltec.Backup
 			get
 			{
 				if (_AmazonS3Accounts == null)
-					_AmazonS3Accounts = new GenericRepository<AmazonS3Account>(_context);
+					_AmazonS3Accounts = new GenericRepository<AmazonS3Account>(Context);
 				return _AmazonS3Accounts;
 			}
 		}
@@ -25,14 +25,25 @@ namespace Teltec.Backup
 			get
 			{
 				if (_BackupPlans == null)
-					_BackupPlans = new GenericRepository<BackupPlan>(_context);
+					_BackupPlans = new GenericRepository<BackupPlan>(Context);
 				return _BackupPlans;
+			}
+		}
+
+		private GenericRepository<BackupPlanSourceEntry> _BackupPlanSourceEntries;
+		public GenericRepository<BackupPlanSourceEntry> BackupPlanSourceEntries
+		{
+			get
+			{
+				if (_BackupPlanSourceEntries == null)
+					_BackupPlanSourceEntries = new GenericRepository<BackupPlanSourceEntry>(Context);
+				return _BackupPlanSourceEntries;
 			}
 		}
 
 		public int Save()
 		{
-			return _context.SaveChanges();
+			return Context.SaveChanges();
 		}
 
 		private bool _disposed = false;
@@ -48,8 +59,8 @@ namespace Teltec.Backup
 			{
 				if (disposing)
 				{
-					if (_context != null)
-						_context.Dispose();
+					//if (Context != null)
+					//	Context.Dispose();
 				}
 				_disposed = true;
 			}

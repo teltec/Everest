@@ -15,18 +15,11 @@ namespace Teltec.Backup
         [STAThread]
         static void Main()
         {
-            var container = new Container();
-
-            // NOTE: instances that are declared as Single should be thread-safe in a multi-threaded environment
-            container.RegisterSingle<DbContext, DatabaseContext>();
-            //container.Register<IUserRepository, SqlUserRepository>();
-
-            container.Verify();
-            //DependencyResolver.SetResolver(new SimpleInjectorDependencyResolver(container));
-
+			Provider.Setup();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
+			Provider.Cleanup();
         }
     }
 }

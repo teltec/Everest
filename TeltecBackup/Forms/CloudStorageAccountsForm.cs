@@ -10,7 +10,7 @@ namespace Teltec.Backup.Forms
     public partial class CloudStorageAccountsForm : Form
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        private DBContextScope _dbContextScope = new DBContextScope();
+		private readonly DBContextScope _dbContextScope = new DBContextScope();
 
         public CloudStorageAccountsForm()
         {

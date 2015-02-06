@@ -13,7 +13,7 @@ namespace Teltec.Backup.Forms
 {
     public partial class MainForm : Form
     {
-		private DBContextScope DBContextScope = new DBContextScope();
+		private readonly DBContextScope _dbContextScope = new DBContextScope();
 
         public MainForm()
         {
@@ -33,7 +33,6 @@ namespace Teltec.Backup.Forms
         {
             using (var presenter = new NewBackupPlanPresenter())
 			{
-				presenter.DBContextScope = DBContextScope;
 				presenter.ShowDialog(this);
 			}
 			backupPlanListControl1.RefreshPlans();

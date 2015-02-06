@@ -70,6 +70,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Provider.cs" />
     <Compile Include="DAO\CommonDAO.cs" />
     <Compile Include="Forms\BackupPlan\BackupPlanListControl.cs">
       <SubType>UserControl</SubType>

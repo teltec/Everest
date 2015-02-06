@@ -27,13 +27,14 @@ namespace Teltec.Common.Forms
 		public FileSystemTreeNodeTag(InfoType infoType, object infoObject, CheckState state = CheckState.Unchecked)
 		{
 			Type = infoType;
+			Path = BuildPath(infoType, infoObject);
 			InfoObject = infoObject;
 			State = state;
 		}
 
-		public InfoType Type { get; private set; }
-		public object InfoObject { get; private set; }
-		public CheckState State { get; private set; }
+		public InfoType Type { get; internal set; }
+		public object InfoObject { get; internal set; }
+		public CheckState State { get; internal set; }
 
 		private string _Path;
 		public string Path
