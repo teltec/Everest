@@ -7,13 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Teltec.Backup.DAO;
 using Teltec.Backup.Forms.BackupPlan;
 
 namespace Teltec.Backup.Forms
 {
     public partial class MainForm : Form
     {
-		private readonly DBContextScope _dbContextScope = new DBContextScope();
+		private readonly BackupPlanRepository _dao = new BackupPlanRepository();
 
         public MainForm()
         {

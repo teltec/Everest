@@ -18,12 +18,12 @@ namespace Teltec.Backup
 			private set { _Container = value; }
 		}
 
-		private static DatabaseContext _DBContext = new DatabaseContext();
-		public static DatabaseContext DBContext
-		{
-			get { return _DBContext; }
-			private set { _DBContext = value; }
-		}
+		//private static DatabaseContext _DBContext = new DatabaseContext();
+		//public static DatabaseContext DBContext
+		//{
+		//	get { return _DBContext; }
+		//	private set { _DBContext = value; }
+		//}
 
 		public static void Setup()
 		{
@@ -37,11 +37,11 @@ namespace Teltec.Backup
 
 		public static void Cleanup()
 		{
-			if (DBContext != null)
-			{
-				DBContext.Dispose();
-				DBContext = null;
-			}
+			//if (DBContext != null)
+			//{
+			//	DBContext.Dispose();
+			//	DBContext = null;
+			//}
 		}
 	}
 }

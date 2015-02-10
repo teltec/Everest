@@ -5,20 +5,13 @@ using Teltec.Common.Forms;
 
 namespace Teltec.Backup.Models
 {
-	public class BackupPlanSourceEntry : ObservableObject
+	public class BackupPlanSourceEntry : ObservableObject, IEntity<Int64>
 	{
 		public enum EntryType
 		{
 			DRIVE = 1,
 			FOLDER = 2,
 			FILE = 3,
-		}
-
-		private int _Id;
-		public int Id
-		{
-			get { return _Id; }
-			set { SetField(ref _Id, value); }
 		}
 
 		public BackupPlanSourceEntry()
@@ -36,8 +29,22 @@ namespace Teltec.Backup.Models
 		{
 		}
 
+		private Int64 _Id;
+		public virtual Int64 Id
+		{
+			get { return _Id; }
+			set { SetField(ref _Id, value); }
+		}
+
+		private BackupPlan _BackupPlan;
+		public virtual BackupPlan BackupPlan
+		{
+			get { return _BackupPlan; }
+			set { SetField(ref _BackupPlan, value); }
+		}
+
 		private EntryType _Type;
-		public EntryType Type
+		public virtual EntryType Type
 		{
 			get { return _Type; }
 			set { SetField(ref _Type, value); }
@@ -45,7 +52,7 @@ namespace Teltec.Backup.Models
 
 		public const int PathMaxLen = 1024;
 		private string _Path;
-		public string Path
+		public virtual string Path
 		{
 			get { return _Path; }
 			set { SetField(ref _Path, value); }

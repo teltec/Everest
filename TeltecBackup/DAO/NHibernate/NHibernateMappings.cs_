@@ -1,0 +1,254 @@
+﻿using NHibernate;
+using NHibernate.Mapping.ByCode;
+using NHibernate.Mapping.ByCode.Conformist;
+using NHibernate.Type;
+using Teltec.Backup.Models;
+
+namespace Teltec.Backup.DAO.NHibernate
+{
+	public class EnumAsInt32<T> : PersistentEnumType
+	{
+		public EnumAsInt32() : base(typeof(T)) { }
+		//#region Implementation of IUserType
+
+		//object IUserType.Assemble(object cached, object owner)
+		//{
+		//	return cached;
+		//}
+
+		//object IUserType.DeepCopy(object value)
+		//{
+		//	return value;
+		//}
+
+		//object IUserType.Disassemble(object value)
+		//{
+		//	return value;
+		//}
+
+		//bool IUserType.Equals(object x, object y)
+		//{
+		//	if (object.ReferenceEquals(x, y))
+		//		return true;
+		//	if (x == null || y == null)
+		//		return false;
+		//	return x.Equals(y);
+		//}
+
+		//int IUserType.GetHashCode(object x)
+		//{
+		//	return x == null ? typeof(string).GetHashCode() + 473 : x.GetHashCode();
+		//}
+
+		//bool IUserType.IsMutable
+		//{
+		//	get { return false; }
+		//}
+
+		//object IUserType.NullSafeGet(IDataReader rs, string[] names, object owner)
+		//{
+		//	object obj = NHibernateUtil.String.NullSafeGet(rs, names);
+		//	if (obj == null)
+		//		return null;
+		//	return Enum.Parse(typeof(T), obj.ToString());
+		//}
+
+		//void IUserType.NullSafeSet(IDbCommand cmd, object value, int index)
+		//{
+		//	//Debug.Assert(cmd != null);
+		//	if (value == null)
+		//	{
+		//		((IDataParameter)cmd.Parameters[index]).Value = DBNull.Value;
+		//	}
+		//	else
+		//	{
+		//		((IDataParameter)cmd.Parameters[index]).Value = (int)value;
+		//	}
+		//}
+
+		//object IUserType.Replace(object original, object target, object owner)
+		//{
+		//	return original;
+		//}
+
+		//Type IUserType.ReturnedType
+		//{
+		//	get { return typeof(T); }
+		//}
+
+		//SqlType[] IUserType.SqlTypes
+		//{
+		//	get { return new[] { SqlTypeFactory.Int32 }; }
+		//}
+
+		//#endregion
+	}
+
+	class ICloudStorageAccountMap : ClassMapping<ICloudStorageAccount>
+	{
+		public ICloudStorageAccountMap()
+		{
+			Id(x => x.Id, map =>
+			{
+				map.Column("id");
+				//map.Generator(Generators.HighLow, g => g.Params(new { where = "entity_type = 'cloud_storage_accounts'" }));
+				map.Generator(Generators.EnhancedTable);
+			});
+
+			Property(p => p.Type, map =>
+			{
+				map.Column("type");
+				map.NotNullable(true);
+				map.Type<EnumStringType<CloudStorageAccountType>>();
+			});
+
+			Property(p => p.DisplayName, map =>
+			{
+				map.Column("display_name");
+				map.NotNullable(true);
+				map.Unique(true);
+				map.UniqueKey("uk_display_name");
+			});
+
+			Discriminator(d =>
+			{
+				d.Column("type");
+				d.NotNullable(true);
+				d.Type(NHibernateUtil.Guid);
+				d.Force(true);
+				d.Insert(true);
+			});
+		}
+	}
+
+	class AmazonS3AccountMap : UnionSubclassMapping<AmazonS3Account>
+	{
+		public AmazonS3AccountMap()
+		{
+			Table("amazon_s3_accounts");
+
+			Property(p => p.DisplayName, map =>
+			{
+				map.Column("display_name");
+				map.NotNullable(true);
+				map.Unique(true);
+				map.UniqueKey("uk_display_name");
+
+				map.Length(AmazonS3Account.DisplayNameMaxLen);
+			});
+
+			Property(p => p.AccessKey, map =>
+			{
+				map.Column("access_key");
+				map.NotNullable(true);
+				map.Length(AmazonS3Account.AccessKeyNameMaxLen);
+			});
+
+			Property(p => p.SecretKey, map =>
+			{
+				map.Column("secret_key");
+				map.NotNullable(true);
+				map.Length(AmazonS3Account.AccessKeyNameMaxLen);
+			});
+
+			Property(p => p.BucketName, map =>
+			{
+				map.Column("bucket_name");
+				map.NotNullable(true);
+				map.Length(AmazonS3Account.BucketNameMaxLen);
+			});
+		}
+	}
+
+	class BackupPlanMap : ClassMapping<BackupPlan>
+	{
+		public BackupPlanMap()
+		{
+			Table("backup_plans");
+
+			Id(x => x.Id, map =>
+			{
+				map.Column("id");
+				//map.Generator(Generators.HighLow, g => g.Params(new { where = "entity_type = 'backup_plans'" }));
+				map.Generator(Generators.Native);
+			});
+
+			Property(p => p.Name, map =>
+			{
+				map.Column("name");
+				map.NotNullable(true);
+				map.Length(BackupPlan.NameMaxLen);
+				map.Unique(true);
+				map.UniqueKey("uk_name");
+			});
+
+			Property(p => p.StorageAccountType, map =>
+			{
+				map.Column("storage_account_type");
+				map.NotNullable(true);
+				map.Type(new EnumType<EStorageAccountType>());
+			});
+
+			//Property(p => p.StorageAccountId, map =>
+			//{
+			//	map.Column("storage_account_id");
+			//	map.NotNullable(true);
+			//});
+
+			ManyToOne(fk => fk.StorageAccount, map =>
+			{
+				map.Column("storage_account_id");
+				map.NotNullable(true);
+				map.Lazy(LazyRelation.Proxy);
+			});
+
+			Bag(p => p.SelectedSources, map =>
+			{
+				map.Key(fk => fk.Column("backup_plan_id"));
+			}, ce => ce.OneToMany());
+
+			Property(p => p.ScheduleType, map =>
+			{
+				map.Column("schedule_type");
+				map.NotNullable(true);
+				map.Type(new EnumType<BackupPlan.EScheduleType>());
+			});
+		}
+	}
+
+	class BackupPlanSourceEntryMap : ClassMapping<BackupPlanSourceEntry>
+	{
+		public BackupPlanSourceEntryMap()
+		{
+			Table("backup_plans_source_entries");
+
+			Id(x => x.Id, map =>
+			{
+				map.Column("id");
+				//map.Generator(Generators.HighLow, g => g.Params(new { where = "entity_type = 'backup_plans_source_entries'" }));
+				map.Generator(Generators.Native);
+			});
+
+			Property(p => p.Type, map =>
+			{
+				map.Column("type");
+				map.NotNullable(true);
+				map.Type(new EnumType<BackupPlanSourceEntry.EntryType>());
+			});
+
+			Property(p => p.Path, map =>
+			{
+				map.Column("path");
+				map.NotNullable(true);
+				map.Length(BackupPlanSourceEntry.PathMaxLen);
+			});
+
+			ManyToOne(fk => fk.BackupPlan, map =>
+			{
+				map.Column("backup_plan_id");
+				map.NotNullable(true);
+				map.Lazy(LazyRelation.Proxy);
+			});
+		}
+	}
+}

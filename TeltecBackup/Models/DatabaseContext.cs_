@@ -150,11 +150,11 @@ namespace Teltec.Backup.Models
 						new IndexAnnotation(new IndexAttribute("ix_sto_acc_type"))
 					)
 					;
-				mapping
-					.Property(p => p.StorageAccountId)
-					.HasColumnName("storage_account_id")
-					.IsRequired()
-					;
+				//mapping
+				//	.Property(p => p.StorageAccountId)
+				//	.HasColumnName("storage_account_id")
+				//	.IsRequired()
+				//	;
 				mapping
 					.HasMany(p => p.SelectedSources)
 					.WithRequired()

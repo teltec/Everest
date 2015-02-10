@@ -16,8 +16,12 @@ namespace Teltec.Backup.Forms.S3
 
 		public AmazonS3AccountForm(AmazonS3Account account)
 		{
+			if (account.Type != EStorageAccountType.AmazonS3)
+				throw new ArgumentException("Attempt to edit an account of an incompatible type");
+
 			InitializeComponent();
 			_account = account;
+
 			// Setup data bindings
 			tbDisplayName.DataBindings.Add(new Binding("Text", _account,
 				this.GetPropertyName((AmazonS3Account x) => x.DisplayName)));
@@ -40,11 +44,11 @@ namespace Teltec.Backup.Forms.S3
 		{
 			CleanData();
 
-			if (!IsValid())
-			{
-				MessageBox.Show("Invalid data");
-				return;
-			}
+			//if (!IsValid())
+			//{
+			//	MessageBox.Show("Invalid data");
+			//	return;
+			//}
 
 			if (AccountSaved != null)
 				AccountSaved(this, new AmazonS3AccountSaveEventArgs(_account));

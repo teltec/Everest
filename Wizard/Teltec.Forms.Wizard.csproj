@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Teltec.Forms.Wizard</RootNamespace>
-    <AssemblyName>Teltec.Forms.Wizar</AssemblyName>
+    <AssemblyName>Teltec.Forms.Wizard</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

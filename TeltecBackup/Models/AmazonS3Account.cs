@@ -5,42 +5,22 @@ using Teltec.Forms.Wizard;
 
 namespace Teltec.Backup.Models
 {
-    public class AmazonS3Account : ObservableObject, ICloudStorageAccount
+	public class AmazonS3Account : StorageAccount
     {
-		private Guid _Id;
-		public Guid Id
-		{
-			get { return _Id; }
-			set { SetField(ref _Id, value); }
-		}
-
-		private CloudStorageAccountType _Type;
-		public CloudStorageAccountType Type
-		{
-			get { return _Type; }
-			set { SetField(ref _Type, value); }
-		}
-
-        public const int DisplayNameMaxLen = 16;
-        private String _DisplayName;
-        public String DisplayName
-        {
-            get { return _DisplayName; }
-            set { SetField(ref _DisplayName, value); }
-        }
+		public const int DisplayNameMaxLen = 16;
 
         // http://docs.aws.amazon.com/IAM/latest/APIReference/API_AccessKey.html
         public const int AccessKeyNameMinLen = 16;
         public const int AccessKeyNameMaxLen = 32;
         private String _AccessKey;
-        public String AccessKey
+		public virtual String AccessKey
         {
             get { return _AccessKey; }
             set { SetField(ref _AccessKey, value); }
         }
 
         private String _SecretKey;
-        public String SecretKey
+		public virtual String SecretKey
         {
             get { return _SecretKey; }
             set { SetField(ref _SecretKey, value); }
@@ -50,7 +30,7 @@ namespace Teltec.Backup.Models
         public const int BucketNameMinLen = 3;
         public const int BucketNameMaxLen = 63;
         private String _BucketName;
-        public String BucketName
+		public virtual String BucketName
         {
             get { return _BucketName; }
             set { SetField(ref _BucketName, value); }
@@ -62,5 +42,10 @@ namespace Teltec.Backup.Models
 		//	get { return _BackupPlans; }
 		//	set { SetField(ref _BackupPlans, value); }
 		//}
+
+		public AmazonS3Account()
+		{
+			Type = EStorageAccountType.AmazonS3;
+		}
     }
 }

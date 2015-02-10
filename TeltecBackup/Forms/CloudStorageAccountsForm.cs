@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using Teltec.Backup.DAO;
 using Teltec.Backup.Forms.S3;
 using Teltec.Backup.Models;
 
@@ -10,7 +11,7 @@ namespace Teltec.Backup.Forms
     public partial class CloudStorageAccountsForm : Form
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-		private readonly DBContextScope _dbContextScope = new DBContextScope();
+		private readonly AmazonS3AccountRepository _s3dao = new AmazonS3AccountRepository();
 
         public CloudStorageAccountsForm()
         {
@@ -20,13 +21,9 @@ namespace Teltec.Backup.Forms
         protected void LoadAccounts()
         {
             this.lvAccounts.Items.Clear();
-			
-			//var query = from acc in _dbContextScope.AmazonS3Accounts.Objects
-			//            where acc.DisplayName == "Jardel"
-			//            select acc;
-			var query = from acc in _dbContextScope.AmazonS3Accounts.Objects select acc;
-			var accounts = query.ToList<AmazonS3Account>();
 
+			var accounts = _s3dao.GetAll();
+	
 			foreach (var account in accounts)
 			{
 				ListViewItem item = new ListViewItem(account.DisplayName, 0);
@@ -56,11 +53,8 @@ namespace Teltec.Backup.Forms
                 this.lvAccounts.Items.Remove(item);
 
                 // Remove actual account model and persist?
-                _dbContextScope.AmazonS3Accounts.Delete(item.Tag);
+				_s3dao.Delete((int)item.Tag);
             }
-
-            if (hasSelection)
-                _dbContextScope.Save();
         }
 
         private void btnAdd_Click(object sender, EventArgs e)
@@ -79,7 +73,7 @@ namespace Teltec.Backup.Forms
                 return;
 
             var item = lvAccounts.SelectedItems[0];
-            var selectedAcount = _dbContextScope.AmazonS3Accounts.Get(item.Tag);
+            var selectedAcount = _s3dao.Get((int)item.Tag);
 			using (var form = new AmazonS3AccountForm(selectedAcount))
 			{
 				form.AccountSaved += form_AccountChanged;
@@ -90,21 +84,18 @@ namespace Teltec.Backup.Forms
 
         void form_AccountCancelled(object sender, AmazonS3AccountSaveEventArgs e)
         {
-            _dbContextScope.AmazonS3Accounts.UndoChanges(e.Account);
+            _s3dao.Refresh(e.Account);
         }
 
         void form_AccountSaved(object sender, AmazonS3AccountSaveEventArgs e)
         {
-            e.Account.Id = Guid.NewGuid();
-            _dbContextScope.AmazonS3Accounts.Insert(e.Account);
-            _dbContextScope.Save();
+            _s3dao.Insert(e.Account);
             LoadAccounts();
         }
 
         void form_AccountChanged(object sender, AmazonS3AccountSaveEventArgs e)
         {
-            _dbContextScope.AmazonS3Accounts.Update(e.Account);
-            _dbContextScope.Save();
+			_s3dao.Update(e.Account);
             LoadAccounts();
         }
 
@@ -118,8 +109,6 @@ namespace Teltec.Backup.Forms
             {
 				if (components != null)
 					components.Dispose();
-				if (_dbContextScope != null)
-					_dbContextScope.Dispose();
             }
             base.Dispose(disposing);
         }

@@ -4,7 +4,7 @@ using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace Teltec.Data
+namespace Teltec.Data.Entity
 {
     public class GenericRepository<TEntity> where TEntity : class
     {

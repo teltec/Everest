@@ -8,7 +8,7 @@ namespace Teltec.Common
 {
     public class ObservableObject : IObservableObject
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+        public virtual event PropertyChangedEventHandler PropertyChanged;
 
         // NotifyPropertyChanged will raise the PropertyChanged event passing the
         // source property that is being updated.
@@ -36,7 +36,7 @@ namespace Teltec.Common
             NotifyPropertyChanged(memberExpression.Member.Name);
         }
 
-        public bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        public virtual bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
         {
             if (EqualityComparer<T>.Default.Equals(field, value))
                 return false;

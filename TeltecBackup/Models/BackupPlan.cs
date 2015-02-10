@@ -3,19 +3,14 @@ using System.Collections.Generic;
 using Teltec.Common;
 using System.Linq;
 using Teltec.Common.Forms;
+using Teltec.Backup.DAO;
 
 namespace Teltec.Backup.Models
 {
-	public enum EStorageAccountType
+	public class BackupPlan : ObservableObject, IEntity<int>
 	{
-		AmazonS3	= 1,
-		FileSystem	= 2,
-	};
-
-	public class BackupPlan : ObservableObject
-	{
-		private Guid _Id;
-		public Guid Id
+		private int _Id;
+		public virtual int Id
 		{
 			get { return _Id; }
 			set { SetField(ref _Id, value); }
@@ -25,7 +20,7 @@ namespace Teltec.Backup.Models
 
 		public const int NameMaxLen = 128;
 		private String _Name;
-		public String Name
+		public virtual String Name
 		{
 			get { return _Name; }
 			set { SetField(ref _Name, value); }
@@ -36,32 +31,32 @@ namespace Teltec.Backup.Models
 		#region Accounts
 
 		private EStorageAccountType _StorageAccountType;
-		public EStorageAccountType StorageAccountType
+		public virtual EStorageAccountType StorageAccountType
 		{
 			get { return _StorageAccountType; }
 			set { SetField(ref _StorageAccountType, value); }
 		}
 
-		private Guid _StorageAccountId;
-		public Guid StorageAccountId
-		{
-			get { return _StorageAccountId; }
-			set { SetField(ref _StorageAccountId, value); }
-		}
+		//private int _StorageAccountId;
+		//public virtual int StorageAccountId
+		//{
+		//	get { return _StorageAccountId; }
+		//	set { SetField(ref _StorageAccountId, value); }
+		//}
 
-		public static ICloudStorageAccount GetStorageAccount(BackupPlan plan, DBContextScope scope)
-		{
-			switch (plan.StorageAccountType)
-			{
-				default:
-					throw new ArgumentException("Unhandled StorageAccountType", "plan");
-				case EStorageAccountType.AmazonS3:
-					return scope.AmazonS3Accounts.Get(plan.StorageAccountId);
-			}
-		}
+		//public static ICloudStorageAccount GetStorageAccount(BackupPlan plan, ICloudStorageAccount dao)
+		//{
+		//	switch (plan.StorageAccountType)
+		//	{
+		//		default:
+		//			throw new ArgumentException("Unhandled StorageAccountType", "plan");
+		//		case EStorageAccountType.AmazonS3:
+		//			return dao.Get(plan.StorageAccountId);
+		//	}
+		//}
 
-		private ICloudStorageAccount _StorageAccount;
-		public virtual ICloudStorageAccount StorageAccount
+		private StorageAccount _StorageAccount;
+		public virtual StorageAccount StorageAccount
 		{
 			get { return _StorageAccount; }
 			set { SetField(ref _StorageAccount, value); }
@@ -71,8 +66,8 @@ namespace Teltec.Backup.Models
 
 		#region Sources
 
-		private List<BackupPlanSourceEntry> _SelectedSources = new List<BackupPlanSourceEntry>();
-		public virtual List<BackupPlanSourceEntry> SelectedSources
+		private IList<BackupPlanSourceEntry> _SelectedSources = new List<BackupPlanSourceEntry>();
+		public virtual IList<BackupPlanSourceEntry> SelectedSources
 		{
 			get { return _SelectedSources; }
 			set { SetField(ref _SelectedSources, value); }
@@ -82,32 +77,31 @@ namespace Teltec.Backup.Models
 
 		#region Schedule
 
-		public enum ScheduleTypeE
+		public enum EScheduleType
 		{
 			RunManually = 0,
 		}
 
-		private ScheduleTypeE _ScheduleType;
-		public ScheduleTypeE ScheduleType
+		private EScheduleType _ScheduleType;
+		public virtual EScheduleType ScheduleType
 		{
 			get { return _ScheduleType; }
 			set { SetField(ref _ScheduleType, value); }
 		}
 
-		public bool IsRunManually
+		public virtual bool IsRunManually
 		{
-			get { return ScheduleType == ScheduleTypeE.RunManually;  }
+			get { return ScheduleType == EScheduleType.RunManually;  }
 		}
 
 		#endregion
 
-		public Dictionary<string, FileSystemTreeNodeTag> SelectedSourcesAsCheckedDataSource()
+		public virtual Dictionary<string, FileSystemTreeNodeTag> SelectedSourcesAsCheckedDataSource()
 		{
 			return SelectedSources.ToDictionary(
 				e => e.Path,
 				e => new FileSystemTreeNodeTag(e.Type.ToInfoType(), e.Path, CheckState.Checked)
 			);
 		}
-
 	}
 }
