@@ -10,7 +10,7 @@ namespace Teltec.Backup.Forms
 {
     public partial class CloudStorageAccountsForm : Form
     {
-        private static Logger logger = LogManager.GetCurrentClassLogger();
+		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 		private readonly AmazonS3AccountRepository _s3dao = new AmazonS3AccountRepository();
 
         public CloudStorageAccountsForm()

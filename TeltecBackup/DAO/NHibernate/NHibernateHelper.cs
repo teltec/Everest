@@ -2,22 +2,31 @@
 using FluentNHibernate.Cfg.Db;
 using NHibernate;
 using NHibernate.Cfg;
-using NHibernate.Cfg.MappingSchema;
+using NHibernate.Engine;
 using NHibernate.Event;
 using NHibernate.Event.Default;
+using NHibernate.Hql.Util;
 using NHibernate.Tool.hbm2ddl;
 using NLog;
 using System;
+using System.Threading;
 
-namespace Teltec.Backup.DAO.FluentNHibernate
+namespace Teltec.Backup.DAO.NHibernate
 {
 	public static class NHibernateHelper
 	{
-		private static Logger logger = LogManager.GetCurrentClassLogger();
+		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+		// TODO(jweyrich): When to dispose it?
 		private static ISessionFactory _sessionFactory;
+
+		// TODO(jweyrich): When to dispose it?
 		private static Configuration _configuration;
 
-		public static ISession OpenSession()
+		// TODO(jweyrich): When to dispose it?
+		private static readonly ThreadLocal<ISession> _sessions = new ThreadLocal<ISession>();
+
+		public static ISession GetSession()
 		{
 			//
 			// NOTES:
@@ -25,8 +34,24 @@ namespace Teltec.Backup.DAO.FluentNHibernate
 			// 2. 
 			//
 
-			//Open and return the nhibernate session
-			return SessionFactory.OpenSession();
+			if (!_sessions.IsValueCreated)
+			{
+				logger.Debug("### Opening a new ISession");
+				// Open a new NHibernate session
+				_sessions.Value = SessionFactory.OpenSession();
+				//_sessions.Value.FlushMode = FlushMode.Never;
+			}
+
+			return _sessions.Value;
+		}
+
+		public static bool IsTransient(ISession session, object obj)
+		{
+			ISessionFactoryImplementor sessionFactoryImpl = session.SessionFactory as ISessionFactoryImplementor;
+			var persister = new SessionFactoryHelper(sessionFactoryImpl)
+				.RequireClassPersister(obj.GetType().FullName);
+			bool? yes = persister.IsTransient(obj, (ISessionImplementor)session);
+			return yes ?? default(bool);
 		}
 
 		public static ISessionFactory SessionFactory
@@ -72,14 +97,21 @@ namespace Teltec.Backup.DAO.FluentNHibernate
 			Configuration config = fluentConfig.BuildConfiguration();
 
 			// Register interceptors.
-			//config.SetInterceptor(new NHibernateAuditInterceptor());
+			config.SetInterceptor(new NHibernateAuditInterceptor());
 
 			// Register listeners.
-			ILoadEventListener[] stack = new ILoadEventListener[] {
-				new NHibernateLoadListener(), // Custom listener.
-				new DefaultLoadEventListener() // Keep the default listener.
-			};
-			config.EventListeners.LoadEventListeners = stack;
+			config.AppendListeners(ListenerType.Load, new ILoadEventListener[] {
+				new NHibernateLoadListener(),
+			});
+			config.AppendListeners(ListenerType.PostLoad, new IPostLoadEventListener[] {
+				new NHibernatePersistentEntityListener(),
+			});
+			config.AppendListeners(ListenerType.Save, new ISaveOrUpdateEventListener[] {
+				new NHibernatePersistentEntityListener(),
+			});
+			config.AppendListeners(ListenerType.Update, new ISaveOrUpdateEventListener[] {
+				new NHibernatePersistentEntityListener(),
+			});
 
 			UpdateSchema(config);
 			ValidateSchema(config);

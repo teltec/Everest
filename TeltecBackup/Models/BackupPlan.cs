@@ -7,10 +7,10 @@ using Teltec.Backup.DAO;
 
 namespace Teltec.Backup.Models
 {
-	public class BackupPlan : ObservableObject, IEntity<int>
+	public class BackupPlan : BaseEntity<int?>
 	{
-		private int _Id;
-		public virtual int Id
+		private int? _Id;
+		public virtual int? Id
 		{
 			get { return _Id; }
 			set { SetField(ref _Id, value); }
@@ -70,7 +70,7 @@ namespace Teltec.Backup.Models
 		public virtual IList<BackupPlanSourceEntry> SelectedSources
 		{
 			get { return _SelectedSources; }
-			set { SetField(ref _SelectedSources, value); }
+			protected set { SetField(ref _SelectedSources, value); }
 		}
 
 		#endregion
@@ -91,17 +91,9 @@ namespace Teltec.Backup.Models
 
 		public virtual bool IsRunManually
 		{
-			get { return ScheduleType == EScheduleType.RunManually;  }
+			get { return ScheduleType == EScheduleType.RunManually; }
 		}
 
 		#endregion
-
-		public virtual Dictionary<string, FileSystemTreeNodeTag> SelectedSourcesAsCheckedDataSource()
-		{
-			return SelectedSources.ToDictionary(
-				e => e.Path,
-				e => new FileSystemTreeNodeTag(e.Type.ToInfoType(), e.Path, CheckState.Checked)
-			);
-		}
 	}
 }

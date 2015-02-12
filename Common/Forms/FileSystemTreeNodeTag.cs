@@ -17,24 +17,35 @@ namespace Teltec.Common.Forms
 			FILE = 3,
 		}
 
-		public FileSystemTreeNodeTag(InfoType infoType, string path, CheckState state = CheckState.Unchecked)
-		{
-			Type = infoType;
-			Path = path;
-			State = state;
-		}
+		//public FileSystemTreeNodeTag(
+		//	object id, InfoType infoType, string path, CheckState state = CheckState.Unchecked)
+		//{
+		//	Id = id;
+		//	Type = infoType;
+		//	Path = path;
+		//	State = state;
+		//}
 
-		public FileSystemTreeNodeTag(InfoType infoType, object infoObject, CheckState state = CheckState.Unchecked)
-		{
-			Type = infoType;
-			Path = BuildPath(infoType, infoObject);
-			InfoObject = infoObject;
-			State = state;
-		}
+		//public FileSystemTreeNodeTag(
+		//	object id, InfoType infoType, object infoObject, CheckState state = CheckState.Unchecked)
+		//{
+		//	Id = Id;
+		//	Type = infoType;
+		//	Path = BuildPath(infoType, infoObject);
+		//	InfoObject = infoObject;
+		//	State = state;
+		//}
 
-		public InfoType Type { get; internal set; }
-		public object InfoObject { get; internal set; }
-		public CheckState State { get; internal set; }
+		public object Id { get; set; }
+		public InfoType Type { get; set; }
+		public object InfoObject { get; set; }
+
+		private CheckState _State = CheckState.Unchecked;
+		public CheckState State
+		{
+			get { return _State; }
+			set { _State = value; }
+		}
 
 		private string _Path;
 		public string Path

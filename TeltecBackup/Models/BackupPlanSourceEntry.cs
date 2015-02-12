@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using Teltec.Backup.DAO;
 using Teltec.Common;
 using Teltec.Common.Forms;
 
 namespace Teltec.Backup.Models
 {
-	public class BackupPlanSourceEntry : ObservableObject, IEntity<Int64>
+	public class BackupPlanSourceEntry : BaseEntity<Int64?>
 	{
 		public enum EntryType
 		{
@@ -14,23 +15,24 @@ namespace Teltec.Backup.Models
 			FILE = 3,
 		}
 
-		public BackupPlanSourceEntry()
-		{
-		}
+		//public BackupPlanSourceEntry()
+		//{
+		//}
 
-		public BackupPlanSourceEntry(EntryType type, string path) : this()
-		{
-			Type = type;
-			Path = path;
-		}
+		//public BackupPlanSourceEntry(BackupPlan plan, EntryType type, string path) : this()
+		//{
+		//	BackupPlan = plan;
+		//	Type = type;
+		//	Path = path;
+		//}
 
-		public BackupPlanSourceEntry(FileSystemTreeNodeTag tag)
-			: this(tag.ToEntryType(), tag.Path)
-		{
-		}
+		//public BackupPlanSourceEntry(BackupPlan plan, FileSystemTreeNodeTag tag)
+		//	: this(plan, tag.ToEntryType(), tag.Path)
+		//{
+		//}
 
-		private Int64 _Id;
-		public virtual Int64 Id
+		private Int64? _Id;
+		public virtual Int64? Id
 		{
 			get { return _Id; }
 			set { SetField(ref _Id, value); }
@@ -81,11 +83,22 @@ namespace Teltec.Backup.Models
 	public static class TreeNodeTagExtensions
 	{
 		// Convert collection of `FileSystemTreeView.TreeNodeTag` to `BackupPlanSourceEntry`.
-		public static List<BackupPlanSourceEntry> ToBackupPlanSourceEntry(this List<FileSystemTreeNodeTag> tags)
+		public static List<BackupPlanSourceEntry> ToBackupPlanSourceEntry(
+			this List<FileSystemTreeNodeTag> tags, BackupPlan plan, BackupPlanSourceEntryRepository dao)
 		{
 			List<BackupPlanSourceEntry> entries = new List<BackupPlanSourceEntry>(tags.Count);
 			foreach (Teltec.Common.Forms.FileSystemTreeNodeTag tag in tags)
-				entries.Add(new BackupPlanSourceEntry(tag));
+			{
+				BackupPlanSourceEntry entry = null;
+				if (tag.Id != null)
+					entry = dao.Get(tag.Id as long?);
+				else
+					entry = new BackupPlanSourceEntry();
+				entry.BackupPlan = plan;
+				entry.Type = tag.ToEntryType();
+				entry.Path = tag.Path;
+				entries.Add(entry);
+			}
 			return entries;
 		}
 

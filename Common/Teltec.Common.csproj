@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\ICollectionExtension.cs" />
     <Compile Include="Forms\CheckState.cs" />
     <Compile Include="Forms\FileSystemTreeView.cs">
       <SubType>Component</SubType>

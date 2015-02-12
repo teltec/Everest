@@ -97,17 +97,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DAO\FluentNHibernate\FluentNHibernateMappings.cs" />
-    <Compile Include="DAO\NHibernateAuditInterceptor.cs" />
-    <Compile Include="DAO\FluentNHibernate\FluentNHibernateHelper.cs" />
-    <Compile Include="DAO\NHibernateLoadListener.cs" />
-    <None Include="DAO\NHibernate\NHibernateMappings.cs_" />
+    <Compile Include="DAO\NHibernate\NHibernateMappings.cs" />
+    <Compile Include="DAO\NHibernate\IAuditable.cs" />
+    <Compile Include="DAO\NHibernate\NHibernateAuditInterceptor.cs" />
+    <Compile Include="DAO\NHibernate\NHibernateHelper.cs" />
+    <Compile Include="DAO\NHibernate\NHibernateLoadListener.cs" />
+    <Compile Include="DAO\NHibernate\NHibernatePersistentEntityListener.cs" />
     <Compile Include="DAO\Repositories.cs" />
-    <None Include="DAO\NHibernate\NHibernateHelper.cs_" />
-    <Compile Include="DAO\NHibernateTransactionProxy.cs" />
+    <Compile Include="DAO\NHibernate\NHibernateTransactionProxy.cs" />
     <Compile Include="DAO\Test\SchemaTest.cs" />
     <Compile Include="Models\EStorageAccountType.cs" />
-    <Compile Include="Models\IEntity.cs" />
+    <Compile Include="Models\BaseEntity.cs" />
+    <Compile Include="DAO\NHibernate\IPersistentEntity.cs" />
     <Compile Include="Provider.cs" />
     <Compile Include="DAO\BaseRepository.cs" />
     <Compile Include="Forms\BackupPlan\BackupPlanListControl.cs">
@@ -180,7 +181,7 @@
     <Compile Include="Models\BackupPlan.cs" />
     <Compile Include="Models\BackupPlanSourceEntry.cs" />
     <Compile Include="Models\BackupStatus.cs" />
-    <Compile Include="Models\CloudStorageAccount.cs" />
+    <Compile Include="Models\StorageAccount.cs" />
     <Compile Include="Forms\CloudStorageAccountsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -193,11 +194,8 @@
     <Compile Include="Forms\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-    <None Include="Models\DatabaseContext.cs_" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="DAO\NHibernate\DBContextScope.cs_" />
-    <None Include="_nhibernate.cfg.xml_" />
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanListControl.resx">
       <DependentUpon>BackupPlanListControl.cs</DependentUpon>
     </EmbeddedResource>

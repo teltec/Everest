@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Windows.Forms;
 using Teltec.Backup.DAO;
 using Teltec.Backup.Models;
@@ -8,6 +9,7 @@ namespace Teltec.Backup.Forms.BackupPlan
 {
 	sealed class NewBackupPlanPresenter : WizardPresenter
 	{
+		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 		private readonly BackupPlanRepository _dao = new BackupPlanRepository();
 
 		public NewBackupPlanPresenter()
@@ -39,11 +41,10 @@ namespace Teltec.Backup.Forms.BackupPlan
 			Models.BackupPlan plan = Model as Models.BackupPlan;
 
 			Console.WriteLine("Name = {0}", plan.Name);
-			//ICloudStorageAccount storageAccount = Models.BackupPlan.GetStorageAccount(plan, _dao);
 			Console.WriteLine("StorageAccount = {0}", plan.StorageAccount.DisplayName);
 			Console.WriteLine("StorageAccountType = {0}", plan.StorageAccountType.ToString());
 			foreach (BackupPlanSourceEntry entry in plan.SelectedSources)
-				Console.WriteLine("SelectedSource => #{0}, {1}, {1}", entry.Id, entry.Type.ToString(), entry.Path);
+				Console.WriteLine("SelectedSource => #{0}, {1}, {2}", entry.Id, entry.Type.ToString(), entry.Path);
 			Console.WriteLine("ScheduleType = {0}", plan.ScheduleType.ToString());
 
 			//try

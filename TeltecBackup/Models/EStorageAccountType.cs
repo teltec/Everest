@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace Teltec.Backup.Models
 {
-	public interface IEntity<ID> //where ID : class
+	public enum EStorageAccountType
 	{
-	}
+		Unknown = 0,
+		AmazonS3 = 1,
+		FileSystem = 2,
+	};
 }

@@ -9,6 +9,11 @@ namespace Teltec.Backup.Models
     {
 		public const int DisplayNameMaxLen = 16;
 
+		public override EStorageAccountType Type
+		{
+			get { return EStorageAccountType.AmazonS3;  }
+		}
+
         // http://docs.aws.amazon.com/IAM/latest/APIReference/API_AccessKey.html
         public const int AccessKeyNameMinLen = 16;
         public const int AccessKeyNameMaxLen = 32;
@@ -42,10 +47,5 @@ namespace Teltec.Backup.Models
 		//	get { return _BackupPlans; }
 		//	set { SetField(ref _BackupPlans, value); }
 		//}
-
-		public AmazonS3Account()
-		{
-			Type = EStorageAccountType.AmazonS3;
-		}
     }
 }

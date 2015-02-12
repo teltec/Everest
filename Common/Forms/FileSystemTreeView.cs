@@ -285,7 +285,11 @@ namespace Teltec.Common.Forms
 				nodeName = drive.Name;
 			}
 			TreeNode node = new TreeNode(nodeName, 0, 0);
-			node.Tag = new FileSystemTreeNodeTag(FileSystemTreeNodeTag.InfoType.DRIVE, drive);
+			node.Tag = new FileSystemTreeNodeTag
+			{
+				Type = FileSystemTreeNodeTag.InfoType.DRIVE,
+				InfoObject = drive
+			};
 			node.ImageKey = "drive";
 			view.Nodes.Add(node);
 			RestoreNodeState(FileSystemTreeNodeTag.InfoType.DRIVE, node);
@@ -295,7 +299,11 @@ namespace Teltec.Common.Forms
 		private TreeNode AddFolderNode(TreeNode parentNode, DirectoryInfo folder)
 		{
 			TreeNode node = new TreeNode(folder.Name, 0, 0);
-			node.Tag = new FileSystemTreeNodeTag(FileSystemTreeNodeTag.InfoType.FOLDER, folder);
+			node.Tag = new FileSystemTreeNodeTag
+			{
+				Type = FileSystemTreeNodeTag.InfoType.FOLDER,
+				InfoObject = folder
+			};
 			node.ImageKey = "folder";
 			parentNode.Nodes.Add(node);
 			if (GetCheckState(parentNode) == CheckState.Checked)
@@ -308,7 +316,11 @@ namespace Teltec.Common.Forms
 		private TreeNode AddFileNode(TreeNode parentNode, FileInfo file)
 		{
 			TreeNode node = new TreeNode(file.Name, 0, 0);
-			node.Tag = new FileSystemTreeNodeTag(FileSystemTreeNodeTag.InfoType.FILE, file);
+			node.Tag = new FileSystemTreeNodeTag
+			{
+				Type = FileSystemTreeNodeTag.InfoType.FILE,
+				InfoObject = file
+			};
 			node.ImageKey = "file";
 			parentNode.Nodes.Add(node);
 			if (GetCheckState(parentNode) == CheckState.Checked)
@@ -321,7 +333,7 @@ namespace Teltec.Common.Forms
 		private TreeNode AddLazyLoadingNode(TreeNode parentNode)
 		{
 			TreeNode node = new TreeNode("Retrieving data...", 0, 0);
-			node.Tag = new FileSystemTreeNodeTag(FileSystemTreeNodeTag.InfoType.LOADING, null);
+			node.Tag = new FileSystemTreeNodeTag { Type = FileSystemTreeNodeTag.InfoType.LOADING };
 			node.ImageKey = "loading";
 			parentNode.Nodes.Add(node);
 			return node;
@@ -390,7 +402,9 @@ namespace Teltec.Common.Forms
 				case CheckState.Checked:
 					// If it's checked, add it and ignore its child nodes.
 					// This means the entire folder is checked - regardless of what it contains.
-					list.Add(node.Tag as FileSystemTreeNodeTag);
+					FileSystemTreeNodeTag tag = node.Tag as FileSystemTreeNodeTag;
+					tag.State = CheckState.Checked;
+					list.Add(tag);
 					break;
 				case CheckState.Mixed:
 					// Ignore it, but verify its child nodes.
@@ -403,9 +417,9 @@ namespace Teltec.Common.Forms
 		public List<FileSystemTreeNodeTag> GetCheckedTagData()
 		{
 			// ...
-			List<FileSystemTreeNodeTag> list = CheckedDataSource != null
+			List<FileSystemTreeNodeTag> list = /*CheckedDataSource != null
 				? CheckedDataSource.Select(e => e.Value).Where(e => e.State == CheckState.Checked).ToList()
-				: new List<FileSystemTreeNodeTag>();
+				: */ new List<FileSystemTreeNodeTag>();
 			// ...
 			foreach (TreeNode node in Nodes)
 			{
@@ -414,8 +428,9 @@ namespace Teltec.Common.Forms
 					string path = FileSystemTreeNodeTag.BuildPath(node.Tag as FileSystemTreeNodeTag);
 					FileSystemTreeNodeTag match;
 					bool found = CheckedDataSource.TryGetValue(path, out match);
-					if (!found)
-						BuildTagDataList(node, list);
+					if (found)
+						node.Tag = match;
+					BuildTagDataList(node, list);
 				}
 				else
 				{
@@ -472,14 +487,26 @@ namespace Teltec.Common.Forms
 								{
 									case FileSystemTreeNodeTag.InfoType.FOLDER:
 										{
-											FileSystemTreeNodeTag newTag = new FileSystemTreeNodeTag(type, parentInfo, CheckState.Mixed);
-											expandedDict.Add(newTag.Path, newTag);
+											FileSystemTreeNodeTag newTag = new FileSystemTreeNodeTag
+											{
+												Type = type,
+												InfoObject = parentInfo,
+												State = CheckState.Mixed
+											};
+											if (!expandedDict.ContainsKey(newTag.Path))
+												expandedDict.Add(newTag.Path, newTag);
 											break;
 										}
 									case FileSystemTreeNodeTag.InfoType.DRIVE:
 										{
-											FileSystemTreeNodeTag newTag = new FileSystemTreeNodeTag(type, new DriveInfo(parentInfo.Name), CheckState.Mixed);
-											expandedDict.Add(newTag.Path, newTag);
+											FileSystemTreeNodeTag newTag = new FileSystemTreeNodeTag
+											{
+												Type = type,
+												InfoObject = new DriveInfo(parentInfo.Name),
+												State = CheckState.Mixed
+											};
+											if (!expandedDict.ContainsKey(newTag.Path))
+												expandedDict.Add(newTag.Path, newTag);
 											break;
 										}
 								}
@@ -514,7 +541,10 @@ namespace Teltec.Common.Forms
 						FileSystemTreeNodeTag match;
 						bool found = CheckedDataSource.TryGetValue(path, out match);
 						if (found && match.Type == type)
+						{
+							node.Tag = match;
 							SetStateImage(node, (int)match.State);
+						}
 						break;
 					}
 			}

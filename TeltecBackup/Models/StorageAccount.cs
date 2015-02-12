@@ -9,7 +9,7 @@ using Teltec.Common;
 
 namespace Teltec.Backup.Models
 {
-	public abstract class StorageAccount : ObservableObject, IEntity<int>
+	public abstract class StorageAccount : BaseEntity<int?>
     {
 		private int? _Id;
 		public virtual int? Id
@@ -18,11 +18,9 @@ namespace Teltec.Backup.Models
 			set { SetField(ref _Id, value); }
 		}
 
-		private EStorageAccountType _Type;
-		public virtual EStorageAccountType Type
+		public abstract EStorageAccountType Type
 		{
-			get { return _Type; }
-			set { SetField(ref _Type, value); }
+			get;
 		}
 
 		private String _DisplayName;

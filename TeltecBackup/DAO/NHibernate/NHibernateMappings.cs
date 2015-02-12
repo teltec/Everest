@@ -1,8 +1,7 @@
 ﻿using FluentNHibernate.Mapping;
-using NHibernate.Type;
 using Teltec.Backup.Models;
 
-namespace Teltec.Backup.DAO.FluentNHibernate
+namespace Teltec.Backup.DAO.NHibernate
 {
 	class StorageAccountMap : ClassMap<StorageAccount>
 	{
@@ -10,11 +9,12 @@ namespace Teltec.Backup.DAO.FluentNHibernate
 		{
 			Table("storage_accounts");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_storage_accounts");
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_storage_accounts").UnsavedValue(null);
 
 			Map(p => p.Type)
 				.Column("type")
 				.Not.Nullable()
+				.ReadOnly().Access.None()
 				.CustomType<GenericEnumMapper<EStorageAccountType>>();
 
 			DiscriminateSubClassesOnColumn("type");
@@ -61,7 +61,7 @@ namespace Teltec.Backup.DAO.FluentNHibernate
 		{
 			Table("backup_plans");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plans");
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plans").UnsavedValue(null);
 
 			Map(p => p.Name)
 				.Column("name")
@@ -85,7 +85,8 @@ namespace Teltec.Backup.DAO.FluentNHibernate
 
 			HasMany(p => p.SelectedSources)
 				.KeyColumn("backup_plan_id")
-				.Inverse().Cascade.All();
+				.Cascade.AllDeleteOrphan()
+				.AsBag();
 
 			Map(p => p.ScheduleType)
 				.Column("schedule_type")
@@ -100,7 +101,7 @@ namespace Teltec.Backup.DAO.FluentNHibernate
 		{
 			Table("backup_plans_source_entries");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plans_source_entries");
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plans_source_entries").UnsavedValue(null);
 
 			Map(p => p.Type)
 				.Column("type")
@@ -113,10 +114,10 @@ namespace Teltec.Backup.DAO.FluentNHibernate
 				.Length(BackupPlanSourceEntry.PathMaxLen);
 
 			References(fk => fk.BackupPlan)
-				.Column("backup_plan_id")
-				.Not.Nullable()
-				//.LazyLoad(Laziness.Proxy)
-				.Cascade.All();
+				.Column("backup_plan_id");
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+ 				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable();
 		}
 	}
 
