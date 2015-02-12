@@ -386,7 +386,7 @@ namespace Teltec.Common.Forms
 			UseWaitCursor = false;
 		}
 
-		private void BuildTagDataList(TreeNode node, List<FileSystemTreeNodeTag> list)
+		private void BuildTagDataDict(TreeNode node, Dictionary<string, FileSystemTreeNodeTag> dict)
 		{
 			FileSystemTreeNodeTag nodeTag = node.Tag as FileSystemTreeNodeTag;
 			// Skip over loading nodes and nodes without a tag.
@@ -402,24 +402,38 @@ namespace Teltec.Common.Forms
 				case CheckState.Checked:
 					// If it's checked, add it and ignore its child nodes.
 					// This means the entire folder is checked - regardless of what it contains.
-					FileSystemTreeNodeTag tag = node.Tag as FileSystemTreeNodeTag;
-					tag.State = CheckState.Checked;
-					list.Add(tag);
+					if (CheckedDataSource != null)
+					{
+						string path = FileSystemTreeNodeTag.BuildPath(node.Tag as FileSystemTreeNodeTag);
+						FileSystemTreeNodeTag match;
+						bool found = dict.TryGetValue(path, out match);
+						match = found ? match : node.Tag as FileSystemTreeNodeTag;
+						match.State = CheckState.Checked;
+						node.Tag = match;
+						dict.Add(match.Path, match);
+					}
+					else
+					{
+						FileSystemTreeNodeTag tag = node.Tag as FileSystemTreeNodeTag;
+						tag.State = CheckState.Checked;
+						dict.Add(tag.Path, tag);
+					}
 					break;
 				case CheckState.Mixed:
 					// Ignore it, but verify its child nodes.
 					foreach (TreeNode child in node.Nodes)
-						BuildTagDataList(child, list);
+						BuildTagDataDict(child, dict);
 					break;
 			}
 		}
 
-		public List<FileSystemTreeNodeTag> GetCheckedTagData()
+		public Dictionary<string, FileSystemTreeNodeTag> GetCheckedTagData()
 		{
 			// ...
-			List<FileSystemTreeNodeTag> list = /*CheckedDataSource != null
-				? CheckedDataSource.Select(e => e.Value).Where(e => e.State == CheckState.Checked).ToList()
-				: */ new List<FileSystemTreeNodeTag>();
+			Dictionary<string, FileSystemTreeNodeTag> dict = CheckedDataSource != null
+				? CheckedDataSource.Select(e => e.Value).Where(e => e.State == CheckState.Checked)
+					.ToDictionary(k => k.Path)
+				: new Dictionary<string, FileSystemTreeNodeTag>();
 			// ...
 			foreach (TreeNode node in Nodes)
 			{
@@ -427,17 +441,17 @@ namespace Teltec.Common.Forms
 				{
 					string path = FileSystemTreeNodeTag.BuildPath(node.Tag as FileSystemTreeNodeTag);
 					FileSystemTreeNodeTag match;
-					bool found = CheckedDataSource.TryGetValue(path, out match);
+					bool found = dict.TryGetValue(path, out match);
 					if (found)
 						node.Tag = match;
-					BuildTagDataList(node, list);
+					BuildTagDataDict(node, dict);
 				}
 				else
 				{
-					BuildTagDataList(node, list);
+					BuildTagDataDict(node, dict);
 				}
 			}
-			return list;
+			return dict;
 		}
 
 		#region CheckState restoring

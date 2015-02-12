@@ -84,22 +84,23 @@ namespace Teltec.Backup.Models
 	{
 		// Convert collection of `FileSystemTreeView.TreeNodeTag` to `BackupPlanSourceEntry`.
 		public static List<BackupPlanSourceEntry> ToBackupPlanSourceEntry(
-			this List<FileSystemTreeNodeTag> tags, BackupPlan plan, BackupPlanSourceEntryRepository dao)
+			this Dictionary<string, FileSystemTreeNodeTag> tags, BackupPlan plan, BackupPlanSourceEntryRepository dao)
 		{
-			List<BackupPlanSourceEntry> entries = new List<BackupPlanSourceEntry>(tags.Count);
-			foreach (Teltec.Common.Forms.FileSystemTreeNodeTag tag in tags)
+			List<BackupPlanSourceEntry> sources = new List<BackupPlanSourceEntry>(tags.Count);
+			foreach (var entry in tags)
 			{
-				BackupPlanSourceEntry entry = null;
+				Teltec.Common.Forms.FileSystemTreeNodeTag tag = entry.Value;
+				BackupPlanSourceEntry source = null;
 				if (tag.Id != null)
-					entry = dao.Get(tag.Id as long?);
+					source = dao.Get(tag.Id as long?);
 				else
-					entry = new BackupPlanSourceEntry();
-				entry.BackupPlan = plan;
-				entry.Type = tag.ToEntryType();
-				entry.Path = tag.Path;
-				entries.Add(entry);
+					source = new BackupPlanSourceEntry();
+				source.BackupPlan = plan;
+				source.Type = tag.ToEntryType();
+				source.Path = tag.Path;
+				sources.Add(source);
 			}
-			return entries;
+			return sources;
 		}
 
 		public static BackupPlanSourceEntry.EntryType ToEntryType(this FileSystemTreeNodeTag tag)

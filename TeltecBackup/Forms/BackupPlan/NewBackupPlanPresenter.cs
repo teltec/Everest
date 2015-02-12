@@ -34,6 +34,14 @@ namespace Teltec.Backup.Forms.BackupPlan
 			RegisterFormClass(typeof(BackupPlanScheduleForm), options);
 		}
 
+		public override void OnCancel()
+		{
+			base.OnCancel();
+
+			Models.BackupPlan plan = Model as Models.BackupPlan;
+			_dao.Refresh(plan);
+		}
+
 		public override void OnFinish()
 		{
 			base.OnFinish();
