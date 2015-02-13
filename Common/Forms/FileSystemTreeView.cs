@@ -124,6 +124,7 @@ namespace Teltec.Common.Forms
 				return false;
 
 			SetStateImage(node, (int)state);
+			RestoreNodeStateRemove(node);
 
 			OnAfterCheck(new TreeViewEventArgs(node, TreeViewAction.Unknown));
 			return true;
@@ -410,13 +411,15 @@ namespace Teltec.Common.Forms
 						match = found ? match : node.Tag as FileSystemTreeNodeTag;
 						match.State = CheckState.Checked;
 						node.Tag = match;
-						dict.Add(match.Path, match);
+						if (!dict.ContainsKey(match.Path))
+							dict.Add(match.Path, match);
 					}
 					else
 					{
 						FileSystemTreeNodeTag tag = node.Tag as FileSystemTreeNodeTag;
 						tag.State = CheckState.Checked;
-						dict.Add(tag.Path, tag);
+						if (!dict.ContainsKey(tag.Path))
+							dict.Add(tag.Path, tag);
 					}
 					break;
 				case CheckState.Mixed:
@@ -561,6 +564,22 @@ namespace Teltec.Common.Forms
 						}
 						break;
 					}
+			}
+		}
+
+		private void RestoreNodeStateRemove(TreeNode node)
+		{
+			if (CheckedDataSource == null)
+				return;
+			if (node.Tag == null)
+				return;
+
+			FileSystemTreeNodeTag tag = node.Tag as FileSystemTreeNodeTag;
+			if (tag.Type != FileSystemTreeNodeTag.InfoType.LOADING)
+			{
+				string path = FileSystemTreeNodeTag.BuildPath(tag);
+				if (CheckedDataSource.ContainsKey(path))
+					CheckedDataSource.Remove(path);
 			}
 		}
 

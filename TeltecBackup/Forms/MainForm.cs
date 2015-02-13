@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NLog;
+using System;
 using System.Windows.Forms;
 using Teltec.Backup.DAO;
 using Teltec.Backup.Forms.BackupPlan;
@@ -14,6 +8,7 @@ namespace Teltec.Backup.Forms
 {
     public partial class MainForm : Form
     {
+		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 		private readonly BackupPlanRepository _dao = new BackupPlanRepository();
 
         public MainForm()
