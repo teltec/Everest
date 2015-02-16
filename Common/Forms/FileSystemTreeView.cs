@@ -213,6 +213,9 @@ namespace Teltec.Common.Forms
 			if (DesignMode)
 				return;
 
+			if (!IsHandleCreated)
+				CreateHandle();
+
 			SuspendLayout();
 			this.Nodes.Clear();
 			try
@@ -500,38 +503,41 @@ namespace Teltec.Common.Forms
 								FileSystemTreeNodeTag.InfoType type = parentInfo.Parent != null
 									? FileSystemTreeNodeTag.InfoType.FOLDER
 									: FileSystemTreeNodeTag.InfoType.DRIVE;
+								
+								FileSystemTreeNodeTag newTag = null;
+
 								switch (type)
 								{
 									case FileSystemTreeNodeTag.InfoType.FOLDER:
+										newTag = new FileSystemTreeNodeTag
 										{
-											FileSystemTreeNodeTag newTag = new FileSystemTreeNodeTag
-											{
-												Type = type,
-												InfoObject = parentInfo,
-												State = CheckState.Mixed
-											};
-											if (!expandedDict.ContainsKey(newTag.Path))
-												expandedDict.Add(newTag.Path, newTag);
-											break;
-										}
+											Type = type,
+											InfoObject = parentInfo,
+											State = CheckState.Mixed
+										};
+										break;
 									case FileSystemTreeNodeTag.InfoType.DRIVE:
+										newTag = new FileSystemTreeNodeTag
 										{
-											FileSystemTreeNodeTag newTag = new FileSystemTreeNodeTag
-											{
-												Type = type,
-												InfoObject = new DriveInfo(parentInfo.Name),
-												State = CheckState.Mixed
-											};
-											if (!expandedDict.ContainsKey(newTag.Path))
-												expandedDict.Add(newTag.Path, newTag);
-											break;
-										}
+											Type = type,
+											InfoObject = new DriveInfo(parentInfo.Name),
+											State = CheckState.Mixed
+										};
+										break;
 								}
+
+								if (newTag != null)
+								{
+									if (!expandedDict.ContainsKey(newTag.Path))
+										expandedDict.Add(newTag.Path, newTag);
+								}
+
 								parentInfo = parentInfo.Parent;
 							}
 
 							if (obj.Value.InfoObject == null)
 								obj.Value.InfoObject = new DirectoryInfo(obj.Value.Path);
+
 							expandedDict.Add(obj.Key, obj.Value);
 							break;
 						}
