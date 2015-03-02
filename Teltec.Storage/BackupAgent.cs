@@ -21,9 +21,17 @@ namespace App
 		{
 			if (_Sources == null)
 			{
-				_Sources = Enumerable.Aggregate<FileInfo, string>(
-					_Files, "", (result, next) => result + next.FullName + delimiter);
-				_Sources = _Sources.Substring(0, maxLength) + trail;
+				if (FileCount > 0)
+				{
+					_Sources = Enumerable.Aggregate<FileInfo, string>(
+						_Files, "", (result, next) => result + next.FullName + delimiter);
+					if (_Sources.Length > maxLength)
+						_Sources = _Sources.Substring(0, maxLength) + trail;
+				}
+				else
+				{
+					_Sources = "No files to transfer.";
+				}
 			}
 			return _Sources;
 		}
