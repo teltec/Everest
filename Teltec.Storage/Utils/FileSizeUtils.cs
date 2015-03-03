@@ -42,7 +42,6 @@ namespace Teltec.Storage.Utils
 		{
 			if (e.DesiredType == typeof(string))
 			{
-				// Convert the string back to decimal using the shared Parse method.
 				e.Value = FileSizeToString((long)e.Value);
 			}
 		}

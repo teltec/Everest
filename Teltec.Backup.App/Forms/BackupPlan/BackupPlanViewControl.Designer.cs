@@ -37,6 +37,8 @@
 			this.panelActions = new System.Windows.Forms.Panel();
 			this.panelContents = new System.Windows.Forms.Panel();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
+			this.lblLastSuccessfulRun = new System.Windows.Forms.Label();
+			this.label8 = new System.Windows.Forms.Label();
 			this.groupBox1.SuspendLayout();
 			this.panelTitle.SuspendLayout();
 			this.panelActions.SuspendLayout();
@@ -56,6 +58,8 @@
 			// 
 			// groupBox1
 			// 
+			this.groupBox1.Controls.Add(this.lblLastSuccessfulRun);
+			this.groupBox1.Controls.Add(this.label8);
 			this.groupBox1.Controls.Add(this.lblDuration);
 			this.groupBox1.Controls.Add(this.lblFilesUploaded);
 			this.groupBox1.Controls.Add(this.lblLastRun);
@@ -71,7 +75,7 @@
 			this.groupBox1.Dock = System.Windows.Forms.DockStyle.Top;
 			this.groupBox1.Location = new System.Drawing.Point(0, 0);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(398, 128);
+			this.groupBox1.Size = new System.Drawing.Size(398, 147);
 			this.groupBox1.TabIndex = 13;
 			this.groupBox1.TabStop = false;
 			// 
@@ -79,7 +83,7 @@
 			// 
 			this.lblDuration.AutoSize = true;
 			this.lblDuration.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.lblDuration.Location = new System.Drawing.Point(132, 108);
+			this.lblDuration.Location = new System.Drawing.Point(132, 127);
 			this.lblDuration.Margin = new System.Windows.Forms.Padding(3);
 			this.lblDuration.Name = "lblDuration";
 			this.lblDuration.Size = new System.Drawing.Size(69, 13);
@@ -90,7 +94,7 @@
 			// 
 			this.lblFilesUploaded.AutoSize = true;
 			this.lblFilesUploaded.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.lblFilesUploaded.Location = new System.Drawing.Point(132, 89);
+			this.lblFilesUploaded.Location = new System.Drawing.Point(132, 108);
 			this.lblFilesUploaded.Margin = new System.Windows.Forms.Padding(3);
 			this.lblFilesUploaded.Name = "lblFilesUploaded";
 			this.lblFilesUploaded.Size = new System.Drawing.Size(96, 13);
@@ -145,7 +149,7 @@
 			// 
 			this.label6.AutoSize = true;
 			this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label6.Location = new System.Drawing.Point(6, 108);
+			this.label6.Location = new System.Drawing.Point(6, 127);
 			this.label6.Margin = new System.Windows.Forms.Padding(3);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(100, 13);
@@ -156,7 +160,7 @@
 			// 
 			this.label5.AutoSize = true;
 			this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label5.Location = new System.Drawing.Point(6, 89);
+			this.label5.Location = new System.Drawing.Point(6, 108);
 			this.label5.Margin = new System.Windows.Forms.Padding(3);
 			this.label5.Name = "label5";
 			this.label5.Size = new System.Drawing.Size(89, 13);
@@ -259,7 +263,7 @@
 			this.panelActions.Controls.Add(this.llblDeletePlan);
 			this.panelActions.Controls.Add(this.llblRunNow);
 			this.panelActions.Dock = System.Windows.Forms.DockStyle.Bottom;
-			this.panelActions.Location = new System.Drawing.Point(0, 128);
+			this.panelActions.Location = new System.Drawing.Point(0, 147);
 			this.panelActions.Margin = new System.Windows.Forms.Padding(3, 10, 3, 3);
 			this.panelActions.Name = "panelActions";
 			this.panelActions.Size = new System.Drawing.Size(398, 28);
@@ -274,13 +278,35 @@
 			this.panelContents.Location = new System.Drawing.Point(8, 36);
 			this.panelContents.Margin = new System.Windows.Forms.Padding(3, 10, 3, 3);
 			this.panelContents.Name = "panelContents";
-			this.panelContents.Size = new System.Drawing.Size(398, 156);
+			this.panelContents.Size = new System.Drawing.Size(398, 175);
 			this.panelContents.TabIndex = 26;
 			// 
 			// timer1
 			// 
 			this.timer1.Interval = 1000;
 			this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+			// 
+			// lblLastSuccessfulRun
+			// 
+			this.lblLastSuccessfulRun.AutoSize = true;
+			this.lblLastSuccessfulRun.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.lblLastSuccessfulRun.Location = new System.Drawing.Point(132, 89);
+			this.lblLastSuccessfulRun.Margin = new System.Windows.Forms.Padding(3);
+			this.lblLastSuccessfulRun.Name = "lblLastSuccessfulRun";
+			this.lblLastSuccessfulRun.Size = new System.Drawing.Size(121, 13);
+			this.lblLastSuccessfulRun.TabIndex = 25;
+			this.lblLastSuccessfulRun.Text = "{{ LastSuccessfulRun }}";
+			// 
+			// label8
+			// 
+			this.label8.AutoSize = true;
+			this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.label8.Location = new System.Drawing.Point(6, 89);
+			this.label8.Margin = new System.Windows.Forms.Padding(3);
+			this.label8.Name = "label8";
+			this.label8.Size = new System.Drawing.Size(117, 13);
+			this.label8.TabIndex = 24;
+			this.label8.Text = "Last successful run";
 			// 
 			// BackupPlanViewControl
 			// 
@@ -290,7 +316,7 @@
 			this.Controls.Add(this.panelContents);
 			this.Name = "BackupPlanViewControl";
 			this.Padding = new System.Windows.Forms.Padding(8);
-			this.Size = new System.Drawing.Size(414, 200);
+			this.Size = new System.Drawing.Size(414, 219);
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
 			this.panelTitle.ResumeLayout(false);
@@ -326,6 +352,8 @@
 		private System.Windows.Forms.Panel panelActions;
 		private System.Windows.Forms.Panel panelContents;
 		private System.Windows.Forms.Timer timer1;
+		private System.Windows.Forms.Label lblLastSuccessfulRun;
+		private System.Windows.Forms.Label label8;
 
 	}
 }

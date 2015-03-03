@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
+using Teltec.Common.Extensions;
 using Teltec.Storage;
 using Teltec.Storage.Agent;
 
@@ -16,29 +16,18 @@ namespace App
 		LinkedList<FileInfo> _Files = new LinkedList<FileInfo>();
 		IAsyncTransferAgent _Agent;
 
-		private string _Sources;
-		public string Sources(string delimiter, int maxLength, string trail)
+		private string _CachedSourcesAsDelimitedString;
+		public string SourcesAsDelimitedString(string delimiter, int maxLength, string trail)
 		{
-			if (_Sources == null)
-			{
-				if (FileCount > 0)
-				{
-					_Sources = Enumerable.Aggregate<FileInfo, string>(
-						_Files, "", (result, next) => result + next.FullName + delimiter);
-					if (_Sources.Length > maxLength)
-						_Sources = _Sources.Substring(0, maxLength) + trail;
-				}
-				else
-				{
-					_Sources = "No files to transfer.";
-				}
-			}
-			return _Sources;
+			if (_CachedSourcesAsDelimitedString == null)
+				_CachedSourcesAsDelimitedString = _Files.AsDelimitedString(p => p.FullName,
+					"No files to transfer", delimiter, maxLength, trail);
+			return _CachedSourcesAsDelimitedString;
 		}
 
-		private void InvalidateSources()
+		private void InvalidateCachedSourcesAsDelimitedString()
 		{
-			_Sources = null;
+			_CachedSourcesAsDelimitedString = null;
 		}
 
 		long _EstimatedLength = 0; // In bytes.
@@ -81,8 +70,8 @@ namespace App
 		{
 			_Files.Clear();
 			_EstimatedLength = 0;
-			
-			InvalidateSources();
+
+			InvalidateCachedSourcesAsDelimitedString();
 		}
 
 		public void AddFile(string path)
@@ -101,8 +90,8 @@ namespace App
 			_Files.AddLast(file);
 			_EstimatedLength += file.Length;
 			logger.Debug("File added: {0}, {1} bytes", file.FullName, file.Length);
-			
-			InvalidateSources();
+
+			InvalidateCachedSourcesAsDelimitedString();
 		}
 
 		public void AddDirectory(string path)
@@ -125,8 +114,8 @@ namespace App
 			// Add all sub-directories recursively.
 			foreach (DirectoryInfo subdir in directory.GetDirectories())
 				AddDirectory(subdir);
-			
-			InvalidateSources();
+
+			InvalidateCachedSourcesAsDelimitedString();
 		}
 
 		public async Task StartBackup()

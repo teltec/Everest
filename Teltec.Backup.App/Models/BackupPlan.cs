@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Teltec.Common;
-using System.Linq;
-using Teltec.Common.Forms;
-using Teltec.Backup.App.DAO;
+using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.App.Models
 {
@@ -73,6 +70,20 @@ namespace Teltec.Backup.App.Models
 			protected set { SetField(ref _SelectedSources, value); }
 		}
 
+		private string _CachedSelectedSourcesAsDelimitedString;
+		public virtual string SelectedSourcesAsDelimitedString(string delimiter, int maxLength, string trail)
+		{
+			if (_CachedSelectedSourcesAsDelimitedString == null)
+				_CachedSelectedSourcesAsDelimitedString = SelectedSources.AsDelimitedString(p => p.Path,
+					"No selected sources", delimiter, maxLength, trail);
+			return _CachedSelectedSourcesAsDelimitedString;
+		}
+
+		private void InvalidateCachedSelectedSourcesAsDelimitedString()
+		{
+			_CachedSelectedSourcesAsDelimitedString = null;
+		}
+
 		#endregion
 
 		#region Schedule
@@ -96,16 +107,18 @@ namespace Teltec.Backup.App.Models
 
 		#endregion
 
-		#region Backup task (not serializable)
+		private DateTime? _LastRunAt;
+		public virtual DateTime? LastRunAt
+		{
+			get { return _LastRunAt; }
+			set { SetField(ref _LastRunAt, value); }
+		}
 
-		//private Backup _RunningBackup;
-		//public virtual Backup RunningBackup
-		//{
-		//	get { return _RunningBackup; }
-		//	set { SetField(ref _RunningBackup, value); }
-		//}
-
-		#endregion
-
+		private DateTime? _LastSuccessfulRunAt;
+		public virtual DateTime? LastSuccessfulRunAt
+		{
+			get { return _LastSuccessfulRunAt; }
+			set { SetField(ref _LastSuccessfulRunAt, value); }
+		}
 	}
 }

@@ -87,7 +87,10 @@ namespace Teltec.Backup.App.Models
 		{
 			get
 			{
-				return BackupAgent.Sources(", ", 50, "...");
+				if (BackupAgent != null)
+					return BackupAgent.SourcesAsDelimitedString(", ", 50, "...");
+				else
+					return Plan.SelectedSourcesAsDelimitedString(", ", 50, "...");
 			}
 		}
 

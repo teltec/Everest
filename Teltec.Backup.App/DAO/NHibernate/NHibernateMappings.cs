@@ -1,4 +1,5 @@
 ﻿using FluentNHibernate.Mapping;
+using NHibernate.Type;
 using Teltec.Backup.App.Models;
 
 namespace Teltec.Backup.App.DAO.NHibernate
@@ -92,6 +93,16 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("schedule_type")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<BackupPlan.EScheduleType>>();
+
+			Map(p => p.LastRunAt)
+				.Column("last_run_at")
+				.Nullable();
+				//.CustomType<TimestampType>();
+
+			Map(p => p.LastSuccessfulRunAt)
+				.Column("last_successful_run_at")
+				.Nullable();
+				//.CustomType<TimestampType>();
 		}
 	}
 

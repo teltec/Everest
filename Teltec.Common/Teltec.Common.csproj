@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="Collections\ObservableDictionary.cs" />
     <Compile Include="Extensions\ICollectionExtension.cs" />
+    <Compile Include="Extensions\IEnumerableExtensions.cs" />
     <Compile Include="Forms\CheckState.cs" />
     <Compile Include="Forms\FileSystemTreeView.cs">
       <SubType>Component</SubType>
