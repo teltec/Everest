@@ -27,6 +27,8 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			{
 				lblTitle.DataBindings.Clear();
 				lblSchedule.DataBindings.Clear();
+				lblLastRun.DataBindings.Clear();
+				lblLastSuccessfulRun.DataBindings.Clear();
 
 				if (Model == null)
 					return;
