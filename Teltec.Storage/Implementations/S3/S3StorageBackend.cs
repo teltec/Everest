@@ -46,35 +46,38 @@ namespace Teltec.Storage.Implementations.S3
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/LLuploadFileDotNet.html
 		public override void UploadFile(string filePath, string keyName, CancellationToken cancellationToken)
 		{
-			// Attempt to read the file before anything else.
-			// Here we don't want to handle possible exceptions.
-			FileInfo fileInfo = new FileInfo(filePath);
-			long contentLength = fileInfo.Length;
+			FileInfo fileInfo = null;
+			long contentLength = 0;
+			CancelableFileStream inputStream = null;
 
-			CancelableFileStream inputStream = new CancelableFileStream(
-				filePath, FileMode.Open, FileAccess.Read, cancellationToken);
+			TransferFileProgressArgs reusedProgressArgs = new TransferFileProgressArgs
+			{
+				State = TransferState.PENDING,
+				TotalBytes = 0,
+				TransferredBytes = 0,
+				FilePath = filePath,
+			};
 
             // List to store upload part responses.
             List<UploadPartResponse> uploadResponses = new List<UploadPartResponse>();
-
-			TransferFileProgressArgs reusedProgressArgs = new TransferFileProgressArgs
-				{
-					State = TransferState.PENDING,
-					TotalBytes = contentLength,
-					TransferredBytes = 0,
-					FilePath = filePath,
-				};
 
 			InitiateMultipartUploadResponse initResponse = null;
 			
 			try
 			{
+				// Attempt to read the file before anything else.
+				fileInfo = new FileInfo(filePath);
+				contentLength = reusedProgressArgs.TotalBytes = fileInfo.Length;
+
 				// Report start - before any possible failures.
 				if (UploadStarted != null)
 					UploadStarted(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.STARTED;
 					});
+
+				// Create the input stream to actually read the file.
+				inputStream = new CancelableFileStream(filePath, FileMode.Open, FileAccess.Read, cancellationToken);
 
 				// 1. Initialize.
 				InitiateMultipartUploadRequest initiateRequest = new InitiateMultipartUploadRequest
