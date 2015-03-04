@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
 using Teltec.Storage.Agent;
+using Teltec.Storage.Versioning;
 
 namespace App
 {
@@ -13,14 +14,14 @@ namespace App
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		LinkedList<FileInfo> _Files = new LinkedList<FileInfo>();
+		LinkedList<VersionedFileInfo> _Files = new LinkedList<VersionedFileInfo>();
 		IAsyncTransferAgent _Agent;
 
 		private string _CachedSourcesAsDelimitedString;
 		public string SourcesAsDelimitedString(string delimiter, int maxLength, string trail)
 		{
 			if (_CachedSourcesAsDelimitedString == null)
-				_CachedSourcesAsDelimitedString = _Files.AsDelimitedString(p => p.FullName,
+				_CachedSourcesAsDelimitedString = _Files.AsDelimitedString(p => p.File.FullName,
 					"No files to transfer", delimiter, maxLength, trail);
 			return _CachedSourcesAsDelimitedString;
 		}
@@ -35,6 +36,9 @@ namespace App
 
 		public int FileCount { get { return _Files.Count; } }
 		public BackupResults Results { get; private set; }
+
+		public delegate void FileAddedHandler(object sender, VersionedFileInfo file);
+		public FileAddedHandler FileAdded;
 
 		public BackupAgent(IAsyncTransferAgent agent)
 		{
@@ -74,24 +78,27 @@ namespace App
 			InvalidateCachedSourcesAsDelimitedString();
 		}
 
-		public void AddFile(string path)
+		public void AddFile(string path, IFileVersion version)
 		{
-			AddFile(new FileInfo(path));
+			AddFile(new VersionedFileInfo(path, version));
 		}
 
-		public void AddFile(FileInfo file)
+		public void AddFile(VersionedFileInfo file)
 		{
-			if (!file.Exists)
+			if (!file.File.Exists)
 			{
-				logger.Warn("File {0} does not exist", file.FullName);
+				logger.Warn("File {0} does not exist", file.File.FullName);
 				return;
 			}
 
 			_Files.AddLast(file);
-			_EstimatedLength += file.Length;
-			logger.Debug("File added: {0}, {1} bytes", file.FullName, file.Length);
+			_EstimatedLength += file.File.Length;
+			logger.Debug("File added: {0}, {1} bytes", file.File.FullName, file.File.Length);
 
 			InvalidateCachedSourcesAsDelimitedString();
+
+			if (FileAdded != null)
+				FileAdded(this, file);
 		}
 
 		public void AddDirectory(string path)
@@ -109,7 +116,7 @@ namespace App
 
 			// Add all files from this directory.
 			foreach (FileInfo file in directory.GetFiles())
-				AddFile(file);
+				AddFile(new VersionedFileInfo(file));
 
 			// Add all sub-directories recursively.
 			foreach (DirectoryInfo subdir in directory.GetDirectories())
@@ -125,12 +132,13 @@ namespace App
 			_Agent.RenewCancellationToken();
 			List<Task> activeTasks = new List<Task>();
 
-			foreach (FileInfo file in _Files)
+			foreach (VersionedFileInfo file in _Files)
 			{
 				Results.Stats.Pending -= 1;
 				Results.Stats.Running += 1;
 
-				Task task = _Agent.UploadFile(file.FullName).ContinueWith((Task t) =>
+				Task task = _Agent.UploadVersionedFile(file.File.FullName, file.Version)
+					.ContinueWith((Task t) =>
 				{
 					//switch (t.Status)
 					//{

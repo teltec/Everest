@@ -198,6 +198,7 @@
     <Compile Include="Migrations\201502041721361_RenameBackupPlanSourceEntryId.Designer.cs">
       <DependentUpon>201502041721361_RenameBackupPlanSourceEntryId.cs</DependentUpon>
     </Compile>
+    <Compile Include="Versioning\FileVersioner.cs" />
     <None Include="Migrations\Configuration.cs_" />
     <Compile Include="Models\AmazonS3Account.cs" />
     <Compile Include="Models\Backup.cs" />

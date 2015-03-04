@@ -1,9 +1,11 @@
 ﻿using Amazon;
 using Amazon.Runtime;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Teltec.Storage.Agent;
+using Teltec.Storage.Versioning;
 
 namespace Teltec.Storage.Implementations.S3
 {
@@ -14,15 +16,17 @@ namespace Teltec.Storage.Implementations.S3
 
 		#region Public API
 
-		public S3AsyncTransferAgent(EventDispatcher dispatcher, AWSCredentials awsCredentials, string awsBucketName)
-			: base(dispatcher, new S3StorageBackend(awsCredentials, awsBucketName, RegionEndpoint.USEast1))
+		public S3AsyncTransferAgent(AWSCredentials awsCredentials, string awsBucketName)
+			: base(new S3StorageBackend(awsCredentials, awsBucketName, RegionEndpoint.USEast1))
 		{
 			_shouldDispose = true;
+			PathBuilder = new S3PathBuilder();
 		}
 
-		public override async Task UploadFile(string sourcePath)
+		public override async Task UploadVersionedFile(string sourcePath, IFileVersion version)
 		{
-			string targetPath = BuildTargetPath(sourcePath);
+			Debug.Assert(PathBuilder != null);
+			string targetPath = PathBuilder.BuildVersionedPath(sourcePath, version);
 			await UploadFile(sourcePath, targetPath);
 		}
 
@@ -34,10 +38,12 @@ namespace Teltec.Storage.Implementations.S3
 			});
 		}
 
-		public override async Task DownloadFile(string sourcePath)
+		public override async Task DownloadVersionedFile(string sourcePath, IFileVersion version)
 		{
-			string targetPath = "...";
-			await DownloadFile(sourcePath, targetPath);
+			Debug.Assert(PathBuilder != null);
+			throw new NotImplementedException();
+			//string targetPath = "...";
+			//await DownloadFile(sourcePath, targetPath);
 		}
 
 		public override async Task DownloadFile(string sourcePath, string targetPath)
@@ -46,34 +52,6 @@ namespace Teltec.Storage.Implementations.S3
 			{
 				throw new NotImplementedException();
 			});
-		}
-
-		#endregion
-
-		#region Versioning?
-
-		private string BuildTargetPath(string sourcePath)
-		{
-			string root = Path.GetPathRoot(sourcePath);
-			// Remove root from Windows path, if any.
-			if (root != null && root.EndsWith(@":\"))
-				root = "" + root[0];
-			// Remove root from Linux/Unix path, if any.
-			if (sourcePath.StartsWith("/", StringComparison.Ordinal))
-				sourcePath = sourcePath.Substring(1);
-			// Build the key.
-			string key = string.IsNullOrEmpty(RemoteRootDir)
-				? root + "/" + BuildKeyPrefix(sourcePath)
-				: RemoteRootDir + "/" + root + "/" + BuildKeyPrefix(sourcePath);
-			return key;
-		}
-
-		private string BuildKeyPrefix(string path)
-		{
-			// Examples:
-			//   "C:\foo\bar"       -> "foo\bar"
-			//   "\\remote\foo\bar" -> "bar" (given that the network share is "\\remote\foo")
-			return path.Substring(Path.GetPathRoot(path).Length).Replace('\\', '/');
 		}
 
 		#endregion

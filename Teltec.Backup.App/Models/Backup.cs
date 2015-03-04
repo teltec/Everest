@@ -3,17 +3,14 @@ using App;
 using NLog;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Teltec.Backup.App.DAO;
+using Teltec.Backup.App.Versioning;
 using Teltec.Common;
-using Teltec.Common.Collections;
 using Teltec.Storage;
 using Teltec.Storage.Agent;
 using Teltec.Storage.Implementations.S3;
-using Teltec.Storage.Utils;
+using Teltec.Storage.Versioning;
 
 namespace Teltec.Backup.App.Models
 {
@@ -153,50 +150,21 @@ namespace Teltec.Backup.App.Models
 			// Setup agents.
 			//
 			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
-			TransferAgent = new S3AsyncTransferAgent(new EventDispatcher(), awsCredentials, s3account.BucketName);
-			TransferAgent.RemoteRootDir = "backup-99";
+			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
+			TransferAgent.RemoteRootDir = string.Format("backup-plan-{0}", Plan.Id);
 
 			BackupAgent = new BackupAgent(TransferAgent);
-			if (TransferListControl != null)
-				BackupAgent.Results.Monitor = TransferListControl;
+			BackupAgent.Results.Monitor = TransferListControl;
 			
 			results = BackupAgent.Results;
 
 			//
-			// Add sources.
-			//
-			foreach (var entry in Plan.SelectedSources)
-			{
-				switch (entry.Type)
-				{
-					case BackupPlanSourceEntry.EntryType.DRIVE:
-						{
-							DirectoryInfo dir = new DriveInfo(entry.Path).RootDirectory;
-							BackupAgent.AddDirectory(dir);
-							break;
-						}
-					case BackupPlanSourceEntry.EntryType.FOLDER:
-						{
-							DirectoryInfo dir = new DirectoryInfo(entry.Path);
-							BackupAgent.AddDirectory(dir);
-							break;
-						}
-					case BackupPlanSourceEntry.EntryType.FILE:
-						{
-							FileInfo file = new FileInfo(entry.Path);
-							BackupAgent.AddFile(file);
-							break;
-						}
-				}
-			}
-
-			//
 			// Start the backup.
 			//
-			DoBackup(BackupAgent);
+			DoBackup(BackupAgent, Plan, Options);
 		}
 
-		private async void DoBackup(BackupAgent agent)
+		private async void DoBackup(BackupAgent agent, BackupPlan plan, BackupOptions options)
 		{
 			agent.Results.Failed += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
@@ -231,10 +199,20 @@ namespace Teltec.Backup.App.Models
 				//Info(message);
 				Updated(this, new BackupEvent { Status = BackupStatus.Updated, Message = null });
 			};
+			agent.FileAdded += (object sender, VersionedFileInfo file) =>
+			{
+				Console.WriteLine("ADDED: File {0}, Version {1}", file.File, file.Version.ToString());
+			};
 
 			OnStart(agent);
-			Task task = agent.StartBackup();
-			await task;
+
+			FileVersioner versioner = new FileVersioner(plan);
+			Task versionerTask = versioner.AssembleVersion(agent);
+			await versionerTask;
+
+			Task transferTask = agent.StartBackup();
+			await transferTask;
+
 			OnFinish(agent);
 		}
 

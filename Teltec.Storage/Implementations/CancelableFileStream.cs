@@ -3,6 +3,8 @@ using System.Threading;
 
 namespace Teltec.Storage.Implementations
 {
+	// This is a hack just to make the synchronous upload/download operations cancelable.
+	// We could just switch to asynchronous APIs but this would cause more tasks to be queued - we don't want it!
 	public class CancelableFileStream : FileStream
 	{
 		private CancellationToken _CancellationToken;

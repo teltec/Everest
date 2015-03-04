@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Teltec.Storage.Backend;
+using Teltec.Storage.Versioning;
 
 namespace Teltec.Storage.Agent
 {
@@ -8,13 +10,23 @@ namespace Teltec.Storage.Agent
 
 	public interface IAsyncTransferAgent : IDisposable
 	{
+		// ATTENTION: If an event listener performs changes to the UI, then the provided dispatcher
+		//            MUST have been created on the Main thread.
+		// The reason is that this implementation raises events through the provided dispatcher,
+		// and every change in transfer progress causes an event be raised and propagated.
+		// An UI element might be have registered a binding to the event instance, which is unique
+		// and reused during the lifetime of a transfer.
+		EventDispatcher EventDispatcher { get; set; }
+
+		IPathBuilder PathBuilder { get; set; }
+
 		string LocalRootDir { get; set; }
 		string RemoteRootDir { get; set; }
 
-		Task UploadFile(string sourcePath);
+		Task UploadVersionedFile(string sourcePath, IFileVersion version);
 		Task UploadFile(string sourcePath, string targetPath);
 
-		Task DownloadFile(string sourcePath);
+		Task DownloadVersionedFile(string sourcePath, IFileVersion version);
 		Task DownloadFile(string sourcePath, string targetPath);
 
 		void CancelTransfers();

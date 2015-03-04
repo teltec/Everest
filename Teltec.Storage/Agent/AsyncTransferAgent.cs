@@ -2,60 +2,20 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Storage.Backend;
+using Teltec.Storage.Versioning;
 
 namespace Teltec.Storage.Agent
 {
-	/*
-	public class TransferException : Exception
-	{
-		public TransferFileProgressArgs Args;
-		public TransferException(string message, Exception innerException, TransferFileProgressArgs args)
-			: base(message, innerException)
-		{
-			Args = args;
-		}
-	}
-
-	public class TransferCanceledException : TaskCanceledException
-	{
-		public TransferFileProgressArgs Args;
-		public TransferCanceledException(string message, Exception innerException, TransferFileProgressArgs args)
-			: base(message, innerException)
-		{
-			Args = args;
-		}
-	}
-	*/
-
-	// ATTENTION: If an event listener performs changes to the UI, then the provided dispatcher
-	//            MUST have been created on the Main thread.
-	// The reason is that this implementation raises events through the provided dispatcher,
-	// and every change in transfer progress causes an event be raised and propagated.
-	// An UI element might be have registered a binding to the event instance, which is unique
-	// and reused during the lifetime of a transfer.
 	public abstract class AsyncTransferAgent : IAsyncTransferAgent
 	{
-		protected StorageBackend Implementation; // IDisposable
-		protected CancellationTokenSource CancellationTokenSource; // IDisposable
-		protected EventDispatcher EventDispatcher;
-
-		public string LocalRootDir { get; set; }
-		public string RemoteRootDir { get; set; }
-
-		public event TransferFileProgressHandler UploadFileStarted;
-		public event TransferFileProgressHandler UploadFileProgress;
-		public event TransferFileExceptionHandler UploadFileCanceled;
-		public event TransferFileExceptionHandler UploadFileFailed;
-		public event TransferFileProgressHandler UploadFileCompleted;
-
-		protected AsyncTransferAgent(EventDispatcher dispatcher, StorageBackend impl)
+		protected AsyncTransferAgent(StorageBackend impl)
 		{
 			RenewCancellationToken();
 
 			Implementation = impl;
 
 			// Forward-proxy all events.
-			EventDispatcher = dispatcher;
+			EventDispatcher = new EventDispatcher();
 			RegisterDelegates();
 		}
 
@@ -116,10 +76,47 @@ namespace Teltec.Storage.Agent
 			};
 		}
 
-		abstract public Task UploadFile(string sourcePath);
+		protected Task ExecuteOnBackround(Action action)
+		{
+			return AsyncHelper.ExecuteOnBackround(action);
+		}
+
+		protected StorageBackend Implementation; // IDisposable
+		protected CancellationTokenSource CancellationTokenSource; // IDisposable
+
+		#region IAsyncTransferAgent
+
+		public EventDispatcher EventDispatcher { get; set; }
+
+		public IPathBuilder PathBuilder { get; set; }
+
+		public string LocalRootDir { get; set; }
+
+		private string _RemoteRootDir;
+		public string RemoteRootDir
+		{
+			get { return _RemoteRootDir;  }
+			set
+			{
+				_RemoteRootDir = value;
+				if (PathBuilder != null)
+					// The `RootDirectory` of the path builder should always
+					// be our `RemoteRootDir` (not `LocalRootDir`) because
+					// versioning only makes sense on the remote repository.
+					PathBuilder.RootDirectory = RemoteRootDir;
+			}
+		}
+
+		public event TransferFileProgressHandler UploadFileStarted;
+		public event TransferFileProgressHandler UploadFileProgress;
+		public event TransferFileExceptionHandler UploadFileCanceled;
+		public event TransferFileExceptionHandler UploadFileFailed;
+		public event TransferFileProgressHandler UploadFileCompleted;
+
+		abstract public Task UploadVersionedFile(string sourcePath, IFileVersion version);
 		abstract public Task UploadFile(string sourcePath, string targetPath);
 
-		abstract public Task DownloadFile(string sourcePath);
+		abstract public Task DownloadVersionedFile(string sourcePath, IFileVersion version);
 		abstract public Task DownloadFile(string sourcePath, string targetPath);
 
 		public void CancelTransfers()
@@ -139,14 +136,7 @@ namespace Teltec.Storage.Agent
 			}
 		}
 
-		protected Task ExecuteOnBackround(Action action)
-		{
-			TaskCreationOptions options = TaskCreationOptions.DenyChildAttach;
-			CancellationToken token = CancellationToken.None;
-			TaskScheduler scheduler = new System.Threading.Tasks.Schedulers.QueuedTaskScheduler(Environment.ProcessorCount);
-			//TaskScheduler scheduler = TaskScheduler.Default;
-			return Task.Factory.StartNew(action, token, options, scheduler);
-		}
+		#endregion
 
 		#region Dispose Pattern Implementation
 
@@ -185,4 +175,26 @@ namespace Teltec.Storage.Agent
 
 		#endregion
 	}
+
+	/*
+	public class TransferException : Exception
+	{
+		public TransferFileProgressArgs Args;
+		public TransferException(string message, Exception innerException, TransferFileProgressArgs args)
+			: base(message, innerException)
+		{
+			Args = args;
+		}
+	}
+
+	public class TransferCanceledException : TaskCanceledException
+	{
+		public TransferFileProgressArgs Args;
+		public TransferCanceledException(string message, Exception innerException, TransferFileProgressArgs args)
+			: base(message, innerException)
+		{
+			Args = args;
+		}
+	}
+	*/
 }
