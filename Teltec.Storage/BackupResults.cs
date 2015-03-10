@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using Teltec.Common.Collections;
-using Teltec.Storage;
 using Teltec.Storage.Agent;
 using Teltec.Storage.Monitor;
 
-namespace App
+namespace Teltec.Storage
 {
+	public enum BackupStatus
+	{
+		FAILED = -2,
+		CANCELED = -1,
+		STOPPED = 0,
+		RUNNING = 1,
+		COMPLETED = 2,
+	}
+
 	public class BackupResults
 	{
-		public enum Status
-		{
-			FAILED		= -2,
-			CANCELED	= -1,
-			STOPPED		= 0,
-			RUNNING		= 1,
-			COMPLETED	= 2,
-		}
-
 		public class Statistics
 		{
 			private int _Total = 0;
@@ -52,20 +51,20 @@ namespace App
 			set { _Monitor = value; }
 		}
 
-		public Status OverallStatus
+		public BackupStatus OverallStatus
 		{
 			get
 			{
 				if (Stats.Pending > 0 || Stats.Running > 0) // Running has priority over all status.
-					return Status.RUNNING;
+					return BackupStatus.RUNNING;
 				else if (Stats.Failed > 0) // Failure has priority over cancelation.
-					return Status.FAILED;
+					return BackupStatus.FAILED;
 				else if (Stats.Canceled > 0) // Cancelation has priority over completion.
-					return Status.CANCELED;
+					return BackupStatus.CANCELED;
 				else if (Stats.Completed == Stats.Total) // Completion has priority over stopped.
-					return Status.COMPLETED;
+					return BackupStatus.COMPLETED;
 				else
-					return Status.STOPPED;
+					return BackupStatus.STOPPED;
 			}
 		}
 

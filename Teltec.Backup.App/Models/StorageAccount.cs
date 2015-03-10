@@ -9,10 +9,10 @@ using Teltec.Common;
 
 namespace Teltec.Backup.App.Models
 {
-	public abstract class StorageAccount : BaseEntity<int?>
+	public abstract class StorageAccount : BaseEntity<Int32?>
     {
-		private int? _Id;
-		public virtual int? Id
+		private Int32? _Id;
+		public virtual Int32? Id
 		{
 			get { return _Id; }
 			set { SetField(ref _Id, value); }

@@ -59,6 +59,7 @@
     <Compile Include="BackupResults.cs" />
     <Compile Include="Implementations\CancelableFileStream.cs" />
     <Compile Include="Implementations\S3\S3PathBuilder.cs" />
+    <Compile Include="PathScanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Agent\AsyncTransferAgent.cs" />
     <Compile Include="Agent\IAsyncTransferAgent.cs" />
@@ -86,8 +87,7 @@
     <Compile Include="Utils\FileSizeUtils.cs" />
     <Compile Include="Utils\TimeSpanUtils.cs" />
     <Compile Include="PathComponents.cs" />
-    <Compile Include="Versioning\VersionedFile.cs" />
-    <Compile Include="Versioning\VersionedFileInfo.cs" />
+    <Compile Include="Versioning\IVersionedFile.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">

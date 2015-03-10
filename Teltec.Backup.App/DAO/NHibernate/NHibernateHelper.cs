@@ -97,6 +97,9 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Add<AmazonS3AccountMap>()
 				.Add<BackupPlanMap>()
 				.Add<BackupPlanSourceEntryMap>()
+				.Add<BackupMap>()
+				.Add<BackupPlanFileMap>()
+				.Add<BackupedFileMap>()
 			);
 
 			Configuration config = fluentConfig.BuildConfiguration();

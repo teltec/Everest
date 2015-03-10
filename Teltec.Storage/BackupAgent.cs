@@ -1,49 +1,69 @@
 ﻿using NLog;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Teltec.Common.Extensions;
-using Teltec.Storage;
 using Teltec.Storage.Agent;
 using Teltec.Storage.Versioning;
 
-namespace App
+namespace Teltec.Storage
 {
-	public class BackupAgent
+	public class BackupAgent<T> where T : IVersionedFile
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		LinkedList<VersionedFileInfo> _Files = new LinkedList<VersionedFileInfo>();
-		IAsyncTransferAgent _Agent;
-
-		private string _CachedSourcesAsDelimitedString;
-		public string SourcesAsDelimitedString(string delimiter, int maxLength, string trail)
-		{
-			if (_CachedSourcesAsDelimitedString == null)
-				_CachedSourcesAsDelimitedString = _Files.AsDelimitedString(p => p.File.FullName,
-					"No files to transfer", delimiter, maxLength, trail);
-			return _CachedSourcesAsDelimitedString;
-		}
-
-		private void InvalidateCachedSourcesAsDelimitedString()
-		{
-			_CachedSourcesAsDelimitedString = null;
-		}
-
-		long _EstimatedLength = 0; // In bytes.
-		public long EstimatedLength { get { return _EstimatedLength; } }
-
-		public int FileCount { get { return _Files.Count; } }
-		public BackupResults Results { get; private set; }
-
-		public delegate void FileAddedHandler(object sender, VersionedFileInfo file);
-		public FileAddedHandler FileAdded;
+		private IAsyncTransferAgent _Agent;
 
 		public BackupAgent(IAsyncTransferAgent agent)
 		{
 			Results = new BackupResults();
 			_Agent = agent;
+			RegisterTransferEventHandlers();
+		}
+
+		private string _FilesAsDelimitedString;
+		public string FilesAsDelimitedString(string delimiter, int maxLength, string trail)
+		{
+			if (_FilesAsDelimitedString == null)
+				_FilesAsDelimitedString = Files.AsDelimitedString(p => p.Path,
+					"No files to transfer", delimiter, maxLength, trail);
+			return _FilesAsDelimitedString;
+		}
+
+		private LinkedList<T> _Files = new LinkedList<T>();
+		public LinkedList<T> Files
+		{
+			get { return _Files;  }
+			set
+			{
+				_Files = value;
+				FilesChanged();
+			}
+		}
+
+		protected void FilesChanged()
+		{
+			_EstimatedBackupSize = 0;
+			_FilesAsDelimitedString = null;
+		}
+
+		// In Bytes
+		private long _EstimatedBackupSize;
+		public long EstimatedBackupSize
+		{
+			get
+			{
+				if (_EstimatedBackupSize == 0 && Files != null)
+					_EstimatedBackupSize = Enumerable.Sum(Files, p => p.Size);
+				return _EstimatedBackupSize;
+			}
+		}
+
+		public BackupResults Results { get; private set; }
+
+		protected void RegisterTransferEventHandlers()
+		{
 			_Agent.UploadFileStarted += (object sender, TransferFileProgressArgs e) =>
 			{
 				Results.Stats.Running -= 1;
@@ -72,57 +92,8 @@ namespace App
 
 		public void RemoveAllFiles()
 		{
-			_Files.Clear();
-			_EstimatedLength = 0;
-
-			InvalidateCachedSourcesAsDelimitedString();
-		}
-
-		public void AddFile(string path, IFileVersion version)
-		{
-			AddFile(new VersionedFileInfo(path, version));
-		}
-
-		public void AddFile(VersionedFileInfo file)
-		{
-			if (!file.File.Exists)
-			{
-				logger.Warn("File {0} does not exist", file.File.FullName);
-				return;
-			}
-
-			_Files.AddLast(file);
-			_EstimatedLength += file.File.Length;
-			logger.Debug("File added: {0}, {1} bytes", file.File.FullName, file.File.Length);
-
-			InvalidateCachedSourcesAsDelimitedString();
-
-			if (FileAdded != null)
-				FileAdded(this, file);
-		}
-
-		public void AddDirectory(string path)
-		{
-			AddDirectory(new DirectoryInfo(path));
-		}
-
-		public void AddDirectory(DirectoryInfo directory)
-		{
-			if (!directory.Exists)
-			{
-				logger.Warn("Directory {0} does not exist", directory.FullName);
-				return;
-			}
-
-			// Add all files from this directory.
-			foreach (FileInfo file in directory.GetFiles())
-				AddFile(new VersionedFileInfo(file));
-
-			// Add all sub-directories recursively.
-			foreach (DirectoryInfo subdir in directory.GetDirectories())
-				AddDirectory(subdir);
-
-			InvalidateCachedSourcesAsDelimitedString();
+			Files.Clear();
+			FilesChanged();
 		}
 
 		public async Task StartBackup()
@@ -132,12 +103,12 @@ namespace App
 			_Agent.RenewCancellationToken();
 			List<Task> activeTasks = new List<Task>();
 
-			foreach (VersionedFileInfo file in _Files)
+			foreach (IVersionedFile file in Files)
 			{
 				Results.Stats.Pending -= 1;
 				Results.Stats.Running += 1;
 
-				Task task = _Agent.UploadVersionedFile(file.File.FullName, file.Version)
+				Task task = _Agent.UploadVersionedFile(file.Path, file.Version)
 					.ContinueWith((Task t) =>
 				{
 					//switch (t.Status)

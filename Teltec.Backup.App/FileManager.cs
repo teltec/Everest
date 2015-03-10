@@ -4,11 +4,37 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Teltec.Backup.App.Forms.Backup
+namespace Teltec.Backup.App
 {
 	public class FileManager
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+		public static DateTime? GetLastWriteTimeUtc(string path)
+		{
+			try
+			{
+				return File.GetLastWriteTimeUtc(path);
+			}
+			catch (Exception e)
+			{
+				logger.Error("Failed to read file/directory \"{0}\" - {1}", path, e.Message);
+				return null;
+			}
+		}
+
+		public static long? GetFileSize(string path)
+		{
+			try
+			{
+				return new FileInfo(path).Length;
+			}
+			catch (Exception e)
+			{
+				logger.Error("Failed to read file/directory \"{0}\" - {1}", path, e.Message);
+				return null;
+			}
+		}
 
 		public static bool DeleteDirectory(string path, bool recursive = false)
 		{

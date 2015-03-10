@@ -4,10 +4,10 @@ using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.App.Models
 {
-	public class BackupPlan : BaseEntity<int?>
+	public class BackupPlan : BaseEntity<Int32?>
 	{
-		private int? _Id;
-		public virtual int? Id
+		private Int32? _Id;
+		public virtual Int32? Id
 		{
 			get { return _Id; }
 			set { SetField(ref _Id, value); }
@@ -67,7 +67,7 @@ namespace Teltec.Backup.App.Models
 		public virtual IList<BackupPlanSourceEntry> SelectedSources
 		{
 			get { return _SelectedSources; }
-			protected set { SetField(ref _SelectedSources, value); }
+			protected set { SetField(ref _SelectedSources, value); InvalidateCachedSelectedSourcesAsDelimitedString(); }
 		}
 
 		private string _CachedSelectedSourcesAsDelimitedString;
@@ -82,6 +82,28 @@ namespace Teltec.Backup.App.Models
 		private void InvalidateCachedSelectedSourcesAsDelimitedString()
 		{
 			_CachedSelectedSourcesAsDelimitedString = null;
+		}
+
+		#endregion
+
+		#region Files
+
+		private IList<BackupPlanFile> _Files = new List<BackupPlanFile>();
+		public virtual IList<BackupPlanFile> Files
+		{
+			get { return _Files; }
+			protected set { SetField(ref _Files, value); }
+		}
+
+		#endregion
+
+		#region Backups
+
+		private IList<Backup> _Backups = new List<Backup>();
+		public virtual IList<Backup> Backups
+		{
+			get { return _Backups; }
+			protected set { SetField(ref _Backups, value); }
 		}
 
 		#endregion

@@ -1,10 +1,9 @@
 ﻿using FluentNHibernate.Mapping;
-using NHibernate.Type;
-using Teltec.Backup.App.Models;
+using Teltec.Storage;
 
 namespace Teltec.Backup.App.DAO.NHibernate
 {
-	class StorageAccountMap : ClassMap<StorageAccount>
+	class StorageAccountMap : ClassMap<Models.StorageAccount>
 	{
 		public StorageAccountMap()
 		{
@@ -16,17 +15,17 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("type")
 				.Not.Nullable()
 				.ReadOnly().Access.None()
-				.CustomType<GenericEnumMapper<EStorageAccountType>>();
+				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>();
 
 			DiscriminateSubClassesOnColumn("type");
 		}
 	}
 
-	class AmazonS3AccountMap : SubclassMap<AmazonS3Account>
+	class AmazonS3AccountMap : SubclassMap<Models.AmazonS3Account>
 	{
 		public AmazonS3AccountMap()
 		{
-			DiscriminatorValue(EStorageAccountType.AmazonS3);
+			DiscriminatorValue(Models.EStorageAccountType.AmazonS3);
 
 			Join("amazon_s3_accounts", x =>
 			{
@@ -35,28 +34,28 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				x.Map(p => p.DisplayName)
 					.Column("display_name")
 					.Not.Nullable()
-					.Unique().UniqueKey("uk_display_name")
-					.Length(AmazonS3Account.AccessKeyNameMaxLen);
+					.UniqueKey("uk_display_name")
+					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen);
 
 				x.Map(p => p.AccessKey)
 					.Column("access_key")
 					.Not.Nullable()
-					.Length(AmazonS3Account.AccessKeyNameMaxLen);
+					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen);
 
 				x.Map(p => p.SecretKey)
 					.Column("secret_key")
 					.Not.Nullable()
-					.Length(AmazonS3Account.AccessKeyNameMaxLen);
+					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen);
 
 				x.Map(p => p.BucketName)
 					.Column("bucket_name")
 					.Not.Nullable()
-					.Length(AmazonS3Account.BucketNameMaxLen);
+					.Length(Models.AmazonS3Account.BucketNameMaxLen);
 			});
 		}
 	}
 
-	class BackupPlanMap : ClassMap<BackupPlan>
+	class BackupPlanMap : ClassMap<Models.BackupPlan>
 	{
 		public BackupPlanMap()
 		{
@@ -67,13 +66,13 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			Map(p => p.Name)
 				.Column("name")
 				.Not.Nullable()
-				.Length(BackupPlan.NameMaxLen)
-				.Unique().UniqueKey("uk_name");
+				.Length(Models.BackupPlan.NameMaxLen)
+				.UniqueKey("uk_name");
 
 			Map(p => p.StorageAccountType)
 				.Column("storage_account_type")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<EStorageAccountType>>();
+				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>();
 
 			//Map(p => p.StorageAccountId)
 			//	.Column("storage_account_id")
@@ -89,10 +88,20 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Cascade.AllDeleteOrphan()
 				.AsBag();
 
+			HasMany(p => p.Files)
+				.KeyColumn("backup_plan_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag();
+
+			HasMany(p => p.Backups)
+				.KeyColumn("backup_plan_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag();
+
 			Map(p => p.ScheduleType)
 				.Column("schedule_type")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<BackupPlan.EScheduleType>>();
+				.CustomType<GenericEnumMapper<Models.BackupPlan.EScheduleType>>();
 
 			Map(p => p.LastRunAt)
 				.Column("last_run_at")
@@ -106,7 +115,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		}
 	}
 
-	class BackupPlanSourceEntryMap : ClassMap<BackupPlanSourceEntry>
+	class BackupPlanSourceEntryMap : ClassMap<Models.BackupPlanSourceEntry>
 	{
 		public BackupPlanSourceEntryMap()
 		{
@@ -117,12 +126,12 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			Map(p => p.Type)
 				.Column("type")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<BackupPlanSourceEntry.EntryType>>();
+				.CustomType<GenericEnumMapper<Models.BackupPlanSourceEntry.EntryType>>();
 
 			Map(p => p.Path)
 				.Column("path")
 				.Not.Nullable()
-				.Length(BackupPlanSourceEntry.PathMaxLen);
+				.Length(Models.BackupPlanSourceEntry.PathMaxLen);
 
 			References(fk => fk.BackupPlan)
 				.Column("backup_plan_id");
@@ -132,4 +141,123 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		}
 	}
 
+	class BackupMap : ClassMap<Models.Backup>
+	{
+		public BackupMap()
+		{
+			Table("backups");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_backus").UnsavedValue(null);
+
+			References(fk => fk.BackupPlan)
+				.Column("backup_plan_id");
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable();
+
+			Map(p => p.StartedAt)
+				.Column("started_at")
+				.Not.Nullable();
+				//.CustomType<TimestampType>();
+
+			Map(p => p.FinishedAt)
+				.Column("finished_at")
+				.Nullable();
+				//.CustomType<TimestampType>();
+
+			Map(p => p.Status)
+				.Column("status")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<BackupStatus>>();
+
+			HasMany(p => p.Files)
+				.KeyColumn("backup_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag();
+		}
+	}
+
+	class BackupedFileMap : ClassMap<Models.BackupedFile>
+	{
+		public BackupedFileMap()
+		{
+			Table("backuped_files");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_backuped_files").UnsavedValue(null);
+
+			References(fk => fk.Backup)
+				.Column("backup_id");
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable();
+
+			References(fk => fk.File)
+				.Column("backup_plan_file_id");
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable();
+
+			Map(p => p.Status)
+				.Column("status")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<BackupStatus>>();
+
+			Map(p => p.UpdatedAt)
+				.Column("updated_at")
+				.Not.Nullable();
+				//.Not.Insert();
+				//.CustomType<TimestampType>();
+		}
+	}
+
+	class BackupPlanFileMap : ClassMap<Models.BackupPlanFile>
+	{
+		public BackupPlanFileMap()
+		{
+			string UNIQUE_KEY_NAME = "uk_backup_plan_path";
+
+			Table("backup_plan_files");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plan_files").UnsavedValue(null);
+
+			References(fk => fk.BackupPlan)
+				.Column("backup_plan_id")
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable();
+				.UniqueKey(UNIQUE_KEY_NAME);
+
+			Map(p => p.Path)
+				.Column("path")
+				.Not.Nullable()
+				.Length(Models.BackupPlanSourceEntry.PathMaxLen)
+				.UniqueKey(UNIQUE_KEY_NAME);
+
+			Map(p => p.LastSize)
+				.Column("last_size")
+				.Nullable();
+
+			Map(p => p.LastWrittenAt)
+				.Column("last_written_at")
+				.Nullable();
+				//.CustomType<TimestampType>();
+
+			Map(p => p.LastStatus)
+				.Column("last_status")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<Models.BackupPlanFileStatus>>();
+
+			Map(p => p.CreatedAt)
+				.Column("created_at")
+				.Not.Nullable()
+				.Not.Update();
+				//.CustomType<TimestampType>();
+
+			Map(p => p.UpdatedAt)
+				.Column("updated_at")
+				.Nullable()
+				.Not.Insert();
+				//.CustomType<TimestampType>();
+		}
+	}
 }

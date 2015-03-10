@@ -1,13 +1,12 @@
-﻿using App;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Windows.Forms;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Models;
 using Teltec.Common;
 using Teltec.Common.Extensions;
+using Teltec.Storage;
 using Teltec.Storage.Utils;
 
 namespace Teltec.Backup.App.Forms.BackupPlan
@@ -16,7 +15,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 	{
 		private readonly BackupPlanRepository _dao = new BackupPlanRepository();
 
-		Models.Backup RunningBackup = null;
+		BackupOperation RunningBackup = null;
 		BackupResults BackupResults = null;
 
 		public BackupPlanViewControl()
@@ -52,18 +51,23 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				lblSchedule.DataBindings.Add(lblScheduleTextBinding);
 				lblLastRun.DataBindings.Add(lblLastRunTextBinding);
 				lblLastSuccessfulRun.DataBindings.Add(lblLastSuccessfulRunTextBinding);
-				
-				// IMPORTANT: Dispose before assigning.
-				if (RunningBackup != null)
-					RunningBackup.Dispose();
-				// Create new backup.
-				RunningBackup = new Models.Backup(this.Model as Models.BackupPlan);
-				RunningBackup.Updated += (sender2, e2) => UpdateStatsInfo(e2.Status);
-				//RunningBackup.EventLog = ...
-				//RunningBackup.TransferListControl = ...
-
-				UpdateStatsInfo(BackupStatus.Unknown);
 			};
+		}
+
+		private void NewBackupOperation(Models.BackupPlan plan)
+		{
+			// IMPORTANT: Dispose before assigning.
+			if (RunningBackup != null)
+				RunningBackup.Dispose();
+			
+			// Create new backup.
+			BackupOperation obj = new BackupOperation(plan);
+			obj.Updated += (sender2, e2) => UpdateStatsInfo(e2.Status);
+			//obj.EventLog = ...
+			//obj.TransferListControl = ...
+
+			RunningBackup = obj;
+			UpdateStatsInfo(BackupOperationStatus.Unknown);
 		}
 
 		#region Binding formatters
@@ -112,6 +116,10 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void llblRunNow_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{
+			// Create new backup operation every time 'Run' is clicked, but not 'Cancel'.
+			if (RunningBackup == null || !RunningBackup.IsRunning)
+				NewBackupOperation(this.Model as Models.BackupPlan);
+
 			if (!RunningBackup.IsRunning)
 				RunningBackup.Start(out BackupResults);
 			else
@@ -129,7 +137,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void timer1_Tick(object sender, EventArgs e)
 		{
-			UpdateDuration(RunningBackup.IsRunning ? BackupStatus.Updated : BackupStatus.Finished);
+			UpdateDuration(RunningBackup.IsRunning ? BackupOperationStatus.Updated : BackupOperationStatus.Finished);
 		}
 
 		static string LBL_RUNNOW_RUNNING = "Cancel";
@@ -143,14 +151,14 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		static string LBL_DURATION_INITIAL = "Not started";
 		static string LBL_FILES_UPLOADED_STOPPED = "Not started"; 
 
-		private void UpdateStatsInfo(BackupStatus status)
+		private void UpdateStatsInfo(BackupOperationStatus status)
 		{
 			Assert.IsNotNull(RunningBackup);
 
 			switch (status)
 			{
 				default: throw new ArgumentException("Unhandled status", "status");
-				case BackupStatus.Unknown:
+				case BackupOperationStatus.Unknown:
 					{
 						Models.BackupPlan plan = Model as Models.BackupPlan;
 						this.lblSources.Text = RunningBackup.Sources;
@@ -160,7 +168,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						this.lblDuration.Text = LBL_DURATION_INITIAL;
 						break;
 					}
-				case BackupStatus.Started:
+				case BackupOperationStatus.Started:
 					{
 						Assert.IsNotNull(BackupResults);
 						Models.BackupPlan plan = Model as Models.BackupPlan;
@@ -178,7 +186,19 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						timer1.Start();
 						break;
 					}
-				case BackupStatus.Finished:
+				case BackupOperationStatus.ProcessingFilesStarted:
+					{
+						Models.BackupPlan plan = Model as Models.BackupPlan;
+						this.lblSources.Text = "Processing files...";
+						break;
+					}
+					case BackupOperationStatus.ProcessingFilesFinished:
+					{
+						Models.BackupPlan plan = Model as Models.BackupPlan;
+						this.lblSources.Text = RunningBackup.Sources;
+						break;
+					}
+				case BackupOperationStatus.Finished:
 					{
 						UpdateDuration(status);
 						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
@@ -196,19 +216,19 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						_dao.Update(plan);
 						break;
 					}
-				case BackupStatus.Updated:
+				case BackupOperationStatus.Updated:
 					{
 						this.lblFilesUploaded.Text = string.Format("{0} of {1}",
 							BackupResults.Stats.Completed, BackupResults.Stats.Total);
 						break;
 					}
-				case BackupStatus.Failed:
-				case BackupStatus.Canceled:
+				case BackupOperationStatus.Failed:
+				case BackupOperationStatus.Canceled:
 					{
 						UpdateDuration(status);
 
 						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
-						this.lblStatus.Text = status == BackupStatus.Canceled ? LBL_STATUS_CANCELED : LBL_STATUS_FAILED;
+						this.lblStatus.Text = status == BackupOperationStatus.Canceled ? LBL_STATUS_CANCELED : LBL_STATUS_FAILED;
 
 						this.llblEditPlan.Enabled = true;
 						this.llblDeletePlan.Enabled = true;
@@ -225,12 +245,12 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			}
 		}
 
-		private void UpdateDuration(BackupStatus status)
+		private void UpdateDuration(BackupOperationStatus status)
 		{
 			Assert.IsNotNull(RunningBackup);
 			var duration = !status.IsEnded()
-				? DateTime.UtcNow - RunningBackup.StartedAt
-				: RunningBackup.FinishedAt - RunningBackup.StartedAt;
+				? DateTime.UtcNow - RunningBackup.StartedAt.Value
+				: RunningBackup.FinishedAt.Value - RunningBackup.StartedAt.Value;
 			lblDuration.Text = TimeSpanUtils.GetReadableTimespan(duration);
 		}
 
