@@ -168,6 +168,9 @@ namespace Teltec.Backup.App.Versioning
 			// Check all files.
 			foreach (CustomVersionedFile entry in FilesToBackup)
 			{
+				// Throw if the operation was canceled.
+				CancellationTokenSource.Token.ThrowIfCancellationRequested();
+
 				string path = entry.Path;
 				long size = FileManager.GetFileSize(entry.Path).Value;
 
@@ -244,6 +247,9 @@ namespace Teltec.Backup.App.Versioning
 
 			foreach (var entry in AllDeletedFilesFromPlan)
 			{
+				// Throw if the operation was canceled.
+				CancellationTokenSource.Token.ThrowIfCancellationRequested();
+
 				if (entry.LastStatus == BackupPlanFileStatus.DELETED)
 					continue;
 
@@ -264,6 +270,9 @@ namespace Teltec.Backup.App.Versioning
 			// Update files version.
 			foreach (CustomVersionedFile entry in FilesToBackup)
 			{
+				// Throw if the operation was canceled.
+				CancellationTokenSource.Token.ThrowIfCancellationRequested();
+
 				entry.Version = version;
 			}
 		}
