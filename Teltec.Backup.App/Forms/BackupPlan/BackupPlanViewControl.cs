@@ -118,20 +118,24 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void llblRunNow_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{
-			this.llblRunNow.Enabled = false;
 
 			if (RunningBackup.IsRunning)
 			{
+				this.llblRunNow.Enabled = false;
 				RunningBackup.Cancel();
+				this.llblRunNow.Enabled = true;
 			}
 			else
 			{
+				this.llblRunNow.Enabled = false;
+				
 				// Create new backup operation for every 'Run' click.
 				NewBackupOperation(this.Model as Models.BackupPlan);
+
+				// FIXME: Re-enable before starting the backup because it's not an async task.
+				this.llblRunNow.Enabled = true;
 				RunningBackup.Start(out BackupResults);
 			}
-
-			this.llblRunNow.Enabled = true;
 		}
 
 		public delegate void DeleteEventHandler(object sender, EventArgs e);
