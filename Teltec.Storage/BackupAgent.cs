@@ -108,19 +108,20 @@ namespace Teltec.Storage
 				Results.Stats.Pending -= 1;
 				Results.Stats.Running += 1;
 
-				Task task = _Agent.UploadVersionedFile(file.Path, file.Version)
-					.ContinueWith((Task t) =>
-				{
-					//switch (t.Status)
-					//{
-					//	case TaskStatus.Faulted:
-					//		break;
-					//	case TaskStatus.Canceled:
-					//		break;
-					//	case TaskStatus.RanToCompletion:
-					//		break;
-					//}
-				});
+				Task task = _Agent.UploadVersionedFile(file.Path, file.Version);
+				//	.ContinueWith((Task t) =>
+				//{
+				//	switch (t.Status)
+				//	{
+				//		case TaskStatus.Faulted:
+				//			break;
+				//		case TaskStatus.Canceled:
+				//			break;
+				//		case TaskStatus.RanToCompletion:
+				//			break;
+				//	}
+				//});
+
 				activeTasks.Add(task);
 			}
 

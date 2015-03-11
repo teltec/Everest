@@ -51,6 +51,8 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				lblSchedule.DataBindings.Add(lblScheduleTextBinding);
 				lblLastRun.DataBindings.Add(lblLastRunTextBinding);
 				lblLastSuccessfulRun.DataBindings.Add(lblLastSuccessfulRunTextBinding);
+
+				NewBackupOperation(this.Model as Models.BackupPlan);
 			};
 		}
 
@@ -116,14 +118,20 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void llblRunNow_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{
-			// Create new backup operation every time 'Run' is clicked, but not 'Cancel'.
-			if (RunningBackup == null || !RunningBackup.IsRunning)
-				NewBackupOperation(this.Model as Models.BackupPlan);
+			this.llblRunNow.Enabled = false;
 
-			if (!RunningBackup.IsRunning)
-				RunningBackup.Start(out BackupResults);
-			else
+			if (RunningBackup.IsRunning)
+			{
 				RunningBackup.Cancel();
+			}
+			else
+			{
+				// Create new backup operation for every 'Run' click.
+				NewBackupOperation(this.Model as Models.BackupPlan);
+				RunningBackup.Start(out BackupResults);
+			}
+
+			this.llblRunNow.Enabled = true;
 		}
 
 		public delegate void DeleteEventHandler(object sender, EventArgs e);
