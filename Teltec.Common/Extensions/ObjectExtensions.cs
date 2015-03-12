@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Teltec.Common.Extensions
 {
-    public static class ObjectExtension
+    public static class ObjectExtensions
     {
         public static string GetPropertyName<TSource, TField>(this Object obj, Expression<Func<TSource, TField>> Field)
         {

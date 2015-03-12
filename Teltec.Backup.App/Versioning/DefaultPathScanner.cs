@@ -7,12 +7,12 @@ using Teltec.Storage.Versioning;
 
 namespace Teltec.Backup.App.Versioning
 {
-	public sealed class DefaultPathScanner : PathScanner<CustomVersionedFile>
+	public sealed class DefaultPathScanner : PathScanner<string>
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		BackupPlan Plan;
-		LinkedList<CustomVersionedFile> Result;
+		LinkedList<string> Result;
 
 		public DefaultPathScanner(BackupPlan plan)
 		{
@@ -21,9 +21,9 @@ namespace Teltec.Backup.App.Versioning
 
 		#region PathScanner
 
-		public override LinkedList<CustomVersionedFile> Scan()
+		public override LinkedList<string> Scan()
 		{
-			Result = new LinkedList<CustomVersionedFile>();
+			Result = new LinkedList<string>();
 
 			//
 			// Add sources.
@@ -66,9 +66,9 @@ namespace Teltec.Backup.App.Versioning
 				return;
 			}
 
-			CustomVersionedFile item = new CustomVersionedFile(file);
+			var item = file.FullName;
+
 			Result.AddLast(item);
-			logger.Debug("File added: {0}, {1} bytes", file.FullName, file.Length);
 
 			if (FileAdded != null)
 				FileAdded(this, item);

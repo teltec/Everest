@@ -181,21 +181,25 @@ namespace Teltec.Backup.App.DAO.NHibernate
 	{
 		public BackupedFileMap()
 		{
+			string UNIQUE_KEY_NAME = "uk_backuped_file_backup_file";
+
 			Table("backuped_files");
 
 			Id(p => p.Id, "id").GeneratedBy.Native("seq_backuped_files").UnsavedValue(null);
 
 			References(fk => fk.Backup)
-				.Column("backup_id");
+				.Column("backup_id")
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
 				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable();
+				//.Not.Nullable()
+				.UniqueKey(UNIQUE_KEY_NAME);
 
 			References(fk => fk.File)
-				.Column("backup_plan_file_id");
+				.Column("backup_plan_file_id")
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
 				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable();
+				//.Not.Nullable()
+				.UniqueKey(UNIQUE_KEY_NAME);
 
 			Map(p => p.Status)
 				.Column("status")

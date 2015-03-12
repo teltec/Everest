@@ -120,6 +120,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ResumeBackupOperation.cs" />
+    <Compile Include="NewBackupOperation.cs" />
     <Compile Include="CustomBackupAgent.cs" />
     <Compile Include="DAO\NHibernate\NHibernateMappings.cs" />
     <Compile Include="DAO\NHibernate\IAuditable.cs" />

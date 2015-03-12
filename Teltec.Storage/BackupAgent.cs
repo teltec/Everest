@@ -46,6 +46,7 @@ namespace Teltec.Storage
 		{
 			_EstimatedBackupSize = 0;
 			_FilesAsDelimitedString = null;
+			Results.Stats.Reset(_Files.Count);
 		}
 
 		// In Bytes

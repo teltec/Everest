@@ -11,6 +11,7 @@ using Teltec.Common;
 using Teltec.Storage;
 using Teltec.Storage.Agent;
 using Teltec.Storage.Implementations.S3;
+using Teltec.Storage.Utils;
 
 namespace Teltec.Backup.App
 {
@@ -18,12 +19,13 @@ namespace Teltec.Backup.App
 	{
 		Unknown					= 0,
 		Started					= 1,
-		ProcessingFilesStarted	= 2,
-		ProcessingFilesFinished = 3,
-		Updated					= 4,
-		Canceled				= 5,
-		Failed					= 6,
-		Finished				= 7,
+		Resumed					= 2,
+		ProcessingFilesStarted	= 3,
+		ProcessingFilesFinished = 4,
+		Updated					= 5,
+		Canceled				= 6,
+		Failed					= 7,
+		Finished				= 8,
 	}
 
 	public static class Extensions
@@ -47,23 +49,20 @@ namespace Teltec.Backup.App
 		// ...
 	}
 
-	public sealed class BackupOperation : ObservableObject, IDisposable
+	public abstract class BackupOperation : ObservableObject, IDisposable
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 		
-		private readonly BackupRepository _daoBackup = new BackupRepository();
+		protected readonly BackupRepository _daoBackup = new BackupRepository();
+
+		protected Models.Backup Backup;
+
+		#region Properties
 
 		public delegate void UpdateEventHandler(object sender, BackupOperationEvent e);
 		public event UpdateEventHandler Updated;
 
-		private Models.Backup Backup;
-
-		private bool _IsRunning = false;
-		public bool IsRunning
-		{
-			get { return _IsRunning; }
-			private set { _IsRunning = value; }
-		}
+		public bool IsRunning { get; protected set; }
 
 		public DateTime? StartedAt
 		{
@@ -99,23 +98,24 @@ namespace Teltec.Backup.App
 		//	}
 		//}
 
-		public BackupOperation(Models.BackupPlan plan)
-			: this(plan, new BackupOperationOptions())
-		{
-		}
+		#endregion
 
-		public BackupOperation(Models.BackupPlan plan, BackupOperationOptions options)
+		#region Constructors
+
+		public BackupOperation(BackupOperationOptions options)
 		{
-			Backup = new Models.Backup(plan);
 			Options = options;
 		}
+
+		#endregion
 
 		#region Transfer
 
 		public Teltec.Storage.Monitor.TransferListControl TransferListControl; // IDisposable, but an external reference.
-		BackupOperationOptions Options;
-		IAsyncTransferAgent TransferAgent; // IDisposable
-		CustomBackupAgent BackupAgent;
+		protected BackupOperationOptions Options;
+		protected IAsyncTransferAgent TransferAgent; // IDisposable
+		protected CustomBackupAgent BackupAgent;
+		protected FileVersioner Versioner; // IDisposable
 
 		public void Start(out BackupResults results)
 		{
@@ -124,8 +124,6 @@ namespace Teltec.Backup.App
 			Assert.IsNotNull(Backup.BackupPlan);
 			Assert.IsNotNull(Backup.BackupPlan.StorageAccount);
 			Assert.AreEqual(Backup.BackupPlan.StorageAccountType, Models.EStorageAccountType.AmazonS3);
-
-			IsRunning = true;
 
 			AmazonS3AccountRepository dao = new AmazonS3AccountRepository();
 			Models.AmazonS3Account s3account = dao.Get(Backup.BackupPlan.StorageAccount.Id);
@@ -137,6 +135,8 @@ namespace Teltec.Backup.App
 				TransferAgent.Dispose();
 			if (TransferListControl != null)
 				TransferListControl.ClearTransfers();
+			if (Versioner != null)
+				Versioner.Dispose();
 
 			//
 			// Setup agents.
@@ -147,6 +147,10 @@ namespace Teltec.Backup.App
 
 			BackupAgent = new CustomBackupAgent(TransferAgent);
 			BackupAgent.Results.Monitor = TransferListControl;
+
+			Versioner = new FileVersioner();
+
+			RegisterResultsEventHandlers(Backup, BackupAgent.Results);
 			
 			results = BackupAgent.Results;
 
@@ -156,10 +160,10 @@ namespace Teltec.Backup.App
 			DoBackup(BackupAgent, Backup, Options);
 		}
 
-		private async void DoBackup(CustomBackupAgent agent, Models.Backup backup, BackupOperationOptions options)
+		protected void RegisterResultsEventHandlers(Models.Backup backup, BackupResults results)
 		{
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
-			agent.Results.Failed += (object sender, TransferFileProgressArgs args, Exception ex) =>
+			results.Failed += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
 				backupedFile.Status = BackupStatus.FAILED;
@@ -169,9 +173,9 @@ namespace Teltec.Backup.App
 				var message = string.Format("Failed {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
-				Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
 			};
-			agent.Results.Canceled += (object sender, TransferFileProgressArgs args, Exception ex) =>
+			results.Canceled += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
 				backupedFile.Status = BackupStatus.CANCELED;
@@ -181,9 +185,9 @@ namespace Teltec.Backup.App
 				var message = string.Format("Canceled {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
-				Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
 			};
-			agent.Results.Completed += (object sender, TransferFileProgressArgs args) =>
+			results.Completed += (object sender, TransferFileProgressArgs args) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
 				backupedFile.Status = BackupStatus.COMPLETED;
@@ -192,9 +196,9 @@ namespace Teltec.Backup.App
 
 				var message = string.Format("Completed {0}", args.FilePath);
 				Info(message);
-				Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
 			};
-			agent.Results.Started += (object sender, TransferFileProgressArgs args) =>
+			results.Started += (object sender, TransferFileProgressArgs args) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
 				backupedFile.Status = BackupStatus.RUNNING;
@@ -203,35 +207,33 @@ namespace Teltec.Backup.App
 
 				var message = string.Format("Started {0}", args.FilePath);
 				//Info(message);
-				Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
 			};
-			agent.Results.Progress += (object sender, TransferFileProgressArgs args) =>
+			results.Progress += (object sender, TransferFileProgressArgs args) =>
 			{
 				//var message = string.Format("Progress {0}% {1} ({2}/{3} bytes)",
 				//	args.PercentDone, args.FilePath, args.TransferredBytes, args.TotalBytes);
 				//Info(message);
-				Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = null });
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = null });
 			};
+		}
 
+		protected abstract LinkedList<string> GetFilesToProcess(Models.Backup backup);
+
+		protected async void DoBackup(CustomBackupAgent agent, Models.Backup backup, BackupOperationOptions options)
+		{
 			OnStart(agent, backup);
 
-			// Scan files.
-			DefaultPathScanner scanner = new DefaultPathScanner(backup.BackupPlan);
-			scanner.FileAdded += (object sender, CustomVersionedFile file) =>
-			{
-				Console.WriteLine("ADDED: File {0}", file.Path);
-			};
-			LinkedList<CustomVersionedFile> files = scanner.Scan();
+			LinkedList<string> filesToProcess = GetFilesToProcess(backup);
 
 			// Version files.
-			FileVersioner versioner = new FileVersioner();
-			Task versionerTask = versioner.NewVersion(backup, files);
+			Task versionerTask = Versioner.NewVersion(backup, filesToProcess);
 
 			{
 				var message = string.Format("Processing files started.");
 				Info(message);
 				//StatusInfo.Update(BackupStatusLevel.INFO, message);
-				Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesStarted, Message = message });
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesStarted, Message = message });
 			}
 
 			try
@@ -243,37 +245,31 @@ namespace Teltec.Backup.App
 				Debug.WriteLine("Exception Message: " + ex.Message);
 			}
 
-			agent.Files = versioner.FilesToBackup;
-
-			{
-				var message = string.Format("Processing files finished.");
-				Info(message);
-				//StatusInfo.Update(BackupStatusLevel.INFO, message);
-				Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesFinished, Message = message });
-			}
-
-			//Task theTask = versionerTask;
-			//Debug.WriteLine("Task IsCanceled: " + theTask.IsCanceled);
-			//Debug.WriteLine("Task IsFaulted:  " + theTask.IsFaulted);
-			//if (theTask.Exception != null)
-			//{
-			//	Debug.WriteLine("Task Exception Message: "
-			//		+ theTask.Exception.Message);
-			//	Debug.WriteLine("Task Inner Exception Message: "
-			//		+ theTask.Exception.InnerException.Message);
-			//}
-
 			if (versionerTask.IsFaulted || versionerTask.IsCanceled)
 			{
-				versioner.Undo();
+				Versioner.Undo();
 				OnFailure(agent, backup, versionerTask.Exception);
 				return;
 			}
 			else
 			{
-				versioner.Save();
+				agent.Files = Versioner.FilesToBackup;
+
+				{
+					var message = string.Format("Processing files finished.");
+					Info(message);
+					//StatusInfo.Update(BackupStatusLevel.INFO, message);
+					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesFinished, Message = message });
+				}
+				{
+					var message = string.Format("Estimate backup size: {0} files, {1}",
+						agent.Files.Count, FileSizeUtils.FileSizeToString(agent.EstimatedBackupSize));
+					Info(message);
+				}
+
+				Versioner.Save();
 			}
-			
+
 			Task transferTask = agent.StartBackup();
 			await transferTask;
 
@@ -286,7 +282,7 @@ namespace Teltec.Backup.App
 			DoCancel(BackupAgent);
 		}
 
-		private void DoCancel(CustomBackupAgent agent)
+		protected void DoCancel(CustomBackupAgent agent)
 		{
 			BackupAgent.Cancel();
 		}
@@ -295,17 +291,17 @@ namespace Teltec.Backup.App
 
 		#region Event handlers
 
-		public void OnStart(CustomBackupAgent agent, Models.Backup backup)
+		public virtual void OnStart(CustomBackupAgent agent, Models.Backup backup)
 		{
+			IsRunning = true;
+
 			backup.DidStart();
-			_daoBackup.Insert(backup);
-			
-			//var message = string.Format("Estimate backup size: {0} files, {1}",
-			//	BackupAgent.FileCount, FileSizeUtils.FileSizeToString(BackupAgent.EstimatedLength));
-			var message = string.Format("Backup started at {0}", StartedAt);
-			Info(message);
-			//StatusInfo.Update(BackupStatusLevel.OK, message);
-			Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.Started, Message = message });
+		}
+
+		protected void OnUpdate(BackupOperationEvent e)
+		{
+			if (Updated != null)
+				Updated(this, e);
 		}
 
 		public void OnFailure(CustomBackupAgent agent, Models.Backup backup, Exception exception)
@@ -319,7 +315,7 @@ namespace Teltec.Backup.App
 			backup.DidFail();
 			_daoBackup.Update(Backup);
 
-			Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.Failed, Message = message });
+			OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Failed, Message = message });
 		}
 
 		public void OnFinish(CustomBackupAgent agent, Models.Backup backup)
@@ -335,22 +331,23 @@ namespace Teltec.Backup.App
 			//StatusInfo.Update(BackupStatusLevel.OK, message);
 
 			switch (agent.Results.OverallStatus)
+			//switch (backup.Status)
 			{
-				default: throw new InvalidOperationException("Unexpected OverallStatus");
+				default: throw new InvalidOperationException("Unexpected BackupStatus");
 				case BackupStatus.CANCELED:
 					backup.WasCanceled();
 					_daoBackup.Update(backup);
-					Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.Canceled, Message = message });
+					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Canceled, Message = message });
 					break;
 				case BackupStatus.FAILED:
 					backup.DidFail();
 					_daoBackup.Update(backup);
-					Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.Failed, Message = message });
+					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Failed, Message = message });
 					break;
 				case BackupStatus.COMPLETED:
 					backup.DidComplete();
 					_daoBackup.Update(backup);
-					Updated(this, new BackupOperationEvent { Status = BackupOperationStatus.Finished, Message = message });
+					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Finished, Message = message });
 					break;
 			}
 		}
@@ -361,7 +358,7 @@ namespace Teltec.Backup.App
 
 		public System.Diagnostics.EventLog EventLog;
 
-		private void Log(System.Diagnostics.EventLogEntryType type, string format, params object[] args)
+		protected void Log(System.Diagnostics.EventLogEntryType type, string format, params object[] args)
 		{
 			string message = string.Format(format, args);
 			Console.WriteLine(message);
@@ -369,17 +366,17 @@ namespace Teltec.Backup.App
 				EventLog.WriteEntry(message, type);
 		}
 
-		private void Warn(string format, params object[] args)
+		protected void Warn(string format, params object[] args)
 		{
 			Log(System.Diagnostics.EventLogEntryType.Warning, format, args);
 		}
 
-		private void Error(string format, params object[] args)
+		protected void Error(string format, params object[] args)
 		{
 			Log(System.Diagnostics.EventLogEntryType.Error, format, args);
 		}
 
-		private void Info(string format, params object[] args)
+		protected void Info(string format, params object[] args)
 		{
 			Log(System.Diagnostics.EventLogEntryType.Information, format, args);
 		}
@@ -396,13 +393,20 @@ namespace Teltec.Backup.App
 		/// </summary>
 		/// <param name="disposing">Whether this object is being disposed via a call to Dispose
 		/// or garbage collected.</param>
-		private void Dispose(bool disposing)
+		protected virtual void Dispose(bool disposing)
 		{
 			if (!this._isDisposed)
 			{
 				if (disposing && _shouldDispose)
 				{
 					BackupAgent = null;
+					
+					if (Versioner != null)
+					{
+						Versioner.Dispose();
+						Versioner = null;
+					}
+
 					if (TransferAgent != null)
 					{
 						TransferAgent.Dispose();

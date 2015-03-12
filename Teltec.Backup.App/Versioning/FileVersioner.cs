@@ -9,16 +9,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Models;
+using Teltec.Common.Extensions;
 using Teltec.Storage;
 using Teltec.Storage.Versioning;
 
 namespace Teltec.Backup.App.Versioning
 {
-	public sealed class FileVersioner
+	public sealed class FileVersioner : IDisposable
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		CancellationTokenSource CancellationTokenSource;
+		CancellationTokenSource CancellationTokenSource; // IDisposable
 
 		public FileVersioner()
 		{
@@ -27,16 +28,16 @@ namespace Teltec.Backup.App.Versioning
 			CancellationTokenSource = new CancellationTokenSource();
 		}
 
-		public async Task NewVersion(Models.Backup backup, LinkedList<CustomVersionedFile> files)
+		public async Task NewVersion(Models.Backup backup, LinkedList<string> files)
 		{
 			Assert.IsNotNull(backup);
 			Assert.AreEqual(backup.Status, BackupStatus.RUNNING);
 			Assert.IsNotNull(files);
 
+			Backup = backup;
+
 			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
 			AllFilesFromPlan = daoBackupPlanFile.GetAllByPlan(backup.BackupPlan).ToDictionary<BackupPlanFile, string>(p => p.Path);
-
-			Backup = backup;
 
 			await ExecuteOnBackround(() =>
 			{
@@ -80,12 +81,17 @@ namespace Teltec.Backup.App.Versioning
 
 		#endregion
 
-		private void Execute(Models.Backup backup, LinkedList<CustomVersionedFile> files, bool newVersion)
+		private void Execute(Models.Backup backup, LinkedList<string> files, bool newVersion)
 		{
-			DoPrepareBackup(backup, files);
+			LinkedList<CustomVersionedFile> filesToBeVersioned = files.ToLinkedListWithCtorConversion<CustomVersionedFile, string>();
+
+			DoPrepareBackup(backup, filesToBeVersioned);
 			DoUpdateFilesDeletionStatus(backup);
-			DoUpdateFilesVersion(backup);
-			//throw new Exception("Something happened.");
+			DoUpdateFilesProperties(filesToBeVersioned);
+			DoUpdateFilesVersion(backup, filesToBeVersioned);
+			
+			FilesToBackup = filesToBeVersioned;
+			//throw new Exception("Simulating failure.");
 		}
 		
 		Models.Backup Backup;
@@ -104,6 +110,7 @@ namespace Teltec.Backup.App.Versioning
 		{
 			BackupRepository daoBackup = new BackupRepository();
 			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
+			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
 
 			// 1. Update all files that were deleted from the filesystem.
 			foreach (var entry in AllDeletedFilesFromPlan)
@@ -145,7 +152,11 @@ namespace Teltec.Backup.App.Versioning
 				//
 				// Create `BackupedFile`.
 				//
-				BackupedFile backupedFile = new BackupedFile(Backup, versionedFile.UserData as BackupPlanFile);
+				BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(Backup, versionedFile.Path);
+				if (backupedFile == null) // If we're resuming, this should already exist.
+				{
+					backupedFile = new BackupedFile(Backup, versionedFile.UserData as BackupPlanFile);
+				}
 				backupedFile.UpdatedAt = DateTime.UtcNow;
 				Backup.Files.Add(backupedFile);
 			}
@@ -163,16 +174,13 @@ namespace Teltec.Backup.App.Versioning
 		//
 		private void DoPrepareBackup(Models.Backup backup, LinkedList<CustomVersionedFile> files)
 		{
-			FilesToBackup = files;
-
 			// Check all files.
-			foreach (CustomVersionedFile entry in FilesToBackup)
+			foreach (CustomVersionedFile entry in files)
 			{
 				// Throw if the operation was canceled.
 				CancellationTokenSource.Token.ThrowIfCancellationRequested();
 
 				string path = entry.Path;
-				long size = FileManager.GetFileSize(entry.Path).Value;
 
 				//
 				// Create or update `BackupPlanFile`.
@@ -184,7 +192,6 @@ namespace Teltec.Backup.App.Versioning
 				{
 					backupPlanFile = new BackupPlanFile(backup.BackupPlan);
 					backupPlanFile.Path = path;
-					backupPlanFile.LastSize = size;
 					backupPlanFile.CreatedAt = DateTime.UtcNow;
 				}
 				else
@@ -192,19 +199,22 @@ namespace Teltec.Backup.App.Versioning
 					backupPlanFile.UpdatedAt = DateTime.UtcNow;
 				}
 
-				entry.UserData = backupPlanFile; // Later we use it to remove unchanged/deleted files from the resulting list.
+				// Associate both types so later we use it to remove unchanged/deleted files from the resulting list,
+				// and also update their properties.
+				entry.UserData = backupPlanFile;
 
 				BackupPlanFiles.AddLast(backupPlanFile);
 
 				//
 				// Check what happened to the file.
 				//
+
+				bool fileExistsOnFilesystem = File.Exists(path);
+
 				if (backupPlanFileAlreadyExists) // File was backed up at least once in the past?
 				{
-					if (File.Exists(path)) // Exists?
+					if (fileExistsOnFilesystem) // Exists?
 					{
-						backupPlanFile.LastWrittenAt = FileManager.GetLastWriteTimeUtc(path).Value;
-
 						if (IsFileModified(entry)) // Modified?
 						{
 							backupPlanFile.LastStatus = BackupPlanFileStatus.MODIFIED;
@@ -221,9 +231,8 @@ namespace Teltec.Backup.App.Versioning
 				}
 				else // Adding to this backup? We MUST NOT change the plan!
 				{
-					if (File.Exists(entry.Path)) // Exists?
+					if (fileExistsOnFilesystem) // Exists?
 					{
-						backupPlanFile.LastWrittenAt = FileManager.GetLastWriteTimeUtc(path).Value;
 						backupPlanFile.LastStatus = BackupPlanFileStatus.ADDED;
 					}
 					else
@@ -242,14 +251,17 @@ namespace Teltec.Backup.App.Versioning
 		//
 		private void DoUpdateFilesDeletionStatus(Models.Backup backup)
 		{
+			Assert.IsNotNull(AllFilesFromPlan);
+
 			// Find all files that were already backed up at least once, but are not present in this on-going backup.
 			AllDeletedFilesFromPlan = AllFilesFromPlan.Values.Except(backup.BackupPlan.Files);
 
-			foreach (var entry in AllDeletedFilesFromPlan)
+			foreach (BackupPlanFile entry in AllDeletedFilesFromPlan)
 			{
 				// Throw if the operation was canceled.
 				CancellationTokenSource.Token.ThrowIfCancellationRequested();
 
+				// Skip deleted files.
 				if (entry.LastStatus == BackupPlanFileStatus.DELETED)
 					continue;
 
@@ -260,15 +272,42 @@ namespace Teltec.Backup.App.Versioning
 
 		//
 		// Summary:
+		// 1. Update all files' properties: size, last written date, etc.
+		//
+		private void DoUpdateFilesProperties(LinkedList<CustomVersionedFile> files)
+		{
+			foreach (CustomVersionedFile entry in files)
+			{
+				// Throw if the operation was canceled.
+				CancellationTokenSource.Token.ThrowIfCancellationRequested();
+
+				BackupPlanFile backupPlanFile = entry.UserData as BackupPlanFile;
+
+				// Skip deleted files.
+				if (backupPlanFile.LastStatus == BackupPlanFileStatus.DELETED)
+					continue;
+
+				// Update file related properties
+				string path = entry.Path;
+				entry.Size = backupPlanFile.LastSize = FileManager.GetFileSize(path).Value;
+				entry.LastWriteTimeUtc = backupPlanFile.LastWrittenAt = FileManager.GetLastWriteTimeUtc(path).Value;
+
+				if (backupPlanFile.Id.HasValue)
+					backupPlanFile.UpdatedAt = DateTime.UtcNow;
+			}
+		}
+
+		//
+		// Summary:
 		// 1. ...
 		// 2. ...
 		//
-		private void DoUpdateFilesVersion(Models.Backup backup)
+		private void DoUpdateFilesVersion(Models.Backup backup, LinkedList<CustomVersionedFile> files)
 		{
 			IFileVersion version = new FileVersion { Version = backup.Id.Value.ToString() };
 
 			// Update files version.
-			foreach (CustomVersionedFile entry in FilesToBackup)
+			foreach (CustomVersionedFile entry in files)
 			{
 				// Throw if the operation was canceled.
 				CancellationTokenSource.Token.ThrowIfCancellationRequested();
@@ -276,5 +315,42 @@ namespace Teltec.Backup.App.Versioning
 				entry.Version = version;
 			}
 		}
+
+		#region Dispose Pattern Implementation
+
+		bool _shouldDispose = true;
+		bool _isDisposed;
+
+		/// <summary>
+		/// Implements the Dispose pattern
+		/// </summary>
+		/// <param name="disposing">Whether this object is being disposed via a call to Dispose
+		/// or garbage collected.</param>
+		private void Dispose(bool disposing)
+		{
+			if (!this._isDisposed)
+			{
+				if (disposing && _shouldDispose)
+				{
+					if (CancellationTokenSource != null)
+					{
+						CancellationTokenSource.Dispose();
+						CancellationTokenSource = null;
+					}
+				}
+				this._isDisposed = true;
+			}
+		}
+
+		/// <summary>
+		/// Disposes of all managed and unmanaged resources.
+		/// </summary>
+		public void Dispose()
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 }

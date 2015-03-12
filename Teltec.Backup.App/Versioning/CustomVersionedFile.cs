@@ -16,13 +16,13 @@ namespace Teltec.Backup.App.Versioning
 		public long Size
 		{
 			get;
-			private set;
+			set;
 		}
 
 		public DateTime LastWriteTimeUtc
 		{
 			get;
-			private set;
+			set;
 		}
 
 		public byte[] Checksum
@@ -48,23 +48,9 @@ namespace Teltec.Backup.App.Versioning
 			set;
 		}
 
-		public CustomVersionedFile(string path, long size, DateTime lastWriteTimeUtc, byte[] checksum, IFileVersion version)
+		public CustomVersionedFile(string path)
 		{
 			Path = path;
-			Size = size;
-			LastWriteTimeUtc = lastWriteTimeUtc;
-			Checksum = checksum;
-			Version = version;
-		}
-
-		public CustomVersionedFile(string path, long size, DateTime lastWriteTimeUtc)
-			: this(path, size, lastWriteTimeUtc, null, null) 
-		{
-		}
-
-		public CustomVersionedFile(FileInfo file)
-			: this(file.FullName, file.Length, file.LastWriteTimeUtc)
-		{
 		}
 	}
 }

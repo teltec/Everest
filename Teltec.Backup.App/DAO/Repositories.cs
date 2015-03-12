@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Teltec.Common.Extensions;
+using Teltec.Storage;
 
 namespace Teltec.Backup.App.DAO
 {
@@ -59,6 +60,7 @@ namespace Teltec.Backup.App.DAO
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string idPropertyName = this.GetPropertyName((Models.Backup x) => x.Id);
 			crit.AddOrder(Order.Desc(idPropertyName));
+			crit.SetMaxResults(1);
 			return crit.UniqueResult<Models.Backup>();
 		}
 	}
@@ -142,6 +144,16 @@ namespace Teltec.Backup.App.DAO
 				expr = expr.IgnoreCase();
 			crit.Add(expr);
 			return crit.UniqueResult<Models.BackupedFile>();
+		}
+
+		public IList<Models.BackupedFile> GetByBackupAndStatus(Models.Backup backup, BackupStatus status)
+		{
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
+			string statusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Status);
+			crit.Add(Restrictions.Eq(backupPropertyName, backup));
+			crit.Add(Restrictions.Eq(statusPropertyName, status));
+			return crit.List<Models.BackupedFile>();
 		}
 	}
 }
