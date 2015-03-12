@@ -74,9 +74,18 @@ namespace Teltec.Backup.App.Versioning
 
 		#region FileHandling
 
-		private bool IsFileModified(CustomVersionedFile file)
+		private bool IsFileModified(BackupPlanFile file)
 		{
-			return true;
+			Assert.IsNotNull(file);
+			
+			DateTime dt1 = file.LastWrittenAt;
+			DateTime dt2 = FileManager.GetLastWriteTimeUtc(file.Path).Value;
+			
+			// Strip milliseconds off from both dates!
+			dt1 = dt1.AddTicks(-(dt1.Ticks % TimeSpan.TicksPerSecond));
+			dt2 = dt2.AddTicks(-(dt2.Ticks % TimeSpan.TicksPerSecond));
+
+			return DateTime.Compare(dt1, dt2) != 0;
 		}
 
 		#endregion
@@ -89,25 +98,37 @@ namespace Teltec.Backup.App.Versioning
 			DoUpdateFilesDeletionStatus(backup);
 			DoUpdateFilesProperties(filesToBeVersioned);
 			DoUpdateFilesVersion(backup, filesToBeVersioned);
-			
-			FilesToBackup = filesToBeVersioned;
+
+			InternalFilesToBackup = filesToBeVersioned;
 			//throw new Exception("Simulating failure.");
 		}
-		
+
+		bool IsSaved = false;
 		Models.Backup Backup;
 		Dictionary<string, BackupPlanFile> AllFilesFromPlan;
 		IEnumerable<BackupPlanFile> AllDeletedFilesFromPlan;
 		LinkedList<BackupPlanFile> BackupPlanFiles = new LinkedList<BackupPlanFile>();
-		public LinkedList<CustomVersionedFile> FilesToBackup { get; private set; }
+		LinkedList<CustomVersionedFile> InternalFilesToBackup;
+
+		public LinkedList<CustomVersionedFile> FilesToBackup
+		{
+			get
+			{
+				Assert.IsTrue(IsSaved);
+				return InternalFilesToBackup;
+			}
+		}
 
 		public void Undo()
 		{
+			Assert.IsFalse(IsSaved);
 			BackupRepository daoBackup = new BackupRepository();
 			daoBackup.Refresh(Backup);
 		}
 
 		public void Save()
 		{
+			Assert.IsFalse(IsSaved);
 			BackupRepository daoBackup = new BackupRepository();
 			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
@@ -127,7 +148,7 @@ namespace Teltec.Backup.App.Versioning
 			}
 
 			// 3. Remove files that won't belong to this backup.
-			var node = FilesToBackup.First;
+			var node = InternalFilesToBackup.First;
 			while (node != null)
 			{
 				var nextNode = node.Next;
@@ -136,7 +157,7 @@ namespace Teltec.Backup.App.Versioning
 				{
 					default:
 						// Remove everything else.
-						FilesToBackup.Remove(node);
+						InternalFilesToBackup.Remove(node);
 						break;
 					case BackupPlanFileStatus.ADDED:
 					case BackupPlanFileStatus.MODIFIED:
@@ -147,7 +168,7 @@ namespace Teltec.Backup.App.Versioning
 			}
 
 			// 4. Add `BackupedFile`s to the `Backup`.
-			foreach (CustomVersionedFile versionedFile in FilesToBackup)
+			foreach (CustomVersionedFile versionedFile in InternalFilesToBackup)
 			{
 				//
 				// Create `BackupedFile`.
@@ -163,6 +184,7 @@ namespace Teltec.Backup.App.Versioning
 
 			// 5. Insert `Backup` and its `BackupedFile`s into the database.
 			daoBackup.Update(Backup);
+			IsSaved = true;
 		}
 
 		//
@@ -215,7 +237,7 @@ namespace Teltec.Backup.App.Versioning
 				{
 					if (fileExistsOnFilesystem) // Exists?
 					{
-						if (IsFileModified(entry)) // Modified?
+						if (IsFileModified(backupPlanFile)) // Modified?
 						{
 							backupPlanFile.LastStatus = BackupPlanFileStatus.MODIFIED;
 						}

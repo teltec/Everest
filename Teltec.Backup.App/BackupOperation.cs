@@ -251,23 +251,22 @@ namespace Teltec.Backup.App
 				OnFailure(agent, backup, versionerTask.Exception);
 				return;
 			}
-			else
+
+			// IMPORTANT: Must happen before any attempt to get `FileVersioner.FilesToBackup`.
+			Versioner.Save();
+
+			agent.Files = Versioner.FilesToBackup;
+
 			{
-				agent.Files = Versioner.FilesToBackup;
-
-				{
-					var message = string.Format("Processing files finished.");
-					Info(message);
-					//StatusInfo.Update(BackupStatusLevel.INFO, message);
-					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesFinished, Message = message });
-				}
-				{
-					var message = string.Format("Estimate backup size: {0} files, {1}",
-						agent.Files.Count, FileSizeUtils.FileSizeToString(agent.EstimatedBackupSize));
-					Info(message);
-				}
-
-				Versioner.Save();
+				var message = string.Format("Processing files finished.");
+				Info(message);
+				//StatusInfo.Update(BackupStatusLevel.INFO, message);
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesFinished, Message = message });
+			}
+			{
+				var message = string.Format("Estimate backup size: {0} files, {1}",
+					agent.Files.Count, FileSizeUtils.FileSizeToString(agent.EstimatedBackupSize));
+				Info(message);
 			}
 
 			Task transferTask = agent.StartBackup();
