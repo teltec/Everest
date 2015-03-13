@@ -62,7 +62,7 @@ namespace Teltec.Storage.Implementations.S3
             List<UploadPartResponse> uploadResponses = new List<UploadPartResponse>();
 
 			InitiateMultipartUploadResponse initResponse = null;
-			
+
 			try
 			{
 				// Attempt to read the file before anything else.
@@ -201,6 +201,14 @@ namespace Teltec.Storage.Implementations.S3
 					{
 						reusedProgressArgs.State = TransferState.FAILED;
 					});
+			}
+			finally
+			{
+				if (inputStream != null)
+				{
+					inputStream.Close();
+					inputStream.Dispose();
+				}
 			}
         }
 
