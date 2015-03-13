@@ -37,11 +37,18 @@ namespace Teltec.Backup.App.Models
 			protected set { _File = value; }
 		}
 
-		private BackupStatus _Status;
-		public virtual BackupStatus Status
+		private BackupFileStatus _FileStatus;
+		public virtual BackupFileStatus FileStatus
 		{
-			get { return _Status; }
-			set { _Status = value; }
+			get { return _FileStatus; }
+			set { SetField(ref _FileStatus, value); }
+		}
+
+		private BackupStatus _BackupStatus;
+		public virtual BackupStatus BackupStatus
+		{
+			get { return _BackupStatus; }
+			set { _BackupStatus = value; }
 		}
 
 		private DateTime _UpdatedAt;

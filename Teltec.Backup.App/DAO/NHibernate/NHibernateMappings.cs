@@ -201,8 +201,13 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				//.Not.Nullable()
 				.UniqueKey(UNIQUE_KEY_NAME);
 
-			Map(p => p.Status)
-				.Column("status")
+			Map(p => p.FileStatus)
+				.Column("file_status")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<Models.BackupFileStatus>>();
+
+			Map(p => p.BackupStatus)
+				.Column("backup_status")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<BackupStatus>>();
 
@@ -249,7 +254,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			Map(p => p.LastStatus)
 				.Column("last_status")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<Models.BackupPlanFileStatus>>();
+				.CustomType<GenericEnumMapper<Models.BackupFileStatus>>();
 
 			Map(p => p.CreatedAt)
 				.Column("created_at")

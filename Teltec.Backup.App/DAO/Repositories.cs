@@ -150,9 +150,9 @@ namespace Teltec.Backup.App.DAO
 		{
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
-			string statusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Status);
+			string backupStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.BackupStatus);
 			crit.Add(Restrictions.Eq(backupPropertyName, backup));
-			crit.Add(Restrictions.Eq(statusPropertyName, status));
+			crit.Add(Restrictions.Eq(backupStatusPropertyName, status));
 			return crit.List<Models.BackupedFile>();
 		}
 	}

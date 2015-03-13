@@ -166,7 +166,7 @@ namespace Teltec.Backup.App
 			results.Failed += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
-				backupedFile.Status = BackupStatus.FAILED;
+				backupedFile.BackupStatus = BackupStatus.FAILED;
 				backupedFile.UpdatedAt = DateTime.UtcNow;
 				daoBackupedFile.Update(backupedFile);
 
@@ -178,7 +178,7 @@ namespace Teltec.Backup.App
 			results.Canceled += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
-				backupedFile.Status = BackupStatus.CANCELED;
+				backupedFile.BackupStatus = BackupStatus.CANCELED;
 				backupedFile.UpdatedAt = DateTime.UtcNow;
 				daoBackupedFile.Update(backupedFile);
 
@@ -190,7 +190,7 @@ namespace Teltec.Backup.App
 			results.Completed += (object sender, TransferFileProgressArgs args) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
-				backupedFile.Status = BackupStatus.COMPLETED;
+				backupedFile.BackupStatus = BackupStatus.COMPLETED;
 				backupedFile.UpdatedAt = DateTime.UtcNow;
 				daoBackupedFile.Update(backupedFile);
 
@@ -201,7 +201,7 @@ namespace Teltec.Backup.App
 			results.Started += (object sender, TransferFileProgressArgs args) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
-				backupedFile.Status = BackupStatus.RUNNING;
+				backupedFile.BackupStatus = BackupStatus.RUNNING;
 				backupedFile.UpdatedAt = DateTime.UtcNow;
 				daoBackupedFile.Update(backupedFile);
 

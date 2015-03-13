@@ -3,7 +3,7 @@ using System;
 
 namespace Teltec.Backup.App.Models
 {
-	public enum BackupPlanFileStatus
+	public enum BackupFileStatus
 	{
 		UNCHANGED = 0,
 		ADDED = 1, // File was added to the backup.
@@ -62,8 +62,8 @@ namespace Teltec.Backup.App.Models
 			set { SetField(ref _LastWrittenAt, value); }
 		}
 
-		private BackupPlanFileStatus _LastStatus;
-		public virtual BackupPlanFileStatus LastStatus
+		private BackupFileStatus _LastStatus;
+		public virtual BackupFileStatus LastStatus
 		{
 			get { return _LastStatus; }
 			set { SetField(ref _LastStatus, value); }
