@@ -70,6 +70,7 @@ namespace Teltec.Backup.App.Versioning
 		private Task ExecuteOnBackround(Action action, CancellationToken token)
 		{
 			return Task.Run(action, token);
+			//return AsyncHelper.ExecuteOnBackround(action, token);
 		}
 
 		#region FileHandling

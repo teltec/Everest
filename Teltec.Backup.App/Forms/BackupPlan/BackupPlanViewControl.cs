@@ -253,6 +253,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 					{
 						UpdateDuration(status);
 
+						this.lblSources.Text = RunningBackup.Sources;
 						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
 						this.lblStatus.Text = status == BackupOperationStatus.Canceled ? LBL_STATUS_CANCELED : LBL_STATUS_FAILED;
 
