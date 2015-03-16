@@ -115,7 +115,7 @@ namespace Teltec.Backup.App
 		protected BackupOperationOptions Options;
 		protected IAsyncTransferAgent TransferAgent; // IDisposable
 		protected CustomBackupAgent BackupAgent;
-		protected FileVersioner Versioner; // IDisposable
+		protected IncrementalFileVersioner Versioner; // IDisposable
 
 		public void Start(out BackupResults results)
 		{
@@ -148,7 +148,7 @@ namespace Teltec.Backup.App
 			BackupAgent = new CustomBackupAgent(TransferAgent);
 			BackupAgent.Results.Monitor = TransferListControl;
 
-			Versioner = new FileVersioner();
+			Versioner = new IncrementalFileVersioner();
 
 			RegisterResultsEventHandlers(Backup, BackupAgent.Results);
 			

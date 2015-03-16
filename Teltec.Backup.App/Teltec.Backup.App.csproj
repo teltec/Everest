@@ -205,7 +205,7 @@
       <DependentUpon>201502041721361_RenameBackupPlanSourceEntryId.cs</DependentUpon>
     </Compile>
     <Compile Include="Versioning\CustomVersionedFile.cs" />
-    <Compile Include="Versioning\FileVersioner.cs" />
+    <Compile Include="Versioning\IncrementalFileVersioner.cs" />
     <Compile Include="Versioning\DefaultPathScanner.cs" />
     <None Include="Migrations\Configuration.cs_" />
     <Compile Include="Models\AmazonS3Account.cs" />

@@ -2,7 +2,6 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -15,13 +14,13 @@ using Teltec.Storage.Versioning;
 
 namespace Teltec.Backup.App.Versioning
 {
-	public sealed class FileVersioner : IDisposable
+	public sealed class IncrementalFileVersioner : IDisposable
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		CancellationTokenSource CancellationTokenSource; // IDisposable
 
-		public FileVersioner()
+		public IncrementalFileVersioner()
 		{
 			//_daoBackups = new BackupRepository();
 			//_daoBackupPlanFiles = new BackupPlanFileRepository(_daoBackups.Session);
@@ -44,23 +43,6 @@ namespace Teltec.Backup.App.Versioning
 				Execute(backup, files, true);
 			}, CancellationTokenSource.Token);
 		}
-
-		//public async Task ResumeVersion(Models.Backup backup, LinkedList<CustomVersionedFile> files)
-		//{
-		//	Assert.IsNotNull(backup);
-		//	Assert.AreEqual(backup.Status, BackupStatus.RUNNING);
-		//	Assert.IsNotNull(files);
-		//
-		//	BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
-		//	AllFilesFromPlan = daoBackupPlanFile.GetAllByPlan(backup.BackupPlan).ToDictionary<BackupPlanFile, string>(p => p.Path);
-		//
-		//	Backup = backup;
-		//
-		//	await ExecuteOnBackround(() =>
-		//	{
-		//		Execute(agent, false);
-		//	}, CancellationTokenSource.Token);
-		//}
 
 		public void Cancel()
 		{
