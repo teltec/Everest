@@ -27,6 +27,8 @@ namespace Teltec.Storage.Utils
 
 		static public string FileSizeToString(long size)
 		{
+			if (size == 0)
+				return "Completed";
 			foreach (UnitDescriptor unit in Units)
 			{
 				if (size >= unit.Value)
@@ -35,7 +37,7 @@ namespace Teltec.Storage.Utils
 					return string.Format(unit.Format, remaining, unit.Unit);
 				}
 			}
-			return "Completed";
+			return "Unknown";
 		}
 
 		static public void FileSizeToString(object sender, ConvertEventArgs e)

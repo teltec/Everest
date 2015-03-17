@@ -120,9 +120,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ResumeBackupOperation.cs" />
-    <Compile Include="NewBackupOperation.cs" />
-    <Compile Include="CustomBackupAgent.cs" />
+    <Compile Include="Restore\CustomRestoreAgent.cs" />
+    <Compile Include="Backup\ResumeBackupOperation.cs" />
+    <Compile Include="Backup\NewBackupOperation.cs" />
+    <Compile Include="Backup\CustomBackupAgent.cs" />
     <Compile Include="DAO\NHibernate\NHibernateMappings.cs" />
     <Compile Include="DAO\NHibernate\IAuditable.cs" />
     <Compile Include="DAO\NHibernate\NHibernateAuditInterceptor.cs" />
@@ -209,7 +210,7 @@
     <Compile Include="Versioning\DefaultPathScanner.cs" />
     <None Include="Migrations\Configuration.cs_" />
     <Compile Include="Models\AmazonS3Account.cs" />
-    <Compile Include="BackupOperation.cs" />
+    <Compile Include="Backup\BackupOperation.cs" />
     <Compile Include="Models\BackupPlan.cs" />
     <Compile Include="Models\BackupPlanSourceEntry.cs" />
     <Compile Include="Models\StorageAccount.cs" />

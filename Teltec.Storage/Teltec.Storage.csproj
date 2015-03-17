@@ -53,10 +53,12 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AbstractAgent.cs" />
     <Compile Include="AsyncHelper.cs" />
     <Compile Include="Backend\PathBuilder.cs" />
     <Compile Include="BackupAgent.cs" />
-    <Compile Include="BackupResults.cs" />
+    <Compile Include="RestoreAgent.cs" />
+    <Compile Include="TransferResults.cs" />
     <Compile Include="Implementations\CancelableFileStream.cs" />
     <Compile Include="Implementations\S3\S3PathBuilder.cs" />
     <Compile Include="PathScanner.cs" />

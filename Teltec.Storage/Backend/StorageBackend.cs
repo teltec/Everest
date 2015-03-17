@@ -12,7 +12,7 @@ namespace Teltec.Storage.Backend
 
 	public abstract class StorageBackend : IStorageBackend
 	{
-		#region Delegates
+		#region Upload 
 
 		public TransferStartedDelegate UploadStarted;
 		public TransferProgressedDelegate UploadProgressed;
@@ -20,11 +20,19 @@ namespace Teltec.Storage.Backend
 		public TransferCanceledDelegate UploadCanceled;
 		public TransferCompletedDelegate UploadCompleted;
 
+		public abstract void UploadFile(string filePath, string keyName, CancellationToken cancellationToken);
+
 		#endregion
 
-		#region Upload methods
+		#region Download
 
-		public abstract void UploadFile(string filePath, string keyName, CancellationToken cancellationToken);
+		public TransferStartedDelegate DownloadStarted;
+		public TransferProgressedDelegate DownloadProgressed;
+		public TransferFailedDelegate DownloadFailed;
+		public TransferCanceledDelegate DownloadCanceled;
+		public TransferCompletedDelegate DownloadCompleted;
+
+		public abstract void DownloadFile(string filePath, string keyName, CancellationToken cancellationToken);
 
 		#endregion
 

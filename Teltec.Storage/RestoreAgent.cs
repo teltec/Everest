@@ -4,17 +4,17 @@ using Teltec.Storage.Versioning;
 
 namespace Teltec.Storage
 {
-	public class BackupAgent<T> : AbstractAgent<T> where T : IVersionedFile
+	public class RestoreAgent<T> : AbstractAgent<T> where T : IVersionedFile
 	{
-		public BackupAgent(IAsyncTransferAgent agent)
+		public RestoreAgent(IAsyncTransferAgent agent)
 			: base(agent)
 		{
-			RegisterUploadEventHandlers();
+			RegisterDownloadEventHandlers();
 		}
 
 		public override async Task DoImplementation(IVersionedFile file)
 		{
-			await TransferAgent.UploadVersionedFile(file.Path, file.Version);
+			await TransferAgent.DownloadVersionedFile(file.Path, file.Version);
 		}
 	}
 }

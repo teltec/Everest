@@ -23,19 +23,33 @@ namespace Teltec.Storage.Agent
 		string LocalRootDir { get; set; }
 		string RemoteRootDir { get; set; }
 
-		Task UploadVersionedFile(string sourcePath, IFileVersion version);
-		Task UploadFile(string sourcePath, string targetPath);
-
-		Task DownloadVersionedFile(string sourcePath, IFileVersion version);
-		Task DownloadFile(string sourcePath, string targetPath);
-
-		void CancelTransfers();
-		void RenewCancellationToken();
-
+		#region Upload
+		
 		event TransferFileProgressHandler UploadFileStarted;
 		event TransferFileProgressHandler UploadFileProgress;
 		event TransferFileExceptionHandler UploadFileCanceled;
 		event TransferFileExceptionHandler UploadFileFailed;
 		event TransferFileProgressHandler UploadFileCompleted;
+
+		Task UploadVersionedFile(string sourcePath, IFileVersion version);
+		Task UploadFile(string sourcePath, string targetPath);
+		
+		#endregion
+
+		#region Download
+
+		event TransferFileProgressHandler DownloadFileStarted;
+		event TransferFileProgressHandler DownloadFileProgress;
+		event TransferFileExceptionHandler DownloadFileCanceled;
+		event TransferFileExceptionHandler DownloadFileFailed;
+		event TransferFileProgressHandler DownloadFileCompleted;
+
+		Task DownloadVersionedFile(string sourcePath, IFileVersion version);
+		Task DownloadFile(string sourcePath, string targetPath);
+
+		#endregion
+
+		void CancelTransfers();
+		void RenewCancellationToken();
 	}
 }

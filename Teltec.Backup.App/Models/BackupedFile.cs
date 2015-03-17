@@ -44,8 +44,8 @@ namespace Teltec.Backup.App.Models
 			set { SetField(ref _FileStatus, value); }
 		}
 
-		private BackupStatus _BackupStatus;
-		public virtual BackupStatus BackupStatus
+		private TransferStatus _BackupStatus;
+		public virtual TransferStatus TransferStatus
 		{
 			get { return _BackupStatus; }
 			set { _BackupStatus = value; }

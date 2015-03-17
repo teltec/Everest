@@ -48,8 +48,8 @@ namespace Teltec.Backup.App.Models
 			protected set { _FinishedAt = value; }
 		}
 
-		private BackupStatus _Status;
-		public virtual BackupStatus Status
+		private TransferStatus _Status;
+		public virtual TransferStatus Status
 		{
 			get { return _Status; }
 			protected set { _Status = value; }
@@ -74,25 +74,25 @@ namespace Teltec.Backup.App.Models
 		public virtual void DidStart()
 		{
 			StartedAt = DateTime.UtcNow;
-			Status = BackupStatus.RUNNING;
+			Status = TransferStatus.RUNNING;
 		}
 
 		public virtual void DidComplete()
 		{
 			FinishedAt = DateTime.UtcNow;
-			Status = BackupStatus.COMPLETED;
+			Status = TransferStatus.COMPLETED;
 		}
 
 		public virtual void DidFail()
 		{
 			FinishedAt = DateTime.UtcNow;
-			Status = BackupStatus.FAILED;
+			Status = TransferStatus.FAILED;
 		}
 
 		public virtual void WasCanceled()
 		{
 			FinishedAt = DateTime.UtcNow;
-			Status = BackupStatus.CANCELED;
+			Status = TransferStatus.CANCELED;
 		}
 
 		#endregion

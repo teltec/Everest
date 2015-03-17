@@ -38,19 +38,18 @@ namespace Teltec.Storage.Implementations.S3
 			});
 		}
 
-		public override async Task DownloadVersionedFile(string sourcePath, IFileVersion version)
+		public override async Task DownloadVersionedFile(string targetPath, IFileVersion version)
 		{
 			Debug.Assert(PathBuilder != null);
-			throw new NotImplementedException();
-			//string targetPath = "...";
-			//await DownloadFile(sourcePath, targetPath);
+			string sourcePath = PathBuilder.BuildVersionedPath(targetPath, version);
+			await DownloadFile(targetPath, sourcePath);
 		}
 
-		public override async Task DownloadFile(string sourcePath, string targetPath)
+		public override async Task DownloadFile(string targetPath, string sourcePath)
 		{
 			await ExecuteOnBackround(() =>
 			{
-				throw new NotImplementedException();
+				Implementation.DownloadFile(targetPath, sourcePath, this.CancellationTokenSource.Token);
 			});
 		}
 

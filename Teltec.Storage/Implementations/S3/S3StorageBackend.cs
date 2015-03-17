@@ -2,9 +2,11 @@
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.Util;
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using Teltec.Storage.Backend;
@@ -41,13 +43,11 @@ namespace Teltec.Storage.Implementations.S3
 
 		#endregion
 
-		#region Upload methods
+		#region Upload
 
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/LLuploadFileDotNet.html
 		public override void UploadFile(string filePath, string keyName, CancellationToken cancellationToken)
 		{
-			FileInfo fileInfo = null;
-			long contentLength = 0;
 			CancelableFileStream inputStream = null;
 
 			TransferFileProgressArgs reusedProgressArgs = new TransferFileProgressArgs
@@ -66,8 +66,8 @@ namespace Teltec.Storage.Implementations.S3
 			try
 			{
 				// Attempt to read the file before anything else.
-				fileInfo = new FileInfo(filePath);
-				contentLength = reusedProgressArgs.TotalBytes = fileInfo.Length;
+				FileInfo fileInfo = new FileInfo(filePath);
+				long contentLength = reusedProgressArgs.TotalBytes = fileInfo.Length;
 
 				// Report start - before any possible failures.
 				if (UploadStarted != null)
@@ -105,7 +105,7 @@ namespace Teltec.Storage.Implementations.S3
 
 				long filePosition = 0;
 
-				for (int i = 1; filePosition < contentLength; i++)
+				for (int partNumber = 1; filePosition < contentLength; partNumber++)
 				{
 					if (cancellationToken != null)
 						cancellationToken.ThrowIfCancellationRequested();
@@ -115,7 +115,7 @@ namespace Teltec.Storage.Implementations.S3
 						BucketName = this._awsBuckeName,
 						Key = keyName,
 						UploadId = initResponse.UploadId,
-						PartNumber = i,
+						PartNumber = partNumber,
 						PartSize = PART_SIZE,//Math.Min(contentLength - filePosition, PART_SIZE),
 						//FilePosition = filePosition,
 						//FilePath = filePath,
@@ -211,6 +211,127 @@ namespace Teltec.Storage.Implementations.S3
 				}
 			}
         }
+
+		#endregion
+
+		#region Download
+
+		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/RetrievingObjectUsingNetSDK.html
+		public override void DownloadFile(string filePath, string keyName, CancellationToken cancellationToken)
+		{
+			TransferFileProgressArgs reusedProgressArgs = new TransferFileProgressArgs
+			{
+				State = TransferState.PENDING,
+				TotalBytes = 0,
+				TransferredBytes = 0,
+				FilePath = filePath,
+			};
+
+			// Download request.
+			GetObjectRequest downloadRequest = new GetObjectRequest
+			{
+				BucketName = this._awsBuckeName,
+				Key = keyName,
+			};
+
+			try
+			{
+				// Attempt to create any intermediary directories before anything else.
+				FileInfo file = new FileInfo(filePath);
+				Directory.CreateDirectory(file.DirectoryName);
+
+				// Report start - before any possible failures.
+				if (DownloadStarted != null)
+					DownloadStarted(reusedProgressArgs, () =>
+					{
+						reusedProgressArgs.State = TransferState.STARTED;
+					});
+
+				const int DefaultBufferSize = 8192;
+
+				// REFERENCE: https://github.com/aws/aws-sdk-net/blob/5f19301ee9fa1ec29b11b3dfdee82071a04ed5ae/AWSSDK_DotNet35/Amazon.S3/Model/GetObjectResponse.cs
+				// 2. Download.
+				// Create the file. If the file already exists, it will be overwritten.
+				using (GetObjectResponse downloadResponse = this._s3Client.GetObject(downloadRequest))
+				using (BufferedStream bufferedStream = new BufferedStream(downloadResponse.ResponseStream))
+				using (Stream fileStream = new BufferedStream(new FileStream(filePath, FileMode.Create)))
+				{
+					// Report 0% progress.
+					if (DownloadProgressed != null)
+						DownloadProgressed(reusedProgressArgs, () =>
+						{
+							reusedProgressArgs.TotalBytes = downloadResponse.ContentLength;
+							reusedProgressArgs.State = TransferState.TRANSFERRING;
+						});
+
+					string requestId = downloadResponse.ResponseMetadata.RequestId;
+					string amzId2;
+					downloadResponse.ResponseMetadata.Metadata.TryGetValue(HeaderKeys.XAmzId2Header, out amzId2);
+					amzId2 = amzId2 ?? string.Empty;
+
+					long filePosition = 0;
+					int bytesRead = 0;
+					byte[] buffer = new byte[DefaultBufferSize];
+					while ((bytesRead = bufferedStream.Read(buffer, 0, buffer.Length)) > 0)
+					{
+						if (cancellationToken != null)
+							cancellationToken.ThrowIfCancellationRequested();
+
+						fileStream.Write(buffer, 0, bytesRead);
+						filePosition += bytesRead;
+
+						// Report progress.
+						if (DownloadProgressed != null)
+							DownloadProgressed(reusedProgressArgs, () =>
+							{
+								reusedProgressArgs.TransferredBytes = filePosition;
+							});
+					}
+
+					// Validate transferred size.
+					if (reusedProgressArgs.TransferredBytes != reusedProgressArgs.TotalBytes)
+					{
+						var message = string.Format(CultureInfo.InvariantCulture,
+							"The total bytes read {0} from response stream is not equal to the Content-Length {1} for the object {2} in bucket {3}."
+							+ " Request ID = {4} , AmzId2 = {5}.",
+							reusedProgressArgs.TransferredBytes,
+							reusedProgressArgs.TotalBytes,
+							keyName, this._awsBuckeName, requestId, amzId2);
+
+						throw new StreamSizeMismatchException(message, reusedProgressArgs.TotalBytes, reusedProgressArgs.TransferredBytes, requestId, amzId2);
+					}
+				}
+
+				// Report completion.
+				if (DownloadCompleted != null)
+					DownloadCompleted(reusedProgressArgs, () =>
+					{
+						reusedProgressArgs.State = TransferState.COMPLETED;
+					});
+			}
+			catch (OperationCanceledException exception)
+			{
+				logger.Info("Download canceled.");
+
+				// Report cancelation.
+				if (DownloadCanceled != null)
+					DownloadCanceled(reusedProgressArgs, exception, () =>
+					{
+						reusedProgressArgs.State = TransferState.CANCELED;
+					});
+			}
+			catch (Exception exception)
+			{
+				logger.Warn("Exception occurred: {0}", exception.Message);
+
+				// Report failure.
+				if (DownloadFailed != null)
+					DownloadFailed(reusedProgressArgs, exception, () =>
+					{
+						reusedProgressArgs.State = TransferState.FAILED;
+					});
+			}
+		}
 
 		#endregion
 

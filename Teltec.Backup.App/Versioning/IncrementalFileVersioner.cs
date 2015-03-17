@@ -29,8 +29,18 @@ namespace Teltec.Backup.App.Versioning
 
 		public async Task NewVersion(Models.Backup backup, LinkedList<string> files)
 		{
+			await DoVersion(backup, files, true);
+		}
+
+		public async Task ResumeVersion(Models.Backup backup, LinkedList<string> files)
+		{
+			await DoVersion(backup, files, false);
+		}
+
+		public async Task DoVersion(Models.Backup backup, LinkedList<string> files, bool newVersion)
+		{
 			Assert.IsNotNull(backup);
-			Assert.AreEqual(backup.Status, BackupStatus.RUNNING);
+			Assert.AreEqual(backup.Status, TransferStatus.RUNNING);
 			Assert.IsNotNull(files);
 
 			Backup = backup;
@@ -40,7 +50,7 @@ namespace Teltec.Backup.App.Versioning
 
 			await ExecuteOnBackround(() =>
 			{
-				Execute(backup, files, true);
+				Execute(backup, files, newVersion);
 			}, CancellationTokenSource.Token);
 		}
 
@@ -93,8 +103,13 @@ namespace Teltec.Backup.App.Versioning
 			LinkedList<CustomVersionedFile> filesToBeVersioned = files.ToLinkedListWithCtorConversion<CustomVersionedFile, string>();
 
 			BackupPlanFiles = DoLoadOrCreateBackupPlanFiles(backup.BackupPlan, filesToBeVersioned);
-			DoUpdateFilesStatus(backup, filesToBeVersioned);
-			DoUpdateFilesDeletionStatus(BackupPlanFiles);
+			DoUpdateFilesStatus(backup, filesToBeVersioned, newVersion);
+			
+			// DO NOT update files deletion status for a `ResumeBackupOperation`,
+			// only for `NewBackupOperation`.
+			if (newVersion)
+				DoUpdateFilesDeletionStatus(BackupPlanFiles);
+
 			DoUpdateFilesProperties(filesToBeVersioned);
 			DoUpdateFilesVersion(backup, filesToBeVersioned);
 
@@ -112,6 +127,7 @@ namespace Teltec.Backup.App.Versioning
 		{
 			Assert.IsNotNull(plan);
 			Assert.IsNotNull(files);
+			Assert.IsNotNull(AllFilesFromPlan);
 
 			LinkedList<BackupPlanFile> result = new LinkedList<BackupPlanFile>();
 
@@ -133,10 +149,10 @@ namespace Teltec.Backup.App.Versioning
 					backupPlanFile.Path = entry.Path;
 					backupPlanFile.CreatedAt = DateTime.UtcNow;
 				}
-				else
-				{
-					backupPlanFile.UpdatedAt = DateTime.UtcNow;
-				}
+				//else
+				//{
+				//	backupPlanFile.UpdatedAt = DateTime.UtcNow;
+				//}
 
 				// Associate both types so later we use it to remove unchanged/deleted
 				// files from the resulting list, and also update their properties.
@@ -155,7 +171,7 @@ namespace Teltec.Backup.App.Versioning
 		// 3. Update the backup and add its files to the database - Refers to `Backup` and `BackupedFile`;
 		// NOTE: Does not save to the database because this method is run by a secondary thread.
 		//
-		private void DoUpdateFilesStatus(Models.Backup backup, LinkedList<CustomVersionedFile> files)
+		private void DoUpdateFilesStatus(Models.Backup backup, LinkedList<CustomVersionedFile> files, bool newVersion)
 		{
 			Assert.IsNotNull(backup);
 			Assert.IsNotNull(files);
@@ -170,11 +186,13 @@ namespace Teltec.Backup.App.Versioning
 
 				BackupPlanFile backupPlanFile = entry.UserData as BackupPlanFile;
 
+
 				//
 				// Check what happened to the file.
 				//
 
 				bool fileExistsOnFilesystem = File.Exists(path);
+				BackupFileStatus? changeStatusTo = null;
 
 				if (backupPlanFile.Id.HasValue) // File was backed up at least once in the past?
 				{
@@ -182,35 +200,46 @@ namespace Teltec.Backup.App.Versioning
 					{
 						if (backupPlanFile.LastStatus == BackupFileStatus.DELETED) // File was marked as DELETED by a previous backup?
 						{
-							backupPlanFile.LastStatus = BackupFileStatus.ADDED;
+							changeStatusTo = BackupFileStatus.ADDED;
 						}
 						else
 						{
-							if (IsFileModified(backupPlanFile)) // Modified?
-							{
-								backupPlanFile.LastStatus = BackupFileStatus.MODIFIED;
-							}
-							else // Not modified?
-							{
-								backupPlanFile.LastStatus = BackupFileStatus.UNCHANGED;
+							// DO NOT verify whether the file changed for a `ResumeBackupOperation`,
+							// only for `NewBackupOperation`.
+							if (newVersion)
+							{ 
+								if (IsFileModified(backupPlanFile)) // Modified?
+								{
+									changeStatusTo = BackupFileStatus.MODIFIED;
+								}
+								else // Not modified?
+								{
+									changeStatusTo = BackupFileStatus.UNCHANGED;
+								}
 							}
 						}
 					}
 					else // Deleted from filesystem?
 					{
-						backupPlanFile.LastStatus = BackupFileStatus.DELETED;
+						changeStatusTo = BackupFileStatus.DELETED;
 					}
 				}
-				else // Adding to this backup? We MUST NOT change the plan!
+				else // Adding to this backup?
 				{
 					if (fileExistsOnFilesystem) // Exists?
 					{
-						backupPlanFile.LastStatus = BackupFileStatus.ADDED;
+						changeStatusTo = BackupFileStatus.ADDED;
 					}
 					else
 					{
 						// Error?
 					}
+				}
+
+				if (changeStatusTo.HasValue)
+				{
+					backupPlanFile.LastStatus = changeStatusTo.Value;
+					backupPlanFile.UpdatedAt = DateTime.UtcNow;
 				}
 			}
 		}

@@ -21,6 +21,7 @@ namespace Teltec.Backup.App.Versioning
 
 		#region PathScanner
 
+		// TODO(jweyrich): Should return a HashSet/ISet instead?
 		public override LinkedList<string> Scan()
 		{
 			Result = new LinkedList<string>();

@@ -1,13 +1,9 @@
 ﻿using NLog;
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
-using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Versioning;
-using Teltec.Storage.Utils;
 
-namespace Teltec.Backup.App
+namespace Teltec.Backup.App.Backup
 {
 	public sealed class NewBackupOperation : BackupOperation
 	{
@@ -43,6 +39,11 @@ namespace Teltec.Backup.App
 			LinkedList<string> files = scanner.Scan();
 			
 			return files;
+		}
+
+		protected override Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess)
+		{
+			return Versioner.NewVersion(backup, filesToProcess);
 		}
 
 		#endregion

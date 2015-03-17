@@ -5,6 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
+using NUnit.Framework;
 
 namespace Teltec.Backup.App.DAO
 {
@@ -55,9 +56,12 @@ namespace Teltec.Backup.App.DAO
 		{
 		}
 
-		public Models.Backup GetLatest(Models.BackupPlan plan)
+		public Models.Backup GetLatestByPlan(Models.BackupPlan plan)
 		{
+			Assert.IsNotNull(plan);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string backupPlanPropertyName = this.GetPropertyName((Models.Backup x) => x.BackupPlan);
+			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
 			string idPropertyName = this.GetPropertyName((Models.Backup x) => x.Id);
 			crit.AddOrder(Order.Desc(idPropertyName));
 			crit.SetMaxResults(1);
@@ -90,6 +94,7 @@ namespace Teltec.Backup.App.DAO
 
 		public Models.BackupPlanFile GetByPath(string path, bool ignoreCase = false)
 		{
+			Assert.IsNotNullOrEmpty(path);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string pathPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.Path);
 			SimpleExpression expr = Restrictions.Eq(pathPropertyName, path);
@@ -101,6 +106,7 @@ namespace Teltec.Backup.App.DAO
 
 		public IList<Models.BackupPlanFile> GetAllByPlan(Models.BackupPlan plan)
 		{
+			Assert.IsNotNull(plan);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.BackupPlan);
 			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
@@ -133,6 +139,8 @@ namespace Teltec.Backup.App.DAO
 
 		public Models.BackupedFile GetByBackupAndPath(Models.Backup backup, string path, bool ignoreCase = false)
 		{
+			Assert.IsNotNull(backup);
+			Assert.IsNotNullOrEmpty(path);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
 			string filePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
@@ -146,13 +154,15 @@ namespace Teltec.Backup.App.DAO
 			return crit.UniqueResult<Models.BackupedFile>();
 		}
 
-		public IList<Models.BackupedFile> GetByBackupAndStatus(Models.Backup backup, BackupStatus status)
+		public IList<Models.BackupedFile> GetByBackupAndStatus(Models.Backup backup, params TransferStatus[] statuses)
 		{
+			Assert.IsNotNull(backup);
+			Assert.IsNotNull(statuses);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
-			string backupStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.BackupStatus);
+			string transferStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
 			crit.Add(Restrictions.Eq(backupPropertyName, backup));
-			crit.Add(Restrictions.Eq(backupStatusPropertyName, status));
+			crit.Add(Restrictions.In(transferStatusPropertyName, statuses));
 			return crit.List<Models.BackupedFile>();
 		}
 	}

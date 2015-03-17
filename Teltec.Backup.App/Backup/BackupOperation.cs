@@ -13,7 +13,7 @@ using Teltec.Storage.Agent;
 using Teltec.Storage.Implementations.S3;
 using Teltec.Storage.Utils;
 
-namespace Teltec.Backup.App
+namespace Teltec.Backup.App.Backup
 {
 	public enum BackupOperationStatus
 	{
@@ -117,7 +117,7 @@ namespace Teltec.Backup.App
 		protected CustomBackupAgent BackupAgent;
 		protected IncrementalFileVersioner Versioner; // IDisposable
 
-		public void Start(out BackupResults results)
+		public void Start(out TransferResults results)
 		{
 			Assert.IsFalse(IsRunning);
 			Assert.IsNotNull(Backup);
@@ -160,13 +160,13 @@ namespace Teltec.Backup.App
 			DoBackup(BackupAgent, Backup, Options);
 		}
 
-		protected void RegisterResultsEventHandlers(Models.Backup backup, BackupResults results)
+		protected void RegisterResultsEventHandlers(Models.Backup backup, TransferResults results)
 		{
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
 			results.Failed += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
-				backupedFile.BackupStatus = BackupStatus.FAILED;
+				backupedFile.TransferStatus = TransferStatus.FAILED;
 				backupedFile.UpdatedAt = DateTime.UtcNow;
 				daoBackupedFile.Update(backupedFile);
 
@@ -178,7 +178,7 @@ namespace Teltec.Backup.App
 			results.Canceled += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
-				backupedFile.BackupStatus = BackupStatus.CANCELED;
+				backupedFile.TransferStatus = TransferStatus.CANCELED;
 				backupedFile.UpdatedAt = DateTime.UtcNow;
 				daoBackupedFile.Update(backupedFile);
 
@@ -190,7 +190,7 @@ namespace Teltec.Backup.App
 			results.Completed += (object sender, TransferFileProgressArgs args) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
-				backupedFile.BackupStatus = BackupStatus.COMPLETED;
+				backupedFile.TransferStatus = TransferStatus.COMPLETED;
 				backupedFile.UpdatedAt = DateTime.UtcNow;
 				daoBackupedFile.Update(backupedFile);
 
@@ -201,7 +201,7 @@ namespace Teltec.Backup.App
 			results.Started += (object sender, TransferFileProgressArgs args) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
-				backupedFile.BackupStatus = BackupStatus.RUNNING;
+				backupedFile.TransferStatus = TransferStatus.RUNNING;
 				backupedFile.UpdatedAt = DateTime.UtcNow;
 				daoBackupedFile.Update(backupedFile);
 
@@ -219,15 +219,15 @@ namespace Teltec.Backup.App
 		}
 
 		protected abstract LinkedList<string> GetFilesToProcess(Models.Backup backup);
+		protected abstract Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess);
 
 		protected async void DoBackup(CustomBackupAgent agent, Models.Backup backup, BackupOperationOptions options)
 		{
 			OnStart(agent, backup);
 
-			LinkedList<string> filesToProcess = GetFilesToProcess(backup);
-
 			// Version files.
-			Task versionerTask = Versioner.NewVersion(backup, filesToProcess);
+			LinkedList<string> filesToProcess = GetFilesToProcess(backup);
+			Task versionerTask = DoVersionFiles(backup, filesToProcess);
 
 			{
 				var message = string.Format("Processing files started.");
@@ -265,11 +265,11 @@ namespace Teltec.Backup.App
 			}
 			{
 				var message = string.Format("Estimate backup size: {0} files, {1}",
-					agent.Files.Count, FileSizeUtils.FileSizeToString(agent.EstimatedBackupSize));
+					agent.Files.Count, FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
 				Info(message);
 			}
 
-			Task transferTask = agent.StartBackup();
+			Task transferTask = agent.Start();
 			await transferTask;
 
 			OnFinish(agent, backup);
@@ -321,7 +321,7 @@ namespace Teltec.Backup.App
 		{
 			IsRunning = false;
 
-			BackupResults.Statistics stats = agent.Results.Stats;
+			TransferResults.Statistics stats = agent.Results.Stats;
 
 			var message = string.Format(
 				"Backup finished! Stats: {0} completed, {1} failed, {2} canceled, {3} pending, {4} running",
@@ -333,17 +333,17 @@ namespace Teltec.Backup.App
 			//switch (backup.Status)
 			{
 				default: throw new InvalidOperationException("Unexpected BackupStatus");
-				case BackupStatus.CANCELED:
+				case TransferStatus.CANCELED:
 					backup.WasCanceled();
 					_daoBackup.Update(backup);
 					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Canceled, Message = message });
 					break;
-				case BackupStatus.FAILED:
+				case TransferStatus.FAILED:
 					backup.DidFail();
 					_daoBackup.Update(backup);
 					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Failed, Message = message });
 					break;
-				case BackupStatus.COMPLETED:
+				case TransferStatus.COMPLETED:
 					backup.DidComplete();
 					_daoBackup.Update(backup);
 					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Finished, Message = message });

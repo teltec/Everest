@@ -168,7 +168,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			Map(p => p.Status)
 				.Column("status")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<BackupStatus>>();
+				.CustomType<GenericEnumMapper<TransferStatus>>();
 
 			HasMany(p => p.Files)
 				.KeyColumn("backup_id")
@@ -206,10 +206,10 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<Models.BackupFileStatus>>();
 
-			Map(p => p.BackupStatus)
-				.Column("backup_status")
+			Map(p => p.TransferStatus)
+				.Column("transfer_status")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<BackupStatus>>();
+				.CustomType<GenericEnumMapper<TransferStatus>>();
 
 			Map(p => p.UpdatedAt)
 				.Column("updated_at")

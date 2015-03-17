@@ -1,18 +1,13 @@
 ﻿using NLog;
 using NUnit.Framework;
-using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.Versioning;
-using Teltec.Storage;
-using Teltec.Storage.Utils;
 using Teltec.Common.Extensions;
-using System.Collections;
-using System.Linq;
+using Teltec.Storage;
 
-namespace Teltec.Backup.App
+namespace Teltec.Backup.App.Backup
 {
 	public sealed class ResumeBackupOperation : BackupOperation
 	{
@@ -29,7 +24,7 @@ namespace Teltec.Backup.App
 			: base(options)
 		{
 			Assert.IsNotNull(backup);
-			Assert.AreEqual(backup.Status, BackupStatus.RUNNING);
+			Assert.AreEqual(backup.Status, TransferStatus.RUNNING);
 
 			Backup = backup;
 		}
@@ -43,12 +38,18 @@ namespace Teltec.Backup.App
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
 
 			// Load pending `BackupedFiles` from `Backup`.
-			IList<Models.BackupedFile> pendingFiles = daoBackupedFile.GetByBackupAndStatus(backup, BackupStatus.RUNNING);
+			IList<Models.BackupedFile> pendingFiles = daoBackupedFile.GetByBackupAndStatus(backup,
+				TransferStatus.STOPPED, TransferStatus.RUNNING);
 
 			// Convert them to a list of paths.
 			LinkedList<string> files = pendingFiles.ToLinkedList<string, Models.BackupedFile>(p => p.File.Path);
 
 			return files;
+		}
+
+		protected override Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess)
+		{
+			return Versioner.ResumeVersion(backup, filesToProcess);
 		}
 
 		#endregion

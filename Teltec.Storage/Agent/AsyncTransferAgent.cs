@@ -19,11 +19,19 @@ namespace Teltec.Storage.Agent
 			RegisterDelegates();
 		}
 
+		#region Delegates
+
 		private void RegisterDelegates()
+		{
+			RegisterUploadDelegates();
+			RegisterDownloadDelegates();
+		}
+
+		private void RegisterUploadDelegates()
 		{
 			// We do all this magic because other threads should NOT change the UI.
 			// We want the changes made to the reusable `TransferFileProgressArgs` instance
- 			// to raise change events on the context of the Main thread.
+			// to raise change events on the context of the Main thread.
 			Implementation.UploadStarted += (TransferFileProgressArgs args, Action action) =>
 			{
 				EventDispatcher.Invoke(() =>
@@ -76,6 +84,65 @@ namespace Teltec.Storage.Agent
 			};
 		}
 
+		private void RegisterDownloadDelegates()
+		{
+			// We do all this magic because other threads should NOT change the UI.
+			// We want the changes made to the reusable `TransferFileProgressArgs` instance
+ 			// to raise change events on the context of the Main thread.
+			Implementation.DownloadStarted += (TransferFileProgressArgs args, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (DownloadFileStarted != null)
+						DownloadFileStarted.Invoke(this, args);
+				});
+			};
+			Implementation.DownloadProgressed += (TransferFileProgressArgs args, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (DownloadFileProgress != null)
+						DownloadFileProgress.Invoke(this, args);
+				});
+			};
+			Implementation.DownloadCanceled += (TransferFileProgressArgs args, Exception ex, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (DownloadFileCanceled != null)
+						DownloadFileCanceled.Invoke(this, args, ex);
+				});
+			};
+			Implementation.DownloadFailed += (TransferFileProgressArgs args, Exception ex, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (DownloadFileFailed != null)
+						DownloadFileFailed.Invoke(this, args, ex);
+				});
+			};
+			Implementation.DownloadCompleted += (TransferFileProgressArgs args, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (DownloadFileCompleted != null)
+						DownloadFileCompleted.Invoke(this, args);
+				});
+			};
+		}
+
+		#endregion
+
 		protected Task ExecuteOnBackround(Action action)
 		{
 			return AsyncHelper.ExecuteOnBackround(action);
@@ -107,6 +174,8 @@ namespace Teltec.Storage.Agent
 			}
 		}
 
+		#region Upload
+
 		public event TransferFileProgressHandler UploadFileStarted;
 		public event TransferFileProgressHandler UploadFileProgress;
 		public event TransferFileExceptionHandler UploadFileCanceled;
@@ -116,8 +185,20 @@ namespace Teltec.Storage.Agent
 		abstract public Task UploadVersionedFile(string sourcePath, IFileVersion version);
 		abstract public Task UploadFile(string sourcePath, string targetPath);
 
+		#endregion
+
+		#region Download
+
+		public event TransferFileProgressHandler DownloadFileStarted;
+		public event TransferFileProgressHandler DownloadFileProgress;
+		public event TransferFileExceptionHandler DownloadFileCanceled;
+		public event TransferFileExceptionHandler DownloadFileFailed;
+		public event TransferFileProgressHandler DownloadFileCompleted;
+
 		abstract public Task DownloadVersionedFile(string sourcePath, IFileVersion version);
 		abstract public Task DownloadFile(string sourcePath, string targetPath);
+
+		#endregion
 
 		public void CancelTransfers()
 		{

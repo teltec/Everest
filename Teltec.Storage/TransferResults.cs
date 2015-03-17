@@ -6,7 +6,7 @@ using Teltec.Storage.Monitor;
 
 namespace Teltec.Storage
 {
-	public enum BackupStatus
+	public enum TransferStatus
 	{
 		FAILED = -2,
 		CANCELED = -1,
@@ -15,7 +15,7 @@ namespace Teltec.Storage
 		COMPLETED = 2,
 	}
 
-	public class BackupResults
+	public class TransferResults
 	{
 		public class Statistics
 		{
@@ -51,20 +51,20 @@ namespace Teltec.Storage
 			set { _Monitor = value; }
 		}
 
-		public BackupStatus OverallStatus
+		public TransferStatus OverallStatus
 		{
 			get
 			{
 				if (Stats.Pending > 0 || Stats.Running > 0) // Running has priority over all status.
-					return BackupStatus.RUNNING;
+					return TransferStatus.RUNNING;
 				else if (Stats.Failed > 0) // Failure has priority over cancelation.
-					return BackupStatus.FAILED;
+					return TransferStatus.FAILED;
 				else if (Stats.Canceled > 0) // Cancelation has priority over completion.
-					return BackupStatus.CANCELED;
+					return TransferStatus.CANCELED;
 				else if (Stats.Completed == Stats.Total) // Completion has priority over stopped.
-					return BackupStatus.COMPLETED;
+					return TransferStatus.COMPLETED;
 				else
-					return BackupStatus.STOPPED;
+					return TransferStatus.STOPPED;
 			}
 		}
 
@@ -80,7 +80,7 @@ namespace Teltec.Storage
 		public event TransferFileProgressHandler Progress;
 		public event TransferFileProgressHandler Started;
 
-		public BackupResults()
+		public TransferResults()
 		{
 			Stats = new Statistics();
 			ActiveTransfers = new ObservableDictionary<string, TransferFileProgressArgs>();

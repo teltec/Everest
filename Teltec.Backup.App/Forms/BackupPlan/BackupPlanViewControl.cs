@@ -2,6 +2,7 @@
 using System;
 using System.ComponentModel;
 using System.Windows.Forms;
+using Teltec.Backup.App.Backup;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Models;
 using Teltec.Common;
@@ -17,7 +18,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		private readonly BackupRepository _daoBackup = new BackupRepository();
 
 		BackupOperation RunningBackup = null;
-		BackupResults BackupResults = null;
+		TransferResults BackupResults = null;
 		bool MustResumeLastBackup = false;
 
 		public BackupPlanViewControl()
@@ -60,8 +61,10 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void NewBackupOperation(Models.BackupPlan plan)
 		{
-			Models.Backup latestBackup = _daoBackup.GetLatest(plan);
-			MustResumeLastBackup = latestBackup != null && latestBackup.Status == BackupStatus.RUNNING;
+			Models.Backup latestBackup = _daoBackup.GetLatestByPlan(plan);
+			MustResumeLastBackup = latestBackup != null
+				&& (latestBackup.Status == TransferStatus.STOPPED
+					|| latestBackup.Status == TransferStatus.RUNNING);
 
 			// Create new backup or resume the last unfinished one.
 			BackupOperation obj = MustResumeLastBackup
