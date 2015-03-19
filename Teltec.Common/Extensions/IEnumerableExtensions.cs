@@ -98,8 +98,7 @@ namespace Teltec.Common.Extensions
 			int maxLength = -1,
 			string trail = "...")
 		{
-			int count = Enumerable.Count<T>(enumerable);
-			if (count > 0)
+			if (enumerable.Count() > 0)
 			{
 				string result = string.Join(delimiter, enumerable.Select(property));
 				//string result = Enumerable.Aggregate<T, string>(
