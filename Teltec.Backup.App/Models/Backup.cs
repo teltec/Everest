@@ -95,6 +95,12 @@ namespace Teltec.Backup.App.Models
 			Status = TransferStatus.CANCELED;
 		}
 
+		public virtual bool NeedsResume()
+		{
+			// Check if it did run or is still running.
+			return Status == TransferStatus.STOPPED || Status == TransferStatus.RUNNING;
+		}
+
 		#endregion
 	}
 }
