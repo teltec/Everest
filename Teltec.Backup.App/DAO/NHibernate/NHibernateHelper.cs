@@ -25,6 +25,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 
 		// TODO(jweyrich): When to dispose it?
 		private static readonly ThreadLocal<ISession> _sessions = new ThreadLocal<ISession>();
+		private static readonly ThreadLocal<IStatelessSession> _statelessSessions = new ThreadLocal<IStatelessSession>();
 
 		public static ISession GetSession()
 		{
@@ -43,6 +44,25 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			}
 
 			return _sessions.Value;
+		}
+
+		public static IStatelessSession GetStatelessSession()
+		{
+			//
+			// NOTES:
+			// 1. The ISession is not threadsafe! Never access the same IStatelessSession in two concurrent threads.
+			// 2. 
+			//
+
+			if (!_statelessSessions.IsValueCreated)
+			{
+				logger.Debug("### Opening a new stateless ISession");
+				// Open a new NHibernate stateless session
+				_statelessSessions.Value = SessionFactory.OpenStatelessSession();
+				//_statelessSessions.Value.FlushMode = FlushMode.Never;
+			}
+
+			return _statelessSessions.Value;
 		}
 
 		public static bool IsTransient(ISession session, object obj)

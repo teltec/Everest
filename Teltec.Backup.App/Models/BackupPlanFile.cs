@@ -26,6 +26,12 @@ namespace Teltec.Backup.App.Models
 			BackupPlan = plan;
 		}
 
+		public BackupPlanFile(BackupPlan plan, string path)
+			: this(plan)
+		{
+			Path = path;
+		}
+
 		private Int64? _Id;
 		public virtual Int64? Id
 		{

@@ -256,7 +256,7 @@ namespace Teltec.Backup.App.Backup
 			// IMPORTANT: Must happen before any attempt to get `FileVersioner.FilesToBackup`.
 			Versioner.Save();
 
-			agent.Files = Versioner.FilesToBackup;
+			agent.Files = Versioner.FilesToTransfer;
 
 			{
 				var message = string.Format("Processing files finished.");
@@ -266,7 +266,7 @@ namespace Teltec.Backup.App.Backup
 			}
 			{
 				var message = string.Format("Estimate backup size: {0} files, {1}",
-					agent.Files.Count, FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
+					agent.Files.Count(), FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
 				Info(message);
 			}
 

@@ -15,7 +15,8 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("type")
 				.Not.Nullable()
 				.ReadOnly().Access.None()
-				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>();
+				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>()
+				;
 
 			DiscriminateSubClassesOnColumn("type");
 		}
@@ -35,22 +36,26 @@ namespace Teltec.Backup.App.DAO.NHibernate
 					.Column("display_name")
 					.Not.Nullable()
 					.UniqueKey("uk_display_name")
-					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen);
+					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen)
+					;
 
 				x.Map(p => p.AccessKey)
 					.Column("access_key")
 					.Not.Nullable()
-					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen);
+					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen)
+					;
 
 				x.Map(p => p.SecretKey)
 					.Column("secret_key")
 					.Not.Nullable()
-					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen);
+					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen)
+					;
 
 				x.Map(p => p.BucketName)
 					.Column("bucket_name")
 					.Not.Nullable()
-					.Length(Models.AmazonS3Account.BucketNameMaxLen);
+					.Length(Models.AmazonS3Account.BucketNameMaxLen)
+					;
 			});
 		}
 	}
@@ -67,51 +72,62 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("name")
 				.Not.Nullable()
 				.Length(Models.BackupPlan.NameMaxLen)
-				.UniqueKey("uk_name");
+				.UniqueKey("uk_name")
+				;
 
 			Map(p => p.StorageAccountType)
 				.Column("storage_account_type")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>();
+				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>()
+				;
 
 			//Map(p => p.StorageAccountId)
 			//	.Column("storage_account_id")
-			//	.Not.Nullable();
+			//	.Not.Nullable()
+			//	;
 
 			References(fk => fk.StorageAccount)
 				.Column("storage_account_id")
-				.Not.Nullable();
+				.Not.Nullable()
 				//.LazyLoad(Laziness.Proxy)
+				.Cascade.None()
+				;
 
 			HasMany(p => p.SelectedSources)
 				.KeyColumn("backup_plan_id")
 				.Cascade.AllDeleteOrphan()
-				.AsBag();
+				.AsBag()
+				;
 
 			HasMany(p => p.Files)
 				.KeyColumn("backup_plan_id")
 				.Cascade.AllDeleteOrphan()
-				.AsBag();
+				.AsBag()
+				;
 
 			HasMany(p => p.Backups)
 				.KeyColumn("backup_plan_id")
 				.Cascade.AllDeleteOrphan()
-				.AsBag();
+				.AsBag()
+				;
 
 			Map(p => p.ScheduleType)
 				.Column("schedule_type")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<Models.BackupPlan.EScheduleType>>();
+				.CustomType<GenericEnumMapper<Models.BackupPlan.EScheduleType>>()
+				;
 
 			Map(p => p.LastRunAt)
 				.Column("last_run_at")
-				.Nullable();
-				//.CustomType<TimestampType>();
+				.Nullable()
+				//.CustomType<TimestampType>()
+				;
 
 			Map(p => p.LastSuccessfulRunAt)
 				.Column("last_successful_run_at")
-				.Nullable();
-				//.CustomType<TimestampType>();
+				.Nullable()
+				//.CustomType<TimestampType>()
+				;
 		}
 	}
 
@@ -126,18 +142,22 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			Map(p => p.Type)
 				.Column("type")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<Models.BackupPlanSourceEntry.EntryType>>();
+				.CustomType<GenericEnumMapper<Models.BackupPlanSourceEntry.EntryType>>()
+				;
 
 			Map(p => p.Path)
 				.Column("path")
 				.Not.Nullable()
-				.Length(Models.BackupPlanSourceEntry.PathMaxLen);
+				.Length(Models.BackupPlanSourceEntry.PathMaxLen)
+				;
 
 			References(fk => fk.BackupPlan)
-				.Column("backup_plan_id");
+				.Column("backup_plan_id")
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
  				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable();
+				//.Not.Nullable()
+				.Cascade.None()
+				;
 		}
 	}
 
@@ -150,30 +170,36 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			Id(p => p.Id, "id").GeneratedBy.Native("seq_backus").UnsavedValue(null);
 
 			References(fk => fk.BackupPlan)
-				.Column("backup_plan_id");
+				.Column("backup_plan_id")
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
 				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable();
+				//.Not.Nullable()
+				.Cascade.None()
+				;
 
 			Map(p => p.StartedAt)
 				.Column("started_at")
-				.Not.Nullable();
-				//.CustomType<TimestampType>();
+				.Not.Nullable()
+				//.CustomType<TimestampType>()
+				;
 
 			Map(p => p.FinishedAt)
 				.Column("finished_at")
-				.Nullable();
-				//.CustomType<TimestampType>();
+				.Nullable()
+				//.CustomType<TimestampType>()
+				;
 
 			Map(p => p.Status)
 				.Column("status")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<TransferStatus>>();
+				.CustomType<GenericEnumMapper<TransferStatus>>()
+				;
 
 			HasMany(p => p.Files)
 				.KeyColumn("backup_id")
 				.Cascade.AllDeleteOrphan()
-				.AsBag();
+				.AsBag()
+				;
 		}
 	}
 
@@ -192,30 +218,37 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
-				.UniqueKey(UNIQUE_KEY_NAME);
+				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY_NAME)
+				;
 
 			References(fk => fk.File)
 				.Column("backup_plan_file_id")
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
-				.UniqueKey(UNIQUE_KEY_NAME);
+				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY_NAME)
+				;
 
 			Map(p => p.FileStatus)
 				.Column("file_status")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<Models.BackupFileStatus>>();
+				.CustomType<GenericEnumMapper<Models.BackupFileStatus>>()
+				;
 
 			Map(p => p.TransferStatus)
 				.Column("transfer_status")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<TransferStatus>>();
+				.CustomType<GenericEnumMapper<TransferStatus>>()
+				;
 
 			Map(p => p.UpdatedAt)
 				.Column("updated_at")
-				.Not.Nullable();
-				//.Not.Insert();
-				//.CustomType<TimestampType>();
+				.Not.Nullable()
+				//.Not.Insert()
+				//.CustomType<TimestampType>()
+				;
 		}
 	}
 
@@ -234,7 +267,8 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable();
-				.UniqueKey(UNIQUE_KEY_NAME);
+				.UniqueKey(UNIQUE_KEY_NAME)
+				.Cascade.None();
 
 			Map(p => p.Path)
 				.Column("path")

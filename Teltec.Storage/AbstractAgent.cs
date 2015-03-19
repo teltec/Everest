@@ -30,8 +30,8 @@ namespace Teltec.Storage
 			return _FilesAsDelimitedString;
 		}
 
-		private LinkedList<T> _Files = new LinkedList<T>();
-		public LinkedList<T> Files
+		private IEnumerable<T> _Files = new List<T>();
+		public IEnumerable<T> Files
 		{
 			get { return _Files; }
 			set
@@ -45,7 +45,7 @@ namespace Teltec.Storage
 		{
 			_EstimatedTransferSize = 0;
 			_FilesAsDelimitedString = null;
-			Results.Stats.Reset(_Files.Count);
+			Results.Stats.Reset(_Files.Count());
 		}
 
 		// In Bytes
@@ -120,7 +120,7 @@ namespace Teltec.Storage
 
 		public void RemoveAllFiles()
 		{
-			Files.Clear();
+			Files = new List<T>();
 			FilesChanged();
 		}
 
@@ -131,7 +131,7 @@ namespace Teltec.Storage
 
 		public async Task Start()
 		{
-			Results.Stats.Reset(Files.Count);
+			Results.Stats.Reset(Files.Count());
 
 			TransferAgent.RenewCancellationToken();
 			List<Task> activeTasks = new List<Task>();

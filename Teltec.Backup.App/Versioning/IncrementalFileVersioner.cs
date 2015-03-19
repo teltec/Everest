@@ -22,8 +22,6 @@ namespace Teltec.Backup.App.Versioning
 
 		public IncrementalFileVersioner()
 		{
-			//_daoBackups = new BackupRepository();
-			//_daoBackupPlanFiles = new BackupPlanFileRepository(_daoBackups.Session);
 			CancellationTokenSource = new CancellationTokenSource();
 		}
 
@@ -37,11 +35,11 @@ namespace Teltec.Backup.App.Versioning
 			await DoVersion(backup, files, false);
 		}
 
-		public async Task DoVersion(Models.Backup backup, LinkedList<string> files, bool newVersion)
+		public async Task DoVersion(Models.Backup backup, LinkedList<string> filePaths, bool newVersion)
 		{
 			Assert.IsNotNull(backup);
-			Assert.AreEqual(backup.Status, TransferStatus.RUNNING);
-			Assert.IsNotNull(files);
+			Assert.AreEqual(TransferStatus.RUNNING, backup.Status);
+			Assert.IsNotNull(filePaths);
 
 			Backup = backup;
 
@@ -50,7 +48,7 @@ namespace Teltec.Backup.App.Versioning
 
 			await ExecuteOnBackround(() =>
 			{
-				Execute(backup, files, newVersion);
+				Execute(backup, filePaths, newVersion);
 			}, CancellationTokenSource.Token);
 		}
 
@@ -65,15 +63,15 @@ namespace Teltec.Backup.App.Versioning
 			//return AsyncHelper.ExecuteOnBackround(action, token);
 		}
 
-		#region FileHandling
+		#region File change detection
 
 		private bool IsFileModified(BackupPlanFile file)
 		{
 			Assert.IsNotNull(file);
-			
+
 			DateTime dt1 = file.LastWrittenAt;
 			DateTime dt2 = FileManager.GetLastWriteTimeUtc(file.Path).Value;
-			
+
 			// Strip milliseconds off from both dates!
 			dt1 = dt1.AddTicks(-(dt1.Ticks % TimeSpan.TicksPerSecond));
 			dt2 = dt2.AddTicks(-(dt2.Ticks % TimeSpan.TicksPerSecond));
@@ -85,35 +83,68 @@ namespace Teltec.Backup.App.Versioning
 
 		bool IsSaved = false;
 		Models.Backup Backup;
-		Dictionary<string, BackupPlanFile> AllFilesFromPlan;
-		LinkedList<BackupPlanFile> BackupPlanFiles;
-		LinkedList<CustomVersionedFile> InternalFilesToBackup;
 
-		public LinkedList<CustomVersionedFile> FilesToBackup
+		// Contains ALL `BackupPlanFile`s that were registered at least once for the plan associated to this backup.
+		// Fact 1: ALL of its items are also contained (distributed) in:
+		//		`ChangeSet.RemovedFiles`
+		//		`ChangeSet.DeletedFiles`
+		//		`SuppliedFiles`
+		Dictionary<string, BackupPlanFile> AllFilesFromPlan;
+
+		// Contains ALL `BackupPlanFile`s that were informed to be included in this backup.
+		// Fact 1: ALL of its items are also contained in `AllFilesFromPlan`.
+		// Fact 2: SOME of its items may also be contained in `ChangeSet.AddedFiles`.
+		// Fact 3: SOME of its items may also be contained in `ChangeSet.ModifiedFiles`.
+		// Fact 4: SOME of its items may also be contained in `ChangeSet.RemovedFiles`.
+		// Fact 5: SOME of its items may also be contained in `ChangeSet.DeletedFiles`.
+		LinkedList<BackupPlanFile> SuppliedFiles;
+
+		// Contains the relation of all `BackupPlanFile`s that will be listed on this backup,
+		// be it an addition, deletion, modification, or removal.
+		ChangeSet<BackupPlanFile> ChangeSet = new ChangeSet<BackupPlanFile>();
+
+		// After `Save()`, contains ALL `CustomVersionedFile`s that are eligible for transfer - those whose status is ADDED or MODIFIED.
+		TransferSet<CustomVersionedFile> TransferSet = new TransferSet<CustomVersionedFile>();
+
+		public IEnumerable<CustomVersionedFile> FilesToTransfer
 		{
 			get
 			{
 				Assert.IsTrue(IsSaved);
-				return InternalFilesToBackup;
+				return TransferSet.Files;
 			}
 		}
 
-		private void Execute(Models.Backup backup, LinkedList<string> files, bool newVersion)
+		private void Execute(Models.Backup backup, LinkedList<string> filePaths, bool isNewVersion)
 		{
-			LinkedList<CustomVersionedFile> filesToBeVersioned = files.ToLinkedListWithCtorConversion<CustomVersionedFile, string>();
+			// The `filePaths` argument contains the filesystem paths informed by the user for this backup.
 
-			BackupPlanFiles = DoLoadOrCreateBackupPlanFiles(backup.BackupPlan, filesToBeVersioned);
-			DoUpdateFilesStatus(backup, filesToBeVersioned, newVersion);
-			
-			// DO NOT update files deletion status for a `ResumeBackupOperation`,
+			//
+			// NOTE: The methods call ORDER is important!
+			//
+
+			SuppliedFiles = DoLoadOrCreateBackupPlanFiles(backup.BackupPlan, filePaths);
+			DoUpdateBackupPlanFilesStatus(SuppliedFiles, isNewVersion);
+
+			ChangeSet.AddedFiles = GetAddedFiles();
+			foreach (var item in ChangeSet.AddedFiles)
+				Console.WriteLine("BackupPlanAddedFiles: {0}", item.Path);
+
+			ChangeSet.ModifiedFiles = GetModifiedFiles();
+			foreach (var item in ChangeSet.ModifiedFiles)
+				Console.WriteLine("BackupPlanModifiedFiles: {0}", item.Path);
+
+			// DO NOT update files removal and deletion status for `ResumeBackupOperation`,
 			// only for `NewBackupOperation`.
-			if (newVersion)
-				DoUpdateFilesDeletionStatus(BackupPlanFiles);
+			if (isNewVersion)
+			{
+				ChangeSet.RemovedFiles = GetRemovedFiles();
+				foreach (var item in ChangeSet.RemovedFiles)
+					Console.WriteLine("BackupPlanRemovedFiles: {0}", item.Path);
+				ChangeSet.DeletedFiles = GetDeletedFilesAndUpdateTheirStatus(SuppliedFiles);
+			}
 
-			DoUpdateFilesProperties(filesToBeVersioned);
-			DoUpdateFilesVersion(backup, filesToBeVersioned);
-
-			InternalFilesToBackup = filesToBeVersioned;
+			DoUpdateFilesProperties(SuppliedFiles);
 			//throw new Exception("Simulating failure.");
 		}
 
@@ -123,16 +154,16 @@ namespace Teltec.Backup.App.Versioning
 		// It modifies the `UserData` property for each file in `files`.
 		// NOTE: Does not save to the database because this method is run by a secondary thread.
 		//
-		private LinkedList<BackupPlanFile> DoLoadOrCreateBackupPlanFiles(Models.BackupPlan plan, LinkedList<CustomVersionedFile> files)
+		private LinkedList<BackupPlanFile> DoLoadOrCreateBackupPlanFiles(Models.BackupPlan plan, LinkedList<string> filePaths)
 		{
 			Assert.IsNotNull(plan);
-			Assert.IsNotNull(files);
+			Assert.IsNotNull(filePaths);
 			Assert.IsNotNull(AllFilesFromPlan);
 
 			LinkedList<BackupPlanFile> result = new LinkedList<BackupPlanFile>();
 
 			// Check all files.
-			foreach (CustomVersionedFile entry in files)
+			foreach (string path in filePaths)
 			{
 				// Throw if the operation was canceled.
 				CancellationTokenSource.Token.ThrowIfCancellationRequested();
@@ -141,22 +172,13 @@ namespace Teltec.Backup.App.Versioning
 				// Create or update `BackupPlanFile`.
 				//
 				BackupPlanFile backupPlanFile = null;
-				bool backupPlanFileAlreadyExists = AllFilesFromPlan.TryGetValue(entry.Path, out backupPlanFile);
+				bool backupPlanFileAlreadyExists = AllFilesFromPlan.TryGetValue(path, out backupPlanFile);
 
 				if (!backupPlanFileAlreadyExists)
 				{
-					backupPlanFile = new BackupPlanFile(plan);
-					backupPlanFile.Path = entry.Path;
+					backupPlanFile = new BackupPlanFile(plan, path);
 					backupPlanFile.CreatedAt = DateTime.UtcNow;
 				}
-				//else
-				//{
-				//	backupPlanFile.UpdatedAt = DateTime.UtcNow;
-				//}
-
-				// Associate both types so later we use it to remove unchanged/deleted
-				// files from the resulting list, and also update their properties.
-				entry.UserData = backupPlanFile;
 
 				result.AddLast(backupPlanFile);
 			}
@@ -166,62 +188,64 @@ namespace Teltec.Backup.App.Versioning
 
 		//
 		// Summary:
-		// 1. Add files to `backup.Files`;
-		// 2. Insert these files into the database, if they aren't already - Refers to `BackupPlanFile`;
-		// 3. Update the backup and add its files to the database - Refers to `Backup` and `BackupedFile`;
-		// NOTE: Does not save to the database because this method is run by a secondary thread.
+		// Update the `LastStatus` property of each file in `files` according to the actual
+		// state of the file in the filesystem.
+		// NOTE: This function has a side effect - It updates properties of items from `files`.
 		//
-		private void DoUpdateFilesStatus(Models.Backup backup, LinkedList<CustomVersionedFile> files, bool newVersion)
+		private void DoUpdateBackupPlanFilesStatus(LinkedList<BackupPlanFile> files, bool isNewVersion)
 		{
-			Assert.IsNotNull(backup);
 			Assert.IsNotNull(files);
 
 			// Check all files.
-			foreach (CustomVersionedFile entry in files)
+			foreach (BackupPlanFile entry in files)
 			{
 				// Throw if the operation was canceled.
 				CancellationTokenSource.Token.ThrowIfCancellationRequested();
-
-				string path = entry.Path;
-
-				BackupPlanFile backupPlanFile = entry.UserData as BackupPlanFile;
-
 
 				//
 				// Check what happened to the file.
 				//
 
-				bool fileExistsOnFilesystem = File.Exists(path);
+				bool fileExistsOnFilesystem = File.Exists(entry.Path);
 				BackupFileStatus? changeStatusTo = null;
 
-				if (backupPlanFile.Id.HasValue) // File was backed up at least once in the past?
+				if (entry.Id.HasValue) // File was backed up at least once in the past?
 				{
-					if (fileExistsOnFilesystem) // Exists?
+					switch (entry.LastStatus)
 					{
-						if (backupPlanFile.LastStatus == BackupFileStatus.DELETED) // File was marked as DELETED by a previous backup?
-						{
-							changeStatusTo = BackupFileStatus.ADDED;
-						}
-						else
-						{
-							// DO NOT verify whether the file changed for a `ResumeBackupOperation`,
-							// only for `NewBackupOperation`.
-							if (newVersion)
-							{ 
-								if (IsFileModified(backupPlanFile)) // Modified?
+						case BackupFileStatus.DELETED: // File was marked as DELETED by a previous backup?
+							if (fileExistsOnFilesystem) // Exists?
+								changeStatusTo = BackupFileStatus.ADDED;
+							break;
+						case BackupFileStatus.REMOVED: // File was marked as REMOVED by a previous backup?
+							if (fileExistsOnFilesystem) // Exists?
+								changeStatusTo = BackupFileStatus.ADDED;
+							else
+								// QUESTION: Do we really care to transition REMOVED to DELETED?
+								changeStatusTo = BackupFileStatus.DELETED;
+							break;
+						default: // ADDED, MODIFIED, UNMODIFIED
+							if (fileExistsOnFilesystem) // Exists?
+							{
+								// DO NOT verify whether the file changed for a `ResumeBackupOperation`,
+								// only for `NewBackupOperation`.
+								if (isNewVersion)
 								{
-									changeStatusTo = BackupFileStatus.MODIFIED;
-								}
-								else // Not modified?
-								{
-									changeStatusTo = BackupFileStatus.UNCHANGED;
+									if (IsFileModified(entry)) // Modified?
+									{
+										changeStatusTo = BackupFileStatus.MODIFIED;
+									}
+									else // Not modified?
+									{
+										changeStatusTo = BackupFileStatus.UNCHANGED;
+									}
 								}
 							}
-						}
-					}
-					else // Deleted from filesystem?
-					{
-						changeStatusTo = BackupFileStatus.DELETED;
+							else // Deleted from filesystem?
+							{
+								changeStatusTo = BackupFileStatus.DELETED;
+							}
+							break;
 					}
 				}
 				else // Adding to this backup?
@@ -232,72 +256,137 @@ namespace Teltec.Backup.App.Versioning
 					}
 					else
 					{
-						// Error?
+						// Error? Can't add a non-existent file to the plan.
 					}
 				}
 
 				if (changeStatusTo.HasValue)
 				{
-					backupPlanFile.LastStatus = changeStatusTo.Value;
-					backupPlanFile.UpdatedAt = DateTime.UtcNow;
+					entry.LastStatus = changeStatusTo.Value;
+					entry.UpdatedAt = DateTime.UtcNow;
 				}
 			}
 		}
 
 		//
 		// Summary:
-		// 1. Check which files where deleted locally;
-		// 2. Update their status;
-		// NOTE: Does not save to the database because this method is run by a secondary thread.
+		// Return all files from `SuppliedFiles` which are marked as `ADDED`;
+		// NOTE: This function has no side effects.
 		//
-		private void DoUpdateFilesDeletionStatus(LinkedList<BackupPlanFile> files)
+		private IEnumerable<BackupPlanFile> GetAddedFiles()
+		{
+			Assert.IsNotNull(SuppliedFiles);
+
+			// Find all `BackupPlanFile`s from this `BackupPlan` that are marked as ADDED.
+			return SuppliedFiles.Where(p => p.LastStatus == BackupFileStatus.ADDED);
+		}
+
+		//
+		// Summary:
+		// Return all files from `SuppliedFiles` which are marked as `MODIFIED`;
+		// NOTE: This function has no side effects.
+		//
+		private IEnumerable<BackupPlanFile> GetModifiedFiles()
+		{
+			Assert.IsNotNull(SuppliedFiles);
+
+			// Find all `BackupPlanFile`s from this `BackupPlan` that are marked as MODIFIED.
+			return SuppliedFiles.Where(p => p.LastStatus == BackupFileStatus.MODIFIED);
+		}
+
+		//
+		// Summary:
+		// Return all files from `AllFilesFromPlan` which are marked as `REMOVED`;
+		// NOTE: This function has no side effects.
+		//
+		private IEnumerable<BackupPlanFile> GetRemovedFiles()
+		{
+			Assert.IsNotNull(AllFilesFromPlan);
+
+			// Find all `BackupPlanFile`s from this `BackupPlan` that are marked as REMOVED.
+			return AllFilesFromPlan.Values.Where(p => p.LastStatus == BackupFileStatus.REMOVED);
+		}
+
+		//
+		// Summary:
+		// 1. Check which files from `files` are not marked as DELETED;
+		// 2. Check which files from `files` are not marked as REMOVED;
+		// 3. Check which files from `AllFilesFromPlan` are not in the results of 1 AND 2, meaning
+		//    they have been deleted from the filesystem.
+		// 4. Mark them as DELETED;
+		// 5. Return the union of all files from 1 and 3;
+		// NOTE: This function has a side effect - It updates properties of items from `files`.
+		//
+		private IEnumerable<BackupPlanFile> GetDeletedFilesAndUpdateTheirStatus(LinkedList<BackupPlanFile> files)
 		{
 			Assert.IsNotNull(files);
 			Assert.IsNotNull(AllFilesFromPlan);
 
-			// Find all files that were already backed up at least once, but are not present in this on-going backup.
-			IEnumerable<BackupPlanFile> deletedFiles = AllFilesFromPlan.Values.Except(files);
+			// 1. Find all files from `files` that were previously marked as DELETED.
+			IEnumerable<BackupPlanFile> deletedFiles = files.Where(p => p.LastStatus == BackupFileStatus.DELETED);
+			foreach (var item in deletedFiles)
+				Console.WriteLine("GetDeletedFilesAndUpdateTheirStatus: deletedFiles: {0}", item.Path);
 
-			foreach (BackupPlanFile entry in deletedFiles)
+			// 2. Find all files from `files` that were previously marked as REMOVED.
+			IEnumerable<BackupPlanFile> nonRemovedFiles = files.Where(p => p.LastStatus != BackupFileStatus.REMOVED);
+			foreach (var item in nonRemovedFiles)
+				Console.WriteLine("GetDeletedFilesAndUpdateTheirStatus: nonRemovedFiles: {0}", item.Path);
+
+			// 3. Check which files from `AllFilesFromPlan` are not in the results of 1 AND 2, meaning
+			//    they have been deleted from the filesystem.
+			IEnumerable<BackupPlanFile> deletedFilesToBeUpdated = AllFilesFromPlan.Values.Except(nonRemovedFiles).Except(deletedFiles);
+			foreach (var item in deletedFilesToBeUpdated)
+				Console.WriteLine("GetDeletedFilesAndUpdateTheirStatus: deletedFilesToBeUpdated: {0}", item.Path);
+
+			// 4. Mark them as DELETED;
+			foreach (BackupPlanFile entry in deletedFilesToBeUpdated)
 			{
 				// Throw if the operation was canceled.
 				CancellationTokenSource.Token.ThrowIfCancellationRequested();
 
-				// Skip files that were already marked as DELETED.
-				if (entry.LastStatus == BackupFileStatus.DELETED)
-					continue;
-
 				entry.LastStatus = BackupFileStatus.DELETED;
 				entry.UpdatedAt = DateTime.UtcNow;
 			}
+
+			// 5. Return all files from 1 and 3;
+			List<BackupPlanFile> result = new List<BackupPlanFile>(deletedFiles.Count() + deletedFilesToBeUpdated.Count());
+			result.AddRange(deletedFiles);
+			result.AddRange(deletedFilesToBeUpdated);
+			foreach (var item in result)
+				Console.WriteLine("GetDeletedFilesAndUpdateTheirStatus: result: {0}", item.Path);
+
+			return result;
 		}
 
 		//
 		// Summary:
 		// Update all files' properties like size, last written date, etc, skipping files
-		// marked as DELETED.
-		// NOTE: Does not save to the database because this method is run by a secondary thread.
+		// marked as REMOVED, DELETED or UNCHANGED.
+		// NOTE: This function has a side effect - It updates properties of items from `files`.
 		//
-		private void DoUpdateFilesProperties(LinkedList<CustomVersionedFile> files)
+		private void DoUpdateFilesProperties(LinkedList<BackupPlanFile> files)
 		{
-			foreach (CustomVersionedFile entry in files)
+			foreach (BackupPlanFile entry in files)
 			{
 				// Throw if the operation was canceled.
 				CancellationTokenSource.Token.ThrowIfCancellationRequested();
 
-				BackupPlanFile backupPlanFile = entry.UserData as BackupPlanFile;
+				switch (entry.LastStatus)
+				{
+					// Skip REMOVED, DELETED, and UNCHANGED files.
+					default:
+						break;
+					case BackupFileStatus.ADDED:
+					case BackupFileStatus.MODIFIED:
+						// Update file related properties
+						string path = entry.Path;
+						entry.LastSize = FileManager.GetFileSize(path).Value;
+						entry.LastWrittenAt = FileManager.GetLastWriteTimeUtc(path).Value;
 
-				// Skip deleted files.
-				if (backupPlanFile.LastStatus == BackupFileStatus.DELETED)
-					continue;
-
-				// Update file related properties
-				string path = entry.Path;
-				entry.Size = backupPlanFile.LastSize = FileManager.GetFileSize(path).Value;
-				entry.LastWriteTimeUtc = backupPlanFile.LastWrittenAt = FileManager.GetLastWriteTimeUtc(path).Value;
-
-				if (backupPlanFile.Id.HasValue)
-					backupPlanFile.UpdatedAt = DateTime.UtcNow;
+						if (entry.Id.HasValue)
+							entry.UpdatedAt = DateTime.UtcNow;
+						break;
+				}
 			}
 		}
 
@@ -305,17 +394,33 @@ namespace Teltec.Backup.App.Versioning
 		// Summary:
 		// ...
 		//
-		private void DoUpdateFilesVersion(Models.Backup backup, LinkedList<CustomVersionedFile> files)
+		private IEnumerable<CustomVersionedFile> GetFilesToTransfer(Models.Backup backup, LinkedList<BackupPlanFile> files)
 		{
 			IFileVersion version = new FileVersion { Version = backup.Id.Value.ToString() };
 
 			// Update files version.
-			foreach (CustomVersionedFile entry in files)
+			foreach (BackupPlanFile entry in files)
 			{
 				// Throw if the operation was canceled.
 				CancellationTokenSource.Token.ThrowIfCancellationRequested();
 
-				entry.Version = version;
+				switch (entry.LastStatus)
+				{
+					// Skip REMOVED, DELETED, and UNCHANGED files.
+					default:
+						break;
+					case BackupFileStatus.ADDED:
+					case BackupFileStatus.MODIFIED:
+						yield return new CustomVersionedFile
+						{
+							Path = entry.Path,
+							Size = entry.LastSize,
+							Checksum = null,
+							Version = version,
+							LastWriteTimeUtc = entry.LastWrittenAt,
+						};
+						break; // YES, it's required!
+				}
 			}
 		}
 
@@ -328,65 +433,90 @@ namespace Teltec.Backup.App.Versioning
 
 		//
 		// Summary:
-		// 1. Insert/Update `BackupPlanFile`s into the database.
-		// 2. Remove files that won't belong to this backup;
-		// 3. Add `BackupedFile`s to `Backup.Files`.
-		// 3. Update the backup and add its files to the database - Refers to `Backup` and `BackupedFile`;
-		// 4. Insert/Update `Backup` and its `BackupedFile`s into the database.
+		// 1. Insert or update all `BackupPlanFile`s from the backup plan associated with this backup operation.
+		// 2. Create `BackupedFile`s as necessary and add them to the `Backup`.
+		// 3. Insert/Update `Backup` and its `BackupedFile`s into the database.
+		// 4. Create versioned files and remove files that won't belong to this backup.
 		//
 		public void Save()
 		{
 			Assert.IsFalse(IsSaved);
 			BackupRepository daoBackup = new BackupRepository();
+			BackupPlanRepository daoBackupPlan = new BackupPlanRepository();
 			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
 
-			// 1. Insert or update `BackupPlanFile`s.
-			foreach (BackupPlanFile file in BackupPlanFiles)
+			// 2. Create `BackupedFile`s as necessary and add them to the `Backup`.
+			var FilesToTrack = SuppliedFiles.Union(ChangeSet.DeletedFiles);
+			foreach (BackupPlanFile entry in FilesToTrack)
 			{
-				daoBackupPlanFile.InsertOrUpdate(file);
-			}
-
-			// 2. Remove files that won't belong to this backup.
-			var node = InternalFilesToBackup.First;
-			while (node != null)
-			{
-				var nextNode = node.Next;
-				BackupPlanFile file = node.Value.UserData as BackupPlanFile;
-				switch (file.LastStatus)
+				TransferStatus? changeTransferStatusTo = null;
+				switch (entry.LastStatus)
 				{
-					default:
-						// Remove everything else.
-						InternalFilesToBackup.Remove(node);
-						break;
+					// A file that has been marked as REMOVED or DELETED has 2 possibilities here:
+					// 1. This is the 1st backup after the removal/deletion, thus we need to insert a `BackupedFile` as REMOVED/DELETED.
+					// 2. This is not the 1st backup after the removal/deletion, thus we should have already signaled it.
+					//    No need to insert a `BackupedFile` as REMOVED/DELETED again.
+					case BackupFileStatus.REMOVED:
+					case BackupFileStatus.DELETED:
+						{
+							// Retrieve the actual `BackupPlanFile` from the database using a stateless session to check whether its status differ.
+							BackupPlanFile currentBackupPlanFileFromDB = daoBackupPlanFile.GetStateless(entry.Id);
+							// TODO - nao rolar fazer esse lance pq dei UPDATE no passo 1 .. logo acima. FAIL!
+							bool statusIsTheSameFromDB = entry.LastStatus == currentBackupPlanFileFromDB.LastStatus;
+							if (statusIsTheSameFromDB)
+								continue; // No need to insert a `BackupedFile` as REMOVED/DELETED again.
+							changeTransferStatusTo = TransferStatus.COMPLETED;
+							break; // Will add or update a `BackupedFile`.
+						}
+
 					case BackupFileStatus.ADDED:
 					case BackupFileStatus.MODIFIED:
-						// Keep these.
-						break;
-				}
-				node = nextNode;
-			}
+						break; // Will add or update a `BackupedFile`.
 
-			// 3. Add `BackupedFile`s to the `Backup`.
-			foreach (CustomVersionedFile versionedFile in InternalFilesToBackup)
-			{
-				BackupPlanFile backupPlanFile = versionedFile.UserData as BackupPlanFile;
-				//
-				// Create `BackupedFile`.
-				//
-				BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(Backup, versionedFile.Path);
+					default: // Skip all UNCHANGED files.
+						continue;
+				}
+
+				BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(Backup, entry.Path);
 				if (backupedFile == null) // If we're resuming, this should already exist.
 				{
-					backupedFile = new BackupedFile(Backup, backupPlanFile);
+					// Create `BackupedFile`.
+					backupedFile = new BackupedFile(Backup, entry);
 				}
-				backupedFile.FileStatus = backupPlanFile.LastStatus;
+				backupedFile.FileStatus = entry.LastStatus;
+				backupedFile.TransferStatus = changeTransferStatusTo ?? default(TransferStatus);
 				backupedFile.UpdatedAt = DateTime.UtcNow;
 				Backup.Files.Add(backupedFile);
+				// IMPORTANT: It's important that we guarantee the referenced `BackupPlanFile` has a valid `Id`,
+				// otherwise NHibernate won't have a valid value to put on the `backup_plan_file_id` column.
+				daoBackupPlanFile.InsertOrUpdate(entry);
+				daoBackupedFile.InsertOrUpdate(backupedFile);
 			}
 
-			// 4. Insert/Update `Backup` and its `BackupedFile`s into the database.
+			// 1. Insert or update all `BackupPlanFile`s that already exist for the backup plan associated with this backup operation.
+			foreach (BackupPlanFile file in AllFilesFromPlan.Values)
+				daoBackupPlanFile.Update(file);
+			//// This we'll iterate once again over files that were RE-ADDED after being REMOVED or DELETED,
+			//// because they are also in `AllFilesFromPlan`. Sorry! We could use `Union()` + `Except()`, but
+			//// I believe the performance for this would be horrible.
+			//foreach (BackupPlanFile file in BackupPlanAddedFiles)
+			//	daoBackupPlanFile.InsertOrUpdate(file);
+
+			// 3. Insert/Update `Backup` and its `BackupedFile`s into the database.
 			daoBackup.Update(Backup);
 			IsSaved = true;
+
+			// 4. Create versioned files and remove files that won't belong to this backup.
+			TransferSet.Files = GetFilesToTransfer(Backup, SuppliedFiles);
+
+			// Test to see if things are okay!
+			{
+				var transferCount = TransferSet.Files.Count();
+				var filesCount = ChangeSet.AddedFiles.Count() + ChangeSet.ModifiedFiles.Count();
+
+				Assert.IsTrue(transferCount == filesCount, "FilesToTransfer must be euqla (BackupPlanAddedFiles + BackupPlanModifiedFiles)");
+			}
 		}
 
 		#region Dispose Pattern Implementation
@@ -425,5 +555,32 @@ namespace Teltec.Backup.App.Versioning
 		}
 
 		#endregion
+	}
+
+	public sealed class ChangeSet<T>
+	{
+		// Contains ALL `BackupPlanFile`s that were marked as ADDED to the plan associated to this backup.
+		// Fact 1: SOME of its items may also be contained in `AllFilesFromPlan`.
+		// Fact 2: ALL of its items are also contained in `SuppliedFiles`.
+		internal IEnumerable<T> AddedFiles;
+
+		// Contains ALL `BackupPlanFile`s that were marked as MODIFIED from the plan associated to this backup.
+		// Fact 1: ALL of its items are also contained in `AllFilesFromPlan`.
+		// Fact 2: ALL of its items are also contained in `SuppliedFiles`.
+		internal IEnumerable<T> ModifiedFiles;
+
+		// Contains ALL `BackupPlanFile`s that were marked as DELETED from the plan associated to this backup.
+		// Fact 1: ALL of its items are also contained in `AllFilesFromPlan`.
+		// Fact 2: SOME of its items may also be contained in `SuppliedFiles`.
+		internal IEnumerable<T> DeletedFiles;
+
+		// Contains ALL `BackupPlanFile`s that were marked as REMOVED from the plan associated to this backup.
+		// Fact 1: ALL of its items are also contained in `AllFilesFromPlan`.
+		internal IEnumerable<T> RemovedFiles;
+	}
+
+	public sealed class TransferSet<T>
+	{
+		internal IEnumerable<T> Files;
 	}
 }

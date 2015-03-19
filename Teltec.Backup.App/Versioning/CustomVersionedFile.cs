@@ -10,7 +10,7 @@ namespace Teltec.Backup.App.Versioning
 		public string Path
 		{
 			get;
-			private set;
+			set;
 		}
 
 		public long Size
@@ -48,7 +48,12 @@ namespace Teltec.Backup.App.Versioning
 			set;
 		}
 
+		public CustomVersionedFile()
+		{
+		}
+
 		public CustomVersionedFile(string path)
+			: this()
 		{
 			Path = path;
 		}

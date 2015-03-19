@@ -16,7 +16,7 @@ namespace Teltec.Backup.App.DAO
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		private bool _canDisposeSession = false;
+		//private bool _canDisposeSession = false;
 
 		protected Type _PersistentType = typeof(T);
 		protected Type PersistentType { get { return _PersistentType; } }
@@ -35,18 +35,23 @@ namespace Teltec.Backup.App.DAO
 
 		public BaseRepository()
 		{
-			_canDisposeSession = true;
+			//_canDisposeSession = true;
 		}
 
 		public BaseRepository(ISession session)
 		{
-			_canDisposeSession = false;
+			//_canDisposeSession = false;
 			Session = session;
 		}
 
 		public T Get(ID id)
 		{
 			return Session.Get<T>(id);
+		}
+
+		public T GetStateless(ID id)
+		{
+			return StatelessSession.Get<T>(id);
 		}
 
 		public T GetForReadOnly(ID id)
@@ -226,14 +231,29 @@ namespace Teltec.Backup.App.DAO
 			return Session.Query<T>().ToList();
 		}
 
+		public List<T> GetAllStateless()
+		{
+			return StatelessSession.Query<T>().ToList();
+		}
+
 		public IQueryable<T> QueryMany(Expression<System.Func<T, bool>> expression)
 		{
 			return Session.Query<T>().Where(expression).AsQueryable();
 		}
 
+		public IQueryable<T> QueryManyStateless(Expression<System.Func<T, bool>> expression)
+		{
+			return StatelessSession.Query<T>().Where(expression).AsQueryable();
+		}
+
 		public T Query(Expression<System.Func<T, bool>> expression)
 		{
 			return QueryMany(expression).SingleOrDefault();
+		}
+
+		public T QueryStateless(Expression<System.Func<T, bool>> expression)
+		{
+			return QueryManyStateless(expression).SingleOrDefault();
 		}
 
 		protected bool IsTransient(ISession session, T obj)
@@ -246,7 +266,12 @@ namespace Teltec.Backup.App.DAO
 			return NHibernate.NHibernateHelper.GetSession();
 		}
 
-		public ISession _Session;
+		public IStatelessSession GetStatelessSession()
+		{
+			return NHibernate.NHibernateHelper.GetStatelessSession();
+		}
+
+		private ISession _Session;
 		public ISession Session
 		{
 			get
@@ -265,6 +290,28 @@ namespace Teltec.Backup.App.DAO
 					_Session.Dispose();
 				}
 				_Session = value;
+			}
+		}
+
+		private IStatelessSession _StatelessSession;
+		public IStatelessSession StatelessSession
+		{
+			get
+			{
+				if (_StatelessSession == null)
+					_StatelessSession = GetStatelessSession();
+				return _StatelessSession;
+			}
+
+			set
+			{
+				if (_StatelessSession != null)
+				{
+					if (value != null)
+						logger.Warn("ATTENTION! Attempt to overwrite an ISession. Forcing a Dispose().");
+					_StatelessSession.Dispose();
+				}
+				_StatelessSession = value;
 			}
 		}
 	}
