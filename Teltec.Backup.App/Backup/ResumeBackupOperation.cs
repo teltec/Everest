@@ -24,7 +24,7 @@ namespace Teltec.Backup.App.Backup
 			: base(options)
 		{
 			Assert.IsNotNull(backup);
-			Assert.AreEqual(backup.Status, TransferStatus.RUNNING);
+			Assert.AreEqual(TransferStatus.RUNNING, backup.Status);
 
 			Backup = backup;
 		}

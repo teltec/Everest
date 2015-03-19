@@ -4,6 +4,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Versioning;
@@ -123,7 +124,7 @@ namespace Teltec.Backup.App.Backup
 			Assert.IsNotNull(Backup);
 			Assert.IsNotNull(Backup.BackupPlan);
 			Assert.IsNotNull(Backup.BackupPlan.StorageAccount);
-			Assert.AreEqual(Backup.BackupPlan.StorageAccountType, Models.EStorageAccountType.AmazonS3);
+			Assert.AreEqual(Models.EStorageAccountType.AmazonS3, Backup.BackupPlan.StorageAccountType);
 
 			AmazonS3AccountRepository dao = new AmazonS3AccountRepository();
 			Models.AmazonS3Account s3account = dao.Get(Backup.BackupPlan.StorageAccount.Id);

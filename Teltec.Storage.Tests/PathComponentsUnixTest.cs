@@ -16,11 +16,11 @@ namespace Teltec.Storage.Tests
 			Assert.IsTrue(path.HasFileName);
 			Assert.IsTrue(path.HasExtension);
 
-			Assert.AreEqual(path.Drive, "/home");
-			CollectionAssert.AreEqual(path.Directories, new string[] { "johndoe", "Desktop" });
-			Assert.AreEqual(path.FileName, "TODO.txt");
-			Assert.AreEqual(path.FileNameWithoutExtension, "TODO");
-			Assert.AreEqual(path.Extension, "txt");
+			Assert.AreEqual("/home", path.Drive);
+			CollectionAssert.AreEqual(new string[] { "johndoe", "Desktop" }, path.Directories);
+			Assert.AreEqual("TODO.txt", path.FileName);
+			Assert.AreEqual("TODO", path.FileNameWithoutExtension);
+			Assert.AreEqual("txt", path.Extension);
 		}
 	}
 }

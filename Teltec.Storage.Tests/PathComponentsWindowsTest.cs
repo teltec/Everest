@@ -16,11 +16,11 @@ namespace Teltec.Storage.Tests
 			Assert.IsTrue(path.HasFileName);
 			Assert.IsTrue(path.HasExtension);
 
-			Assert.AreEqual(path.Drive, "C");
-			CollectionAssert.AreEqual(path.Directories, new string[] { "Users", "johndoe", "Desktop" });
-			Assert.AreEqual(path.FileName, "TODO.txt");
-			Assert.AreEqual(path.FileNameWithoutExtension, "TODO");
-			Assert.AreEqual(path.Extension, "txt");
+			Assert.AreEqual("C", path.Drive);
+			CollectionAssert.AreEqual(new string[] { "Users", "johndoe", "Desktop" }, path.Directories);
+			Assert.AreEqual("TODO.txt", path.FileName);
+			Assert.AreEqual("TODO", path.FileNameWithoutExtension);
+			Assert.AreEqual("txt", path.Extension);
 		}
 
 		[TestMethod]
@@ -33,9 +33,9 @@ namespace Teltec.Storage.Tests
 			Assert.IsTrue(path.HasFileName);
 			Assert.IsTrue(path.HasExtension);
 
-			Assert.AreEqual(path.Drive, "C");
-			CollectionAssert.AreEqual(path.Directories, null);
-			Assert.AreEqual(path.FileName, "TODO.txt");
+			Assert.AreEqual("C", path.Drive);
+			CollectionAssert.AreEqual(null, path.Directories);
+			Assert.AreEqual("TODO.txt", path.FileName);
 		}
 
 		[TestMethod]
@@ -48,11 +48,11 @@ namespace Teltec.Storage.Tests
 			Assert.IsTrue(path.HasFileName);
 			Assert.IsTrue(path.HasExtension);
 
-			Assert.AreEqual(path.Drive, "C");
-			CollectionAssert.AreEqual(path.Directories, null);
-			Assert.AreEqual(path.FileName, ".txt");
-			Assert.AreEqual(path.FileNameWithoutExtension, string.Empty);
-			Assert.AreEqual(path.Extension, "txt");
+			Assert.AreEqual("C", path.Drive);
+			CollectionAssert.AreEqual(null, path.Directories);
+			Assert.AreEqual(".txt", path.FileName);
+			Assert.AreEqual(string.Empty, path.FileNameWithoutExtension);
+			Assert.AreEqual("txt", path.Extension);
 		}
 
 		[TestMethod]
@@ -65,11 +65,11 @@ namespace Teltec.Storage.Tests
 			Assert.IsFalse(path.HasFileName);
 			Assert.IsFalse(path.HasExtension);
 
-			Assert.AreEqual(path.Drive, "C");
-			CollectionAssert.AreEqual(path.Directories, new string[] { "Users", "johndoe", "Desktop" });
-			Assert.AreEqual(path.FileName, string.Empty);
-			Assert.AreEqual(path.FileNameWithoutExtension, string.Empty);
-			Assert.AreEqual(path.Extension, string.Empty);
+			Assert.AreEqual("C", path.Drive);
+			CollectionAssert.AreEqual(new string[] { "Users", "johndoe", "Desktop" }, path.Directories);
+			Assert.AreEqual(string.Empty, path.FileName);
+			Assert.AreEqual(string.Empty, path.FileNameWithoutExtension);
+			Assert.AreEqual(string.Empty, path.Extension);
 		}
 
 		[TestMethod]
@@ -82,11 +82,11 @@ namespace Teltec.Storage.Tests
 			Assert.IsTrue(path.HasFileName);
 			Assert.IsTrue(path.HasExtension);
 
-			Assert.AreEqual(path.Drive, string.Empty);
-			CollectionAssert.AreEqual(path.Directories, new string[] { "Users", "johndoe", "Desktop" });
-			Assert.AreEqual(path.FileName, "TODO.txt");
-			Assert.AreEqual(path.FileNameWithoutExtension, "TODO");
-			Assert.AreEqual(path.Extension, "txt");
+			Assert.AreEqual(string.Empty, path.Drive);
+			CollectionAssert.AreEqual(new string[] { "Users", "johndoe", "Desktop" }, path.Directories);
+			Assert.AreEqual("TODO.txt", path.FileName);
+			Assert.AreEqual("TODO", path.FileNameWithoutExtension);
+			Assert.AreEqual("txt", path.Extension);
 		}
 
 		[TestMethod]
@@ -99,11 +99,11 @@ namespace Teltec.Storage.Tests
 			Assert.IsFalse(path.HasFileName);
 			Assert.IsFalse(path.HasExtension);
 
-			Assert.AreEqual(path.Drive, string.Empty);
-			CollectionAssert.AreEqual(path.Directories, new string[] { "Users", "johndoe", "Desktop" });
-			Assert.AreEqual(path.FileName, string.Empty);
-			Assert.AreEqual(path.FileNameWithoutExtension, string.Empty);
-			Assert.AreEqual(path.Extension, string.Empty);
+			Assert.AreEqual(string.Empty, path.Drive);
+			CollectionAssert.AreEqual(new string[] { "Users", "johndoe", "Desktop" }, path.Directories);
+			Assert.AreEqual(string.Empty, path.FileName);
+			Assert.AreEqual(string.Empty, path.FileNameWithoutExtension);
+			Assert.AreEqual(string.Empty, path.Extension);
 		}
 
 		[TestMethod]
@@ -116,11 +116,11 @@ namespace Teltec.Storage.Tests
 			Assert.IsTrue(path.HasFileName);
 			Assert.IsTrue(path.HasExtension);
 
-			Assert.AreEqual(path.Drive, string.Empty);
-			CollectionAssert.AreEqual(path.Directories, null);
-			Assert.AreEqual(path.FileName, "TODO.txt");
-			Assert.AreEqual(path.FileNameWithoutExtension, "TODO");
-			Assert.AreEqual(path.Extension, "txt");
+			Assert.AreEqual(string.Empty, path.Drive);
+			CollectionAssert.AreEqual(null, path.Directories);
+			Assert.AreEqual("TODO.txt", path.FileName);
+			Assert.AreEqual("TODO", path.FileNameWithoutExtension);
+			Assert.AreEqual("txt", path.Extension);
 		}
 
 		[TestMethod]
@@ -133,11 +133,11 @@ namespace Teltec.Storage.Tests
 			Assert.IsFalse(path.HasFileName);
 			Assert.IsFalse(path.HasExtension);
 
-			Assert.AreEqual(path.Drive, "C");
-			CollectionAssert.AreEqual(path.Directories, null);
-			Assert.AreEqual(path.FileName, string.Empty);
-			Assert.AreEqual(path.FileNameWithoutExtension, string.Empty);
-			Assert.AreEqual(path.Extension, string.Empty);
+			Assert.AreEqual("C", path.Drive);
+			CollectionAssert.AreEqual(null, path.Directories);
+			Assert.AreEqual(string.Empty, path.FileName);
+			Assert.AreEqual(string.Empty, path.FileNameWithoutExtension);
+			Assert.AreEqual(string.Empty, path.Extension);
 		}
 
 		[TestMethod]
@@ -150,11 +150,11 @@ namespace Teltec.Storage.Tests
 			Assert.IsFalse(path.HasFileName);
 			Assert.IsFalse(path.HasExtension);
 
-			Assert.AreEqual(path.Drive, "C");
-			CollectionAssert.AreEqual(path.Directories, null);
-			Assert.AreEqual(path.FileName, string.Empty);
-			Assert.AreEqual(path.FileNameWithoutExtension, string.Empty);
-			Assert.AreEqual(path.Extension, string.Empty);
+			Assert.AreEqual("C", path.Drive);
+			CollectionAssert.AreEqual(null, path.Directories);
+			Assert.AreEqual(string.Empty, path.FileName);
+			Assert.AreEqual(string.Empty, path.FileNameWithoutExtension);
+			Assert.AreEqual(string.Empty, path.Extension);
 		}
 	}
 }
