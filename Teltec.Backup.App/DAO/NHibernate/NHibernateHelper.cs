@@ -50,7 +50,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		{
 			//
 			// NOTES:
-			// 1. The ISession is not threadsafe! Never access the same IStatelessSession in two concurrent threads.
+			// 1. The IStatelessSession is not threadsafe! Never access the same IStatelessSession in two concurrent threads.
 			// 2. 
 			//
 
