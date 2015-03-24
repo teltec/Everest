@@ -8,7 +8,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Versioning;
-using Teltec.Common;
 using Teltec.Storage;
 using Teltec.Storage.Agent;
 using Teltec.Storage.Implementations.S3;
@@ -50,7 +49,7 @@ namespace Teltec.Backup.App.Backup
 		// ...
 	}
 
-	public abstract class BackupOperation : ObservableObject, IDisposable
+	public abstract class BackupOperation : BaseOperation
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 		
@@ -284,7 +283,7 @@ namespace Teltec.Backup.App.Backup
 
 		protected void DoCancel(CustomBackupAgent agent)
 		{
-			BackupAgent.Cancel();
+			agent.Cancel();
 		}
 
 		#endregion
@@ -354,35 +353,6 @@ namespace Teltec.Backup.App.Backup
 
 		#endregion
 
-		#region Logging
-
-		public System.Diagnostics.EventLog EventLog;
-
-		protected void Log(System.Diagnostics.EventLogEntryType type, string format, params object[] args)
-		{
-			string message = string.Format(format, args);
-			Console.WriteLine(message);
-			if (EventLog != null)
-				EventLog.WriteEntry(message, type);
-		}
-
-		protected void Warn(string format, params object[] args)
-		{
-			Log(System.Diagnostics.EventLogEntryType.Warning, format, args);
-		}
-
-		protected void Error(string format, params object[] args)
-		{
-			Log(System.Diagnostics.EventLogEntryType.Error, format, args);
-		}
-
-		protected void Info(string format, params object[] args)
-		{
-			Log(System.Diagnostics.EventLogEntryType.Information, format, args);
-		}
-
-		#endregion
-
 		#region Dispose Pattern Implementation
 
 		bool _shouldDispose = true;
@@ -393,7 +363,7 @@ namespace Teltec.Backup.App.Backup
 		/// </summary>
 		/// <param name="disposing">Whether this object is being disposed via a call to Dispose
 		/// or garbage collected.</param>
-		protected virtual void Dispose(bool disposing)
+		protected override void Dispose(bool disposing)
 		{
 			if (!this._isDisposed)
 			{
@@ -412,18 +382,11 @@ namespace Teltec.Backup.App.Backup
 						TransferAgent.Dispose();
 						TransferAgent = null;
 					}
+					
 				}
 				this._isDisposed = true;
 			}
-		}
-
-		/// <summary>
-		/// Disposes of all managed and unmanaged resources.
-		/// </summary>
-		public void Dispose()
-		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
+			base.Dispose(disposing);
 		}
 
 		#endregion
