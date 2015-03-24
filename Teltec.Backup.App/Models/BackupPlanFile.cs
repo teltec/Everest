@@ -68,6 +68,13 @@ namespace Teltec.Backup.App.Models
 			set { SetField(ref _LastWrittenAt, value); }
 		}
 
+		private byte[] _LastChecksum; // SHA-1
+		public virtual byte[] LastChecksum
+		{
+			get { return _LastChecksum; }
+			set { SetField(ref _LastChecksum, value); }
+		}
+
 		private BackupFileStatus _LastStatus;
 		public virtual BackupFileStatus LastStatus
 		{

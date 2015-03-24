@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.App.DAO;
@@ -65,7 +67,54 @@ namespace Teltec.Backup.App.Versioning
 
 		#region File change detection
 
+		private readonly BigInteger MAX_FILESIZE_TO_HASH = 10 * BigInteger.Pow(2, 20); // 10 MB
+		private readonly HashAlgorithm HashAlgo = new SHA1CryptoServiceProvider(); // SHA-1 is 160 bits long (20 bytes)
+
 		private bool IsFileModified(BackupPlanFile file)
+		{
+			try
+			{
+				bool byDate = IsFileModifiedByDate(file);
+				if (!byDate)
+					return false;
+
+				FileInfo info = new FileInfo(file.Path);
+				
+				// Skip files larger than `MAX_FILESIZE_TO_HASH`.
+				int result = BigInteger.Compare(info.Length, MAX_FILESIZE_TO_HASH);
+				if (result > 0)
+					return byDate;
+
+				byte[] checksum;
+				bool byHash = IsFileModifiedByHash(file, out checksum);
+				if (byHash)
+					file.LastChecksum = checksum;
+				return byHash;
+			}
+			catch (Exception ex)
+			{
+				logger.Warn("Caught an exception while checking file modification status \"{0}\": {1}", file.Path, ex.Message);
+				return false;
+			}
+		}
+
+		private byte[] CalculateHashForFile(string filePath)
+		{
+			using (Stream inputStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+			{
+				return HashAlgo.ComputeHash(inputStream);
+			}
+		}
+
+		private bool IsFileModifiedByHash(BackupPlanFile file, out byte[] checksum)
+		{
+			checksum = CalculateHashForFile(file.Path);
+			return file.LastChecksum == null
+				? true
+				: !checksum.SequenceEqual(file.LastChecksum);
+		}
+
+		private bool IsFileModifiedByDate(BackupPlanFile file)
 		{
 			Assert.IsNotNull(file);
 

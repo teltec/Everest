@@ -266,41 +266,54 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("backup_plan_id")
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
 				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable();
+				//.Not.Nullable()
 				.UniqueKey(UNIQUE_KEY_NAME)
-				.Cascade.None();
+				.Cascade.None()
+				;
 
 			Map(p => p.Path)
 				.Column("path")
 				.Not.Nullable()
 				.Length(Models.BackupPlanSourceEntry.PathMaxLen)
-				.UniqueKey(UNIQUE_KEY_NAME);
+				.UniqueKey(UNIQUE_KEY_NAME)
+				;
 
 			Map(p => p.LastSize)
 				.Column("last_size")
-				.Nullable();
+				.Nullable()
+				;
 
 			Map(p => p.LastWrittenAt)
 				.Column("last_written_at")
-				.Nullable();
-				//.CustomType<TimestampType>();
+				.Nullable()
+				//.CustomType<TimestampType>()
+				;
+
+			Map(p => p.LastChecksum)
+				.Column("last_checksum")
+				.Nullable()
+				.Length(20) // SHA-1 is 160 bits long (20 bytes)
+				;
 
 			Map(p => p.LastStatus)
 				.Column("last_status")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<Models.BackupFileStatus>>();
+				.CustomType<GenericEnumMapper<Models.BackupFileStatus>>()
+				;
 
 			Map(p => p.CreatedAt)
 				.Column("created_at")
 				.Not.Nullable()
-				.Not.Update();
-				//.CustomType<TimestampType>();
+				.Not.Update()
+				//.CustomType<TimestampType>()
+				;
 
 			Map(p => p.UpdatedAt)
 				.Column("updated_at")
 				.Nullable()
-				.Not.Insert();
-				//.CustomType<TimestampType>();
+				.Not.Insert()
+				//.CustomType<TimestampType>()
+				;
 		}
 	}
 }
