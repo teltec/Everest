@@ -2,7 +2,6 @@
 using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.Models;
 using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.App.Forms.BackupPlan
@@ -44,7 +43,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						break;
 				}
 
-				if (this.Plan.StorageAccountType != EStorageAccountType.Unknown)
+				if (this.Plan.StorageAccountType != Models.EStorageAccountType.Unknown)
 				{
 					LoadAccounts(this.Plan.StorageAccountType);
 
@@ -83,7 +82,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			base.OnBeforeNextOrFinish(sender, e);
 		}
 
-		private void LoadAccounts(EStorageAccountType accountType)
+		private void LoadAccounts(Models.EStorageAccountType accountType)
 		{
 			switch (accountType)
 			{
@@ -93,10 +92,10 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 							return;
 
 						var accounts = _s3dao.GetAll();
-						accounts.Insert(0, new AmazonS3Account() { DisplayName = "<Create new account>" });
+						accounts.Insert(0, new Models.AmazonS3Account() { DisplayName = "<Create new account>" });
 
-						this.cbAmazonS3.DisplayMember = this.GetPropertyName((AmazonS3Account x) => x.DisplayName);
-						this.cbAmazonS3.ValueMember = this.GetPropertyName((AmazonS3Account x) => x.Id);
+						this.cbAmazonS3.DisplayMember = this.GetPropertyName((Models.AmazonS3Account x) => x.DisplayName);
+						this.cbAmazonS3.ValueMember = this.GetPropertyName((Models.AmazonS3Account x) => x.Id);
 						this.cbAmazonS3.DataSource = accounts;
 						break;
 					}
@@ -111,7 +110,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			}
 		}
 
-		private void SelectExistingAccount(EStorageAccountType accountType, int? accountId)
+		private void SelectExistingAccount(Models.EStorageAccountType accountType, int? accountId)
 		{
 			switch (accountType)
 			{
@@ -130,7 +129,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void cbAmazonS3_DropDown(object sender, EventArgs e)
 		{
-			LoadAccounts(EStorageAccountType.AmazonS3);
+			LoadAccounts(Models.EStorageAccountType.AmazonS3);
 		}
 
 		private void cbAmazonS3_SelectionChangeCommitted(object sender, EventArgs e)
@@ -142,7 +141,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			else
 			{
 				Models.BackupPlan plan = Model as Models.BackupPlan;
-				plan.StorageAccountType = EStorageAccountType.AmazonS3;
+				plan.StorageAccountType = Models.EStorageAccountType.AmazonS3;
 				plan.StorageAccount = _s3dao.Get((int)cbAmazonS3.SelectedValue);
 			}
 		}
@@ -169,7 +168,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			else
 			{
 				Models.BackupPlan plan = Model as Models.BackupPlan;
-				plan.StorageAccountType = EStorageAccountType.FileSystem;
+				plan.StorageAccountType = Models.EStorageAccountType.FileSystem;
 				//plan.StorageAccount = new CloudStorageAccount { Id = (int)cbFileSystem.SelectedValue };
 				throw new NotImplementedException();
 			}

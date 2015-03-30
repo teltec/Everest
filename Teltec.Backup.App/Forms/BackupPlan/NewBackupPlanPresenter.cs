@@ -1,6 +1,5 @@
 ﻿using NLog;
 using System;
-using System.Windows.Forms;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Models;
 using Teltec.Forms.Wizard;

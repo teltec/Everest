@@ -312,7 +312,7 @@ namespace Teltec.Backup.App.Backup
 			//StatusInfo.Update(BackupStatusLevel.ERROR, message);
 
 			backup.DidFail();
-			_daoBackup.Update(Backup);
+			_daoBackup.Update(backup);
 
 			OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Failed, Message = message });
 		}
@@ -332,7 +332,7 @@ namespace Teltec.Backup.App.Backup
 			switch (agent.Results.OverallStatus)
 			//switch (backup.Status)
 			{
-				default: throw new InvalidOperationException("Unexpected BackupStatus");
+				default: throw new InvalidOperationException("Unexpected TransferStatus");
 				case TransferStatus.CANCELED:
 					backup.WasCanceled();
 					_daoBackup.Update(backup);

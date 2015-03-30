@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Backup.App.Backup;
 using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.Models;
 using Teltec.Common;
 using Teltec.Common.Extensions;
 using Teltec.Storage;

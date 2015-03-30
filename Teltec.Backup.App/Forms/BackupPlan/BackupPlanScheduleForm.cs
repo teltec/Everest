@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Common.Extensions;
 
@@ -42,7 +35,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			if (DoValidate && !IsValid())
 			{
 				e.Cancel = true;
-				this.ShowErrorMessage("Please, inform a name.");
+				this.ShowErrorMessage("Please, select a scheduling option.");
 			}
 			base.OnBeforeNextOrFinish(sender, e);
 		}
