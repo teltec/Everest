@@ -1,217 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 using Teltec.FileSystem;
 
 namespace Teltec.Common.Forms
 {
-	public partial class FileSystemTreeView : TreeView
+	public class FileSystemTreeView : AdvancedTreeView
 	{
 		public FileSystemTreeView()
+			: base()
 		{
-			UseWaitCursor = true;
-
-			InitializeComponent();
-			CreateStateImages();
+			this.UseWaitCursor = true;
 			PopulateTreeView();
-
-			UseWaitCursor = false;
+			this.UseWaitCursor = false;
 
 			this.BeforeExpand += new TreeViewCancelEventHandler(this.handle_BeforeExpand);
-		}
-
-		protected override void OnHandleCreated(EventArgs e)
-		{
-			base.OnHandleCreated(e);
-
-			Action<TreeNode> RecursivelySetStateImage = null;
-			// Recursively set the checkbox images according to nodes states.
-			RecursivelySetStateImage = new Action<TreeNode>(node =>
-			{
-				SetStateImage(node, node.ImageIndex);
-				foreach (TreeNode n in node.Nodes)
-					RecursivelySetStateImage(n);
-				if (AutoExpandMixedNodes && node.ImageIndex == (int)CheckState.Mixed)
-					node.Expand();
-			});
-
-			foreach (TreeNode n in Nodes)
-				RecursivelySetStateImage(n);
-		}
-
-		private void CreateStateImages()
-		{
-			Action<CheckBoxState> AddToImageList = new Action<CheckBoxState>(state =>
-			{
-				Bitmap image = new Bitmap(16, 16);
-				using (Graphics gfx = Graphics.FromImage(image))
-					CheckBoxRenderer.DrawCheckBox(gfx, new Point(0, 0), state);
-				this.StateImageList.Images.Add(image);
-			});
-
-			this.SuspendLayout();
-			AddToImageList(CheckBoxState.UncheckedNormal); // 0
-			AddToImageList(CheckBoxState.CheckedNormal);   // 1
-			AddToImageList(CheckBoxState.MixedNormal);     // 2
-			this.ResumeLayout();
-		}
-
-		internal void SetStateImage(TreeNode node, int index)
-		{
-			if (!IsHandleCreated)
-				return;
-			if (node == null)
-				throw new ArgumentNullException("node", "Node can not be null");
-			if (node.Handle == null)
-				return;
-			if (index < 0)
-				//throw new ArgumentException("Index must be greater than zero.", "index");
-				index = (int)CheckState.Unchecked;
-
-			node.ImageIndex = index;
-
-			NativeMethods.TV_ITEM item = new NativeMethods.TV_ITEM();
-			item.mask = NativeMethods.TVIF_HANDLE | NativeMethods.TVIF_STATE;
-			item.hItem = node.Handle;
-			item.stateMask = NativeMethods.TVIS_STATEIMAGEMASK;
-			item.state |= index << 12;
-			NativeMethods.SendMessage(new HandleRef(this, Handle), NativeMethods.TVM_SETITEM, IntPtr.Zero, ref item);
-		}
-
-		public CheckState GetCheckState(TreeNode node)
-		{
-			return node.ImageIndex < 0 ? CheckState.Unchecked : (CheckState)node.ImageIndex;
-		}
-
-		public void SetCheckState(TreeNode node, CheckState state)
-		{
-			if (!InternalSetCheckedState(node, state))
-				return;
-			CheckNode(node, state);
-			UpdateParentNode(node.Parent);
-		}
-
-		private void CheckNode(TreeNode node, CheckState state)
-		{
-			InternalSetCheckedState(node, state);
-
-			// Update child nodes.
-			foreach (TreeNode child in node.Nodes)
-				CheckNode(child, CheckState.Unchecked);
-		}
-
-		private void UpdateParentNode(TreeNode node)
-		{
-			if (node == null)
-				return;
-
-			CheckState childStates = 0;
-			foreach (TreeNode child in node.Nodes)
-				childStates |= GetCheckState(child);
-
-			CheckState newParentState = childStates == CheckState.Unchecked
-				? CheckState.Unchecked
-				: CheckState.Mixed;
-
-			if (InternalSetCheckedState(node, newParentState))
-				UpdateParentNode(node.Parent);
-		}
-
-		private bool InternalSetCheckedState(TreeNode node, CheckState state)
-		{
-			TreeViewCancelEventArgs args = new TreeViewCancelEventArgs(node, false, TreeViewAction.Unknown);
-			OnBeforeCheck(args);
-			if (args.Cancel)
-				return false;
-
-			SetStateImage(node, (int)state);
-			RestoreNodeStateRemove(node);
-
-			OnAfterCheck(new TreeViewEventArgs(node, TreeViewAction.Unknown));
-			return true;
-		}
-
-		protected void ChangeNodeState(TreeNode node)
-		{
-			BeginUpdate();
-			CheckState newState;
-			//if (node.ImageIndex == (int)CheckState.Unchecked || node.ImageIndex < 0)
-			if (node.ImageIndex != (int)CheckState.Checked)
-				newState = CheckState.Checked;
-			else
-				newState = CheckState.Unchecked;
-			CheckNode(node, newState);
-			UpdateParentNode(node.Parent);
-			EndUpdate();
-		}
-
-		protected override void OnClick(EventArgs e)
-		{
-			base.OnClick(e);
-
-			Point pt = PointToClient(Control.MousePosition);
-
-			TreeViewHitTestInfo info = this.HitTest(pt);
-			TreeViewHitTestLocations loc = info.Location;
-			// Is the click on the checkbox? If not, ignore it.
-			if (loc == TreeViewHitTestLocations.StateImage)
-			{
-				if (info.Node != null)
-					ChangeNodeState(info.Node);
-			}
-		}
-
-		protected override void OnKeyDown(KeyEventArgs e)
-		{
-			base.OnKeyDown(e);
-
-			if (e.KeyCode == Keys.Space)
-				ChangeNodeState(SelectedNode);
-		}
-
-		protected override void WndProc(ref Message m)
-		{
-			//
-			// REFERENCES:
-			//	http://stackoverflow.com/a/3174824/298054
-			//	https://social.msdn.microsoft.com/Forums/windows/en-US/9d717ce0-ec6b-4758-a357-6bb55591f956/possible-bug-in-net-treeview-treenode-checked-state-inconsistent?forum=winforms
-			//
-
-			switch (m.Msg)
-			{
-				case NativeMethods.WM_LBUTTONDBLCLK:
-					{
-						//
-						// Disable double-click on checkbox to fix Windows Vista/7/8/8.1 bug.
-						//
-						TreeViewHitTestInfo hitInfo = HitTest(new Point((int)m.LParam));
-						if (hitInfo != null && hitInfo.Location == TreeViewHitTestLocations.StateImage)
-						{
-							m.Result = IntPtr.Zero;
-							return;
-						}
-						break;
-					}
-				case NativeMethods.WM_RBUTTONDOWN:
-					{
-						//
-						// Fix for another Microsoft bug.
-						// Right-clicking a node doesn't make it the selected node.
-						//
-						TreeViewHitTestInfo hitInfo = HitTest(new Point((int)m.LParam));
-						if (hitInfo != null)
-							this.SelectedNode = hitInfo.Node;
-						break;
-					}
-			}
-
-			base.WndProc(ref m);
+			this.AfterCheck += new TreeViewEventHandler(this.handle_AfterCheck);
 		}
 
 		#region Populate methods
@@ -269,16 +75,6 @@ namespace Teltec.Common.Forms
 				ShowErrorMessage(e, parentNode);
 			}
 			ResumeLayout();
-		}
-
-		private void ShowErrorMessage(Exception exception, TreeNode node)
-		{
-			MessageBox.Show(this, exception.Message, "Error");
-			if (node != null)
-			{
-				SetCheckState(node, CheckState.Unchecked);
-				node.Collapse();
-			}
 		}
 
 		private TreeNode AddDriveNode(TreeView view, DriveInfo drive)
@@ -372,6 +168,28 @@ namespace Teltec.Common.Forms
 
 		#endregion
 
+		#region Custom events
+
+		public delegate void FileSystemFetchStartedHandler(object sender, EventArgs e);
+		public delegate void FileSystemFetchEndedHandler(object sender, EventArgs e);
+
+		public event FileSystemFetchStartedHandler FileSystemFetchStarted;
+		public event FileSystemFetchEndedHandler FileSystemFetchEnded;
+
+		protected virtual void OnFileSystemFetchStarted(object sender, EventArgs e)
+		{
+			if (FileSystemFetchStarted != null)
+				FileSystemFetchStarted(this, e);
+		}
+
+		protected virtual void OnFileSystemFetchEnded(object sender, EventArgs e)
+		{
+			if (FileSystemFetchEnded != null)
+				FileSystemFetchEnded(this, e);
+		}
+
+		#endregion
+
 		private void handle_BeforeExpand(object sender, TreeViewCancelEventArgs e)
 		{
 			UseWaitCursor = true;
@@ -404,6 +222,11 @@ namespace Teltec.Common.Forms
 
 			OnFileSystemFetchEnded(this, null);
 			UseWaitCursor = false;
+		}
+
+		private void handle_AfterCheck(object sender, TreeViewEventArgs e)
+		{
+			RestoreNodeStateRemove(e.Node);
 		}
 
 		private void BuildTagDataDict(TreeNode node, Dictionary<string, FileSystemTreeNodeTag> dict)
@@ -611,97 +434,6 @@ namespace Teltec.Common.Forms
 				if (CheckedDataSource.ContainsKey(path))
 					CheckedDataSource.Remove(path);
 			}
-		}
-
-		#endregion
-
-		#region Custom events
-
-		public delegate void FileSystemFetchStartedHandler(object sender, EventArgs e);
-		public delegate void FileSystemFetchEndedHandler(object sender, EventArgs e);
-
-		public event FileSystemFetchStartedHandler FileSystemFetchStarted;
-		public event FileSystemFetchEndedHandler FileSystemFetchEnded;
-
-		protected virtual void OnFileSystemFetchStarted(object sender, EventArgs e)
-		{
-			if (FileSystemFetchStarted != null)
-				FileSystemFetchStarted(this, e);
-		}
-
-		protected virtual void OnFileSystemFetchEnded(object sender, EventArgs e)
-		{
-			if (FileSystemFetchEnded != null)
-				FileSystemFetchEnded(this, e);
-		}
-
-		#endregion
-
-		#region Custom properties
-
-		[
-		Category("Custom"),
-		DefaultValue(true),
-		DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)
-		]
-		public bool _AutoExpandMixedNodes = true;
-		public bool AutoExpandMixedNodes
-		{
-			get { return _AutoExpandMixedNodes; }
-			set { _AutoExpandMixedNodes = value; }
-		}
-
-		#endregion
-
-		#region Hide some properties from the Designer
-
-		[Browsable(false)]
-		public new bool CheckBoxes
-		{
-			get { return base.CheckBoxes; }
-			set { base.CheckBoxes = value; }
-		}
-
-		[Browsable(false)]
-		public new ImageList ImageList
-		{
-			get { return base.ImageList; }
-			set { base.ImageList = value; }
-		}
-
-		[Browsable(false)]
-		public new string ImageKey
-		{
-			get { return base.ImageKey; }
-			set { base.ImageKey = value; }
-		}
-
-		[Browsable(false)]
-		public new int ImageIndex
-		{
-			get { return base.ImageIndex; }
-			set { base.ImageIndex = value; }
-		}
-
-		[Browsable(false)]
-		public new int SelectedImageIndex
-		{
-			get { return base.SelectedImageIndex; }
-			set { base.SelectedImageIndex = value; }
-		}
-
-		[Browsable(false)]
-		public new string SelectedImageKey
-		{
-			get { return base.SelectedImageKey; }
-			set { base.SelectedImageKey = value; }
-		}
-
-		[Browsable(false)]
-		public new ImageList StateImageList
-		{
-			get { return base.StateImageList; }
-			set { base.StateImageList = value; }
 		}
 
 		#endregion

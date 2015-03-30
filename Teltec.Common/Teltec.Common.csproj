@@ -48,11 +48,14 @@
     <Compile Include="Extensions\ICollectionExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
     <Compile Include="Forms\CheckState.cs" />
-    <Compile Include="Forms\FileSystemTreeView.cs">
+    <Compile Include="Forms\AdvancedTreeView.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Forms\FileSystemTreeView.Designer.cs">
-      <DependentUpon>FileSystemTreeView.cs</DependentUpon>
+    <Compile Include="Forms\AdvancedTreeView.Designer.cs">
+      <DependentUpon>AdvancedTreeView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\FileSystemTreeView.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="Forms\GroupableRadioButton.cs">
       <SubType>Component</SubType>
@@ -85,8 +88,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Forms\FileSystemTreeView.resx">
-      <DependentUpon>FileSystemTreeView.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\AdvancedTreeView.resx">
+      <DependentUpon>AdvancedTreeView.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

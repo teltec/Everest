@@ -1,6 +1,6 @@
 ﻿namespace Teltec.Common.Forms
 {
-	partial class FileSystemTreeView
+	partial class AdvancedTreeView
 	{
 		/// <summary> 
 		/// Required designer variable.
