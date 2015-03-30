@@ -34,6 +34,7 @@
 			this.amazonS3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.backupPlansToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.backupPlanListControl1 = new Teltec.Backup.App.Forms.BackupPlan.BackupPlanListControl();
+			this.restorePlansToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -49,7 +50,8 @@
 			// 
 			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.contasToolStripMenuItem,
-            this.backupPlansToolStripMenuItem});
+            this.backupPlansToolStripMenuItem,
+            this.restorePlansToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Size = new System.Drawing.Size(670, 24);
@@ -87,6 +89,13 @@
 			this.backupPlanListControl1.Size = new System.Drawing.Size(670, 316);
 			this.backupPlanListControl1.TabIndex = 2;
 			// 
+			// restorePlansToolStripMenuItem
+			// 
+			this.restorePlansToolStripMenuItem.Name = "restorePlansToolStripMenuItem";
+			this.restorePlansToolStripMenuItem.Size = new System.Drawing.Size(89, 20);
+			this.restorePlansToolStripMenuItem.Text = "Restore Plans";
+			this.restorePlansToolStripMenuItem.Click += new System.EventHandler(this.restorePlansToolStripMenuItem_Click);
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -114,6 +123,7 @@
         private System.Windows.Forms.ToolStripMenuItem amazonS3ToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem backupPlansToolStripMenuItem;
 		private BackupPlan.BackupPlanListControl backupPlanListControl1;
+		private System.Windows.Forms.ToolStripMenuItem restorePlansToolStripMenuItem;
     }
 }
 

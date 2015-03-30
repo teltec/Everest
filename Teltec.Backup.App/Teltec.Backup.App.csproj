@@ -122,6 +122,38 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseOperation.cs" />
+    <Compile Include="Forms\RestorePlan\RestorePlanSelectSourceForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\RestorePlanSelectSourceForm.Designer.cs">
+      <DependentUpon>RestorePlanSelectSourceForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\RestorePlanScheduleForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\RestorePlanScheduleForm.Designer.cs">
+      <DependentUpon>RestorePlanScheduleForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\NewRestorePlanPresenter.cs" />
+    <Compile Include="Forms\RestorePlan\RestorePlanSelectBackupPlanForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\RestorePlanSelectBackupPlanForm.Designer.cs">
+      <DependentUpon>RestorePlanSelectBackupPlanForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\RestorePlanGiveNameForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\RestorePlanGiveNameForm.Designer.cs">
+      <DependentUpon>RestorePlanGiveNameForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Models\FileSystemTreeNodeTagExtensions.cs" />
+    <Compile Include="Models\EntryType.cs" />
+    <Compile Include="Models\Restore.cs" />
+    <Compile Include="Models\RestoredFile.cs" />
+    <Compile Include="Models\RestorePlan.cs" />
+    <Compile Include="Models\RestorePlanFile.cs" />
+    <Compile Include="Models\RestorePlanSourceEntry.cs" />
     <Compile Include="Restore\CustomRestoreAgent.cs" />
     <Compile Include="Backup\ResumeBackupOperation.cs" />
     <Compile Include="Backup\NewBackupOperation.cs" />
@@ -207,6 +239,7 @@
     <Compile Include="Migrations\201502041721361_RenameBackupPlanSourceEntryId.Designer.cs">
       <DependentUpon>201502041721361_RenameBackupPlanSourceEntryId.cs</DependentUpon>
     </Compile>
+    <Compile Include="Restore\RestoreOperation.cs" />
     <Compile Include="Versioning\CustomVersionedFile.cs" />
     <Compile Include="Versioning\IncrementalFileVersioner.cs" />
     <Compile Include="Versioning\DefaultPathScanner.cs" />
@@ -247,6 +280,18 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanViewControl.resx">
       <DependentUpon>BackupPlanViewControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectSourceForm.resx">
+      <DependentUpon>RestorePlanSelectSourceForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RestorePlan\RestorePlanScheduleForm.resx">
+      <DependentUpon>RestorePlanScheduleForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectBackupPlanForm.resx">
+      <DependentUpon>RestorePlanSelectBackupPlanForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RestorePlan\RestorePlanGiveNameForm.resx">
+      <DependentUpon>RestorePlanGiveNameForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\S3\AmazonS3AccountForm.resx">
       <DependentUpon>AmazonS3AccountForm.cs</DependentUpon>

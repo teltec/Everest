@@ -3,6 +3,7 @@ using System;
 using System.Windows.Forms;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Forms.BackupPlan;
+using Teltec.Backup.App.Forms.RestorePlan;
 
 namespace Teltec.Backup.App.Forms
 {
@@ -36,5 +37,17 @@ namespace Teltec.Backup.App.Forms
 			// One case I confirmed is after going through all the `NewBackupPlanPresenter` process.
 			backupPlanListControl1.Focus();
         }
+
+		private void restorePlansToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			using (var presenter = new NewRestorePlanPresenter())
+			{
+				presenter.ShowDialog(this);
+			}
+			//restorePlanListControl1.RefreshPlans();
+			// Focusing is needed in some cases to avoid the mouse scrolling to stops working.
+			// One case I confirmed is after going through all the `NewBackupPlanPresenter` process.
+			//restorePlanListControl1.Focus();
+		}
     }
 }
