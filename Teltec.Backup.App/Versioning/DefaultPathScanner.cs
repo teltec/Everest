@@ -33,19 +33,19 @@ namespace Teltec.Backup.App.Versioning
 			{
 				switch (entry.Type)
 				{
-					case BackupPlanSourceEntry.EntryType.DRIVE:
+					case EntryType.DRIVE:
 						{
 							DirectoryInfo dir = new DriveInfo(entry.Path).RootDirectory;
 							AddDirectory(dir);
 							break;
 						}
-					case BackupPlanSourceEntry.EntryType.FOLDER:
+					case EntryType.FOLDER:
 						{
 							DirectoryInfo dir = new DirectoryInfo(entry.Path);
 							AddDirectory(dir);
 							break;
 						}
-					case BackupPlanSourceEntry.EntryType.FILE:
+					case EntryType.FILE:
 						{
 							FileInfo file = new FileInfo(entry.Path);
 							AddFile(file);

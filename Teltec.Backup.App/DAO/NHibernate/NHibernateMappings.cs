@@ -142,7 +142,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			Map(p => p.Type)
 				.Column("type")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<Models.BackupPlanSourceEntry.EntryType>>()
+				.CustomType<GenericEnumMapper<Models.EntryType>>()
 				;
 
 			Map(p => p.Path)

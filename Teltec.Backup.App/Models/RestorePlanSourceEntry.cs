@@ -1,24 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using Teltec.Backup.App.DAO;
 using Teltec.Common.Forms;
 
 namespace Teltec.Backup.App.Models
 {
-	public class BackupPlanSourceEntry : BaseEntity<Int64?>
+	public class RestorePlanSourceEntry : BaseEntity<Int64?>
 	{
-		//public BackupPlanSourceEntry()
+		//public RestorePlanSourceEntry()
 		//{
 		//}
 
-		//public BackupPlanSourceEntry(BackupPlan plan, EntryType type, string path) : this()
+		//public RestorePlanSourceEntry(RestorePlan plan, EntryType type, string path) : this()
 		//{
-		//	BackupPlan = plan;
+		//	RestorePlan = plan;
 		//	Type = type;
 		//	Path = path;
 		//}
 
-		//public BackupPlanSourceEntry(BackupPlan plan, FileSystemTreeNodeTag tag)
+		//public RestorePlanSourceEntry(RestorePlan plan, FileSystemTreeNodeTag tag)
 		//	: this(plan, tag.ToEntryType(), tag.Path)
 		//{
 		//}
@@ -30,11 +29,11 @@ namespace Teltec.Backup.App.Models
 			set { SetField(ref _Id, value); }
 		}
 
-		private BackupPlan _BackupPlan;
-		public virtual BackupPlan BackupPlan
+		private RestorePlan _RestorePlan;
+		public virtual RestorePlan RestorePlan
 		{
-			get { return _BackupPlan; }
-			set { SetField(ref _BackupPlan, value); }
+			get { return _RestorePlan; }
+			set { SetField(ref _RestorePlan, value); }
 		}
 
 		private EntryType _Type;

@@ -9,6 +9,8 @@ using NUnit.Framework;
 
 namespace Teltec.Backup.App.DAO
 {
+	#region Accounts
+
 	public class AmazonS3AccountRepository : BaseRepository<Models.AmazonS3Account, Int32?>
 	{
 		public AmazonS3AccountRepository()
@@ -20,6 +22,10 @@ namespace Teltec.Backup.App.DAO
 		{
 		}
 	}
+
+	#endregion
+
+	#region Backup
 
 	public class BackupPlanRepository : BaseRepository<Models.BackupPlan, Int32?>
 	{
@@ -166,4 +172,156 @@ namespace Teltec.Backup.App.DAO
 			return crit.List<Models.BackupedFile>();
 		}
 	}
+
+	#endregion
+
+	#region Restore
+
+	public class RestorePlanRepository : BaseRepository<Models.RestorePlan, Int32?>
+	{
+		public RestorePlanRepository()
+		{
+		}
+
+		public RestorePlanRepository(ISession session)
+			: base(session)
+		{
+		}
+	}
+
+	public class RestorePlanSourceEntryRepository : BaseRepository<Models.RestorePlanSourceEntry, Int64?>
+	{
+		public RestorePlanSourceEntryRepository()
+		{
+		}
+
+		public RestorePlanSourceEntryRepository(ISession session)
+			: base(session)
+		{
+		}
+	}
+
+	public class RestoreRepository : BaseRepository<Models.Restore, Int32?>
+	{
+		public RestoreRepository()
+		{
+		}
+
+		public RestoreRepository(ISession session)
+			: base(session)
+		{
+		}
+
+		public Models.Restore GetLatestByPlan(Models.RestorePlan plan)
+		{
+			Assert.IsNotNull(plan);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string restorePlanPropertyName = this.GetPropertyName((Models.Restore x) => x.RestorePlan);
+			crit.Add(Restrictions.Eq(restorePlanPropertyName, plan));
+			string idPropertyName = this.GetPropertyName((Models.Restore x) => x.Id);
+			crit.AddOrder(Order.Desc(idPropertyName));
+			crit.SetMaxResults(1);
+			return crit.UniqueResult<Models.Restore>();
+		}
+	}
+
+	public class RestorePlanFileRepository : BaseRepository<Models.RestorePlanFile, Int64?>
+	{
+		public RestorePlanFileRepository()
+		{
+		}
+
+		public RestorePlanFileRepository(ISession session)
+			: base(session)
+		{
+		}
+
+		//public RestorePlanFileRepository()
+		//{
+		//	BeforeInsert = (ITransaction tx, Models.RestorePlanFile instance) =>
+		//	{
+		//		instance.CreatedAt = DateTime.UtcNow;
+		//	};
+		//	BeforeUpdate = (ITransaction tx, Models.RestorePlanFile instance) =>
+		//	{
+		//		instance.UpdatedAt = DateTime.UtcNow;
+		//	};
+		//}
+
+		public Models.RestorePlanFile GetByPath(string path, bool ignoreCase = false)
+		{
+			Assert.IsNotNullOrEmpty(path);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string pathPropertyName = this.GetPropertyName((Models.RestorePlanFile x) => x.Path);
+			SimpleExpression expr = Restrictions.Eq(pathPropertyName, path);
+			if (ignoreCase)
+				expr = expr.IgnoreCase();
+			crit.Add(expr);
+			return crit.UniqueResult<Models.RestorePlanFile>();
+		}
+
+		public IList<Models.RestorePlanFile> GetAllByPlan(Models.RestorePlan plan)
+		{
+			Assert.IsNotNull(plan);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string restorePlanPropertyName = this.GetPropertyName((Models.RestorePlanFile x) => x.RestorePlan);
+			crit.Add(Restrictions.Eq(restorePlanPropertyName, plan));
+			return crit.List<Models.RestorePlanFile>();
+		}
+	}
+
+	public class RestoredFileRepository : BaseRepository<Models.RestoredFile, Int64?>
+	{
+		public RestoredFileRepository()
+		{
+		}
+
+		public RestoredFileRepository(ISession session)
+			: base(session)
+		{
+		}
+
+		//public RestoredFileRepository()
+		//{
+		//	BeforeInsert = (ITransaction tx, Models.RestoredFile instance) =>
+		//	{
+		//		instance.UpdatedAt = DateTime.UtcNow;
+		//	};
+		//	BeforeUpdate = (ITransaction tx, Models.RestoredFile instance) =>
+		//	{
+		//		instance.UpdatedAt = DateTime.UtcNow;
+		//	};
+		//}
+
+		public Models.RestoredFile GetByRestoreAndPath(Models.Restore restore, string path, bool ignoreCase = false)
+		{
+			Assert.IsNotNull(restore);
+			Assert.IsNotNullOrEmpty(path);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string restorePropertyName = this.GetPropertyName((Models.RestoredFile x) => x.Restore);
+			string filePropertyName = this.GetPropertyName((Models.RestoredFile x) => x.File);
+			string filePathPropertyName = this.GetPropertyName((Models.RestorePlanFile x) => x.Path);
+			crit.CreateAlias(filePropertyName, "f");
+			crit.Add(Restrictions.Eq(restorePropertyName, restore));
+			SimpleExpression expr = Restrictions.Eq("f." + filePathPropertyName, path);
+			if (ignoreCase)
+				expr = expr.IgnoreCase();
+			crit.Add(expr);
+			return crit.UniqueResult<Models.RestoredFile>();
+		}
+
+		//public IList<Models.RestoredFile> GetByRestoreAndStatus(Models.Restore restore, params TransferStatus[] statuses)
+		//{
+		//	Assert.IsNotNull(restore);
+		//	Assert.IsNotNull(statuses);
+		//	ICriteria crit = Session.CreateCriteria(PersistentType);
+		//	string restorePropertyName = this.GetPropertyName((Models.RestoredFile x) => x.Restore);
+		//	string transferStatusPropertyName = this.GetPropertyName((Models.RestoredFile x) => x.TransferStatus);
+		//	crit.Add(Restrictions.Eq(restorePropertyName, restore));
+		//	crit.Add(Restrictions.In(transferStatusPropertyName, statuses));
+		//	return crit.List<Models.RestoredFile>();
+		//}
+	}
+
+	#endregion
 }
