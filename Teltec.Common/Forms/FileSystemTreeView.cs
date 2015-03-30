@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
+using Teltec.FileSystem;
 
 namespace Teltec.Common.Forms
 {
@@ -99,8 +100,10 @@ namespace Teltec.Common.Forms
 		private void CheckNode(TreeNode node, CheckState state)
 		{
 			InternalSetCheckedState(node, state);
+
+			// Update child nodes.
 			foreach (TreeNode child in node.Nodes)
-				CheckNode(child, state);
+				CheckNode(child, CheckState.Unchecked);
 		}
 
 		private void UpdateParentNode(TreeNode node)
@@ -108,11 +111,15 @@ namespace Teltec.Common.Forms
 			if (node == null)
 				return;
 
-			CheckState state = GetCheckState(node.FirstNode);
+			CheckState childStates = 0;
 			foreach (TreeNode child in node.Nodes)
-				state |= GetCheckState(child);
+				childStates |= GetCheckState(child);
 
-			if (InternalSetCheckedState(node, state))
+			CheckState newParentState = childStates == CheckState.Unchecked
+				? CheckState.Unchecked
+				: CheckState.Mixed;
+
+			if (InternalSetCheckedState(node, newParentState))
 				UpdateParentNode(node.Parent);
 		}
 
@@ -134,7 +141,8 @@ namespace Teltec.Common.Forms
 		{
 			BeginUpdate();
 			CheckState newState;
-			if (node.ImageIndex == (int)CheckState.Unchecked || node.ImageIndex < 0)
+			//if (node.ImageIndex == (int)CheckState.Unchecked || node.ImageIndex < 0)
+			if (node.ImageIndex != (int)CheckState.Checked)
 				newState = CheckState.Checked;
 			else
 				newState = CheckState.Unchecked;
@@ -310,10 +318,14 @@ namespace Teltec.Common.Forms
 			};
 			node.ImageKey = "folder";
 			parentNode.Nodes.Add(node);
-			if (GetCheckState(parentNode) == CheckState.Checked)
-				SetCheckState(node, CheckState.Checked);
-			else
+			//if (GetCheckState(parentNode) == CheckState.Checked)
+			//{
+			//	//SetCheckState(node, CheckState.Checked);
+			//}
+			//else
+			//{
 				RestoreNodeState(FileSystemTreeNodeTag.InfoType.FOLDER, node);
+			//}
 			return node;
 		}
 
@@ -327,10 +339,14 @@ namespace Teltec.Common.Forms
 			};
 			node.ImageKey = "file";
 			parentNode.Nodes.Add(node);
-			if (GetCheckState(parentNode) == CheckState.Checked)
-				SetCheckState(node, CheckState.Checked);
-			else
+			//if (GetCheckState(parentNode) == CheckState.Checked)
+			//{
+			//	//SetCheckState(node, CheckState.Checked);
+			//}
+			//else
+			//{
 				RestoreNodeState(FileSystemTreeNodeTag.InfoType.FILE, node);
+			//}
 			return node;
 		}
 
@@ -469,79 +485,87 @@ namespace Teltec.Common.Forms
 			set { _CheckedDataSource = ExpandCheckedDataSource(value); PopulateTreeView(); }
 		}
 
+		private void ExpandCheckedDataSourceAddParents(Dictionary<string, FileSystemTreeNodeTag> expandedDict, string path)
+		{
+			PathNodes nodes = new PathNodes(path);
+			PathNode nodeParent = nodes.Parent;
+
+			while (nodeParent != null)
+			{
+				FileSystemTreeNodeTag newTag = null;
+				switch (nodeParent.Type)
+				{
+					case PathNode.TypeEnum.FOLDER:
+						newTag = new FileSystemTreeNodeTag
+						{
+							Type = FileSystemTreeNodeTag.InfoType.FOLDER,
+							InfoObject = new DirectoryInfo(nodeParent.Path),
+							State = CheckState.Mixed
+						};
+						break;
+					case PathNode.TypeEnum.DRIVE:
+						newTag = new FileSystemTreeNodeTag
+						{
+							Type = FileSystemTreeNodeTag.InfoType.DRIVE,
+							InfoObject = new DriveInfo(nodeParent.Path),
+							State = CheckState.Mixed
+						};
+						break;
+				}
+
+				if (newTag != null)
+				{
+					if (!expandedDict.ContainsKey(nodeParent.Path))
+						expandedDict.Add(nodeParent.Path, newTag);
+				}
+
+				nodeParent = nodeParent.Parent;
+			}
+		}
+
 		private Dictionary<string, FileSystemTreeNodeTag> ExpandCheckedDataSource(
 			Dictionary<string, FileSystemTreeNodeTag> dict)
 		{
+			if (dict == null)
+				return null;
+
 			Dictionary<string, FileSystemTreeNodeTag> expandedDict =
 				new Dictionary<string, FileSystemTreeNodeTag>(dict.Count * 2);
+
+			bool hasParents = false;
+			string path = null;
 
 			// Expand paths into their respective parts.
 			foreach (var obj in dict)
 			{
+				path = obj.Value.Path;
 				switch (obj.Value.Type)
 				{
-					case FileSystemTreeNodeTag.InfoType.DRIVE:
-						{
-							if (obj.Value.InfoObject == null)
-								obj.Value.InfoObject = new DriveInfo(obj.Value.Path);
-							expandedDict.Add(obj.Key, obj.Value);
-							break;
-						}
 					case FileSystemTreeNodeTag.InfoType.FILE:
 						{
+							hasParents = true;
 							if (obj.Value.InfoObject == null)
-								obj.Value.InfoObject = new FileInfo(obj.Value.Path);
-							expandedDict.Add(obj.Key, obj.Value);
+								obj.Value.InfoObject = new FileInfo(path);
 							break;
 						}
 					case FileSystemTreeNodeTag.InfoType.FOLDER:
 						{
-							DirectoryInfo info = new DirectoryInfo(obj.Value.Path);
-							DirectoryInfo parentInfo = info.Parent;
-							while (parentInfo != null)
-							{
-								FileSystemTreeNodeTag.InfoType type = parentInfo.Parent != null
-									? FileSystemTreeNodeTag.InfoType.FOLDER
-									: FileSystemTreeNodeTag.InfoType.DRIVE;
-								
-								FileSystemTreeNodeTag newTag = null;
-
-								switch (type)
-								{
-									case FileSystemTreeNodeTag.InfoType.FOLDER:
-										newTag = new FileSystemTreeNodeTag
-										{
-											Type = type,
-											InfoObject = parentInfo,
-											State = CheckState.Mixed
-										};
-										break;
-									case FileSystemTreeNodeTag.InfoType.DRIVE:
-										newTag = new FileSystemTreeNodeTag
-										{
-											Type = type,
-											InfoObject = new DriveInfo(parentInfo.Name),
-											State = CheckState.Mixed
-										};
-										break;
-								}
-
-								if (newTag != null)
-								{
-									if (!expandedDict.ContainsKey(newTag.Path))
-										expandedDict.Add(newTag.Path, newTag);
-								}
-
-								parentInfo = parentInfo.Parent;
-							}
-
+							hasParents = true;
 							if (obj.Value.InfoObject == null)
-								obj.Value.InfoObject = new DirectoryInfo(obj.Value.Path);
-
-							expandedDict.Add(obj.Key, obj.Value);
+								obj.Value.InfoObject = new DirectoryInfo(path);
+							break;
+						}
+					case FileSystemTreeNodeTag.InfoType.DRIVE:
+						{
+							hasParents = false;
+							if (obj.Value.InfoObject == null)
+								obj.Value.InfoObject = new DriveInfo(path);
 							break;
 						}
 				}
+				expandedDict.Add(obj.Key, obj.Value);
+				if (hasParents)
+					ExpandCheckedDataSourceAddParents(expandedDict, path);
 			}
 
 			return expandedDict;

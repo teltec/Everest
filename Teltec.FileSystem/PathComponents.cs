@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 
-namespace Teltec.Storage
+namespace Teltec.FileSystem
 {
 	public class PathComponents
 	{

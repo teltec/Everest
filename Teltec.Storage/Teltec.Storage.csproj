@@ -88,13 +88,16 @@
     <Compile Include="TransferProgressArgs.cs" />
     <Compile Include="Utils\FileSizeUtils.cs" />
     <Compile Include="Utils\TimeSpanUtils.cs" />
-    <Compile Include="PathComponents.cs" />
     <Compile Include="Versioning\IVersionedFile.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>
       <Name>Teltec.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Teltec.FileSystem\Teltec.FileSystem.csproj">
+      <Project>{c3e6071d-6940-453c-a919-795795f82584}</Project>
+      <Name>Teltec.FileSystem</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

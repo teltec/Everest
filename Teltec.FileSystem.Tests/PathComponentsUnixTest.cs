@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Teltec.Storage.Versioning;
 
-namespace Teltec.Storage.Tests
+namespace Teltec.FileSystem.Tests
 {
 	[TestClass]
 	public class PathComponentsUnixTest

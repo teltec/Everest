@@ -1,8 +1,46 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Teltec.Storage.Versioning;
+using System.Linq;
 
-namespace Teltec.Storage.Tests
+namespace Teltec.FileSystem.Tests
 {
+	[TestClass]
+	public class PathNodesWindowsTest
+	{
+		[TestMethod]
+		public void TestPathNodesParent()
+		{
+			PathNodes nodes1 = new PathNodes(@"C:");
+			CollectionAssert.AreEqual(new string[] { }, nodes1.Parents.Select(p => p.Path).ToArray());
+
+			PathNodes nodes2 = new PathNodes(@"C:\");
+			CollectionAssert.AreEqual(new string[] { }, nodes2.Parents.Select(p => p.Path).ToArray());
+			
+			PathNodes nodes3 = new PathNodes(@"C:\.txt");
+			CollectionAssert.AreEqual(new string[] { @"C:\" }, nodes3.Parents.Select(p => p.Path).ToArray());
+			
+			PathNodes nodes4 = new PathNodes(@"C:\TODO.txt");
+			CollectionAssert.AreEqual(new string[] { @"C:\" }, nodes4.Parents.Select(p => p.Path).ToArray());
+			
+			PathNodes nodes5 = new PathNodes(@"C:\Users\TODO.txt");
+			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\Users\" }, nodes5.Parents.Select(p => p.Path).ToArray());
+			
+			PathNodes nodes6 = new PathNodes(@"C:\Users\johndoe\");
+			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\Users\" }, nodes6.Parents.Select(p => p.Path).ToArray());
+			
+			PathNodes nodes7 = new PathNodes(@"C:\Users\johndoe\Desktop\");
+			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\Users\", @"C:\Users\johndoe\" }, nodes7.Parents.Select(p => p.Path).ToArray());
+			
+			PathNodes nodes8 = new PathNodes(@"C:\Users\johndoe\Desktop\TODO.txt");
+			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\Users\", @"C:\Users\johndoe\", @"C:\Users\johndoe\Desktop\" }, nodes8.Parents.Select(p => p.Path).ToArray());
+			
+			PathNodes nodes9 = new PathNodes(@"Users\johndoe\Desktop\");
+			CollectionAssert.AreEqual(new string[] { @"Users\", @"Users\johndoe\" }, nodes9.Parents.Select(p => p.Path).ToArray());
+			
+			PathNodes nodes10 = new PathNodes(@"TODO.txt");
+			CollectionAssert.AreEqual(new string[] { }, nodes10.Parents.Select(p => p.Path).ToArray());
+		}
+	}
+
 	[TestClass]
 	public class PathComponentsWindowsTest
 	{
