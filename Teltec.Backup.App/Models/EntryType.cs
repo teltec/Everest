@@ -12,17 +12,17 @@ namespace Teltec.Backup.App.Models
 
 	public static class EntryTypeExtensions
 	{
-		public static FileSystemTreeNodeTag.InfoType ToInfoType(this EntryType obj)
+		public static FileSystemTreeNode.TypeEnum ToTypeEnum(this EntryType obj)
 		{
 			switch (obj)
 			{
 				default: throw new ArgumentException("Unhandled EntryType", "obj");
 				case EntryType.DRIVE:
-					return FileSystemTreeNodeTag.InfoType.DRIVE;
+					return FileSystemTreeNode.TypeEnum.DRIVE;
 				case EntryType.FOLDER:
-					return FileSystemTreeNodeTag.InfoType.FOLDER;
+					return FileSystemTreeNode.TypeEnum.FOLDER;
 				case EntryType.FILE:
-					return FileSystemTreeNodeTag.InfoType.FILE;
+					return FileSystemTreeNode.TypeEnum.FILE;
 			}
 		}
 	}

@@ -35,14 +35,14 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			};
 		}
 
-		private Dictionary<string, FileSystemTreeNodeTag> BackupPlanSelectedSourcesToCheckedDataSource(Models.BackupPlan plan)
+		private Dictionary<string, FileSystemTreeNodeData> BackupPlanSelectedSourcesToCheckedDataSource(Models.BackupPlan plan)
 		{
 			return plan.SelectedSources.ToDictionary(
 				e => e.Path,
-				e => new FileSystemTreeNodeTag
+				e => new FileSystemTreeNodeData
 				{
 					Id = e.Id,
-					Type = e.Type.ToInfoType(),
+					Type = e.Type.ToTypeEnum(),
 					Path = e.Path,
 					State = Teltec.Common.Forms.CheckState.Checked
 				}
