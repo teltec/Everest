@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Forms;
+using Teltec.Backup.App.Controls;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Models;
 using Teltec.Common.Extensions;
-using Teltec.Common.Forms;
 
 namespace Teltec.Backup.App.Forms.BackupPlan
 {
@@ -35,6 +35,20 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			};
 		}
 
+		private FileSystemTreeNode.TypeEnum ToTypeEnum(EntryType obj)
+		{
+			switch (obj)
+			{
+				default: throw new ArgumentException("Unhandled EntryType", "obj");
+				case EntryType.DRIVE:
+					return FileSystemTreeNode.TypeEnum.DRIVE;
+				case EntryType.FOLDER:
+					return FileSystemTreeNode.TypeEnum.FOLDER;
+				case EntryType.FILE:
+					return FileSystemTreeNode.TypeEnum.FILE;
+			}
+		}
+
 		private Dictionary<string, FileSystemTreeNodeData> BackupPlanSelectedSourcesToCheckedDataSource(Models.BackupPlan plan)
 		{
 			return plan.SelectedSources.ToDictionary(
@@ -42,9 +56,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				e => new FileSystemTreeNodeData
 				{
 					Id = e.Id,
-					Type = e.Type.ToTypeEnum(),
+					Type = ToTypeEnum(e.Type),
 					Path = e.Path,
-					State = Teltec.Common.Forms.CheckState.Checked
+					State = Teltec.Common.Controls.CheckState.Checked
 				}
 			);
 		}

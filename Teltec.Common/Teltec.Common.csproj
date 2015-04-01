@@ -47,34 +47,29 @@
     <Compile Include="Collections\ObservableDictionary.cs" />
     <Compile Include="Extensions\ICollectionExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
-    <Compile Include="Forms\CheckState.cs" />
-    <Compile Include="Forms\AdvancedTreeView.cs">
+    <Compile Include="Controls\AdvancedTreeView.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Forms\AdvancedTreeView.Designer.cs">
+    <Compile Include="Controls\AdvancedTreeView.Designer.cs">
       <DependentUpon>AdvancedTreeView.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\FileSystemTreeNode.cs" />
-    <Compile Include="Forms\FileSystemTreeView.cs">
+    <Compile Include="Controls\CheckState.cs" />
+    <Compile Include="Controls\GroupableRadioButton.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Forms\GroupableRadioButton.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Forms\GroupableRadioButton.Designer.cs">
+    <Compile Include="Controls\GroupableRadioButton.Designer.cs">
       <DependentUpon>GroupableRadioButton.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\NegateBinding.cs" />
-    <Compile Include="Forms\RadioButtonGroup.cs">
+    <Compile Include="Controls\NegateBinding.cs" />
+    <Compile Include="Controls\RadioButtonGroup.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Forms\SemiTransparentPanel.cs">
+    <Compile Include="Controls\SemiTransparentPanel.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Forms\SemiTransparentPanel.Designer.cs">
+    <Compile Include="Controls\SemiTransparentPanel.Designer.cs">
       <DependentUpon>SemiTransparentPanel.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\FileSystemTreeNodeData.cs" />
     <Compile Include="IObservableObject.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="NativeMethods.cs" />
@@ -89,7 +84,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Forms\AdvancedTreeView.resx">
+    <EmbeddedResource Include="Controls\AdvancedTreeView.resx">
       <DependentUpon>AdvancedTreeView.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>

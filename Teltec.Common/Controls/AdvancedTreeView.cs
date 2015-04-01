@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 
-namespace Teltec.Common.Forms
+namespace Teltec.Common.Controls
 {
 	public partial class AdvancedTreeView : TreeView
 	{
@@ -55,7 +55,7 @@ namespace Teltec.Common.Forms
 			this.ResumeLayout();
 		}
 
-		internal void SetStateImage(TreeNode node, int index)
+		protected void SetStateImage(TreeNode node, int index)
 		{
 			if (!IsHandleCreated)
 				return;

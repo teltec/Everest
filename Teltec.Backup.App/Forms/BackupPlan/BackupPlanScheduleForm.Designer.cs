@@ -29,7 +29,7 @@
 		private void InitializeComponent()
 		{
 			this.panelItemAmazonS3 = new System.Windows.Forms.Panel();
-			this.rbtnManual = new Teltec.Common.Forms.GroupableRadioButton();
+			this.rbtnManual = new Teltec.Common.Controls.GroupableRadioButton();
 			this.panelBottom.SuspendLayout();
 			this.panelTop.SuspendLayout();
 			this.panelMiddle.SuspendLayout();
@@ -92,6 +92,6 @@
 		#endregion
 
 		protected System.Windows.Forms.Panel panelItemAmazonS3;
-		protected Common.Forms.GroupableRadioButton rbtnManual;
+		protected Teltec.Common.Controls.GroupableRadioButton rbtnManual;
 	}
 }

@@ -2,7 +2,7 @@
 using System.IO;
 using System.Windows.Forms;
 
-namespace Teltec.Common.Forms
+namespace Teltec.Backup.App.Controls
 {
 	public class FileSystemTreeNode : TreeNode
 	{
@@ -108,6 +108,10 @@ namespace Teltec.Common.Forms
 					}
 			}
 		}
+
+		#endregion
+
+		#region Lazy node
 
 		private TreeNode AddLazyLoadingNode()
 		{

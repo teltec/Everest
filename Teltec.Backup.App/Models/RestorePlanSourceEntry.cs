@@ -1,27 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using Teltec.Common.Forms;
 
 namespace Teltec.Backup.App.Models
 {
 	public class RestorePlanSourceEntry : BaseEntity<Int64?>
 	{
-		//public RestorePlanSourceEntry()
-		//{
-		//}
-
-		//public RestorePlanSourceEntry(RestorePlan plan, EntryType type, string path) : this()
-		//{
-		//	RestorePlan = plan;
-		//	Type = type;
-		//	Path = path;
-		//}
-
-		//public RestorePlanSourceEntry(RestorePlan plan, FileSystemTreeNodeTag tag)
-		//	: this(plan, tag.ToEntryType(), tag.Path)
-		//{
-		//}
-
 		private Int64? _Id;
 		public virtual Int64? Id
 		{

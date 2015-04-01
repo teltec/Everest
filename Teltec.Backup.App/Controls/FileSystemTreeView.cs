@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Teltec.Common.Controls;
 using Teltec.FileSystem;
 
-namespace Teltec.Common.Forms
+namespace Teltec.Backup.App.Controls
 {
 	public class FileSystemTreeView : AdvancedTreeView
 	{
@@ -120,13 +121,13 @@ namespace Teltec.Common.Forms
 			if (node == null || node.Data.Type == FileSystemTreeNode.TypeEnum.LOADING)
 				return;
 
-			CheckState state = GetCheckState(node);
+			Teltec.Common.Controls.CheckState state = GetCheckState(node);
 			switch (state)
 			{
-				case CheckState.Unchecked:
+				case Teltec.Common.Controls.CheckState.Unchecked:
 					// If it's unchecked, ignore it and its child nodes.
 					return;
-				case CheckState.Checked:
+				case Teltec.Common.Controls.CheckState.Checked:
 					// If it's checked, add it and ignore its child nodes.
 					// This means the entire folder is checked - regardless of what it contains.
 					if (CheckedDataSource != null)
@@ -135,7 +136,7 @@ namespace Teltec.Common.Forms
 						FileSystemTreeNodeData match;
 						bool found = dict.TryGetValue(path, out match);
 						match = found ? match : node.Data;
-						match.State = CheckState.Checked;
+						match.State = Teltec.Common.Controls.CheckState.Checked;
 						node.Data = match;
 						if (!dict.ContainsKey(match.Path))
 							dict.Add(match.Path, match);
@@ -143,12 +144,12 @@ namespace Teltec.Common.Forms
 					else
 					{
 						FileSystemTreeNodeData tag = node.Data;
-						tag.State = CheckState.Checked;
+						tag.State = Teltec.Common.Controls.CheckState.Checked;
 						if (!dict.ContainsKey(tag.Path))
 							dict.Add(tag.Path, tag);
 					}
 					break;
-				case CheckState.Mixed:
+				case Teltec.Common.Controls.CheckState.Mixed:
 					// Ignore it, but verify its child nodes.
 					foreach (FileSystemTreeNode child in node.Nodes)
 						BuildTagDataDict(child, dict);
@@ -160,7 +161,7 @@ namespace Teltec.Common.Forms
 		{
 			// ...
 			Dictionary<string, FileSystemTreeNodeData> dict = CheckedDataSource != null
-				? CheckedDataSource.Select(e => e.Value).Where(e => e.State == CheckState.Checked)
+				? CheckedDataSource.Select(e => e.Value).Where(e => e.State == Teltec.Common.Controls.CheckState.Checked)
 					.ToDictionary(k => k.Path)
 				: new Dictionary<string, FileSystemTreeNodeData>();
 			// ...
@@ -209,7 +210,7 @@ namespace Teltec.Common.Forms
 						{
 							Type = FileSystemTreeNode.TypeEnum.FOLDER,
 							InfoObject = new DirectoryInfo(nodeParent.Path),
-							State = CheckState.Mixed
+							State = Teltec.Common.Controls.CheckState.Mixed
 						};
 						break;
 					case PathNode.TypeEnum.DRIVE:
@@ -217,7 +218,7 @@ namespace Teltec.Common.Forms
 						{
 							Type = FileSystemTreeNode.TypeEnum.DRIVE,
 							InfoObject = new DriveInfo(nodeParent.Path),
-							State = CheckState.Mixed
+							State = Teltec.Common.Controls.CheckState.Mixed
 						};
 						break;
 				}
@@ -282,9 +283,9 @@ namespace Teltec.Common.Forms
 
 		private void RestoreNodeStateRecursively(FileSystemTreeNode node)
 		{
-			//if (GetCheckState(parentNode) == CheckState.Checked)
+			//if (GetCheckState(parentNode) == Teltec.Common.Controls.CheckState.Checked)
 			//{
-			//	//SetCheckState(node, CheckState.Checked);
+			//	//SetCheckState(node, Teltec.Common.Controls.CheckState.Checked);
 			//}
 			//else
 			//{

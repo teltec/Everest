@@ -1,4 +1,6 @@
-﻿namespace Teltec.Backup.App.Forms.RestorePlan
+﻿using Teltec.Backup.App.Controls;
+
+namespace Teltec.Backup.App.Forms.RestorePlan
 {
 	partial class RestorePlanSelectSourceForm
 	{
@@ -29,8 +31,8 @@
 		private void InitializeComponent()
 		{
 			this.components = new System.ComponentModel.Container();
-			this.tvFiles = new Teltec.Common.Forms.FileSystemTreeView();
-			this.loadingPanel = new Teltec.Common.Forms.SemiTransparentPanel();
+			this.tvFiles = new BackupPlanTreeView();
+			this.loadingPanel = new Teltec.Common.Controls.SemiTransparentPanel();
 			this.panelBottom.SuspendLayout();
 			this.panelTop.SuspendLayout();
 			this.panelMiddle.SuspendLayout();
@@ -87,7 +89,7 @@
 
 		#endregion
 
-		private Teltec.Common.Forms.FileSystemTreeView tvFiles;
-		private Common.Forms.SemiTransparentPanel loadingPanel;
+		private BackupPlanTreeView tvFiles;
+		private Teltec.Common.Controls.SemiTransparentPanel loadingPanel;
 	}
 }

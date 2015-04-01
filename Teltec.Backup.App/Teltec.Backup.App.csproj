@@ -122,6 +122,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseOperation.cs" />
+    <Compile Include="Controls\FileSystemTreeNode.cs" />
+    <Compile Include="Controls\FileSystemTreeNodeData.cs" />
+    <Compile Include="Controls\FileSystemTreeView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\BackupPlanTreeNode.cs" />
+    <Compile Include="Controls\BackupPlanTreeNodeData.cs" />
+    <Compile Include="Controls\BackupPlanTreeView.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Forms\RestorePlan\RestorePlanSelectSourceForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -147,7 +157,6 @@
     <Compile Include="Forms\RestorePlan\RestorePlanGiveNameForm.Designer.cs">
       <DependentUpon>RestorePlanGiveNameForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Models\FileSystemTreeNodeTagExtensions.cs" />
     <Compile Include="Models\EntryType.cs" />
     <Compile Include="Models\Restore.cs" />
     <Compile Include="Models\RestoredFile.cs" />
@@ -358,6 +367,10 @@
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>
       <Name>Teltec.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Teltec.FileSystem\Teltec.FileSystem.csproj">
+      <Project>{c3e6071d-6940-453c-a919-795795f82584}</Project>
+      <Name>Teltec.FileSystem</Name>
     </ProjectReference>
     <ProjectReference Include="..\Teltec.Forms.Wizard\Teltec.Forms.Wizard.csproj">
       <Project>{03b4f6d7-e176-41fc-bd45-a2fbfa739248}</Project>

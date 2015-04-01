@@ -19,11 +19,11 @@
 			this.flpSupportedAccounts = new System.Windows.Forms.FlowLayoutPanel();
 			this.panelItemAmazonS3 = new System.Windows.Forms.Panel();
 			this.cbAmazonS3 = new System.Windows.Forms.ComboBox();
-			this.rbtnAmazonS3 = new Teltec.Common.Forms.GroupableRadioButton();
-			this.radioButtonGroupSupportedAccounts = new Teltec.Common.Forms.RadioButtonGroup(this.components);
+			this.rbtnAmazonS3 = new Teltec.Common.Controls.GroupableRadioButton();
+			this.radioButtonGroupSupportedAccounts = new Teltec.Common.Controls.RadioButtonGroup(this.components);
 			this.panel1 = new System.Windows.Forms.Panel();
 			this.cbFileSystem = new System.Windows.Forms.ComboBox();
-			this.rbtnFileSystem = new Teltec.Common.Forms.GroupableRadioButton();
+			this.rbtnFileSystem = new Teltec.Common.Controls.GroupableRadioButton();
 			this.panelBottom.SuspendLayout();
 			this.panelTop.SuspendLayout();
 			this.panelMiddle.SuspendLayout();
@@ -154,10 +154,10 @@
         protected System.Windows.Forms.FlowLayoutPanel flpSupportedAccounts;
         protected System.Windows.Forms.Panel panelItemAmazonS3;
         protected System.Windows.Forms.ComboBox cbAmazonS3;
-		protected Teltec.Common.Forms.GroupableRadioButton rbtnAmazonS3;
+		protected Teltec.Common.Controls.GroupableRadioButton rbtnAmazonS3;
         protected System.Windows.Forms.Panel panel1;
         protected System.Windows.Forms.ComboBox cbFileSystem;
-		protected Teltec.Common.Forms.GroupableRadioButton rbtnFileSystem;
-		private Common.Forms.RadioButtonGroup radioButtonGroupSupportedAccounts;
+		protected Teltec.Common.Controls.GroupableRadioButton rbtnFileSystem;
+		private Teltec.Common.Controls.RadioButtonGroup radioButtonGroupSupportedAccounts;
     }
 }

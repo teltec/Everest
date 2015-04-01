@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Teltec.Common.Forms
+﻿
+namespace Teltec.Common.Controls
 {
 	// Our replacement for System.Windows.Forms.CheckState.Indeterminate
 	public enum CheckState

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Forms;
 
-namespace Teltec.Common.Forms
+namespace Teltec.Common.Controls
 {
 	public class RadioButtonGroup : Component
 	{

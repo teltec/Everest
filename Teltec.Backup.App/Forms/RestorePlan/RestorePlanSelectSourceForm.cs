@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Forms;
+using Teltec.Backup.App.Controls;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Models;
 using Teltec.Common.Extensions;
-using Teltec.Common.Forms;
 
 namespace Teltec.Backup.App.Forms.RestorePlan
 {
@@ -35,16 +35,32 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 			};
 		}
 
-		private Dictionary<string, FileSystemTreeNodeData> RestorePlanSelectedSourcesToCheckedDataSource(Models.RestorePlan plan)
+		private BackupPlanTreeNode.TypeEnum ToTypeEnum(EntryType obj)
+		{
+			switch (obj)
+			{
+				default: throw new ArgumentException("Unhandled EntryType", "obj");
+				case EntryType.DRIVE:
+					return BackupPlanTreeNode.TypeEnum.DRIVE;
+				case EntryType.FOLDER:
+					return BackupPlanTreeNode.TypeEnum.FOLDER;
+				case EntryType.FILE:
+					return BackupPlanTreeNode.TypeEnum.FILE;
+				//case EntryType.FILE_VERSION:
+				//	return BackupPlanTreeNode.TypeEnum.FILE_VERSION;
+			}
+		}
+
+		private Dictionary<string, BackupPlanTreeNodeData> RestorePlanSelectedSourcesToCheckedDataSource(Models.RestorePlan plan)
 		{
 			return plan.SelectedSources.ToDictionary(
 				e => e.Path,
-				e => new FileSystemTreeNodeData
+				e => new BackupPlanTreeNodeData
 				{
 					Id = e.Id,
-					Type = e.Type.ToTypeEnum(),
+					Type = ToTypeEnum(e.Type),
 					Path = e.Path,
-					State = Teltec.Common.Forms.CheckState.Checked
+					State = Teltec.Common.Controls.CheckState.Checked
 				}
 			);
 		}

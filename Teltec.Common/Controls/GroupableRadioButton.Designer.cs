@@ -1,13 +1,13 @@
-﻿namespace Teltec.Common.Forms
+﻿namespace Teltec.Common.Controls
 {
-	partial class AdvancedTreeView
+	partial class GroupableRadioButton
 	{
-		/// <summary> 
+		/// <summary>
 		/// Required designer variable.
 		/// </summary>
 		private System.ComponentModel.IContainer components = null;
 
-		/// <summary> 
+		/// <summary>
 		/// Clean up any resources being used.
 		/// </summary>
 		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
@@ -28,26 +28,9 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.components = new System.ComponentModel.Container();
-			this.stateImageList = new System.Windows.Forms.ImageList(this.components);
-			this.SuspendLayout();
-			// 
-			// stateImageList
-			// 
-			this.stateImageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
-			this.stateImageList.ImageSize = new System.Drawing.Size(16, 16);
-			this.stateImageList.TransparentColor = System.Drawing.Color.Transparent;
-			// 
-			// FileSystemTreeView
-			// 
-			this.StateImageList = this.stateImageList;
-			this.ResumeLayout(false);
-
+			components = new System.ComponentModel.Container();
 		}
 
 		#endregion
-
-		private System.Windows.Forms.ImageList stateImageList;
-
 	}
 }
