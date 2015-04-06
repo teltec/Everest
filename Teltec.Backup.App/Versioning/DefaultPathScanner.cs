@@ -1,4 +1,5 @@
 ﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Teltec.Backup.App.Models;
@@ -33,6 +34,8 @@ namespace Teltec.Backup.App.Versioning
 			{
 				switch (entry.Type)
 				{
+					default:
+						throw new InvalidOperationException("Unhandled EntryType");
 					case EntryType.DRIVE:
 						{
 							DirectoryInfo dir = new DriveInfo(entry.Path).RootDirectory;

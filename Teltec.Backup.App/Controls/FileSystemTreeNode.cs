@@ -1,19 +1,18 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.IO;
 using System.Windows.Forms;
+using Teltec.Backup.App.Models;
 
 namespace Teltec.Backup.App.Controls
 {
-	public class FileSystemTreeNode : TreeNode
+	public sealed class FileSystemTreeNode : EntryTreeNode
 	{
-		public FileSystemTreeNodeData Data { get; set; }
-
-		public enum TypeEnum
+		private FileSystemTreeNodeData _Data = new FileSystemTreeNodeData();
+		public FileSystemTreeNodeData Data
 		{
-			LOADING = 0,
-			DRIVE = 1,
-			FOLDER = 2,
-			FILE = 3,
+			get { return _Data;  }
+			set { _Data = value; }
 		}
 
 		public static FileSystemTreeNode CreateLoadingNode()
@@ -24,46 +23,42 @@ namespace Teltec.Backup.App.Controls
 			return node;
 		}
 
-		public static FileSystemTreeNode CreateDriveNode(DriveInfo info)
+		public static FileSystemTreeNode CreateDriveNode(EntryInfo info)
 		{
-			string nodeName = null;
-			try
-			{
-				string driveLabel = info.VolumeLabel;
-				if (string.IsNullOrEmpty(driveLabel))
-					nodeName = info.Name;
-				else
-					nodeName = string.Format("{0} ({1})", info.Name, driveLabel);
-			}
-			catch (Exception)
-			{
-				nodeName = info.Name;
-			}
+			//string nodeName = null;
+			// TODO: Support showing drive label!
+			//try
+			//{
+			//	string driveLabel = info.VolumeLabel;
+			//	if (string.IsNullOrEmpty(driveLabel))
+			//		nodeName = info.Name;
+			//	else
+			//		nodeName = string.Format("{0} ({1})", info.Name, driveLabel);
+			//}
+			//catch (Exception)
+			//{
+			//	nodeName = info.Name;
+			//}
 
-			FileSystemTreeNode node = new FileSystemTreeNode(nodeName, 0, 0);
-			node.Data.Type = TypeEnum.DRIVE;
+			FileSystemTreeNode node = new FileSystemTreeNode(info.Name, 0, 0);
 			node.ImageKey = "drive";
 			node.Data.InfoObject = info;
 			node.AddLazyLoadingNode();
 			return node;
 		}
 
-		public static FileSystemTreeNode CreateFolderNode(DirectoryInfo info)
+		public static FileSystemTreeNode CreateFolderNode(EntryInfo info)
 		{
-			string nodeName = info.Name;
-			FileSystemTreeNode node = new FileSystemTreeNode(nodeName, 0, 0);
-			node.Data.Type = TypeEnum.FOLDER;
+			FileSystemTreeNode node = new FileSystemTreeNode(info.Name, 0, 0);
 			node.ImageKey = "folder";
 			node.Data.InfoObject = info;
 			node.AddLazyLoadingNode();
 			return node;
 		}
 
-		public static FileSystemTreeNode CreateFileNode(FileInfo info)
+		public static FileSystemTreeNode CreateFileNode(EntryInfo info)
 		{
-			string nodeName = info.Name;
-			FileSystemTreeNode node = new FileSystemTreeNode(nodeName, 0, 0);
-			node.Data.Type = TypeEnum.FILE;
+			FileSystemTreeNode node = new FileSystemTreeNode(info.Name, 0, 0);
 			node.ImageKey = "file";
 			node.Data.InfoObject = info;
 			return node;
@@ -72,40 +67,31 @@ namespace Teltec.Backup.App.Controls
 		private FileSystemTreeNode()
 			: base()
 		{
-			Data = new FileSystemTreeNodeData();
 		}
 
 		private FileSystemTreeNode(string text, int imageIndex, int selectedImageIndex)
 			: base(text, imageIndex, selectedImageIndex)
 		{
-			Data = new FileSystemTreeNodeData();
 		}
 
 		#region Handle children nodes
 
 		// May throw System.SystemException
-		public void OnExpand()
+		public override void OnExpand()
 		{
 			RemoveLazyLoadingNode();
 
 			switch (Data.Type)
 			{
-				default:
+				default: break;
+				case TypeEnum.FOLDER:
+					if (Nodes.Count == 0)
+						PopuplateDirectory(Data.InfoObject);
 					break;
-				case FileSystemTreeNode.TypeEnum.FOLDER:
-					{
-						DirectoryInfo expandingNodeInfo = Data.InfoObject as DirectoryInfo;
-						if (Nodes.Count == 0)
-							PopuplateDirectory(expandingNodeInfo);
-						break;
-					}
-				case FileSystemTreeNode.TypeEnum.DRIVE:
-					{
-						DriveInfo expandingNodeInfo = Data.InfoObject as DriveInfo;
-						if (Nodes.Count == 0)
-							PopulateDrive(expandingNodeInfo);
-						break;
-					}
+				case TypeEnum.DRIVE:
+					if (Nodes.Count == 0)
+						PopulateDrive(Data.InfoObject);
+					break;
 			}
 		}
 
@@ -126,7 +112,7 @@ namespace Teltec.Backup.App.Controls
 			if (node == null)
 				return;
 
-			if (node.Data.Type == FileSystemTreeNode.TypeEnum.LOADING)
+			if (node.Data.Type == TypeEnum.LOADING)
 				node.Remove();
 		}
 
@@ -135,43 +121,52 @@ namespace Teltec.Backup.App.Controls
 		#region Populate methods
 
 		// May throw System.SystemException
-		private void PopulateDrive(DriveInfo info)
+		private void PopulateDrive(EntryInfo info)
 		{
-			PopuplateDirectory(info.RootDirectory);
+			PopuplateDirectory(info);
 		}
 
 		// May throw System.SystemException
-		private void PopuplateDirectory(DirectoryInfo info)
+		private void PopuplateDirectory(EntryInfo info)
 		{
-			DirectoryInfo[] subDirs = info.GetDirectories();
-			FileInfo[] subFiles = info.GetFiles();
+			if (info.Type != TypeEnum.DRIVE && info.Type != TypeEnum.FOLDER)
+				throw new ArgumentException("Invalid EntryInfo.TypeEnum", "info.Type");
+
+			DirectoryInfo dir = info.Type == TypeEnum.DRIVE
+				? new DriveInfo(info.Path).RootDirectory
+				: new DirectoryInfo(info.Path);
+				
+			DirectoryInfo[] subDirs = dir.GetDirectories();
+			FileInfo[] subFiles = dir.GetFiles();
 			foreach (DirectoryInfo subDir in subDirs)
 			{
-				FileSystemTreeNode subFolderNode = AddFolderNode(subDir);
+				EntryInfo subInfo = new EntryInfo(TypeEnum.FOLDER, subDir.Name, subDir.FullName);
+				FileSystemTreeNode subFolderNode = AddFolderNode(subInfo);
 			}
 			foreach (var file in subFiles)
 			{
-				FileSystemTreeNode subFileNode = AddFileNode(file);
+				EntryInfo subInfo = new EntryInfo(TypeEnum.FILE, file.Name, file.FullName);
+				FileSystemTreeNode subFileNode = AddFileNode(subInfo);
 			}
 		}
 
-		private FileSystemTreeNode AddDriveNode(TreeView view, DriveInfo drive)
+		private FileSystemTreeNode AddDriveNode(TreeView view, EntryInfo info)
 		{
-			FileSystemTreeNode node = FileSystemTreeNode.CreateDriveNode(drive);
+			FileSystemTreeNode node = FileSystemTreeNode.CreateDriveNode(info);
 			view.Nodes.Add(node);
 			return node;
 		}
 
-		private FileSystemTreeNode AddFolderNode(DirectoryInfo folder)
+		private FileSystemTreeNode AddFolderNode(EntryInfo info)
 		{
-			FileSystemTreeNode node = FileSystemTreeNode.CreateFolderNode(folder);
+			FileSystemTreeNode node = FileSystemTreeNode.CreateFolderNode(info);
 			Nodes.Add(node);
 			return node;
 		}
 
-		private FileSystemTreeNode AddFileNode(FileInfo file)
+		private FileSystemTreeNode AddFileNode(EntryInfo info)
 		{
-			FileSystemTreeNode node = FileSystemTreeNode.CreateFileNode(file);
+			FileSystemTreeNode node = FileSystemTreeNode.CreateFileNode(info);
 			Nodes.Add(node);
 			return node;
 		}

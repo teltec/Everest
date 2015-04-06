@@ -122,6 +122,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseOperation.cs" />
+    <Compile Include="Controls\EntryInfo.cs" />
+    <Compile Include="Controls\EntryTreeNode.cs" />
     <Compile Include="Controls\FileSystemTreeNode.cs" />
     <Compile Include="Controls\FileSystemTreeNodeData.cs" />
     <Compile Include="Controls\FileSystemTreeView.cs">
@@ -132,6 +134,8 @@
     <Compile Include="Controls\BackupPlanTreeView.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\EntryTreeNodeData.cs" />
+    <Compile Include="Controls\TypeEnum.cs" />
     <Compile Include="Forms\RestorePlan\RestorePlanSelectSourceForm.cs">
       <SubType>Form</SubType>
     </Compile>

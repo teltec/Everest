@@ -18,11 +18,11 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 		{
 			InitializeComponent();
 			loadingPanel.Dock = DockStyle.Fill;
-			tvFiles.FileSystemFetchStarted += (object sender, EventArgs e) =>
+			tvFiles.ExpandFetchStarted += (object sender, EventArgs e) =>
 			{
 				//loadingPanel.Visible = true;
 			};
-			tvFiles.FileSystemFetchEnded += (object sender, EventArgs e) =>
+			tvFiles.ExpandFetchEnded += (object sender, EventArgs e) =>
 			{
 				//loadingPanel.Visible = false;
 			};
@@ -35,22 +35,6 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 			};
 		}
 
-		private BackupPlanTreeNode.TypeEnum ToTypeEnum(EntryType obj)
-		{
-			switch (obj)
-			{
-				default: throw new ArgumentException("Unhandled EntryType", "obj");
-				case EntryType.DRIVE:
-					return BackupPlanTreeNode.TypeEnum.DRIVE;
-				case EntryType.FOLDER:
-					return BackupPlanTreeNode.TypeEnum.FOLDER;
-				case EntryType.FILE:
-					return BackupPlanTreeNode.TypeEnum.FILE;
-				//case EntryType.FILE_VERSION:
-				//	return BackupPlanTreeNode.TypeEnum.FILE_VERSION;
-			}
-		}
-
 		private Dictionary<string, BackupPlanTreeNodeData> RestorePlanSelectedSourcesToCheckedDataSource(Models.RestorePlan plan)
 		{
 			return plan.SelectedSources.ToDictionary(
@@ -58,7 +42,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 				e => new BackupPlanTreeNodeData
 				{
 					Id = e.Id,
-					Type = ToTypeEnum(e.Type),
+					Type = e.Type.ToTypeEnum(),
 					Path = e.Path,
 					State = Teltec.Common.Controls.CheckState.Checked
 				}

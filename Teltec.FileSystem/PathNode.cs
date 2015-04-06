@@ -9,12 +9,14 @@ namespace Teltec.FileSystem
 	public class PathNode
 	{
 		public TypeEnum Type { get; set; }
+		public string Name { get; set; }
 		public string Path { get; set; }
 		public PathNode Parent { get; set; }
 
-		public PathNode(TypeEnum type, string path, PathNode parent = null)
+		public PathNode(TypeEnum type, string name, string path, PathNode parent = null)
 		{
 			Type = type;
+			Name = name;
 			Path = path;
 			Parent = parent;
 		}

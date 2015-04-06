@@ -34,7 +34,8 @@ namespace Teltec.FileSystem
 				return string.Empty;
 
 			return (includeDrive ? FormattedDrive(comps) : string.Empty)
-				+ string.Join(Path.DirectorySeparatorChar.ToString(), comps.Directories.Take(amount));
+				+ string.Join(Path.DirectorySeparatorChar.ToString(), comps.Directories.Take(amount))
+				+ Path.DirectorySeparatorChar.ToString();
 		}
 
 		protected string FormattedDrive(PathComponents comps)
@@ -53,9 +54,14 @@ namespace Teltec.FileSystem
 				// The DRIVE itself has no intermediates, so return nothing.
 				return nodes;
 
+			string nodeName = null;
+			string nodePath = null;
+
 			if (comps.HasDrive)
 			{
-				currentNode = new PathNode(PathNode.TypeEnum.DRIVE, FormattedDrive(comps), previousNode);
+				nodeName = FormattedDrive(comps);
+				nodePath = FormattedDrive(comps);
+				currentNode = new PathNode(PathNode.TypeEnum.DRIVE, nodeName, nodePath, previousNode);
 				previousNode = currentNode;
 				nodes.AddLast(currentNode); // Include drive
 			}
@@ -69,7 +75,9 @@ namespace Teltec.FileSystem
 
 			for (int i = 1; i <= count; i++)
 			{
-				currentNode = new PathNode(PathNode.TypeEnum.FOLDER, FormattedJoinedDirectoriesUptTo(comps, i), previousNode);
+				nodeName = comps.Directories.ElementAt(i - 1);
+				nodePath = FormattedJoinedDirectoriesUptTo(comps, i);
+				currentNode = new PathNode(PathNode.TypeEnum.FOLDER, nodeName, nodePath, previousNode);
 				previousNode = currentNode;
 				nodes.AddLast(currentNode);
 			}

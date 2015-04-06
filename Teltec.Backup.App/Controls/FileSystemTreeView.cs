@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
 using Teltec.Common.Controls;
 using Teltec.FileSystem;
 
 namespace Teltec.Backup.App.Controls
 {
-	public class FileSystemTreeView : AdvancedTreeView
+	public sealed class FileSystemTreeView : AdvancedTreeView
 	{
 		public FileSystemTreeView()
 			: base()
@@ -17,8 +16,8 @@ namespace Teltec.Backup.App.Controls
 			PopulateTreeView();
 			this.UseWaitCursor = false;
 
-			this.BeforeExpand += new TreeViewCancelEventHandler(this.handle_BeforeExpand);
-			this.AfterCheck += new TreeViewEventHandler(this.handle_AfterCheck);
+			this.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.handle_BeforeExpand);
+			this.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.handle_AfterCheck);
 		}
 
 		#region Populate methods
@@ -33,13 +32,33 @@ namespace Teltec.Backup.App.Controls
 
 			SuspendLayout();
 			this.Nodes.Clear();
+			PopulateDrives();
+			ResumeLayout(false);
+		}
 
+		public void PopulateDrives()
+		{
 			try
 			{
 				DriveInfo[] drives = DriveInfo.GetDrives();
 				foreach (var drive in drives)
 				{
-					FileSystemTreeNode driveNode = FileSystemTreeNode.CreateDriveNode(drive);
+					string infoName = null;
+					try
+					{
+						string driveLabel = drive.VolumeLabel;
+						if (string.IsNullOrEmpty(driveLabel))
+							infoName = drive.Name;
+						else
+							infoName = string.Format("{0} ({1})", drive.Name, driveLabel);
+					}
+					catch (Exception)
+					{
+						infoName = drive.Name;
+					}
+
+					EntryInfo info = new EntryInfo(TypeEnum.DRIVE, infoName, drive.Name);
+					FileSystemTreeNode driveNode = FileSystemTreeNode.CreateDriveNode(info);
 					this.Nodes.Add(driveNode);
 					RestoreNodeState(driveNode);
 				}
@@ -48,40 +67,38 @@ namespace Teltec.Backup.App.Controls
 			{
 				ShowErrorMessage(e, null);
 			}
-
-			ResumeLayout(false);
 		}
 
 		#endregion
 
 		#region Custom events
 
-		public delegate void FileSystemFetchStartedHandler(object sender, EventArgs e);
-		public delegate void FileSystemFetchEndedHandler(object sender, EventArgs e);
+		public delegate void ExpandFetchStartedHandler(object sender, EventArgs e);
+		public delegate void ExpandFetchEndedHandler(object sender, EventArgs e);
 
-		public event FileSystemFetchStartedHandler FileSystemFetchStarted;
-		public event FileSystemFetchEndedHandler FileSystemFetchEnded;
+		public event ExpandFetchStartedHandler ExpandFetchStarted;
+		public event ExpandFetchEndedHandler ExpandFetchEnded;
 
-		protected virtual void OnFileSystemFetchStarted(object sender, EventArgs e)
+		private void OnExpandFetchStarted(object sender, EventArgs e)
 		{
-			if (FileSystemFetchStarted != null)
-				FileSystemFetchStarted(this, e);
+			if (ExpandFetchStarted != null)
+				ExpandFetchStarted(this, e);
 		}
 
-		protected virtual void OnFileSystemFetchEnded(object sender, EventArgs e)
+		private void OnExpandFetchEnded(object sender, EventArgs e)
 		{
-			if (FileSystemFetchEnded != null)
-				FileSystemFetchEnded(this, e);
+			if (ExpandFetchEnded != null)
+				ExpandFetchEnded(this, e);
 		}
 
 		#endregion
 
-		private void handle_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+		private void handle_BeforeExpand(object sender, System.Windows.Forms.TreeViewCancelEventArgs e)
 		{
 			UseWaitCursor = true;
-			OnFileSystemFetchStarted(this, null);
+			OnExpandFetchStarted(this, null);
 
-			FileSystemTreeNode expandingNode = e.Node as FileSystemTreeNode;
+			EntryTreeNode expandingNode = e.Node as EntryTreeNode;
 
 			// Suspend layout because the expanding node may change the UI.
 			SuspendLayout();
@@ -99,16 +116,16 @@ namespace Teltec.Backup.App.Controls
 			}
 
 			// Restore nodes state.
-			RestoreNodeStateRecursively(expandingNode);
+			RestoreNodeStateRecursively(expandingNode as FileSystemTreeNode);
 
 			// Then resume the layout to let it apply all changes made to the UI.
 			ResumeLayout();
 
-			OnFileSystemFetchEnded(this, null);
+			OnExpandFetchEnded(this, null);
 			UseWaitCursor = false;
 		}
 
-		private void handle_AfterCheck(object sender, TreeViewEventArgs e)
+		private void handle_AfterCheck(object sender, System.Windows.Forms.TreeViewEventArgs e)
 		{
 			RestoreNodeStateRemove(e.Node as FileSystemTreeNode);
 		}
@@ -118,16 +135,16 @@ namespace Teltec.Backup.App.Controls
 		private void BuildTagDataDict(FileSystemTreeNode node, Dictionary<string, FileSystemTreeNodeData> dict)
 		{
 			// Skip over loading nodes and nodes without a tag.
-			if (node == null || node.Data.Type == FileSystemTreeNode.TypeEnum.LOADING)
+			if (node == null || node.Data.Type == TypeEnum.LOADING)
 				return;
 
-			Teltec.Common.Controls.CheckState state = GetCheckState(node);
+			CheckState state = GetCheckState(node);
 			switch (state)
 			{
-				case Teltec.Common.Controls.CheckState.Unchecked:
+				case CheckState.Unchecked:
 					// If it's unchecked, ignore it and its child nodes.
 					return;
-				case Teltec.Common.Controls.CheckState.Checked:
+				case CheckState.Checked:
 					// If it's checked, add it and ignore its child nodes.
 					// This means the entire folder is checked - regardless of what it contains.
 					if (CheckedDataSource != null)
@@ -136,7 +153,7 @@ namespace Teltec.Backup.App.Controls
 						FileSystemTreeNodeData match;
 						bool found = dict.TryGetValue(path, out match);
 						match = found ? match : node.Data;
-						match.State = Teltec.Common.Controls.CheckState.Checked;
+						match.State = CheckState.Checked;
 						node.Data = match;
 						if (!dict.ContainsKey(match.Path))
 							dict.Add(match.Path, match);
@@ -144,12 +161,12 @@ namespace Teltec.Backup.App.Controls
 					else
 					{
 						FileSystemTreeNodeData tag = node.Data;
-						tag.State = Teltec.Common.Controls.CheckState.Checked;
+						tag.State = CheckState.Checked;
 						if (!dict.ContainsKey(tag.Path))
 							dict.Add(tag.Path, tag);
 					}
 					break;
-				case Teltec.Common.Controls.CheckState.Mixed:
+				case CheckState.Mixed:
 					// Ignore it, but verify its child nodes.
 					foreach (FileSystemTreeNode child in node.Nodes)
 						BuildTagDataDict(child, dict);
@@ -161,7 +178,7 @@ namespace Teltec.Backup.App.Controls
 		{
 			// ...
 			Dictionary<string, FileSystemTreeNodeData> dict = CheckedDataSource != null
-				? CheckedDataSource.Select(e => e.Value).Where(e => e.State == Teltec.Common.Controls.CheckState.Checked)
+				? CheckedDataSource.Select(e => e.Value).Where(e => e.State == CheckState.Checked)
 					.ToDictionary(k => k.Path)
 				: new Dictionary<string, FileSystemTreeNodeData>();
 			// ...
@@ -202,31 +219,36 @@ namespace Teltec.Backup.App.Controls
 
 			while (nodeParent != null)
 			{
-				FileSystemTreeNodeData newTag = null;
+				EntryTreeNodeData newTag = null;
 				switch (nodeParent.Type)
 				{
+					case PathNode.TypeEnum.FILE:
+						{
+							EntryInfo info = new EntryInfo(TypeEnum.FILE, nodeParent.Name, nodeParent.Path);
+							newTag = new FileSystemTreeNodeData(info);
+							newTag.State = CheckState.Mixed;
+							break;
+						}
 					case PathNode.TypeEnum.FOLDER:
-						newTag = new FileSystemTreeNodeData
 						{
-							Type = FileSystemTreeNode.TypeEnum.FOLDER,
-							InfoObject = new DirectoryInfo(nodeParent.Path),
-							State = Teltec.Common.Controls.CheckState.Mixed
-						};
-						break;
+							EntryInfo info = new EntryInfo(TypeEnum.FOLDER, nodeParent.Name, nodeParent.Path);
+							newTag = new FileSystemTreeNodeData(info);
+							newTag.State = CheckState.Mixed;
+							break;
+						}
 					case PathNode.TypeEnum.DRIVE:
-						newTag = new FileSystemTreeNodeData
 						{
-							Type = FileSystemTreeNode.TypeEnum.DRIVE,
-							InfoObject = new DriveInfo(nodeParent.Path),
-							State = Teltec.Common.Controls.CheckState.Mixed
-						};
-						break;
+							EntryInfo info = new EntryInfo(TypeEnum.DRIVE, nodeParent.Name, nodeParent.Path);
+							newTag = new FileSystemTreeNodeData(info);
+							newTag.State = CheckState.Mixed;
+							break;
+						}
 				}
 
 				if (newTag != null)
 				{
 					if (!expandedDict.ContainsKey(nodeParent.Path))
-						expandedDict.Add(nodeParent.Path, newTag);
+						expandedDict.Add(nodeParent.Path, newTag as FileSystemTreeNodeData);
 				}
 
 				nodeParent = nodeParent.Parent;
@@ -243,39 +265,26 @@ namespace Teltec.Backup.App.Controls
 				new Dictionary<string, FileSystemTreeNodeData>(dict.Count * 2);
 
 			bool hasParents = false;
-			string path = null;
 
 			// Expand paths into their respective parts.
 			foreach (var obj in dict)
 			{
-				path = obj.Value.Path;
 				switch (obj.Value.Type)
 				{
-					case FileSystemTreeNode.TypeEnum.FILE:
-						{
-							hasParents = true;
-							if (obj.Value.InfoObject == null)
-								obj.Value.InfoObject = new FileInfo(path);
-							break;
-						}
-					case FileSystemTreeNode.TypeEnum.FOLDER:
-						{
-							hasParents = true;
-							if (obj.Value.InfoObject == null)
-								obj.Value.InfoObject = new DirectoryInfo(path);
-							break;
-						}
-					case FileSystemTreeNode.TypeEnum.DRIVE:
-						{
-							hasParents = false;
-							if (obj.Value.InfoObject == null)
-								obj.Value.InfoObject = new DriveInfo(path);
-							break;
-						}
+					default: throw new ArgumentException("Unhandled TypeEnum", "TreeNodeData.Type");
+					case TypeEnum.FILE:
+					case TypeEnum.FOLDER:
+						hasParents = true;
+						break;
+					case TypeEnum.DRIVE:
+						hasParents = false;
+						break;
 				}
+				if (obj.Value.InfoObject == null)
+					obj.Value.InfoObject = new EntryInfo(obj.Value.Type, obj.Value.Name, obj.Value.Path);
 				expandedDict.Add(obj.Key, obj.Value);
 				if (hasParents)
-					ExpandCheckedDataSourceAddParents(expandedDict, path);
+					ExpandCheckedDataSourceAddParents(expandedDict, obj.Value.Path);
 			}
 
 			return expandedDict;
@@ -283,9 +292,9 @@ namespace Teltec.Backup.App.Controls
 
 		private void RestoreNodeStateRecursively(FileSystemTreeNode node)
 		{
-			//if (GetCheckState(parentNode) == Teltec.Common.Controls.CheckState.Checked)
+			//if (GetCheckState(parentNode) == CheckState.Checked)
 			//{
-			//	//SetCheckState(node, Teltec.Common.Controls.CheckState.Checked);
+			//	//SetCheckState(node, CheckState.Checked);
 			//}
 			//else
 			//{
@@ -305,12 +314,12 @@ namespace Teltec.Backup.App.Controls
 			{
 				default:
 					throw new ArgumentException("Unhandled TypeEnum", "type");
-				case FileSystemTreeNode.TypeEnum.LOADING:
+				case TypeEnum.LOADING:
 					// Ignore this node.
 					break;
-				case FileSystemTreeNode.TypeEnum.DRIVE:
-				case FileSystemTreeNode.TypeEnum.FOLDER:
-				case FileSystemTreeNode.TypeEnum.FILE:
+				case TypeEnum.DRIVE:
+				case TypeEnum.FOLDER:
+				case TypeEnum.FILE:
 					{
 						string path = node.Data.Path;
 						FileSystemTreeNodeData match;
@@ -332,7 +341,7 @@ namespace Teltec.Backup.App.Controls
 			if (node.Data == null)
 				return;
 
-			if (node.Data.Type != FileSystemTreeNode.TypeEnum.LOADING)
+			if (node.Data.Type != TypeEnum.LOADING)
 			{
 				string path = node.Data.Path;
 				if (CheckedDataSource.ContainsKey(path))

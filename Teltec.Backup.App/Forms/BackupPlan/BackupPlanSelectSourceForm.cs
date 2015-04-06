@@ -18,11 +18,11 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		{
 			InitializeComponent();
 			loadingPanel.Dock = DockStyle.Fill;
-			tvFiles.FileSystemFetchStarted += (object sender, EventArgs e) =>
+			tvFiles.ExpandFetchStarted += (object sender, EventArgs e) =>
 			{
 				//loadingPanel.Visible = true;
 			};
-			tvFiles.FileSystemFetchEnded += (object sender, EventArgs e) =>
+			tvFiles.ExpandFetchEnded += (object sender, EventArgs e) =>
 			{
 				//loadingPanel.Visible = false;
 			};
@@ -35,20 +35,6 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			};
 		}
 
-		private FileSystemTreeNode.TypeEnum ToTypeEnum(EntryType obj)
-		{
-			switch (obj)
-			{
-				default: throw new ArgumentException("Unhandled EntryType", "obj");
-				case EntryType.DRIVE:
-					return FileSystemTreeNode.TypeEnum.DRIVE;
-				case EntryType.FOLDER:
-					return FileSystemTreeNode.TypeEnum.FOLDER;
-				case EntryType.FILE:
-					return FileSystemTreeNode.TypeEnum.FILE;
-			}
-		}
-
 		private Dictionary<string, FileSystemTreeNodeData> BackupPlanSelectedSourcesToCheckedDataSource(Models.BackupPlan plan)
 		{
 			return plan.SelectedSources.ToDictionary(
@@ -56,7 +42,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				e => new FileSystemTreeNodeData
 				{
 					Id = e.Id,
-					Type = ToTypeEnum(e.Type),
+					Type = e.Type.ToTypeEnum(),
 					Path = e.Path,
 					State = Teltec.Common.Controls.CheckState.Checked
 				}

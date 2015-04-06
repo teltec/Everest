@@ -7,7 +7,7 @@ using Teltec.FileSystem;
 
 namespace Teltec.Backup.App.Controls
 {
-	public class BackupPlanTreeView : AdvancedTreeView
+	public sealed class BackupPlanTreeView : AdvancedTreeView
 	{
 		public BackupPlanTreeView()
 			: base()
@@ -32,9 +32,15 @@ namespace Teltec.Backup.App.Controls
 
 			SuspendLayout();
 			this.Nodes.Clear();
+			PopulateDrives();
+			ResumeLayout(false);
+		}
 
+		public void PopulateDrives()
+		{
 			try
 			{
+				// TODO
 				//DriveInfo[] drives = DriveInfo.GetDrives();
 				//foreach (var drive in drives)
 				//{
@@ -42,35 +48,34 @@ namespace Teltec.Backup.App.Controls
 				//	this.Nodes.Add(driveNode);
 				//	RestoreNodeState(driveNode);
 				//}
+
 			}
 			catch (System.SystemException e)
 			{
 				ShowErrorMessage(e, null);
 			}
-
-			ResumeLayout(false);
 		}
 
 		#endregion
 
 		#region Custom events
 
-		public delegate void FileSystemFetchStartedHandler(object sender, EventArgs e);
-		public delegate void FileSystemFetchEndedHandler(object sender, EventArgs e);
+		public delegate void ExpandFetchStartedHandler(object sender, EventArgs e);
+		public delegate void ExpandFetchEndedHandler(object sender, EventArgs e);
 
-		public event FileSystemFetchStartedHandler FileSystemFetchStarted;
-		public event FileSystemFetchEndedHandler FileSystemFetchEnded;
+		public event ExpandFetchStartedHandler ExpandFetchStarted;
+		public event ExpandFetchEndedHandler ExpandFetchEnded;
 
-		protected virtual void OnFileSystemFetchStarted(object sender, EventArgs e)
+		private void OnExpandFetchStarted(object sender, EventArgs e)
 		{
-			if (FileSystemFetchStarted != null)
-				FileSystemFetchStarted(this, e);
+			if (ExpandFetchStarted != null)
+				ExpandFetchStarted(this, e);
 		}
 
-		protected virtual void OnFileSystemFetchEnded(object sender, EventArgs e)
+		private void OnExpandFetchEnded(object sender, EventArgs e)
 		{
-			if (FileSystemFetchEnded != null)
-				FileSystemFetchEnded(this, e);
+			if (ExpandFetchEnded != null)
+				ExpandFetchEnded(this, e);
 		}
 
 		#endregion
@@ -78,9 +83,9 @@ namespace Teltec.Backup.App.Controls
 		private void handle_BeforeExpand(object sender, System.Windows.Forms.TreeViewCancelEventArgs e)
 		{
 			UseWaitCursor = true;
-			OnFileSystemFetchStarted(this, null);
+			OnExpandFetchStarted(this, null);
 
-			BackupPlanTreeNode expandingNode = e.Node as BackupPlanTreeNode;
+			EntryTreeNode expandingNode = e.Node as EntryTreeNode;
 
 			// Suspend layout because the expanding node may change the UI.
 			SuspendLayout();
@@ -98,12 +103,12 @@ namespace Teltec.Backup.App.Controls
 			}
 
 			// Restore nodes state.
-			RestoreNodeStateRecursively(expandingNode);
+			RestoreNodeStateRecursively(expandingNode as BackupPlanTreeNode);
 
 			// Then resume the layout to let it apply all changes made to the UI.
 			ResumeLayout();
 
-			OnFileSystemFetchEnded(this, null);
+			OnExpandFetchEnded(this, null);
 			UseWaitCursor = false;
 		}
 
@@ -117,7 +122,7 @@ namespace Teltec.Backup.App.Controls
 		private void BuildTagDataDict(BackupPlanTreeNode node, Dictionary<string, BackupPlanTreeNodeData> dict)
 		{
 			// Skip over loading nodes and nodes without a tag.
-			if (node == null || node.Data.Type == BackupPlanTreeNode.TypeEnum.LOADING)
+			if (node == null || node.Data.Type == TypeEnum.LOADING)
 				return;
 
 			CheckState state = GetCheckState(node);
@@ -201,39 +206,36 @@ namespace Teltec.Backup.App.Controls
 
 			while (nodeParent != null)
 			{
-				BackupPlanTreeNodeData newTag = null;
+				EntryTreeNodeData newTag = null;
 				switch (nodeParent.Type)
 				{
-					//case PathNode.TypeEnum.FILE:
-					//	newTag = new BackupPlanTreeNodeData
-					//	{
-					//		Type = BackupPlanTreeNode.TypeEnum.FILE,
-					//		InfoObject = new FileInfo(nodeParent.Path),
-					//		State = CheckState.Mixed
-					//	};
-					//	break;
+					case PathNode.TypeEnum.FILE:
+					{
+							EntryInfo info = new EntryInfo(TypeEnum.FILE, nodeParent.Name, nodeParent.Path);
+							newTag = new BackupPlanTreeNodeData(info);
+							newTag.State = CheckState.Mixed;
+							break;
+						}
 					case PathNode.TypeEnum.FOLDER:
-						newTag = new BackupPlanTreeNodeData
 						{
-							Type = BackupPlanTreeNode.TypeEnum.FOLDER,
-							InfoObject = new DirectoryInfo(nodeParent.Path),
-							State = CheckState.Mixed
-						};
-						break;
+							EntryInfo info = new EntryInfo(TypeEnum.FOLDER, nodeParent.Name, nodeParent.Path);
+							newTag = new BackupPlanTreeNodeData(info);
+							newTag.State = CheckState.Mixed;
+							break;
+						}
 					case PathNode.TypeEnum.DRIVE:
-						newTag = new BackupPlanTreeNodeData
 						{
-							Type = BackupPlanTreeNode.TypeEnum.DRIVE,
-							InfoObject = new DriveInfo(nodeParent.Path),
-							State = CheckState.Mixed
-						};
-						break;
+							EntryInfo info = new EntryInfo(TypeEnum.DRIVE, nodeParent.Name, nodeParent.Path);
+							newTag = new BackupPlanTreeNodeData(info);
+							newTag.State = CheckState.Mixed;
+							break;
+						}
 				}
 
 				if (newTag != null)
 				{
 					if (!expandedDict.ContainsKey(nodeParent.Path))
-						expandedDict.Add(nodeParent.Path, newTag);
+						expandedDict.Add(nodeParent.Path, newTag as BackupPlanTreeNodeData);
 				}
 
 				nodeParent = nodeParent.Parent;
@@ -250,46 +252,27 @@ namespace Teltec.Backup.App.Controls
 				new Dictionary<string, BackupPlanTreeNodeData>(dict.Count * 2);
 
 			bool hasParents = false;
-			string path = null;
 
 			// Expand paths into their respective parts.
 			foreach (var obj in dict)
 			{
-				path = obj.Value.Path;
 				switch (obj.Value.Type)
 				{
-					//case BackupPlanTreeNode.TypeEnum.FILE_VERSION:
-					//	{
-					//		hasParents = true;
-					//		if (obj.Value.InfoObject == null)
-					//			obj.Value.InfoObject = new FileVersionInfo(path);
-					//		break;
-					//	}
-					case BackupPlanTreeNode.TypeEnum.FILE:
-						{
-							hasParents = true;
-							if (obj.Value.InfoObject == null)
-								obj.Value.InfoObject = new FileInfo(path);
-							break;
-						}
-					case BackupPlanTreeNode.TypeEnum.FOLDER:
-						{
-							hasParents = true;
-							if (obj.Value.InfoObject == null)
-								obj.Value.InfoObject = new DirectoryInfo(path);
-							break;
-						}
-					case BackupPlanTreeNode.TypeEnum.DRIVE:
-						{
-							hasParents = false;
-							if (obj.Value.InfoObject == null)
-								obj.Value.InfoObject = new DriveInfo(path);
-							break;
-						}
+					default: throw new ArgumentException("Unhandled TypeEnum", "TreeNodeData.Type");
+					case TypeEnum.FILE_VERSION:
+					case TypeEnum.FILE:
+					case TypeEnum.FOLDER:
+						hasParents = true;
+						break;
+					case TypeEnum.DRIVE:
+						hasParents = false;
+						break;
 				}
+				if (obj.Value.InfoObject == null)
+					obj.Value.InfoObject = new EntryInfo(obj.Value.Type, obj.Value.Name, obj.Value.Path);
 				expandedDict.Add(obj.Key, obj.Value);
 				if (hasParents)
-					ExpandCheckedDataSourceAddParents(expandedDict, path);
+					ExpandCheckedDataSourceAddParents(expandedDict, obj.Value.Path);
 			}
 
 			return expandedDict;
@@ -318,13 +301,13 @@ namespace Teltec.Backup.App.Controls
 			switch (node.Data.Type)
 			{
 				default:
-					throw new ArgumentException("Unhandled TypeEnum", "type");
-				case BackupPlanTreeNode.TypeEnum.LOADING:
+					throw new ArgumentException("Unhandled TypeEnum", "TreeNodeData.Type");
+				case TypeEnum.LOADING:
 					// Ignore this node.
 					break;
-				case BackupPlanTreeNode.TypeEnum.DRIVE:
-				case BackupPlanTreeNode.TypeEnum.FOLDER:
-				case BackupPlanTreeNode.TypeEnum.FILE:
+				case TypeEnum.DRIVE:
+				case TypeEnum.FOLDER:
+				case TypeEnum.FILE:
 					{
 						string path = node.Data.Path;
 						BackupPlanTreeNodeData match;
@@ -346,7 +329,7 @@ namespace Teltec.Backup.App.Controls
 			if (node.Data == null)
 				return;
 
-			if (node.Data.Type != BackupPlanTreeNode.TypeEnum.LOADING)
+			if (node.Data.Type != TypeEnum.LOADING)
 			{
 				string path = node.Data.Path;
 				if (CheckedDataSource.ContainsKey(path))
