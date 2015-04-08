@@ -71,33 +71,42 @@ namespace Teltec.Backup.App.DAO
 		{
 			using (ITransaction tx = Session.BeginTransaction())
 			{
-				if (BeforeInsert != null)
-					BeforeInsert(tx, instance);
-				
-				Session.Save(instance);
-				
-				if (AfterInsert != null)
-					AfterInsert(tx, instance);
-
+				Insert(tx, instance);
 				tx.Commit();
 			}
+		}
+
+		public void Insert(ITransaction tx, T instance)
+		{
+			if (BeforeInsert != null)
+				BeforeInsert(tx, instance);
+
+			Session.Save(instance);
+
+			if (AfterInsert != null)
+				AfterInsert(tx, instance);
 		}
 
 		public void Insert(IEnumerable<T> items)
 		{
 			using (ITransaction tx = Session.BeginTransaction())
 			{
-				foreach (T item in items)
-				{
-					if (BeforeInsert != null)
-						BeforeInsert(tx, item);
-					
-					Session.Save(item);
-
-					if (AfterInsert != null)
-						AfterInsert(tx, item);
-				}
+				InsertOrUpdate(tx, items);
 				tx.Commit();
+			}
+		}
+
+		public void Insert(ITransaction tx, IEnumerable<T> items)
+		{
+			foreach (T item in items)
+			{
+				if (BeforeInsert != null)
+					BeforeInsert(tx, item);
+
+				Session.Save(item);
+
+				if (AfterInsert != null)
+					AfterInsert(tx, item);
 			}
 		}
 
@@ -105,33 +114,42 @@ namespace Teltec.Backup.App.DAO
 		{
 			using (ITransaction tx = Session.BeginTransaction())
 			{
-				if (BeforeInsertOrUpdate != null)
-					BeforeInsertOrUpdate(tx, instance);
-
-				Session.SaveOrUpdate(instance);
-
-				if (AfterInsertOrUpdate != null)
-					AfterInsertOrUpdate(tx, instance);
-
+				InsertOrUpdate(tx, instance);
 				tx.Commit();
 			}
+		}
+
+		public void InsertOrUpdate(ITransaction tx, T instance)
+		{
+			if (BeforeInsertOrUpdate != null)
+				BeforeInsertOrUpdate(tx, instance);
+
+			Session.SaveOrUpdate(instance);
+
+			if (AfterInsertOrUpdate != null)
+				AfterInsertOrUpdate(tx, instance);
 		}
 
 		public void InsertOrUpdate(IEnumerable<T> items)
 		{
 			using (ITransaction tx = Session.BeginTransaction())
 			{
-				foreach (T item in items)
-				{
-					if (BeforeInsertOrUpdate != null)
-						BeforeInsertOrUpdate(tx, item);
-
-					Session.SaveOrUpdate(item);
-
-					if (AfterInsertOrUpdate != null)
-						AfterInsertOrUpdate(tx, item);
-				}
+				InsertOrUpdate(tx, items);
 				tx.Commit();
+			}
+		}
+
+		public void InsertOrUpdate(ITransaction tx, IEnumerable<T> items)
+		{
+			foreach (T item in items)
+			{
+				if (BeforeInsertOrUpdate != null)
+					BeforeInsertOrUpdate(tx, item);
+
+				Session.SaveOrUpdate(item);
+
+				if (AfterInsertOrUpdate != null)
+					AfterInsertOrUpdate(tx, item);
 			}
 		}
 
@@ -139,36 +157,45 @@ namespace Teltec.Backup.App.DAO
 		{
 			using (ITransaction tx = Session.BeginTransaction())
 			{
-				if (BeforeUpdate != null)
-					BeforeUpdate(tx, instance);
-				
-				// Remove `instance` from the cache - detach it.
-				//Session.Evict(instance);
-				// Make the detached entity persistent (with the non-flushed changes) .				
-				Session.Update(instance);
-				
-				if (AfterUpdate != null)
-					AfterUpdate(tx, instance);
-
+				Update(tx, instance);
 				tx.Commit();
 			}
+		}
+
+		public void Update(ITransaction tx, T instance)
+		{
+			if (BeforeUpdate != null)
+				BeforeUpdate(tx, instance);
+
+			// Remove `instance` from the cache - detach it.
+			//Session.Evict(instance);
+			// Make the detached entity persistent (with the non-flushed changes) .				
+			Session.Update(instance);
+
+			if (AfterUpdate != null)
+				AfterUpdate(tx, instance);
 		}
 
 		public void Update(IEnumerable<T> items)
 		{
 			using (ITransaction tx = Session.BeginTransaction())
 			{
-				foreach (T item in items)
-				{
-					if (BeforeUpdate != null)
-						BeforeUpdate(tx, item);
-
-					Session.Update(item);
-					
-					if (AfterUpdate != null)
-						AfterUpdate(tx, item);
-				}
+				Update(tx, items);
 				tx.Commit();
+			}
+		}
+
+		public void Update(ITransaction tx, IEnumerable<T> items)
+		{
+			foreach (T item in items)
+			{
+				if (BeforeUpdate != null)
+					BeforeUpdate(tx, item);
+
+				Session.Update(item);
+
+				if (AfterUpdate != null)
+					AfterUpdate(tx, item);
 			}
 		}
 
@@ -176,53 +203,66 @@ namespace Teltec.Backup.App.DAO
 		{
 			using (ITransaction tx = Session.BeginTransaction())
 			{
-				if (BeforeDelete != null)
-					BeforeDelete(tx, instance);
-
-				Session.Delete(instance);
-
-				if (AfterDelete != null)
-					AfterDelete(tx, instance);
-
+				Delete(tx, instance);
 				tx.Commit();
 			}
+		}
+
+		public void Delete(ITransaction tx, T instance)
+		{
+			if (BeforeDelete != null)
+				BeforeDelete(tx, instance);
+
+			Session.Delete(instance);
+
+			if (AfterDelete != null)
+				AfterDelete(tx, instance);
 		}
 
 		public void Delete(ID id)
 		{
 			using (ITransaction tx = Session.BeginTransaction())
 			{
-				// We do `Get` because `session.Delete()` always load the entity anyway.
-				// See http://stackoverflow.com/a/1323461/298054
-				T instance = Get(id);
-
-				if (BeforeDelete != null)
-					BeforeDelete(tx, instance);
-
-				Session.Delete(instance);
-
-				if (AfterDelete != null)
-					AfterDelete(tx, instance);
-	
+				Delete(tx, id);
 				tx.Commit();
 			}
+		}
+
+		public void Delete(ITransaction tx, ID id)
+		{
+			// We do `Get` because `session.Delete()` always load the entity anyway.
+			// See http://stackoverflow.com/a/1323461/298054
+			T instance = Get(id);
+
+			if (BeforeDelete != null)
+				BeforeDelete(tx, instance);
+
+			Session.Delete(instance);
+
+			if (AfterDelete != null)
+				AfterDelete(tx, instance);
 		}
 
 		public void Delete(IEnumerable<T> items)
 		{
 			using (ITransaction tx = Session.BeginTransaction())
 			{
-				foreach (T item in items)
-				{
-					if (BeforeDelete != null)
-						BeforeDelete(tx, item);
-
-					Session.Delete(item);
-
-					if (AfterDelete != null)
-						AfterDelete(tx, item);
-				}
+				Delete(tx, items);
 				tx.Commit();
+			}
+		}
+
+		public void Delete(ITransaction tx, IEnumerable<T> items)
+		{
+			foreach (T item in items)
+			{
+				if (BeforeDelete != null)
+					BeforeDelete(tx, item);
+
+				Session.Delete(item);
+
+				if (AfterDelete != null)
+					AfterDelete(tx, item);
 			}
 		}
 

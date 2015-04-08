@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Versioning;
@@ -20,12 +21,14 @@ namespace Teltec.Backup.App.Restore
 		Unknown = 0,
 		Started = 1,
 		Resumed = 2,
-		ProcessingFilesStarted = 3,
-		ProcessingFilesFinished = 4,
-		Updated = 5,
-		Canceled = 6,
-		Failed = 7,
-		Finished = 8,
+		ScanningFilesStarted = 3,
+		ScanningFilesFinished = 4,
+		ProcessingFilesStarted = 5,
+		ProcessingFilesFinished = 6,
+		Updated = 7,
+		Canceled = 8,
+		Failed = 9,
+		Finished = 10,
 	}
 
 	public static class Extensions
@@ -49,7 +52,7 @@ namespace Teltec.Backup.App.Restore
 		// ...
 	}
 
-	public class RestoreOperation : BaseOperation
+	public abstract class RestoreOperation : BaseOperation
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -61,8 +64,6 @@ namespace Teltec.Backup.App.Restore
 
 		public delegate void UpdateEventHandler(object sender, RestoreOperationEvent e);
 		public event UpdateEventHandler Updated;
-
-		public bool IsRunning { get; protected set; }
 
 		public DateTime? StartedAt
 		{
@@ -87,105 +88,187 @@ namespace Teltec.Backup.App.Restore
 
 		#region Transfer
 
-		public Teltec.Storage.Monitor.TransferListControl TransferListControl; // IDisposable, but an external reference.
-		protected RestoreOperationOptions Options;
-		protected IAsyncTransferAgent TransferAgent; // IDisposable
-		protected CustomRestoreAgent RestoreAgent;
 		protected IncrementalFileVersioner Versioner; // IDisposable
+		protected RestoreOperationOptions Options;
+		protected CustomRestoreAgent RestoreAgent;
 
-		public void Start(out TransferResults results)
+		public override void Start(out TransferResults results)
 		{
-			// TODO: Implement.
-			throw new NotImplementedException();
+			Assert.IsFalse(IsRunning);
+			Assert.IsNotNull(Restore);
+			Assert.IsNotNull(Restore.RestorePlan.BackupPlan);
+			Assert.IsNotNull(Restore.RestorePlan.BackupPlan.StorageAccount);
+			Assert.AreEqual(Models.EStorageAccountType.AmazonS3, Restore.RestorePlan.BackupPlan.StorageAccountType);
+
+			AmazonS3AccountRepository dao = new AmazonS3AccountRepository();
+			Models.AmazonS3Account s3account = dao.Get(Restore.RestorePlan.BackupPlan.StorageAccount.Id);
+
+			//
+			// Dispose and recycle previous objects, if needed.
+			//
+			if (TransferAgent != null)
+				TransferAgent.Dispose();
+			if (TransferListControl != null)
+				TransferListControl.ClearTransfers();
+			if (Versioner != null)
+				Versioner.Dispose();
+
+			//
+			// Setup agents.
+			//
+			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
+			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
+			TransferAgent.RemoteRootDir = string.Format("backup-plan-{0}", Restore.RestorePlan.BackupPlan.Id);
+
+			RestoreAgent = new CustomRestoreAgent(TransferAgent);
+			RestoreAgent.Results.Monitor = TransferListControl;
+
+			//Versioner = new IncrementalFileVersioner(CancellationTokenSource.Token);
+
+			RegisterResultsEventHandlers(Restore, RestoreAgent.Results);
+
+			results = RestoreAgent.Results;
+
+			//
+			// Start the backup.
+			//
+			DoRestore(RestoreAgent, Restore, Options);
 		}
 
 		protected void RegisterResultsEventHandlers(Models.Restore restore, TransferResults results)
 		{
-			// TODO: Implement.
-			throw new NotImplementedException();
+			RestoredFileRepository daoRestoredFile = new RestoredFileRepository();
+			results.Failed += (object sender, TransferFileProgressArgs args, Exception ex) =>
+			{
+				Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(restore, args.FilePath);
+				restoredFile.TransferStatus = TransferStatus.FAILED;
+				restoredFile.UpdatedAt = DateTime.UtcNow;
+				daoRestoredFile.Update(restoredFile);
+
+				var message = string.Format("Failed {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
+				Warn(message);
+				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
+			};
+			results.Canceled += (object sender, TransferFileProgressArgs args, Exception ex) =>
+			{
+				Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(restore, args.FilePath);
+				restoredFile.TransferStatus = TransferStatus.CANCELED;
+				restoredFile.UpdatedAt = DateTime.UtcNow;
+				daoRestoredFile.Update(restoredFile);
+
+				var message = string.Format("Canceled {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
+				Warn(message);
+				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
+			};
+			results.Completed += (object sender, TransferFileProgressArgs args) =>
+			{
+				Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(restore, args.FilePath);
+				restoredFile.TransferStatus = TransferStatus.COMPLETED;
+				restoredFile.UpdatedAt = DateTime.UtcNow;
+				daoRestoredFile.Update(restoredFile);
+
+				var message = string.Format("Completed {0}", args.FilePath);
+				Info(message);
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
+			};
+			results.Started += (object sender, TransferFileProgressArgs args) =>
+			{
+				Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(restore, args.FilePath);
+				restoredFile.TransferStatus = TransferStatus.RUNNING;
+				restoredFile.UpdatedAt = DateTime.UtcNow;
+				daoRestoredFile.Update(restoredFile);
+
+				var message = string.Format("Started {0}", args.FilePath);
+				//Info(message);
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
+			};
+			results.Progress += (object sender, TransferFileProgressArgs args) =>
+			{
+				//var message = string.Format("Progress {0}% {1} ({2}/{3} bytes)",
+				//	args.PercentDone, args.FilePath, args.TransferredBytes, args.TotalBytes);
+				//Info(message);
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = null });
+			};
 		}
 
-		//private void RestoreFile(string path, IFileVersion version)
-		//{
-		//	// ...
-		//}
-
-		protected LinkedList<string> GetFilesToProcess(Models.Restore restore)
-		{
-			LinkedList<string> files = null;
-			
-			return files;
-		}
-
-		protected Task DoVersionFiles(Models.Restore restore, LinkedList<string> filesToProcess)
-		{
-			//return Versioner.NewVersion(restore, filesToProcess);
-			throw new NotImplementedException();
-		}
+		protected abstract Task<LinkedList<CustomVersionedFile>> GetFilesToProcess(Models.Restore restore);
 
 		protected async void DoRestore(CustomRestoreAgent agent, Models.Restore restore, RestoreOperationOptions options)
 		{
 			OnStart(agent, restore);
 
-			// Version files.
-			LinkedList<string> filesToProcess = GetFilesToProcess(restore);
-			Task versionerTask = DoVersionFiles(restore, filesToProcess);
+			//
+			// Scanning
+			//
 
+			LinkedList<CustomVersionedFile> filesToProcess = null;
 			{
-				var message = string.Format("Processing files started.");
-				Info(message);
-				//StatusInfo.Update(BackupStatusLevel.INFO, message);
-				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.ProcessingFilesStarted, Message = message });
+				Task<LinkedList<CustomVersionedFile>> filesToProcessTask = GetFilesToProcess(restore);
+
+				{
+					var message = string.Format("Scanning files started.");
+					Info(message);
+					//StatusInfo.Update(BackupStatusLevel.INFO, message);
+					OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.ScanningFilesStarted, Message = message });
+				}
+
+				try
+				{
+					await filesToProcessTask;
+				}
+				catch (Exception ex)
+				{
+					Debug.WriteLine("Exception Message: " + ex.Message);
+				}
+
+				if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
+				{
+					OnFailure(agent, restore, filesToProcessTask.Exception);
+					return;
+				}
+
+				filesToProcess = filesToProcessTask.Result;
+
+				{
+					var message = string.Format("Scanning files finished.");
+					Info(message);
+					//StatusInfo.Update(BackupStatusLevel.INFO, message);
+					OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.ScanningFilesFinished, Message = message });
+				}
 			}
 
-			try
-			{
-				await versionerTask;
-			}
-			catch (Exception ex)
-			{
-				Debug.WriteLine("Exception Message: " + ex.Message);
-			}
+			agent.Files = filesToProcess;
 
-			if (versionerTask.IsFaulted || versionerTask.IsCanceled)
-			{
-				Versioner.Undo();
-				OnFailure(agent, restore, versionerTask.Exception);
-				return;
-			}
-
-			// IMPORTANT: Must happen before any attempt to get `FileVersioner.FilesToBackup`.
-			Versioner.Save();
-
-			agent.Files = Versioner.FilesToTransfer;
-
-			{
-				var message = string.Format("Processing files finished.");
-				Info(message);
-				//StatusInfo.Update(BackupStatusLevel.INFO, message);
-				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.ProcessingFilesFinished, Message = message });
-			}
 			{
 				var message = string.Format("Estimate restore size: {0} files, {1}",
 					agent.Files.Count(), FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
 				Info(message);
 			}
 
-			Task transferTask = agent.Start();
-			await transferTask;
+			//
+			// Transfer
+			//
+
+			{
+				Task transferTask = agent.Start();
+				await transferTask;
+			}
 
 			OnFinish(agent, restore);
 		}
 
-		public void Cancel()
+		public override void Cancel()
 		{
-			Assert.IsTrue(IsRunning);
+			base.Cancel();
 			DoCancel(RestoreAgent);
 		}
 
 		protected void DoCancel(CustomRestoreAgent agent)
 		{
 			agent.Cancel();
+			CancellationTokenSource.Cancel();
 		}
 
 		#endregion
@@ -277,12 +360,6 @@ namespace Teltec.Backup.App.Restore
 					{
 						Versioner.Dispose();
 						Versioner = null;
-					}
-
-					if (TransferAgent != null)
-					{
-						TransferAgent.Dispose();
-						TransferAgent = null;
 					}
 				}
 				this._isDisposed = true;

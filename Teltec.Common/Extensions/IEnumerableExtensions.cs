@@ -112,5 +112,21 @@ namespace Teltec.Common.Extensions
 				return emptyStr;
 			}
 		}
+
+		public static string ToReadableString<T>(this IEnumerable<T> enumerable)
+		{
+			var sb = new StringBuilder("[", 255);
+
+			bool isFirstItem = true;
+			foreach (T item in enumerable)
+			{
+				sb.AppendFormat("{1}{0}", item, isFirstItem ? "" : ",");
+				isFirstItem = false;
+			}
+
+			sb.Append("]");
+
+			return sb.ToString();
+		}
 	}
 }

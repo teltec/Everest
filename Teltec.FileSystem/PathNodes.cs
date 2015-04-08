@@ -10,76 +10,98 @@ namespace Teltec.FileSystem
 	public class PathNodes
 	{
 		PathComponents Components;
-		IEnumerable<PathNode> Nodes;
 
 		public PathNodes(string path)
 		{
 			Components = new PathComponents(path);
-			Nodes = GetParentNodes(Components);
+			Nodes = Split(Components);
 		}
 
-		public IEnumerable<PathNode> Parents
+		IEnumerable<PathNode> _Nodes;
+		public IEnumerable<PathNode> Nodes
 		{
-			get { return Nodes; }
+			get { return _Nodes; }
+			protected set { _Nodes = value; }
 		}
 
-		public PathNode Parent
+		public bool HasNodes
 		{
-			get { return Nodes.Last(); }
+			get { return Nodes.Count() > 0; }
+		}
+
+		public PathNode FirstNode
+		{
+			get { return HasNodes ? Nodes.First() : null; }
+		}
+
+		public PathNode LastNode
+		{
+			get { return HasNodes ? Nodes.Last() : null; }
+		}
+
+		public PathNode ParentNode
+		{
+			get { return Nodes.Count() > 1 ? Nodes.Last().Parent : null; }
 		}
 
 		protected string FormattedJoinedDirectoriesUptTo(PathComponents comps, int amount, bool includeDrive = true)
 		{
-			if (!comps.HasDirectories || amount <= 0)
+			if (!comps.HasDirectories || amount <= 0 || amount > comps.Directories.Length)
 				return string.Empty;
 
-			return (includeDrive ? FormattedDrive(comps) : string.Empty)
+			return (includeDrive ? FormattedDrivePath(comps) : string.Empty)
 				+ string.Join(Path.DirectorySeparatorChar.ToString(), comps.Directories.Take(amount))
 				+ Path.DirectorySeparatorChar.ToString();
 		}
+		
+		protected string FormattedDriveName(PathComponents comps)
+		{
+			return comps.HasDrive ? comps.Drive + Path.VolumeSeparatorChar : string.Empty;
+		}
 
-		protected string FormattedDrive(PathComponents comps)
+		protected string FormattedDrivePath(PathComponents comps)
 		{
 			return comps.HasDrive ? comps.Drive + Path.VolumeSeparatorChar + Path.DirectorySeparatorChar : string.Empty;
 		}
 
-		protected IEnumerable<PathNode> GetParentNodes(PathComponents comps)
+		protected IEnumerable<PathNode> Split(PathComponents comps)
 		{
 			LinkedList<PathNode> nodes = new LinkedList<PathNode>();
 			PathNode previousNode = null;
 			PathNode currentNode = null;
 
-			if (!comps.HasFileName && !comps.HasDirectories)
-				// No filename? No directories?
-				// The DRIVE itself has no intermediates, so return nothing.
-				return nodes;
-
 			string nodeName = null;
 			string nodePath = null;
 
 			if (comps.HasDrive)
-			{
-				nodeName = FormattedDrive(comps);
-				nodePath = FormattedDrive(comps);
+			{ 
+				nodeName = FormattedDriveName(comps);
+				nodePath = FormattedDrivePath(comps);
 				currentNode = new PathNode(PathNode.TypeEnum.DRIVE, nodeName, nodePath, previousNode);
 				previousNode = currentNode;
 				nodes.AddLast(currentNode); // Include drive
 			}
 
-			if (!comps.HasDirectories)
-				return nodes;
-
-			int count = comps.Directories.Length; // Includes ALL directories
-			if (!comps.HasFileName)
-				count--; // Exclude the most inner directory.
-
-			for (int i = 1; i <= count; i++)
+			if (comps.HasDirectories)
 			{
-				nodeName = comps.Directories.ElementAt(i - 1);
-				nodePath = FormattedJoinedDirectoriesUptTo(comps, i);
-				currentNode = new PathNode(PathNode.TypeEnum.FOLDER, nodeName, nodePath, previousNode);
+				// Include ALL directories
+				for (int i = 0; i < comps.Directories.Length; i++)
+				{
+					nodeName = comps.Directories.ElementAt(i);
+					nodePath = FormattedJoinedDirectoriesUptTo(comps, i + 1);
+					currentNode = new PathNode(PathNode.TypeEnum.FOLDER, nodeName, nodePath, previousNode);
+					previousNode = currentNode;
+					nodes.AddLast(currentNode); // Include directory
+				}
+			}
+
+			if (comps.HasFileName)
+			{
+				nodeName = comps.FileName;
+				nodePath = comps.FullPath;
+				currentNode = new PathNode(PathNode.TypeEnum.FILE, nodeName, nodePath, previousNode);
 				previousNode = currentNode;
-				nodes.AddLast(currentNode);
+				nodes.AddLast(currentNode); // Include file
 			}
 
 			return nodes;

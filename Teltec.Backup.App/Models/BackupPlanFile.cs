@@ -54,6 +54,13 @@ namespace Teltec.Backup.App.Models
 			set { SetField(ref _Path, value); }
 		}
 
+		private BackupPlanPathNode _PathNode;
+		public virtual BackupPlanPathNode PathNode
+		{
+			get { return _PathNode; }
+			set { _PathNode = value; }
+		}
+
 		private long _LastSize;
 		public virtual long LastSize
 		{
@@ -79,7 +86,18 @@ namespace Teltec.Backup.App.Models
 		public virtual BackupFileStatus LastStatus
 		{
 			get { return _LastStatus; }
-			set { SetField(ref _LastStatus, value); }
+			set
+			{
+				SetField(ref _LastStatus, value);
+				PreviousLastStatus = value; // Update `PreviousLastStatus` as well.
+			}
+		}
+
+		private BackupFileStatus _PreviousLastStatus;
+		public virtual BackupFileStatus PreviousLastStatus
+		{
+			get { return _PreviousLastStatus; }
+			protected set { _PreviousLastStatus = value; }
 		}
 
 		private DateTime _CreatedAt; // The date this entity was created.
@@ -148,6 +166,8 @@ namespace Teltec.Backup.App.Models
 
 		#endregion
 
+		#region Operators
+
 		public static bool operator ==(BackupPlanFile x, BackupPlanFile y)
 		{
 			return Equals(x, y);
@@ -157,5 +177,7 @@ namespace Teltec.Backup.App.Models
 		{
 			return !(x == y);
 		}
+
+		#endregion
 	}
 }

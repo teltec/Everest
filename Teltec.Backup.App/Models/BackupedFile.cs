@@ -44,11 +44,11 @@ namespace Teltec.Backup.App.Models
 			set { SetField(ref _FileStatus, value); }
 		}
 
-		private TransferStatus _BackupStatus;
+		private TransferStatus _TransferStatus;
 		public virtual TransferStatus TransferStatus
 		{
-			get { return _BackupStatus; }
-			set { _BackupStatus = value; }
+			get { return _TransferStatus; }
+			set { _TransferStatus = value; }
 		}
 
 		private DateTime _UpdatedAt;

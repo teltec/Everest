@@ -7,12 +7,12 @@ namespace Teltec.Storage
 	public interface IPathScanner<T> where T : class
 	{
 		PathScannerFileAddedHandler<T> FileAdded { get; set; }
-		LinkedList<string> Scan();
+		LinkedList<T> Scan();
 	}
 
 	public abstract class PathScanner<T> : IPathScanner<T> where T : class
 	{
 		public PathScannerFileAddedHandler<T> FileAdded { get; set; }
-		public abstract LinkedList<string> Scan();
+		public abstract LinkedList<T> Scan();
 	}
 }

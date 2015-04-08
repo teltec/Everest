@@ -75,6 +75,17 @@ namespace Teltec.Backup.App.Models
 
 		#endregion
 
+		#region Restores
+
+		private IList<Restore> _Restores = new List<Restore>();
+		public virtual IList<Restore> Restores
+		{
+			get { return _Restores; }
+			protected set { SetField(ref _Restores, value); }
+		}
+
+		#endregion
+
 		#region Schedule
 
 		public enum EScheduleType

@@ -65,8 +65,6 @@ namespace Teltec.Backup.App.Backup
 		public delegate void UpdateEventHandler(object sender, BackupOperationEvent e);
 		public event UpdateEventHandler Updated;
 
-		public bool IsRunning { get; protected set; }
-
 		public DateTime? StartedAt
 		{
 			get { Assert.IsNotNull(Backup); return Backup.StartedAt; }
@@ -107,7 +105,6 @@ namespace Teltec.Backup.App.Backup
 
 		public BackupOperation(BackupOperationOptions options)
 		{
-			CancellationTokenSource = new CancellationTokenSource();
 			Options = options;
 		}
 
@@ -115,13 +112,11 @@ namespace Teltec.Backup.App.Backup
 
 		#region Transfer
 
-		public Teltec.Storage.Monitor.TransferListControl TransferListControl; // IDisposable, but an external reference.
-		protected BackupOperationOptions Options;
-		protected IAsyncTransferAgent TransferAgent; // IDisposable
-		protected CustomBackupAgent BackupAgent;
 		protected IncrementalFileVersioner Versioner; // IDisposable
+		protected BackupOperationOptions Options;
+		protected CustomBackupAgent BackupAgent;
 
-		public void Start(out TransferResults results)
+		public override void Start(out TransferResults results)
 		{
 			Assert.IsFalse(IsRunning);
 			Assert.IsNotNull(Backup);
@@ -233,99 +228,106 @@ namespace Teltec.Backup.App.Backup
 			// Scanning
 			//
 
-			Task<LinkedList<string>> filesToProcessTask = GetFilesToProcess(backup);
-
+			LinkedList<string> filesToProcess = null;
 			{
-				var message = string.Format("Scanning files started.");
-				Info(message);
-				//StatusInfo.Update(BackupStatusLevel.INFO, message);
-				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ScanningFilesStarted, Message = message });
-			}
+				Task<LinkedList<string>> filesToProcessTask = GetFilesToProcess(backup);
 
-			try
-			{
-				await filesToProcessTask;
-			}
-			catch (Exception ex)
-			{
-				Debug.WriteLine("Exception Message: " + ex.Message);
-			}
+				{
+					var message = string.Format("Scanning files started.");
+					Info(message);
+					//StatusInfo.Update(BackupStatusLevel.INFO, message);
+					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ScanningFilesStarted, Message = message });
+				}
 
-			if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
-			{
-				OnFailure(agent, backup, filesToProcessTask.Exception);
-				return;
-			}
+				try
+				{
+					await filesToProcessTask;
+				}
+				catch (Exception ex)
+				{
+					Debug.WriteLine("Exception Message: " + ex.Message);
+				}
 
-			LinkedList<string> filesToProcess = filesToProcessTask.Result;
+				if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
+				{
+					OnFailure(agent, backup, filesToProcessTask.Exception);
+					return;
+				}
 
-			{
-				var message = string.Format("Scanning files finished.");
-				Info(message);
-				//StatusInfo.Update(BackupStatusLevel.INFO, message);
-				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ScanningFilesFinished, Message = message });
+				filesToProcess = filesToProcessTask.Result;
+
+				{
+					var message = string.Format("Scanning files finished.");
+					Info(message);
+					//StatusInfo.Update(BackupStatusLevel.INFO, message);
+					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ScanningFilesFinished, Message = message });
+				}
 			}
 
 			//
 			// Versioning
 			//
 
-			Task versionerTask = DoVersionFiles(backup, filesToProcess);
-
 			{
-				var message = string.Format("Processing files started.");
-				Info(message);
-				//StatusInfo.Update(BackupStatusLevel.INFO, message);
-				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesStarted, Message = message });
-			}
+				Task versionerTask = DoVersionFiles(backup, filesToProcess);
 
-			try
-			{
-				await versionerTask;
-			}
-			catch (Exception ex)
-			{
-				Debug.WriteLine("Exception Message: " + ex.Message);
-			}
+				{
+					var message = string.Format("Processing files started.");
+					Info(message);
+					//StatusInfo.Update(BackupStatusLevel.INFO, message);
+					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesStarted, Message = message });
+				}
 
-			if (versionerTask.IsFaulted || versionerTask.IsCanceled)
-			{
-				Versioner.Undo();
-				OnFailure(agent, backup, versionerTask.Exception);
-				return;
-			}
+				try
+				{
+					await versionerTask;
+				}
+				catch (Exception ex)
+				{
+					Debug.WriteLine("Exception Message: " + ex.Message);
+				}
 
-			// IMPORTANT: Must happen before any attempt to get `FileVersioner.FilesToBackup`.
-			Versioner.Save();
+				if (versionerTask.IsFaulted || versionerTask.IsCanceled)
+				{
+					Versioner.Undo();
+					OnFailure(agent, backup, versionerTask.Exception);
+					return;
+				}
 
-			agent.Files = Versioner.FilesToTransfer;
+				// IMPORTANT: Must happen before any attempt to get `FileVersioner.FilesToBackup`.
+				Versioner.Save();
 
-			{
-				var message = string.Format("Processing files finished.");
-				Info(message);
-				//StatusInfo.Update(BackupStatusLevel.INFO, message);
-				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesFinished, Message = message });
-			}
+				agent.Files = Versioner.FilesToTransfer;
 
-			{
-				var message = string.Format("Estimate backup size: {0} files, {1}",
-					agent.Files.Count(), FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
-				Info(message);
+				{
+					var message = string.Format("Processing files finished.");
+					Info(message);
+					//StatusInfo.Update(BackupStatusLevel.INFO, message);
+					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesFinished, Message = message });
+				}
+
+				{
+					var message = string.Format("Estimate backup size: {0} files, {1}",
+						agent.Files.Count(), FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
+					Info(message);
+				}
 			}
 
 			//
 			// Transfer
 			//
 
-			Task transferTask = agent.Start();
-			await transferTask;
+			{
+				Task transferTask = agent.Start();
+				await transferTask;
+			}
 
 			OnFinish(agent, backup);
 		}
 
-		public void Cancel()
+		public override void Cancel()
 		{
-			Assert.IsTrue(IsRunning);
+			base.Cancel();
 			DoCancel(BackupAgent);
 		}
 
@@ -333,17 +335,6 @@ namespace Teltec.Backup.App.Backup
 		{
 			agent.Cancel();
 			CancellationTokenSource.Cancel();
-		}
-
-		#endregion
-
-		#region Task
-
-		protected CancellationTokenSource CancellationTokenSource; // IDisposable
-
-		protected Task<T> ExecuteOnBackround<T>(Func<T> action, CancellationToken token)
-		{
-			return Task.Factory.StartNew<T>(action, token);
 		}
 
 		#endregion
@@ -436,13 +427,6 @@ namespace Teltec.Backup.App.Backup
 						Versioner.Dispose();
 						Versioner = null;
 					}
-
-					if (TransferAgent != null)
-					{
-						TransferAgent.Dispose();
-						TransferAgent = null;
-					}
-					
 				}
 				this._isDisposed = true;
 			}

@@ -232,6 +232,28 @@ namespace Teltec.Common.Controls
 
 		#endregion
 
+		#region Custom events
+
+		public delegate void ExpandFetchStartedHandler(object sender, EventArgs e);
+		public delegate void ExpandFetchEndedHandler(object sender, EventArgs e);
+
+		public virtual event ExpandFetchStartedHandler ExpandFetchStarted;
+		public virtual event ExpandFetchEndedHandler ExpandFetchEnded;
+
+		protected virtual void OnExpandFetchStarted(object sender, EventArgs e)
+		{
+			if (ExpandFetchStarted != null)
+				ExpandFetchStarted(this, e);
+		}
+
+		protected virtual void OnExpandFetchEnded(object sender, EventArgs e)
+		{
+			if (ExpandFetchEnded != null)
+				ExpandFetchEnded(this, e);
+		}
+
+		#endregion
+
 		#region Hide some properties from the Designer
 
 		[Browsable(false)]

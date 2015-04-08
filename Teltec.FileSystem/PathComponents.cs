@@ -5,6 +5,14 @@ namespace Teltec.FileSystem
 {
 	public class PathComponents
 	{
+		public enum ModeEnum
+		{
+			NONE = 0,
+			BLOCK_DEVICE = 0060000,
+			DIRECTORY = 0040000,
+			REGULAR_FILE = 0100000,
+		}
+
 		[Flags]
 		public enum ComponentFlags
 		{
@@ -16,9 +24,11 @@ namespace Teltec.FileSystem
 		}
 
 		public ComponentFlags AvailableComponents { get; private set; }
+		public ModeEnum Mode { get; private set; }
 		public string FullPath { get; private set; }
 		public string Drive { get; private set; }
 		public string[] Directories { get; private set; }
+		public string ParentDirectoryName { get { return Directories.Length > 0 ? Directories[Directories.Length - 1] : string.Empty; } }
 		public string FileName { get; private set; }
 		public string FileNameWithoutExtension { get; private set; }
 		public string Extension { get; private set; } // Without the leading period '.'
@@ -32,6 +42,10 @@ namespace Teltec.FileSystem
 		public bool HasDirectories { get { return AvailableComponents.HasFlag(ComponentFlags.DIRECTORY); } }
 		public bool HasFileName { get { return AvailableComponents.HasFlag(ComponentFlags.FILENAME); } }
 		public bool HasExtension { get { return AvailableComponents.HasFlag(ComponentFlags.EXTENSION); } }
+
+		public bool IsBlockDevice { get { return Mode == ModeEnum.BLOCK_DEVICE; } }
+		public bool IsDirectory { get { return Mode == ModeEnum.DIRECTORY; } }
+		public bool IsRegularFile { get { return Mode == ModeEnum.REGULAR_FILE; } }
 
 		private void Reset()
 		{
@@ -65,7 +79,10 @@ namespace Teltec.FileSystem
 			//if (drive != null && drive.StartsWith("/", StringComparison.Ordinal))
 			//	drive = drive.Substring(1);
 			if (!string.IsNullOrEmpty(drive))
+			{
 				comps |= ComponentFlags.DRIVE;
+				Mode = ModeEnum.BLOCK_DEVICE;
+			}
 
 			// Directories
 			string[] directories = null;
@@ -81,7 +98,10 @@ namespace Teltec.FileSystem
 				{
 					directories = parsing.Split(Path.DirectorySeparatorChar);
 					if (directories.Length > 0)
+					{
 						comps |= ComponentFlags.DIRECTORY;
+						Mode = ModeEnum.DIRECTORY;
+					}
 				}
 			}
 			//Console.WriteLine("whereItBegins = {0}", whereItBegins);
@@ -96,6 +116,7 @@ namespace Teltec.FileSystem
 			{
 				filenameWithoutExtension = Path.GetFileNameWithoutExtension(fullpath);
 				comps |= ComponentFlags.FILENAME;
+				Mode = ModeEnum.REGULAR_FILE;
 			}
 
 			// File extension

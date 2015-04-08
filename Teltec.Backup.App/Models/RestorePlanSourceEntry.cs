@@ -32,5 +32,20 @@ namespace Teltec.Backup.App.Models
 			get { return _Path; }
 			set { SetField(ref _Path, value); }
 		}
+
+		private BackupPlanPathNode _PathNode;
+		public virtual BackupPlanPathNode PathNode
+		{
+			get { return _PathNode; }
+			set { SetField(ref _PathNode, value); }
+		}
+
+		public const int VersionMaxLen = 10;
+		private string _Version;
+		public virtual string Version
+		{
+			get { return _Version; }
+			set { SetField(ref _Version, value); }
+		}
 	}
 }

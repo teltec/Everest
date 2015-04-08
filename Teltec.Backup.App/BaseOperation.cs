@@ -1,12 +1,49 @@
 ﻿using NLog;
+using NUnit.Framework;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Teltec.Common;
+using Teltec.Storage;
+using Teltec.Storage.Agent;
 
 namespace Teltec.Backup.App
 {
 	public abstract class BaseOperation : ObservableObject, IDisposable
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+		public Teltec.Storage.Monitor.TransferListControl TransferListControl; // IDisposable, but an external reference.
+		protected IAsyncTransferAgent TransferAgent; // IDisposable
+
+		#region Properties
+
+		public bool IsRunning { get; protected set; }
+
+		#endregion
+
+		public abstract void Start(out TransferResults results);
+
+		#region Task
+
+		protected CancellationTokenSource CancellationTokenSource; // IDisposable
+
+		protected Task<T> ExecuteOnBackround<T>(Func<T> action, CancellationToken token)
+		{
+			return Task.Factory.StartNew<T>(action, token);
+		}
+
+		public virtual void Cancel()
+		{
+			Assert.IsTrue(IsRunning);
+		}
+
+		#endregion
+
+		protected BaseOperation()
+		{
+			CancellationTokenSource = new CancellationTokenSource();
+		}
 
 		#region Logging
 
@@ -53,11 +90,17 @@ namespace Teltec.Backup.App
 			{
 				if (disposing && _shouldDispose)
 				{
-					//if (obj != null)
-					//{
-					//	obj.Dispose();
-					//	obj = null;
-					//}
+					if (TransferAgent != null)
+					{
+						TransferAgent.Dispose();
+						TransferAgent = null;
+					}
+
+					if (CancellationTokenSource != null)
+					{
+						CancellationTokenSource.Dispose();
+						CancellationTokenSource = null;
+					}
 				}
 				this._isDisposed = true;
 			}

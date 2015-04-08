@@ -8,14 +8,16 @@ namespace Teltec.Backup.App.Controls
 {
 	public sealed class BackupPlanTreeNodeData : EntryTreeNodeData
 	{
+		public Models.BackupPlan Plan { get; set; }
 		public IFileVersion Version { get; private set; } // Depends on `InfoObject`
 
 		public BackupPlanTreeNodeData()
 		{
 		}
 
-		public BackupPlanTreeNodeData(EntryInfo infoObject)
+		public BackupPlanTreeNodeData(BackupPlan plan, EntryInfo infoObject)
 		{
+			Plan = plan;
 			InfoObject = infoObject;
 		}
 

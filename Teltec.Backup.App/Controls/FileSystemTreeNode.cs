@@ -130,7 +130,7 @@ namespace Teltec.Backup.App.Controls
 		private void PopuplateDirectory(EntryInfo info)
 		{
 			if (info.Type != TypeEnum.DRIVE && info.Type != TypeEnum.FOLDER)
-				throw new ArgumentException("Invalid EntryInfo.TypeEnum", "info.Type");
+				throw new ArgumentException("Unexpected TypeEnum", "info.Type");
 
 			DirectoryInfo dir = info.Type == TypeEnum.DRIVE
 				? new DriveInfo(info.Path).RootDirectory

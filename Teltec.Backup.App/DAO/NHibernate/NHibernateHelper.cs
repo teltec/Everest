@@ -119,7 +119,13 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Add<BackupPlanSourceEntryMap>()
 				.Add<BackupMap>()
 				.Add<BackupPlanFileMap>()
+				.Add<BackupPlanPathNodeMap>()
 				.Add<BackupedFileMap>()
+				.Add<RestorePlanMap>()
+				.Add<RestorePlanSourceEntryMap>()
+				.Add<RestoreMap>()
+				.Add<RestorePlanFileMap>()
+				.Add<RestoredFileMap>()
 			);
 
 			Configuration config = fluentConfig.BuildConfiguration();

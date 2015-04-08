@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using Teltec.Backup.App.DAO;
 using Teltec.Common.Controls;
 using Teltec.FileSystem;
+using Teltec.Storage.Versioning;
 
 namespace Teltec.Backup.App.Controls
 {
@@ -12,12 +13,22 @@ namespace Teltec.Backup.App.Controls
 		public BackupPlanTreeView()
 			: base()
 		{
+			this.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.handle_BeforeExpand);
+			this.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.handle_AfterCheck);
+		}
+
+		private Models.BackupPlan _Plan;
+		public Models.BackupPlan Plan
+		{
+			get { return _Plan; }
+			set { _Plan = value; OnPlanChanged(); }
+		}
+
+		private void OnPlanChanged()
+		{
 			this.UseWaitCursor = true;
 			PopulateTreeView();
 			this.UseWaitCursor = false;
-
-			this.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.handle_BeforeExpand);
-			this.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.handle_AfterCheck);
 		}
 
 		#region Populate methods
@@ -36,46 +47,39 @@ namespace Teltec.Backup.App.Controls
 			ResumeLayout(false);
 		}
 
+		private IFileVersion BuildVersion(Models.BackupPlan plan)
+		{
+			if (!plan.Id.HasValue)
+				return null;
+			IFileVersion obj = new FileVersion();
+			obj.Version = plan.Id.Value.ToString();
+			return obj;
+		}
+
 		public void PopulateDrives()
 		{
+			if (Plan == null)
+				return;
+
+			BackupPlanPathNodeRepository dao = new BackupPlanPathNodeRepository();
+
 			try
 			{
-				// TODO
-				//DriveInfo[] drives = DriveInfo.GetDrives();
-				//foreach (var drive in drives)
-				//{
-				//	FileSystemTreeNode driveNode = FileSystemTreeNode.CreateDriveNode(drive);
-				//	this.Nodes.Add(driveNode);
-				//	RestoreNodeState(driveNode);
-				//}
+				//IFileVersion version = BuildVersion(Plan);
+				IList<Models.BackupPlanPathNode> drives = dao.GetAllDrivesByPlan(Plan);
 
+				foreach (var drive in drives)
+				{
+					//EntryInfo info = new EntryInfo(TypeEnum.DRIVE, drive.Name, drive.Name, version);
+					BackupPlanTreeNode driveNode = BackupPlanTreeNode.CreateDriveNode(drive);
+					this.Nodes.Add(driveNode);
+					RestoreNodeState(driveNode);
+				}
 			}
 			catch (System.SystemException e)
 			{
 				ShowErrorMessage(e, null);
 			}
-		}
-
-		#endregion
-
-		#region Custom events
-
-		public delegate void ExpandFetchStartedHandler(object sender, EventArgs e);
-		public delegate void ExpandFetchEndedHandler(object sender, EventArgs e);
-
-		public event ExpandFetchStartedHandler ExpandFetchStarted;
-		public event ExpandFetchEndedHandler ExpandFetchEnded;
-
-		private void OnExpandFetchStarted(object sender, EventArgs e)
-		{
-			if (ExpandFetchStarted != null)
-				ExpandFetchStarted(this, e);
-		}
-
-		private void OnExpandFetchEnded(object sender, EventArgs e)
-		{
-			if (ExpandFetchEnded != null)
-				ExpandFetchEnded(this, e);
 		}
 
 		#endregion
@@ -201,8 +205,9 @@ namespace Teltec.Backup.App.Controls
 
 		private void ExpandCheckedDataSourceAddParents(Dictionary<string, BackupPlanTreeNodeData> expandedDict, string path)
 		{
+			IFileVersion version = BuildVersion(Plan);
 			PathNodes nodes = new PathNodes(path);
-			PathNode nodeParent = nodes.Parent;
+			PathNode nodeParent = nodes.ParentNode;
 
 			while (nodeParent != null)
 			{
@@ -210,23 +215,23 @@ namespace Teltec.Backup.App.Controls
 				switch (nodeParent.Type)
 				{
 					case PathNode.TypeEnum.FILE:
-					{
-							EntryInfo info = new EntryInfo(TypeEnum.FILE, nodeParent.Name, nodeParent.Path);
-							newTag = new BackupPlanTreeNodeData(info);
+						{
+							EntryInfo info = new EntryInfo(TypeEnum.FILE, nodeParent.Name, nodeParent.Path, version);
+							newTag = new BackupPlanTreeNodeData(Plan, info);
 							newTag.State = CheckState.Mixed;
 							break;
 						}
 					case PathNode.TypeEnum.FOLDER:
 						{
-							EntryInfo info = new EntryInfo(TypeEnum.FOLDER, nodeParent.Name, nodeParent.Path);
-							newTag = new BackupPlanTreeNodeData(info);
+							EntryInfo info = new EntryInfo(TypeEnum.FOLDER, nodeParent.Name, nodeParent.Path, version);
+							newTag = new BackupPlanTreeNodeData(Plan, info);
 							newTag.State = CheckState.Mixed;
 							break;
 						}
 					case PathNode.TypeEnum.DRIVE:
 						{
-							EntryInfo info = new EntryInfo(TypeEnum.DRIVE, nodeParent.Name, nodeParent.Path);
-							newTag = new BackupPlanTreeNodeData(info);
+							EntryInfo info = new EntryInfo(TypeEnum.DRIVE, nodeParent.Name, nodeParent.Path, version);
+							newTag = new BackupPlanTreeNodeData(Plan, info);
 							newTag.State = CheckState.Mixed;
 							break;
 						}
@@ -248,6 +253,8 @@ namespace Teltec.Backup.App.Controls
 			if (dict == null)
 				return null;
 
+			IFileVersion version = BuildVersion(Plan);
+
 			Dictionary<string, BackupPlanTreeNodeData> expandedDict =
 				new Dictionary<string, BackupPlanTreeNodeData>(dict.Count * 2);
 
@@ -258,7 +265,7 @@ namespace Teltec.Backup.App.Controls
 			{
 				switch (obj.Value.Type)
 				{
-					default: throw new ArgumentException("Unhandled TypeEnum", "TreeNodeData.Type");
+					default: throw new ArgumentException("Unhandled TypeEnum", "obj.Value.Type");
 					case TypeEnum.FILE_VERSION:
 					case TypeEnum.FILE:
 					case TypeEnum.FOLDER:
@@ -269,7 +276,7 @@ namespace Teltec.Backup.App.Controls
 						break;
 				}
 				if (obj.Value.InfoObject == null)
-					obj.Value.InfoObject = new EntryInfo(obj.Value.Type, obj.Value.Name, obj.Value.Path);
+					obj.Value.InfoObject = new EntryInfo(obj.Value.Type, obj.Value.Name, obj.Value.Path, version);
 				expandedDict.Add(obj.Key, obj.Value);
 				if (hasParents)
 					ExpandCheckedDataSourceAddParents(expandedDict, obj.Value.Path);
@@ -286,7 +293,7 @@ namespace Teltec.Backup.App.Controls
 			//}
 			//else
 			//{
-			RestoreNodeState(node);
+				RestoreNodeState(node);
 			//}
 
 			foreach (BackupPlanTreeNode subNode in node.Nodes)
@@ -301,7 +308,7 @@ namespace Teltec.Backup.App.Controls
 			switch (node.Data.Type)
 			{
 				default:
-					throw new ArgumentException("Unhandled TypeEnum", "TreeNodeData.Type");
+					throw new ArgumentException("Unhandled TypeEnum", "node.Data.Type");
 				case TypeEnum.LOADING:
 					// Ignore this node.
 					break;

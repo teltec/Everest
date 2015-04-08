@@ -60,6 +60,8 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		}
 	}
 
+	#region Backup
+
 	class BackupPlanMap : ClassMap<Models.BackupPlan>
 	{
 		public BackupPlanMap()
@@ -139,6 +141,14 @@ namespace Teltec.Backup.App.DAO.NHibernate
 
 			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plans_source_entries").UnsavedValue(null);
 
+			References(fk => fk.BackupPlan)
+				.Column("backup_plan_id")
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+ 				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable()
+				.Cascade.None()
+				;
+
 			Map(p => p.Type)
 				.Column("type")
 				.Not.Nullable()
@@ -149,14 +159,6 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("path")
 				.Not.Nullable()
 				.Length(Models.BackupPlanSourceEntry.PathMaxLen)
-				;
-
-			References(fk => fk.BackupPlan)
-				.Column("backup_plan_id")
-				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
- 				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable()
-				.Cascade.None()
 				;
 		}
 	}
@@ -267,8 +269,8 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
-				.UniqueKey(UNIQUE_KEY_NAME)
 				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY_NAME)
 				;
 
 			Map(p => p.Path)
@@ -276,6 +278,13 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Not.Nullable()
 				.Length(Models.BackupPlanSourceEntry.PathMaxLen)
 				.UniqueKey(UNIQUE_KEY_NAME)
+				;
+
+			References(fk => fk.PathNode)
+				.Column("path_node_id")
+				//.Not.Nullable() -- It should be NOT NULL, but we only want to set it later, so...
+				//.LazyLoad(Laziness.Proxy)
+				.Cascade.None()
 				;
 
 			Map(p => p.LastSize)
@@ -316,4 +325,332 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				;
 		}
 	}
+
+	class BackupPlanPathNodeMap : ClassMap<Models.BackupPlanPathNode>
+	{
+		public BackupPlanPathNodeMap()
+		{
+			string UNIQUE_KEY_NAME = "uk_backup_plan_path_node"; // (backup_plan_id, parent_id, name)
+			string UNIQUE_KEY_NAME_PATH = "uk_backup_plan_path_node_path"; // (backup_plan_id, path)
+
+			Table("backup_plan_path_nodes");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plan_path_nodes").UnsavedValue(null);
+
+			References(fk => fk.BackupPlan)
+				.Column("backup_plan_id")
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable()
+				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY_NAME)
+				;
+
+			References(fk => fk.Parent)
+				.Column("parent_id")
+				.Cascade.None()
+ 				.UniqueKey(UNIQUE_KEY_NAME)
+				;
+
+			Map(p => p.Type)
+				.Column("type")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<Models.EntryType>>()
+				;
+
+			Map(p => p.Name)
+				.Column("name")
+				.Not.Nullable()
+				.Length(Models.BackupPlanPathNode.NameMaxLen)
+				.UniqueKey(UNIQUE_KEY_NAME)
+				;
+
+			Map(p => p.Path)
+				.Column("path")
+				.Not.Nullable()
+				.Length(Models.BackupPlanPathNode.PathMaxLen)
+				.UniqueKey(UNIQUE_KEY_NAME_PATH)
+				;
+
+			HasMany(p => p.SubNodes)
+				.KeyColumn("parent_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag()
+				;
+		}
+	}
+
+	#endregion
+
+	#region Restore
+
+	class RestorePlanMap : ClassMap<Models.RestorePlan>
+	{
+		public RestorePlanMap()
+		{
+			Table("restore_plans");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_restore_plans").UnsavedValue(null);
+
+			Map(p => p.Name)
+				.Column("name")
+				.Not.Nullable()
+				.Length(Models.RestorePlan.NameMaxLen)
+				.UniqueKey("uk_name")
+				;
+
+			References(fk => fk.BackupPlan)
+				.Column("backup_plan_id")
+				.Not.Nullable()
+				//.LazyLoad(Laziness.Proxy)
+				.Cascade.None()
+				;
+
+			HasMany(p => p.SelectedSources)
+				.KeyColumn("restore_plan_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag()
+				;
+
+			HasMany(p => p.Files)
+				.KeyColumn("restore_plan_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag()
+				;
+
+			HasMany(p => p.Restores)
+				.KeyColumn("backup_plan_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag()
+				;
+
+			Map(p => p.ScheduleType)
+				.Column("schedule_type")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<Models.RestorePlan.EScheduleType>>()
+				;
+
+			Map(p => p.LastRunAt)
+				.Column("last_run_at")
+				.Nullable()
+				//.CustomType<TimestampType>()
+				;
+
+			Map(p => p.LastSuccessfulRunAt)
+				.Column("last_successful_run_at")
+				.Nullable()
+				//.CustomType<TimestampType>()
+				;
+		}
+	}
+
+	class RestorePlanSourceEntryMap : ClassMap<Models.RestorePlanSourceEntry>
+	{
+		public RestorePlanSourceEntryMap()
+		{
+			// TODO: Add unique key!
+			//string UNIQUE_KEY_NAME = "uk_restore_plan_source_entry";
+
+			Table("restore_plans_source_entries");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_restore_plans_source_entries").UnsavedValue(null);
+
+			References(fk => fk.RestorePlan)
+				.Column("restore_plan_id")
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable()
+				.Cascade.None()
+				;
+
+			Map(p => p.Type)
+				.Column("type")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<Models.EntryType>>()
+				;
+
+			Map(p => p.Path)
+				.Column("path")
+				.Not.Nullable()
+				.Length(Models.RestorePlanSourceEntry.PathMaxLen)
+				;
+
+			References(fk => fk.PathNode)
+				.Column("path_node_id")
+				.Not.Nullable()
+				//.LazyLoad(Laziness.Proxy)
+				.Cascade.None()
+				;
+
+			Map(p => p.Version)
+				.Column("version")
+				.Length(Models.RestorePlanSourceEntry.VersionMaxLen)
+				;
+		}
+	}
+
+	class RestoreMap : ClassMap<Models.Restore>
+	{
+		public RestoreMap()
+		{
+			Table("restores");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_restores").UnsavedValue(null);
+
+			References(fk => fk.RestorePlan)
+				.Column("restore_plan_id")
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable()
+				.Cascade.None()
+				;
+
+			Map(p => p.StartedAt)
+				.Column("started_at")
+				.Not.Nullable()
+				//.CustomType<TimestampType>()
+				;
+
+			Map(p => p.FinishedAt)
+				.Column("finished_at")
+				.Nullable()
+				//.CustomType<TimestampType>()
+				;
+
+			Map(p => p.Status)
+				.Column("status")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<TransferStatus>>()
+				;
+
+			HasMany(p => p.Files)
+				.KeyColumn("restore_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag()
+				;
+		}
+	}
+
+	class RestoredFileMap : ClassMap<Models.RestoredFile>
+	{
+		public RestoredFileMap()
+		{
+			string UNIQUE_KEY_NAME = "uk_restored_file_restore_file";
+
+			Table("restored_files");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_restored_files").UnsavedValue(null);
+
+			References(fk => fk.Restore)
+				.Column("restore_id")
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable()
+				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY_NAME)
+				;
+
+			References(fk => fk.File)
+				.Column("restore_plan_file_id")
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable()
+				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY_NAME)
+				;
+
+			//Map(p => p.FileStatus)
+			//	.Column("file_status")
+			//	.Not.Nullable()
+			//	.CustomType<GenericEnumMapper<Models.RestoreFileStatus>>()
+			//	;
+
+			Map(p => p.TransferStatus)
+				.Column("transfer_status")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<TransferStatus>>()
+				;
+
+			Map(p => p.UpdatedAt)
+				.Column("updated_at")
+				.Not.Nullable()
+				//.Not.Insert()
+				//.CustomType<TimestampType>()
+				;
+		}
+	}
+
+	class RestorePlanFileMap : ClassMap<Models.RestorePlanFile>
+	{
+		public RestorePlanFileMap()
+		{
+			string UNIQUE_KEY_NAME = "uk_restore_plan_path";
+
+			Table("restore_plan_files");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_restore_plan_files").UnsavedValue(null);
+
+			References(fk => fk.RestorePlan)
+				.Column("restore_plan_id")
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable()
+				.UniqueKey(UNIQUE_KEY_NAME)
+				.Cascade.None()
+				;
+
+			Map(p => p.Path)
+				.Column("path")
+				.Not.Nullable()
+				.Length(Models.RestorePlanSourceEntry.PathMaxLen)
+				.UniqueKey(UNIQUE_KEY_NAME)
+				;
+
+			References(fk => fk.PathNode)
+				.Column("path_node_id")
+				.Not.Nullable()
+				//.LazyLoad(Laziness.Proxy)
+				.Cascade.None()
+				;
+
+			//Map(p => p.LastSize)
+			//	.Column("last_size")
+			//	.Nullable()
+			//	;
+
+			//Map(p => p.LastWrittenAt)
+			//	.Column("last_written_at")
+			//	.Nullable()
+			//	//.CustomType<TimestampType>()
+			//	;
+
+			//Map(p => p.LastChecksum)
+			//	.Column("last_checksum")
+			//	.Nullable()
+			//	.Length(20) // SHA-1 is 160 bits long (20 bytes)
+			//	;
+
+			//Map(p => p.LastStatus)
+			//	.Column("last_status")
+			//	.Not.Nullable()
+			//	.CustomType<GenericEnumMapper<Models.RestoreFileStatus>>()
+			//	;
+
+			Map(p => p.CreatedAt)
+				.Column("created_at")
+				.Not.Nullable()
+				.Not.Update()
+				//.CustomType<TimestampType>()
+				;
+
+			//Map(p => p.UpdatedAt)
+			//	.Column("updated_at")
+			//	.Nullable()
+			//	.Not.Insert()
+			//	//.CustomType<TimestampType>()
+			//	;
+		}
+	}
+
+	#endregion
 }

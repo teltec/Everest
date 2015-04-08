@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using NHibernate;
+using NLog;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -10,8 +11,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Teltec.Backup.App.DAO;
+using Teltec.Backup.App.DAO.NHibernate;
 using Teltec.Backup.App.Models;
-using Teltec.Common.Extensions;
+using Teltec.FileSystem;
 using Teltec.Storage;
 using Teltec.Storage.Versioning;
 
@@ -516,89 +518,115 @@ namespace Teltec.Backup.App.Versioning
 		public void Save()
 		{
 			Assert.IsFalse(IsSaved);
-			BackupRepository daoBackup = new BackupRepository();
-			BackupPlanRepository daoBackupPlan = new BackupPlanRepository();
-			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
-			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
 
-			// 2. Create `BackupedFile`s as necessary and add them to the `Backup`.
-			var FilesToInsertOrUpdate = new LinkedList<BackupPlanFile>();
+			ISession session = NHibernateHelper.GetSession();
+
+			BackupRepository daoBackup = new BackupRepository(session);
+			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository(session);
+			BackupedFileRepository daoBackupedFile = new BackupedFileRepository(session);
+			BackupPlanPathNodeRepository daoBackupPlanPathNode = new BackupPlanPathNodeRepository(session);
+			
 			var FilesToTrack = SuppliedFiles.Union(ChangeSet.DeletedFiles);
-			foreach (BackupPlanFile entry in FilesToTrack)
+			var FilesToInsertOrUpdate =
+				from f in FilesToTrack
+				where
+					// Keep it so we'll later add or update a `BackupedFile`.
+					((f.LastStatus == BackupFileStatus.ADDED || f.LastStatus == BackupFileStatus.MODIFIED))
+					// Keep it if `LastStatus` is different from `PreviousLastStatus`.
+					|| ((f.LastStatus == BackupFileStatus.REMOVED || f.LastStatus == BackupFileStatus.DELETED) && (f.LastStatus != f.PreviousLastStatus))
+					// Skip all UNCHANGED files.
+				select f;
+			
+			// 1. Create `BackupedFile`s as necessary and add them to the `Backup`.
+			foreach (BackupPlanFile entry in FilesToInsertOrUpdate)
 			{
 				// Since we're running in the same thread that does update UI.
 				Application.DoEvents();
 
-				TransferStatus? changeTransferStatusTo = null;
-				switch (entry.LastStatus)
+				// 1.1 - Insert/Update BackupPlanFile's and BackupedFile's if they don't exist yet.
+				using (ITransaction tx = session.BeginTransaction())
 				{
-					// A file that has been marked as REMOVED or DELETED has 2 possibilities here:
-					// 1. This is the 1st backup after the removal/deletion, thus we need to insert a `BackupedFile` as REMOVED/DELETED.
-					// 2. This is not the 1st backup after the removal/deletion, thus we should have already signaled it.
-					//    No need to insert a `BackupedFile` as REMOVED/DELETED again.
-					case BackupFileStatus.REMOVED:
-					case BackupFileStatus.DELETED:
+					// IMPORTANT: It's important that we guarantee the referenced `BackupPlanFile` has a valid `Id`
+					// before we reference it elsewhere, otherwise NHibernate won't have a valid value to put on
+					// the `backup_plan_file_id` column.
+					daoBackupPlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved 
+
+					BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(Backup, entry.Path);
+					if (backupedFile == null) // If we're resuming, this should already exist.
+					{
+						// Create `BackupedFile`.
+						backupedFile = new BackupedFile(Backup, entry);
+					}
+					backupedFile.FileStatus = entry.LastStatus;
+					switch (entry.LastStatus)
+					{
+						default:
+							backupedFile.TransferStatus = default(TransferStatus);
+							break;
+						case BackupFileStatus.REMOVED:
+						case BackupFileStatus.DELETED:
+							backupedFile.TransferStatus = TransferStatus.COMPLETED;
+							break;
+					}
+					backupedFile.UpdatedAt = DateTime.UtcNow;
+					daoBackupedFile.InsertOrUpdate(tx, backupedFile);
+					
+					Backup.Files.Add(backupedFile);
+					//daoBackup.Update(tx, Backup);
+					
+					tx.Commit();
+				}
+
+				// 1.2 - Split path into its components and INSERT new path nodes if they don't exist yet.
+				//       IMPORTANT: This step depends on 1.1 because it references the recently created `BackupPlanFile`s.
+				using (ITransaction tx = session.BeginTransaction())
+				{
+					PathNodes pathNodes = new PathNodes(entry.Path);
+
+					BackupPlanPathNode previousNode = null;
+					foreach (var pathNode in pathNodes.Nodes)
+					{
+						BackupPlanPathNode planPathNode = daoBackupPlanPathNode.GetByPlanAndTypeAndPath(Backup.BackupPlan, pathNode.Type.ToEntryType(), pathNode.Path);
+						if (planPathNode == null)
 						{
-							// Retrieve the actual `BackupPlanFile` from the database using a stateless session to check whether its status differ.
-							BackupPlanFile currentBackupPlanFileFromDB = daoBackupPlanFile.GetStateless(entry.Id);
-							// TODO - nao rolar fazer esse lance pq dei UPDATE no passo 1 .. logo acima. FAIL!
-							bool statusIsTheSameFromDB = entry.LastStatus == currentBackupPlanFileFromDB.LastStatus;
-							if (statusIsTheSameFromDB)
-								continue; // No need to insert a `BackupedFile` as REMOVED/DELETED again.
-							changeTransferStatusTo = TransferStatus.COMPLETED;
-							break; // Will add or update a `BackupedFile`.
+							BackupPlanFile planFile = daoBackupPlanFile.GetByPlanAndPath(Backup.BackupPlan, entry.Path);
+							if (planFile == null)
+								throw new InvalidOperationException(string.Format("Required {0} not found in the database.", typeof(BackupPlanFile).Name));
+							planPathNode = new BackupPlanPathNode(Backup.BackupPlan, pathNode.Type.ToEntryType(), pathNode.Name, pathNode.Path, previousNode);
+							daoBackupPlanPathNode.Insert(tx, planPathNode);
 						}
+						previousNode = planPathNode;
+					}
 
-					case BackupFileStatus.ADDED:
-					case BackupFileStatus.MODIFIED:
-						break; // Will add or update a `BackupedFile`.
+					entry.PathNode = previousNode;
 
-					default: // Skip all UNCHANGED files.
-						continue;
+					tx.Commit();
 				}
+			} // end for-each
 
-				BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(Backup, entry.Path);
-				if (backupedFile == null) // If we're resuming, this should already exist.
+			// 2. Update all `BackupPlanFile`s that already exist for the backup plan associated with this backup operation.
+			using (ITransaction tx = session.BeginTransaction())
+			{
+				var AllFilesFromPlanThatWerentUpdatedYet = AllFilesFromPlan.Values.Except(FilesToInsertOrUpdate);
+				foreach (BackupPlanFile file in AllFilesFromPlanThatWerentUpdatedYet)
 				{
-					// Create `BackupedFile`.
-					backupedFile = new BackupedFile(Backup, entry);
+					// Since we're running in the same thread that does update UI.
+					Application.DoEvents();
+					//Console.WriteLine("2: {0}", file.Path);
+					daoBackupPlanFile.Update(tx, file);
 				}
-				backupedFile.FileStatus = entry.LastStatus;
-				backupedFile.TransferStatus = changeTransferStatusTo ?? default(TransferStatus);
-				backupedFile.UpdatedAt = DateTime.UtcNow;
-				Backup.Files.Add(backupedFile);
-
-				FilesToInsertOrUpdate.AddLast(entry);
+				
+				tx.Commit();
 			}
 
-			foreach (BackupPlanFile file in FilesToInsertOrUpdate)
+			// 3. Insert/Update `Backup` and its `BackupedFile`s into the database, also saving
+			//	  the `BackuPlanFile`s instances that may have been changed by step 1.2. 
+			using (ITransaction tx = session.BeginTransaction())
 			{
-				// Since we're running in the same thread that does update UI.
-				Application.DoEvents();
-				//Console.WriteLine("1: {0}", file.Path);
-				// IMPORTANT: It's important that we guarantee the referenced `BackupPlanFile` has a valid `Id`,
-				// otherwise NHibernate won't have a valid value to put on the `backup_plan_file_id` column.
-				daoBackupPlanFile.InsertOrUpdate(file);
-				//daoBackupedFile.InsertOrUpdate(backupedFile);
+				daoBackup.Update(tx, Backup);
+				tx.Commit();
 			}
 
-			// 1. Insert or update all `BackupPlanFile`s that already exist for the backup plan associated with this backup operation.
-			var AllFilesFromPlanThatWerentUpdatedYet = AllFilesFromPlan.Values.Except(FilesToInsertOrUpdate);
-			foreach (BackupPlanFile file in AllFilesFromPlanThatWerentUpdatedYet)
-			{
-				// Since we're running in the same thread that does update UI.
-				Application.DoEvents();
-				//Console.WriteLine("2: {0}", file.Path);
-				daoBackupPlanFile.Update(file);
-			}
-			//// This we'll iterate once again over files that were RE-ADDED after being REMOVED or DELETED,
-			//// because they are also in `AllFilesFromPlan`. Sorry! We could use `Union()` + `Except()`, but
-			//// I believe the performance for this would be horrible.
-			//foreach (BackupPlanFile file in BackupPlanAddedFiles)
-			//	daoBackupPlanFile.InsertOrUpdate(file);
-
-			// 3. Insert/Update `Backup` and its `BackupedFile`s into the database.
-			daoBackup.Update(Backup);
 			IsSaved = true;
 
 			// 4. Create versioned files and remove files that won't belong to this backup.

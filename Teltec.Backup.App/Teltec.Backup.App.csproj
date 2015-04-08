@@ -163,6 +163,7 @@
     </Compile>
     <Compile Include="Models\EntryType.cs" />
     <Compile Include="Models\Restore.cs" />
+    <Compile Include="Models\BackupPlanPathNode.cs" />
     <Compile Include="Models\RestoredFile.cs" />
     <Compile Include="Models\RestorePlan.cs" />
     <Compile Include="Models\RestorePlanFile.cs" />
@@ -252,8 +253,10 @@
     <Compile Include="Migrations\201502041721361_RenameBackupPlanSourceEntryId.Designer.cs">
       <DependentUpon>201502041721361_RenameBackupPlanSourceEntryId.cs</DependentUpon>
     </Compile>
+    <Compile Include="Restore\NewRestoreOperation.cs" />
     <Compile Include="Restore\RestoreOperation.cs" />
     <Compile Include="Versioning\CustomVersionedFile.cs" />
+    <Compile Include="Versioning\DefaultRestoreScanner.cs" />
     <Compile Include="Versioning\IncrementalFileVersioner.cs" />
     <Compile Include="Versioning\DefaultPathScanner.cs" />
     <None Include="Migrations\Configuration.cs_" />

@@ -1,11 +1,10 @@
 ﻿using NHibernate;
 using NHibernate.Criterion;
+using NUnit.Framework;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
-using NUnit.Framework;
 
 namespace Teltec.Backup.App.DAO
 {
@@ -98,18 +97,6 @@ namespace Teltec.Backup.App.DAO
 		//	};
 		//}
 
-		public Models.BackupPlanFile GetByPath(string path, bool ignoreCase = false)
-		{
-			Assert.IsNotNullOrEmpty(path);
-			ICriteria crit = Session.CreateCriteria(PersistentType);
-			string pathPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.Path);
-			SimpleExpression expr = Restrictions.Eq(pathPropertyName, path);
-			if (ignoreCase)
-				expr = expr.IgnoreCase();
-			crit.Add(expr);
-			return crit.UniqueResult<Models.BackupPlanFile>();
-		}
-
 		public IList<Models.BackupPlanFile> GetAllByPlan(Models.BackupPlan plan)
 		{
 			Assert.IsNotNull(plan);
@@ -117,6 +104,59 @@ namespace Teltec.Backup.App.DAO
 			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.BackupPlan);
 			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
 			return crit.List<Models.BackupPlanFile>();
+		}
+
+		public Models.BackupPlanFile GetByPlanAndPath(Models.BackupPlan plan, string path, bool ignoreCase = false)
+		{
+			Assert.IsNotNullOrEmpty(path);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.BackupPlan);
+			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
+			string pathPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.Path);
+			SimpleExpression expr = Restrictions.Eq(pathPropertyName, path);
+			if (ignoreCase)
+				expr = expr.IgnoreCase();
+			crit.Add(expr);
+			return crit.UniqueResult<Models.BackupPlanFile>();
+		}
+	}
+
+	public class BackupPlanPathNodeRepository : BaseRepository<Models.BackupPlanPathNode, Int64?>
+	{
+		public BackupPlanPathNodeRepository()
+		{
+		}
+
+		public BackupPlanPathNodeRepository(ISession session)
+			: base(session)
+		{
+		}
+
+		public IList<Models.BackupPlanPathNode> GetAllDrivesByPlan(Models.BackupPlan plan)
+		{
+			Assert.IsNotNull(plan);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.BackupPlan);
+			string typePropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.Type);
+			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
+			crit.Add(Restrictions.Eq(typePropertyName, Models.EntryType.DRIVE));
+			return crit.List<Models.BackupPlanPathNode>();
+		}
+
+		public Models.BackupPlanPathNode GetByPlanAndTypeAndPath(Models.BackupPlan plan, Models.EntryType type, string path, bool ignoreCase = false)
+		{
+			Assert.IsNotNull(plan);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.BackupPlan);
+			string typePropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.Type);
+			string pathPropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.Path);
+			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
+			crit.Add(Restrictions.Eq(typePropertyName, type));
+			SimpleExpression expr = Restrictions.Eq(pathPropertyName, path);
+			if (ignoreCase)
+				expr = expr.IgnoreCase();
+			crit.Add(expr);
+			return crit.UniqueResult<Models.BackupPlanPathNode>();
 		}
 	}
 
@@ -169,6 +209,30 @@ namespace Teltec.Backup.App.DAO
 			string transferStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
 			crit.Add(Restrictions.Eq(backupPropertyName, backup));
 			crit.Add(Restrictions.In(transferStatusPropertyName, statuses));
+			return crit.List<Models.BackupedFile>();
+		}
+
+		public IList<Models.BackupedFile> GetCompletedByPlanAndPath(Models.BackupPlan plan, string path, bool ignoreCase = false)
+		{
+			Assert.IsNotNull(plan);
+			Assert.IsNotNullOrEmpty(path);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+
+			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
+			string backupPlanPropertyName = this.GetPropertyName((Models.Backup x) => x.BackupPlan);
+			crit.CreateAlias(backupPropertyName, "bkp");
+			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan)); 
+			
+			string transferStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
+			crit.Add(Restrictions.Eq(transferStatusPropertyName, TransferStatus.COMPLETED));
+
+			string filePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
+			string filePathPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.Path);
+			crit.CreateAlias(filePropertyName, "f");
+			SimpleExpression expr = Restrictions.Eq("f." + filePathPropertyName, path);
+			if (ignoreCase)
+				expr = expr.IgnoreCase();
+			crit.Add(expr);
 			return crit.List<Models.BackupedFile>();
 		}
 	}

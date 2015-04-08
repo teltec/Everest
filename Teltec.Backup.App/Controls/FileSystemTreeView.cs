@@ -71,28 +71,6 @@ namespace Teltec.Backup.App.Controls
 
 		#endregion
 
-		#region Custom events
-
-		public delegate void ExpandFetchStartedHandler(object sender, EventArgs e);
-		public delegate void ExpandFetchEndedHandler(object sender, EventArgs e);
-
-		public event ExpandFetchStartedHandler ExpandFetchStarted;
-		public event ExpandFetchEndedHandler ExpandFetchEnded;
-
-		private void OnExpandFetchStarted(object sender, EventArgs e)
-		{
-			if (ExpandFetchStarted != null)
-				ExpandFetchStarted(this, e);
-		}
-
-		private void OnExpandFetchEnded(object sender, EventArgs e)
-		{
-			if (ExpandFetchEnded != null)
-				ExpandFetchEnded(this, e);
-		}
-
-		#endregion
-
 		private void handle_BeforeExpand(object sender, System.Windows.Forms.TreeViewCancelEventArgs e)
 		{
 			UseWaitCursor = true;
@@ -215,7 +193,7 @@ namespace Teltec.Backup.App.Controls
 		private void ExpandCheckedDataSourceAddParents(Dictionary<string, FileSystemTreeNodeData> expandedDict, string path)
 		{
 			PathNodes nodes = new PathNodes(path);
-			PathNode nodeParent = nodes.Parent;
+			PathNode nodeParent = nodes.ParentNode;
 
 			while (nodeParent != null)
 			{

@@ -54,6 +54,13 @@ namespace Teltec.Backup.App.Models
 			set { SetField(ref _Path, value); }
 		}
 
+		private BackupPlanPathNode _PathNode;
+		public virtual BackupPlanPathNode PathNode
+		{
+			get { return _PathNode; }
+			protected set { _PathNode = value; }
+		}
+
 		//private BackupFileStatus _LastStatus;
 		//public virtual BackupFileStatus LastStatus
 		//{
