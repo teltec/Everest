@@ -18,6 +18,8 @@
 			this.components = new System.ComponentModel.Container();
 			this.llblEditPlan = new System.Windows.Forms.LinkLabel();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
+			this.lblLastSuccessfulRun = new System.Windows.Forms.Label();
+			this.label8 = new System.Windows.Forms.Label();
 			this.lblDuration = new System.Windows.Forms.Label();
 			this.lblFilesUploaded = new System.Windows.Forms.Label();
 			this.lblLastRun = new System.Windows.Forms.Label();
@@ -37,8 +39,7 @@
 			this.panelActions = new System.Windows.Forms.Panel();
 			this.panelContents = new System.Windows.Forms.Panel();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
-			this.lblLastSuccessfulRun = new System.Windows.Forms.Label();
-			this.label8 = new System.Windows.Forms.Label();
+			this.llblRestore = new System.Windows.Forms.LinkLabel();
 			this.groupBox1.SuspendLayout();
 			this.panelTitle.SuspendLayout();
 			this.panelActions.SuspendLayout();
@@ -78,6 +79,28 @@
 			this.groupBox1.Size = new System.Drawing.Size(398, 147);
 			this.groupBox1.TabIndex = 13;
 			this.groupBox1.TabStop = false;
+			// 
+			// lblLastSuccessfulRun
+			// 
+			this.lblLastSuccessfulRun.AutoSize = true;
+			this.lblLastSuccessfulRun.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.lblLastSuccessfulRun.Location = new System.Drawing.Point(132, 89);
+			this.lblLastSuccessfulRun.Margin = new System.Windows.Forms.Padding(3);
+			this.lblLastSuccessfulRun.Name = "lblLastSuccessfulRun";
+			this.lblLastSuccessfulRun.Size = new System.Drawing.Size(121, 13);
+			this.lblLastSuccessfulRun.TabIndex = 25;
+			this.lblLastSuccessfulRun.Text = "{{ LastSuccessfulRun }}";
+			// 
+			// label8
+			// 
+			this.label8.AutoSize = true;
+			this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.label8.Location = new System.Drawing.Point(6, 89);
+			this.label8.Margin = new System.Windows.Forms.Padding(3);
+			this.label8.Name = "label8";
+			this.label8.Size = new System.Drawing.Size(117, 13);
+			this.label8.TabIndex = 24;
+			this.label8.Text = "Last successful run";
 			// 
 			// lblDuration
 			// 
@@ -259,6 +282,7 @@
 			// 
 			// panelActions
 			// 
+			this.panelActions.Controls.Add(this.llblRestore);
 			this.panelActions.Controls.Add(this.llblEditPlan);
 			this.panelActions.Controls.Add(this.llblDeletePlan);
 			this.panelActions.Controls.Add(this.llblRunNow);
@@ -286,27 +310,16 @@
 			this.timer1.Interval = 1000;
 			this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
 			// 
-			// lblLastSuccessfulRun
+			// llblRestore
 			// 
-			this.lblLastSuccessfulRun.AutoSize = true;
-			this.lblLastSuccessfulRun.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.lblLastSuccessfulRun.Location = new System.Drawing.Point(132, 89);
-			this.lblLastSuccessfulRun.Margin = new System.Windows.Forms.Padding(3);
-			this.lblLastSuccessfulRun.Name = "lblLastSuccessfulRun";
-			this.lblLastSuccessfulRun.Size = new System.Drawing.Size(121, 13);
-			this.lblLastSuccessfulRun.TabIndex = 25;
-			this.lblLastSuccessfulRun.Text = "{{ LastSuccessfulRun }}";
-			// 
-			// label8
-			// 
-			this.label8.AutoSize = true;
-			this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.label8.Location = new System.Drawing.Point(6, 89);
-			this.label8.Margin = new System.Windows.Forms.Padding(3);
-			this.label8.Name = "label8";
-			this.label8.Size = new System.Drawing.Size(117, 13);
-			this.label8.TabIndex = 24;
-			this.label8.Text = "Last successful run";
+			this.llblRestore.AutoSize = true;
+			this.llblRestore.Location = new System.Drawing.Point(292, 8);
+			this.llblRestore.Name = "llblRestore";
+			this.llblRestore.Size = new System.Drawing.Size(44, 13);
+			this.llblRestore.TabIndex = 16;
+			this.llblRestore.TabStop = true;
+			this.llblRestore.Text = "Restore";
+			this.llblRestore.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.llblRestore_LinkClicked);
 			// 
 			// BackupPlanViewControl
 			// 
@@ -354,6 +367,7 @@
 		private System.Windows.Forms.Timer timer1;
 		private System.Windows.Forms.Label lblLastSuccessfulRun;
 		private System.Windows.Forms.Label label8;
+		private System.Windows.Forms.LinkLabel llblRestore;
 
 	}
 }

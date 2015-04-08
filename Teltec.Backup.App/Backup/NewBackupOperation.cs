@@ -1,5 +1,7 @@
 ﻿using NLog;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.App.Versioning;
 
@@ -26,19 +28,28 @@ namespace Teltec.Backup.App.Backup
 
 		#region Transfer
 
-		protected override LinkedList<string> GetFilesToProcess(Models.Backup backup)
+		private LinkedList<string> DoWork(Models.Backup backup, CancellationToken cancellationToken)
 		{
 			// Scan files.
-			DefaultPathScanner scanner = new DefaultPathScanner(backup.BackupPlan);
+			DefaultPathScanner scanner = new DefaultPathScanner(backup.BackupPlan, CancellationTokenSource.Token);
 
 			scanner.FileAdded += (object sender, string file) =>
 			{
 				logger.Debug("ADDED: File {0}", file);
+				cancellationToken.ThrowIfCancellationRequested();
 			};
-			
+
 			LinkedList<string> files = scanner.Scan();
-			
+
 			return files;
+		}
+
+		protected override Task<LinkedList<string>> GetFilesToProcess(Models.Backup backup)
+		{
+			return ExecuteOnBackround(() =>
+			{
+				return DoWork(backup, CancellationTokenSource.Token);
+			}, CancellationTokenSource.Token);
 		}
 
 		protected override Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess)
@@ -81,7 +92,7 @@ namespace Teltec.Backup.App.Backup
 			{
 				if (disposing && _shouldDispose)
 				{
-					// NOP
+					// Nop
 				}
 				this._isDisposed = true;
 			}

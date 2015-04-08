@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Teltec.Storage.Versioning;
+﻿using System.Collections.Generic;
 
 namespace Teltec.Storage
 {
@@ -9,12 +7,12 @@ namespace Teltec.Storage
 	public interface IPathScanner<T> where T : class
 	{
 		PathScannerFileAddedHandler<T> FileAdded { get; set; }
-		LinkedList<T> Scan();
+		LinkedList<string> Scan();
 	}
 
 	public abstract class PathScanner<T> : IPathScanner<T> where T : class
 	{
 		public PathScannerFileAddedHandler<T> FileAdded { get; set; }
-		public abstract LinkedList<T> Scan();
+		public abstract LinkedList<string> Scan();
 	}
 }

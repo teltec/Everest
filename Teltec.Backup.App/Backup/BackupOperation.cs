@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Versioning;
@@ -20,12 +21,14 @@ namespace Teltec.Backup.App.Backup
 		Unknown					= 0,
 		Started					= 1,
 		Resumed					= 2,
-		ProcessingFilesStarted	= 3,
-		ProcessingFilesFinished = 4,
-		Updated					= 5,
-		Canceled				= 6,
-		Failed					= 7,
-		Finished				= 8,
+		ScanningFilesStarted	= 3,
+		ScanningFilesFinished	= 4,
+		ProcessingFilesStarted	= 5,
+		ProcessingFilesFinished = 6,
+		Updated					= 7,
+		Canceled				= 8,
+		Failed					= 9,
+		Finished				= 10,
 	}
 
 	public static class Extensions
@@ -104,6 +107,7 @@ namespace Teltec.Backup.App.Backup
 
 		public BackupOperation(BackupOperationOptions options)
 		{
+			CancellationTokenSource = new CancellationTokenSource();
 			Options = options;
 		}
 
@@ -148,7 +152,7 @@ namespace Teltec.Backup.App.Backup
 			BackupAgent = new CustomBackupAgent(TransferAgent);
 			BackupAgent.Results.Monitor = TransferListControl;
 
-			Versioner = new IncrementalFileVersioner();
+			Versioner = new IncrementalFileVersioner(CancellationTokenSource.Token);
 
 			RegisterResultsEventHandlers(Backup, BackupAgent.Results);
 			
@@ -218,15 +222,54 @@ namespace Teltec.Backup.App.Backup
 			};
 		}
 
-		protected abstract LinkedList<string> GetFilesToProcess(Models.Backup backup);
+		protected abstract Task<LinkedList<string>> GetFilesToProcess(Models.Backup backup);
 		protected abstract Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess);
 
 		protected async void DoBackup(CustomBackupAgent agent, Models.Backup backup, BackupOperationOptions options)
 		{
 			OnStart(agent, backup);
 
-			// Version files.
-			LinkedList<string> filesToProcess = GetFilesToProcess(backup);
+			//
+			// Scanning
+			//
+
+			Task<LinkedList<string>> filesToProcessTask = GetFilesToProcess(backup);
+
+			{
+				var message = string.Format("Scanning files started.");
+				Info(message);
+				//StatusInfo.Update(BackupStatusLevel.INFO, message);
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ScanningFilesStarted, Message = message });
+			}
+
+			try
+			{
+				await filesToProcessTask;
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine("Exception Message: " + ex.Message);
+			}
+
+			if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
+			{
+				OnFailure(agent, backup, filesToProcessTask.Exception);
+				return;
+			}
+
+			LinkedList<string> filesToProcess = filesToProcessTask.Result;
+
+			{
+				var message = string.Format("Scanning files finished.");
+				Info(message);
+				//StatusInfo.Update(BackupStatusLevel.INFO, message);
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ScanningFilesFinished, Message = message });
+			}
+
+			//
+			// Versioning
+			//
+
 			Task versionerTask = DoVersionFiles(backup, filesToProcess);
 
 			{
@@ -263,11 +306,16 @@ namespace Teltec.Backup.App.Backup
 				//StatusInfo.Update(BackupStatusLevel.INFO, message);
 				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ProcessingFilesFinished, Message = message });
 			}
+
 			{
 				var message = string.Format("Estimate backup size: {0} files, {1}",
 					agent.Files.Count(), FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
 				Info(message);
 			}
+
+			//
+			// Transfer
+			//
 
 			Task transferTask = agent.Start();
 			await transferTask;
@@ -284,6 +332,18 @@ namespace Teltec.Backup.App.Backup
 		protected void DoCancel(CustomBackupAgent agent)
 		{
 			agent.Cancel();
+			CancellationTokenSource.Cancel();
+		}
+
+		#endregion
+
+		#region Task
+
+		protected CancellationTokenSource CancellationTokenSource; // IDisposable
+
+		protected Task<T> ExecuteOnBackround<T>(Func<T> action, CancellationToken token)
+		{
+			return Task.Factory.StartNew<T>(action, token);
 		}
 
 		#endregion

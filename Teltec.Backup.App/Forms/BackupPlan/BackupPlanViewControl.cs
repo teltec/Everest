@@ -183,7 +183,6 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				default: throw new ArgumentException("Unhandled status", "status");
 				case BackupOperationStatus.Unknown:
 					{
-						Models.BackupPlan plan = Model as Models.BackupPlan;
 						this.lblSources.Text = RunningBackup.Sources;
 						this.lblStatus.Text = MustResumeLastBackup ? LBL_STATUS_INTERRUPTED : LBL_STATUS_STOPPED;
 						this.llblRunNow.Text = MustResumeLastBackup ? LBL_RUNNOW_RESUME : LBL_RUNNOW_STOPPED;
@@ -195,7 +194,6 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				case BackupOperationStatus.Resumed:
 					{
 						Assert.IsNotNull(BackupResults);
-						Models.BackupPlan plan = Model as Models.BackupPlan;
 						this.lblSources.Text = RunningBackup.Sources;
 						this.llblRunNow.Text = LBL_RUNNOW_RUNNING;
 						this.lblStatus.Text = LBL_STATUS_STARTED;
@@ -205,20 +203,28 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 						this.llblEditPlan.Enabled = false;
 						this.llblDeletePlan.Enabled = false;
+						this.llblRestore.Enabled = false;
 
 						timer1.Enabled = true;
 						timer1.Start();
 						break;
 					}
+				case BackupOperationStatus.ScanningFilesStarted:
+					{
+						this.lblSources.Text = "Scanning files...";
+						break;
+					}
+				case BackupOperationStatus.ScanningFilesFinished:
+					{
+						break;
+					}
 				case BackupOperationStatus.ProcessingFilesStarted:
 					{
-						Models.BackupPlan plan = Model as Models.BackupPlan;
 						this.lblSources.Text = "Processing files...";
 						break;
 					}
 				case BackupOperationStatus.ProcessingFilesFinished:
 					{
-						Models.BackupPlan plan = Model as Models.BackupPlan;
 						this.lblSources.Text = RunningBackup.Sources;
 						this.lblFilesUploaded.Text = string.Format("{0} of {1}",
 							BackupResults.Stats.Completed, BackupResults.Stats.Total);
@@ -232,6 +238,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 						this.llblEditPlan.Enabled = true;
 						this.llblDeletePlan.Enabled = true;
+						this.llblRestore.Enabled = true;
 
 						timer1.Stop();
 						timer1.Enabled = false;
@@ -259,6 +266,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 						this.llblEditPlan.Enabled = true;
 						this.llblDeletePlan.Enabled = true;
+						this.llblRestore.Enabled = true;
 
 						timer1.Stop();
 						timer1.Enabled = false;
@@ -378,5 +386,10 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		}
 
 		#endregion
+
+		private void llblRestore_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

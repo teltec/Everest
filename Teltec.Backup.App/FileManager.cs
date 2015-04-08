@@ -10,11 +10,16 @@ namespace Teltec.Backup.App
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		public static DateTime? GetLastWriteTimeUtc(string path)
+		public static DateTime UnsafeGetLastWriteTimeUtc(string path)
+		{
+			return File.GetLastWriteTimeUtc(path);
+		}
+
+		public static DateTime? SafeGetLastWriteTimeUtc(string path)
 		{
 			try
 			{
-				return File.GetLastWriteTimeUtc(path);
+				return UnsafeGetLastWriteTimeUtc(path);
 			}
 			catch (Exception e)
 			{
@@ -23,11 +28,16 @@ namespace Teltec.Backup.App
 			}
 		}
 
-		public static long? GetFileSize(string path)
+		public static long UnsafeGetFileSize(string path)
+		{
+			return new FileInfo(path).Length;
+		}
+
+		public static long? SafeGetFileSize(string path)
 		{
 			try
 			{
-				return new FileInfo(path).Length;
+				return UnsafeGetFileSize(path);
 			}
 			catch (Exception e)
 			{

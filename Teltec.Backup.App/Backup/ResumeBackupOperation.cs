@@ -1,7 +1,9 @@
 ﻿using NLog;
 using NUnit.Framework;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.App.DAO;
 using Teltec.Common.Extensions;
@@ -12,7 +14,7 @@ namespace Teltec.Backup.App.Backup
 	public sealed class ResumeBackupOperation : BackupOperation
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-
+		
 		#region Constructors
 
 		public ResumeBackupOperation(Models.Backup backup)
@@ -33,7 +35,7 @@ namespace Teltec.Backup.App.Backup
 
 		#region Transfer
 
-		protected override LinkedList<string> GetFilesToProcess(Models.Backup backup)
+		private LinkedList<string> DoWork(Models.Backup backup, CancellationToken cancellationToken)
 		{
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
 
@@ -41,10 +43,20 @@ namespace Teltec.Backup.App.Backup
 			IList<Models.BackupedFile> pendingFiles = daoBackupedFile.GetByBackupAndStatus(backup,
 				TransferStatus.STOPPED, TransferStatus.RUNNING);
 
+			cancellationToken.ThrowIfCancellationRequested();
+
 			// Convert them to a list of paths.
 			LinkedList<string> files = pendingFiles.ToLinkedList<string, Models.BackupedFile>(p => p.File.Path);
 
 			return files;
+		}
+
+		protected override Task<LinkedList<string>> GetFilesToProcess(Models.Backup backup)
+		{
+			return ExecuteOnBackround(() =>
+			{
+				return DoWork(backup, CancellationTokenSource.Token);
+			}, CancellationTokenSource.Token);
 		}
 
 		protected override Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess)
@@ -87,7 +99,7 @@ namespace Teltec.Backup.App.Backup
 			{
 				if (disposing && _shouldDispose)
 				{
-					// NOP
+					// Nop
 				}
 				this._isDisposed = true;
 			}

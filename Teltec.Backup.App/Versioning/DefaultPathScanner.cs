@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Teltec.Backup.App.Models;
 using Teltec.Storage;
-using Teltec.Storage.Versioning;
 
 namespace Teltec.Backup.App.Versioning
 {
@@ -12,11 +12,13 @@ namespace Teltec.Backup.App.Versioning
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+		CancellationToken CancellationToken;
 		BackupPlan Plan;
 		LinkedList<string> Result;
 
-		public DefaultPathScanner(BackupPlan plan)
+		public DefaultPathScanner(BackupPlan plan, CancellationToken cancellationToken)
 		{
+			CancellationToken = cancellationToken;
 			Plan = plan;
 		}
 
@@ -32,28 +34,40 @@ namespace Teltec.Backup.App.Versioning
 			//
 			foreach (var entry in Plan.SelectedSources)
 			{
-				switch (entry.Type)
+				try
 				{
-					default:
-						throw new InvalidOperationException("Unhandled EntryType");
-					case EntryType.DRIVE:
-						{
-							DirectoryInfo dir = new DriveInfo(entry.Path).RootDirectory;
-							AddDirectory(dir);
-							break;
-						}
-					case EntryType.FOLDER:
-						{
-							DirectoryInfo dir = new DirectoryInfo(entry.Path);
-							AddDirectory(dir);
-							break;
-						}
-					case EntryType.FILE:
-						{
-							FileInfo file = new FileInfo(entry.Path);
-							AddFile(file);
-							break;
-						}
+					switch (entry.Type)
+					{
+						default:
+							throw new InvalidOperationException("Unhandled EntryType");
+						case EntryType.DRIVE:
+							{
+								DirectoryInfo dir = new DriveInfo(entry.Path).RootDirectory;
+								AddDirectory(dir);
+								break;
+							}
+						case EntryType.FOLDER:
+							{
+								DirectoryInfo dir = new DirectoryInfo(entry.Path);
+								AddDirectory(dir);
+								break;
+							}
+						case EntryType.FILE:
+							{
+								FileInfo file = new FileInfo(entry.Path);
+								AddFile(file);
+								break;
+							}
+					}
+				}
+				catch (OperationCanceledException ex)
+				{
+					throw ex; // Rethrow!
+				}
+				catch (Exception ex)
+				{
+					string message = string.Format("Failed to scan entry {0}", entry.Path);
+					logger.Error(message, ex);
 				}
 			}
 
@@ -69,6 +83,12 @@ namespace Teltec.Backup.App.Versioning
 				logger.Warn("File {0} does not exist", file.FullName);
 				return;
 			}
+
+			// IMPORTANT: The condition above, `if (!directory.Exists)`, doesn't guarantee the
+			// directory will exist at this point! We probably shouldn't try to detect this but
+			// handle any exceptions that may be raised.
+
+			CancellationToken.ThrowIfCancellationRequested();
 
 			var item = file.FullName;
 
@@ -91,12 +111,20 @@ namespace Teltec.Backup.App.Versioning
 				return;
 			}
 
+			// IMPORTANT: The condition above, `if (!directory.Exists)`, doesn't guarantee the
+			// directory will exist at this point! We probably shouldn't try to detect this but
+			// handle any exceptions that may be raised.
+
+			CancellationToken.ThrowIfCancellationRequested();
+
+			FileInfo[] files = directory.GetFiles(); // System.IO.DirectoryNotFoundException
 			// Add all files from this directory.
-			foreach (FileInfo file in directory.GetFiles())
+			foreach (FileInfo file in files)
 				AddFile(file);
 
+			DirectoryInfo[] directories = directory.GetDirectories();
 			// Add all sub-directories recursively.
-			foreach (DirectoryInfo subdir in directory.GetDirectories())
+			foreach (DirectoryInfo subdir in directories)
 				AddDirectory(subdir);
 		}
 	}
