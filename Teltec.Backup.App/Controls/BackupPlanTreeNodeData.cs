@@ -10,6 +10,7 @@ namespace Teltec.Backup.App.Controls
 	{
 		public Models.BackupPlan Plan { get; set; }
 		public IFileVersion Version { get; private set; } // Depends on `InfoObject`
+		public object UserObject { get; set; }
 
 		public BackupPlanTreeNodeData()
 		{

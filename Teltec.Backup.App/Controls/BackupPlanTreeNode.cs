@@ -33,6 +33,7 @@ namespace Teltec.Backup.App.Controls
 			node.ImageKey = "drive";
 			EntryInfo info = new EntryInfo(TypeEnum.DRIVE, pathNode.Name, pathNode.Path);
 			node.Data.InfoObject = info;
+			node.Data.UserObject = pathNode;
 			node.AddLazyLoadingNode();
 			return node;
 		}
@@ -42,8 +43,9 @@ namespace Teltec.Backup.App.Controls
 			Assert.AreEqual(EntryType.FOLDER, pathNode.Type);
 			BackupPlanTreeNode node = new BackupPlanTreeNode(pathNode.Name, 0, 0);
 			node.ImageKey = "folder";
-			EntryInfo info = new EntryInfo(TypeEnum.DRIVE, pathNode.Name, pathNode.Path);
+			EntryInfo info = new EntryInfo(TypeEnum.FOLDER, pathNode.Name, pathNode.Path);
 			node.Data.InfoObject = info;
+			node.Data.UserObject = pathNode;
 			node.AddLazyLoadingNode();
 			return node;
 		}
@@ -53,8 +55,9 @@ namespace Teltec.Backup.App.Controls
 			Assert.AreEqual(EntryType.FILE, pathNode.Type);
 			BackupPlanTreeNode node = new BackupPlanTreeNode(pathNode.Name, 0, 0);
 			node.ImageKey = "file";
-			EntryInfo info = new EntryInfo(TypeEnum.DRIVE, pathNode.Name, pathNode.Path);
+			EntryInfo info = new EntryInfo(TypeEnum.FILE, pathNode.Name, pathNode.Path);
 			node.Data.InfoObject = info;
+			node.Data.UserObject = pathNode;
 			node.AddLazyLoadingNode();
 			return node;
 		}
@@ -62,10 +65,11 @@ namespace Teltec.Backup.App.Controls
 		public static BackupPlanTreeNode CreateFileVersionNode(BackupPlanPathNode pathNode, IFileVersion version)
 		{
 			Assert.AreEqual(EntryType.FILE, pathNode.Type);
-			BackupPlanTreeNode node = new BackupPlanTreeNode(pathNode.Name, 0, 0);
+			BackupPlanTreeNode node = new BackupPlanTreeNode(version.Version, 0, 0);
 			node.ImageKey = "file_version";
 			EntryInfo info = new EntryInfo(TypeEnum.FILE_VERSION, pathNode.Name, pathNode.Path, version);
 			node.Data.InfoObject = info;
+			node.Data.UserObject = pathNode;
 			return node;
 		}
 
@@ -86,29 +90,26 @@ namespace Teltec.Backup.App.Controls
 		{
 			RemoveLazyLoadingNode();
 
-			BackupPlanPathNodeRepository dao = new BackupPlanPathNodeRepository();
-			
+			BackupPlanPathNode pathNode = Data.UserObject as BackupPlanPathNode;
+
 			switch (Data.Type)
 			{
 				default: break;
 				case TypeEnum.FOLDER:
 					if (Nodes.Count == 0)
 					{
-						BackupPlanPathNode pathNode = dao.GetByPlanAndTypeAndPath(Data.Plan, EntryType.FOLDER, Data.Path);
 						PopuplateDirectory(pathNode);
 					}
 					break;
 				case TypeEnum.FILE:
 					if (Nodes.Count == 0)
 					{
-						BackupPlanPathNode pathNode = dao.GetByPlanAndTypeAndPath(Data.Plan, EntryType.FILE, Data.Path);
 						PopulateFile(pathNode);
 					}
 					break;
 				case TypeEnum.DRIVE:
 					if (Nodes.Count == 0)
 					{
-						BackupPlanPathNode pathNode = dao.GetByPlanAndTypeAndPath(Data.Plan, EntryType.DRIVE, Data.Path);
 						PopulateDrive(pathNode);
 					}
 					break;
@@ -180,9 +181,6 @@ namespace Teltec.Backup.App.Controls
 			IEnumerable<IFileVersion> versions = from file in backupedFiles
 									  select new FileVersion { Version = file.Backup.Id.ToString() };
 
-			//IFileVersion[] versions = new IFileVersion[] {
-			//	new FileVersion { Version = "1.0" }
-			//};
 			foreach (IFileVersion version in versions)
 			{
 				BackupPlanTreeNode versionNode = AddFileVersionNode(pathNode, version);

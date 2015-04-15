@@ -315,6 +315,7 @@ namespace Teltec.Backup.App.Controls
 				case TypeEnum.DRIVE:
 				case TypeEnum.FOLDER:
 				case TypeEnum.FILE:
+				case TypeEnum.FILE_VERSION:
 					{
 						string path = node.Data.Path;
 						BackupPlanTreeNodeData match;
