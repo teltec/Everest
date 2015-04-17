@@ -180,7 +180,7 @@ namespace Teltec.Backup.App.Controls
 			IList<BackupedFile> backupedFiles = dao.GetCompletedByPlanAndPath(pathNode.BackupPlan, pathNode.Path);
 			IEnumerable<IFileVersion> versions =
 				from f in backupedFiles
-				select new FileVersion { Name = f.Backup.FinishedAt.ToString(), Version = f.Backup.Id.ToString() };
+				select new FileVersion { Name = f.Backup.VersionName, Version = f.Backup.Version };
 #else
 			// *** DO NOT USE THIS APPROACH BECAUSE IT WILL NOT SHOW A BACKUP VERSION THAT HAS JUST BEEN CREATED! ***
 			// I know it's a problem related to the NHibernate caching mechanism, but I don't want to deal with it right now. Sorry! :-)
@@ -188,7 +188,7 @@ namespace Teltec.Backup.App.Controls
 			IEnumerable<IFileVersion> versions =
 				from f in backupedFiles
 				where f.TransferStatus == Storage.TransferStatus.COMPLETED
-				select new FileVersion { Name = f.Backup.FinishedAt.ToString(), Version = f.Backup.Id.ToString() };
+				select new FileVersion { Name = f.Backup.VersionName, Version = f.Backup.Version };
 #endif
 			foreach (IFileVersion version in versions)
 			{

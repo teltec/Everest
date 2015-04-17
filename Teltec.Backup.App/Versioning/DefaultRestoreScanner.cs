@@ -1,12 +1,9 @@
 ﻿using NLog;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using System.Threading;
-using Teltec.Backup.App.Controls;
-using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Models;
-using Teltec.FileSystem;
 using Teltec.Storage;
 using Teltec.Storage.Versioning;
 
@@ -109,6 +106,15 @@ namespace Teltec.Backup.App.Versioning
 		{
 			CancellationToken.ThrowIfCancellationRequested();
 
+			// If `version` is not not informed, then find the file's latest version.
+			if (version == null)
+			{
+				BackupedFile f = node.PlanFile.Versions.Last();
+				IFileVersion latestFileVersion = f != null
+					? new FileVersion { Name = f.Backup.VersionName, Version = f.Backup.Version }
+					: null;
+				version = latestFileVersion;
+			}
 			var item = new CustomVersionedFile { Path = node.Path, Version = version };
 
 			Result.AddLast(item);

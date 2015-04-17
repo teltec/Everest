@@ -69,6 +69,20 @@ namespace Teltec.Backup.App.Models
 			protected set { SetField(ref _Files, value); }
 		}
 
+		#region Read-only properties
+
+		public virtual string Version
+		{
+			get { return Id.HasValue ? Id.ToString() : string.Empty; }
+		}
+
+		public virtual string VersionName
+		{
+			get { return FinishedAt != null ? FinishedAt.ToString() : string.Empty; }
+		}
+
+		#endregion
+
 		#region Status reporting
 
 		public virtual void DidStart()
