@@ -10,11 +10,14 @@ namespace Teltec.Backup.App.Models
 		{
 		}
 
-		public BackupPlanPathNode(BackupPlan plan, EntryType type, string name, string path, BackupPlanPathNode parent)
+		public BackupPlanPathNode(BackupPlanFile planFile, EntryType type, string name, string path, BackupPlanPathNode parent)
 			: this()
 		{
-			BackupPlan = plan;
+			BackupPlan = planFile.BackupPlan;
 			Type = type;
+			// Only assign `PlanFile` if this is for a node that represents a FILE.
+			if (Type == EntryType.FILE)
+				PlanFile = planFile;
 			Name = name;
 			Path = path;
 			Parent = parent;
@@ -64,57 +67,18 @@ namespace Teltec.Backup.App.Models
 			set { _Path = value; }
 		}
 
-		/*
-		private string FormattedName(EntryType type, string name)
-		{
-			switch (type)
-			{
-				default:
-					throw new ArgumentException("Unhandled type in switch-case", "type");
-				case EntryType.FOLDER:
-					return name
-						+ System.IO.Path.DirectorySeparatorChar.ToString();
-				case EntryType.FILE:
-					return name;
-				case EntryType.FILE_VERSION:
-					return name;
-				case EntryType.DRIVE:
-					return name
-						+ System.IO.Path.VolumeSeparatorChar.ToString()
-						+ System.IO.Path.DirectorySeparatorChar.ToString();
-			}
-		}
-
-		public virtual string Path
-		{
-			get
-			{
-				List<string> parts = new List<string>();
-				
-				// Add itself
-				parts.Add(FormattedName(Type, Name));
-				
-				// Iterate over parents
-				BackupPlanPathNode parent = Parent;
-				while (parent != null)
-				{
-					// Add parent
-					parts.Add(FormattedName(parent.Type, parent.Name));
-					parent = parent.Parent;
-				}
-
-				parts.Reverse();
-
-				return string.Join("", parts);
-			}
-		}
-		*/
-
 		private IList<BackupPlanPathNode> _SubNodes = new List<BackupPlanPathNode>();
 		public virtual IList<BackupPlanPathNode> SubNodes
 		{
 			get { return _SubNodes; }
 			protected set { SetField(ref _SubNodes, value); }
+		}
+
+		private BackupPlanFile _PlanFile;
+		public virtual BackupPlanFile PlanFile
+		{
+			get { return _PlanFile; }
+			protected set { SetField(ref _PlanFile, value); }
 		}
 	}
 }

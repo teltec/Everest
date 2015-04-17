@@ -9,6 +9,7 @@ namespace Teltec.Storage.Versioning
 {
 	public interface IFileVersion
 	{
+		string Name { get; set; }
 		string Version { get; set; }
 
 		string ToString();
@@ -16,11 +17,12 @@ namespace Teltec.Storage.Versioning
 
 	public class FileVersion : IFileVersion
 	{
+		public string Name { get; set; }
 		public string Version { get; set; }
 
 		public override string ToString()
 		{
-			return Version;
+			return Name;
 		}
 	}
 

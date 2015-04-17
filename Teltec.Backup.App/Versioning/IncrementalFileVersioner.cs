@@ -589,13 +589,15 @@ namespace Teltec.Backup.App.Versioning
 						BackupPlanPathNode planPathNode = daoBackupPlanPathNode.GetByPlanAndTypeAndPath(Backup.BackupPlan, pathNode.Type.ToEntryType(), pathNode.Path);
 						if (planPathNode == null)
 						{
-							BackupPlanFile planFile = daoBackupPlanFile.GetByPlanAndPath(Backup.BackupPlan, entry.Path);
-							if (planFile == null)
-								throw new InvalidOperationException(string.Format("Required {0} not found in the database.", typeof(BackupPlanFile).Name));
-							planPathNode = new BackupPlanPathNode(Backup.BackupPlan, pathNode.Type.ToEntryType(), pathNode.Name, pathNode.Path, previousNode);
+							//BackupPlanFile planFile = daoBackupPlanFile.GetByPlanAndPath(Backup.BackupPlan, entry.Path);
+							//Assert.NotNull(planFile, string.Format("Required {0} not found in the database.", typeof(BackupPlanFile).Name))
+							planPathNode = new BackupPlanPathNode(entry, pathNode.Type.ToEntryType(), pathNode.Name, pathNode.Path, previousNode);
+							if (previousNode != null)
+								previousNode.SubNodes.Add(planPathNode);
 							daoBackupPlanPathNode.Insert(tx, planPathNode);
 						}
 						previousNode = planPathNode;
+						//session.Evict(planPathNode); // Force future queries to re-load it and its relationships.
 					}
 
 					entry.PathNode = previousNode;

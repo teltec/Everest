@@ -90,7 +90,26 @@ namespace Teltec.Common.Controls
 			UpdateParentNode(node.Parent);
 		}
 
-		private void CheckNode(TreeNode node, CheckState state)
+		protected void UncheckNodeSiblings(TreeNode node)
+		{
+			// Update previous sibling nodes.
+			TreeNode prevNode = node.PrevNode;
+			while (prevNode != null)
+			{
+				InternalSetCheckedState(prevNode, CheckState.Unchecked);
+				prevNode = prevNode.PrevNode;
+			}
+
+			// Update next sibling nodes.
+			TreeNode nextNode = node.NextNode;
+			while (nextNode != null)
+			{
+				InternalSetCheckedState(nextNode, CheckState.Unchecked);
+				nextNode = nextNode.NextNode;
+			}
+		}
+
+		protected virtual void CheckNode(TreeNode node, CheckState state)
 		{
 			InternalSetCheckedState(node, state);
 

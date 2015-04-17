@@ -49,6 +49,11 @@ namespace Teltec.Backup.App.DAO
 			return Session.Get<T>(id);
 		}
 
+		public T Load(ID id)
+		{
+			return Session.Load<T>(id);
+		}
+
 		public T GetStateless(ID id)
 		{
 			return StatelessSession.Get<T>(id);

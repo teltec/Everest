@@ -62,6 +62,9 @@ namespace Teltec.Backup.App.Controls
 				source.RestorePlan = plan;
 				source.Type = data.ToEntryType();
 				source.Path = data.Path;
+				source.PathNode = data.UserObject as BackupPlanPathNode;
+				if (source.Type == EntryType.FILE_VERSION)
+					source.Version = data.Version.Version;
 				sources.Add(source);
 			}
 			return sources;

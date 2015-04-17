@@ -1,4 +1,5 @@
 ﻿using FluentNHibernate.Mapping;
+using Teltec.Common.Extensions;
 using Teltec.Storage;
 
 namespace Teltec.Backup.App.DAO.NHibernate
@@ -258,7 +259,8 @@ namespace Teltec.Backup.App.DAO.NHibernate
 	{
 		public BackupPlanFileMap()
 		{
-			string UNIQUE_KEY_NAME = "uk_backup_plan_path";
+			string UNIQUE_KEY_PLAN_PATH = "uk_backup_plan_path";
+			string UNIQUE_KEY_PATHNODE = "uk_backup_plan_path_node";
 
 			Table("backup_plan_files");
 
@@ -270,21 +272,14 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_NAME)
+				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
 				;
 
 			Map(p => p.Path)
 				.Column("path")
 				.Not.Nullable()
 				.Length(Models.BackupPlanSourceEntry.PathMaxLen)
-				.UniqueKey(UNIQUE_KEY_NAME)
-				;
-
-			References(fk => fk.PathNode)
-				.Column("path_node_id")
-				//.Not.Nullable() -- It should be NOT NULL, but we only want to set it later, so...
-				//.LazyLoad(Laziness.Proxy)
-				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
 				;
 
 			Map(p => p.LastSize)
@@ -323,6 +318,21 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Not.Insert()
 				//.CustomType<TimestampType>()
 				;
+
+			References(fk => fk.PathNode)
+				.Column("path_node_id")
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable()
+				.Cascade.All()
+				.UniqueKey(UNIQUE_KEY_PATHNODE)
+				;
+
+			HasMany(p => p.Versions)
+				.KeyColumn("backup_plan_file_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag()
+				;
 		}
 	}
 
@@ -330,8 +340,8 @@ namespace Teltec.Backup.App.DAO.NHibernate
 	{
 		public BackupPlanPathNodeMap()
 		{
-			string UNIQUE_KEY_NAME = "uk_backup_plan_path_node"; // (backup_plan_id, parent_id, name)
-			string UNIQUE_KEY_NAME_PATH = "uk_backup_plan_path_node_path"; // (backup_plan_id, path)
+			string UNIQUE_KEY_PLAN_PARENT_NAME = "uk_backup_plan_path_node"; // (backup_plan_id, parent_id, name)
+			string UNIQUE_KEY_PLAN_PATH = "uk_backup_plan_path_node_path"; // (backup_plan_id, path)
 
 			Table("backup_plan_path_nodes");
 
@@ -343,13 +353,13 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_NAME)
+				.UniqueKey(UNIQUE_KEY_PLAN_PARENT_NAME)
 				;
 
 			References(fk => fk.Parent)
 				.Column("parent_id")
 				.Cascade.None()
- 				.UniqueKey(UNIQUE_KEY_NAME)
+				.UniqueKey(UNIQUE_KEY_PLAN_PARENT_NAME)
 				;
 
 			Map(p => p.Type)
@@ -362,20 +372,25 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("name")
 				.Not.Nullable()
 				.Length(Models.BackupPlanPathNode.NameMaxLen)
-				.UniqueKey(UNIQUE_KEY_NAME)
+				.UniqueKey(UNIQUE_KEY_PLAN_PARENT_NAME)
 				;
 
 			Map(p => p.Path)
 				.Column("path")
 				.Not.Nullable()
 				.Length(Models.BackupPlanPathNode.PathMaxLen)
-				.UniqueKey(UNIQUE_KEY_NAME_PATH)
+				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
 				;
 
 			HasMany(p => p.SubNodes)
 				.KeyColumn("parent_id")
 				.Cascade.AllDeleteOrphan()
 				.AsBag()
+				;
+
+			HasOne(fk => fk.PlanFile)
+				.PropertyRef(this.GetPropertyName((Models.BackupPlanFile x) => x.PathNode))
+				.Cascade.None()
 				;
 		}
 	}

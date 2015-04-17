@@ -32,6 +32,7 @@
 			this.btnPrevious = new System.Windows.Forms.Button();
 			this.panelBottom = new System.Windows.Forms.Panel();
 			this.btnNext = new System.Windows.Forms.Button();
+			this.btnFinish = new System.Windows.Forms.Button();
 			this.label1 = new System.Windows.Forms.Label();
 			this.panelTop = new System.Windows.Forms.Panel();
 			this.panelMiddle = new System.Windows.Forms.Panel();
@@ -39,7 +40,6 @@
 			this.panelRight = new System.Windows.Forms.Panel();
 			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			this.pictureBox1 = new System.Windows.Forms.PictureBox();
-			this.btnFinish = new System.Windows.Forms.Button();
 			this.panelBottom.SuspendLayout();
 			this.panelTop.SuspendLayout();
 			this.panelMiddle.SuspendLayout();
@@ -92,6 +92,16 @@
 			this.btnNext.Text = "&Next";
 			this.btnNext.UseVisualStyleBackColor = true;
 			this.btnNext.Click += new System.EventHandler(this.btnNext_Click);
+			// 
+			// btnFinish
+			// 
+			this.btnFinish.Location = new System.Drawing.Point(284, 8);
+			this.btnFinish.Name = "btnFinish";
+			this.btnFinish.Size = new System.Drawing.Size(75, 23);
+			this.btnFinish.TabIndex = 3;
+			this.btnFinish.Text = "&Finish";
+			this.btnFinish.UseVisualStyleBackColor = true;
+			this.btnFinish.Click += new System.EventHandler(this.btnFinish_Click);
 			// 
 			// label1
 			// 
@@ -179,16 +189,6 @@
 			this.pictureBox1.Size = new System.Drawing.Size(175, 461);
 			this.pictureBox1.TabIndex = 0;
 			this.pictureBox1.TabStop = false;
-			// 
-			// btnFinish
-			// 
-			this.btnFinish.Location = new System.Drawing.Point(284, 8);
-			this.btnFinish.Name = "btnFinish";
-			this.btnFinish.Size = new System.Drawing.Size(75, 23);
-			this.btnFinish.TabIndex = 3;
-			this.btnFinish.Text = "&Finish";
-			this.btnFinish.UseVisualStyleBackColor = true;
-			this.btnFinish.Click += new System.EventHandler(this.btnFinish_Click);
 			// 
 			// WizardForm
 			// 

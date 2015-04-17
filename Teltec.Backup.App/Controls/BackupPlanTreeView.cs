@@ -31,6 +31,16 @@ namespace Teltec.Backup.App.Controls
 			this.UseWaitCursor = false;
 		}
 
+		protected override void CheckNode(System.Windows.Forms.TreeNode node, Teltec.Common.Controls.CheckState state)
+		{
+			base.CheckNode(node, state);
+
+			BackupPlanTreeNode realNode = node as BackupPlanTreeNode;
+			// Disallow checking multiple versions of the same file.
+			if (realNode.Data.Type == TypeEnum.FILE_VERSION)
+				base.UncheckNodeSiblings(node);
+		}
+
 		#region Populate methods
 
 		public void PopulateTreeView()
@@ -277,6 +287,7 @@ namespace Teltec.Backup.App.Controls
 				}
 				if (obj.Value.InfoObject == null)
 					obj.Value.InfoObject = new EntryInfo(obj.Value.Type, obj.Value.Name, obj.Value.Path, version);
+				// TODO: fill obj.Value.UserObject?
 				expandedDict.Add(obj.Key, obj.Value);
 				if (hasParents)
 					ExpandCheckedDataSourceAddParents(expandedDict, obj.Value.Path);

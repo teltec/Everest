@@ -52,7 +52,8 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 			Console.WriteLine("Name = {0}", plan.Name);
 			Console.WriteLine("BackupPlan = {0}", plan.BackupPlan.Name);
 			foreach (RestorePlanSourceEntry entry in plan.SelectedSources)
-				Console.WriteLine("SelectedSource => #{0}, {1}, {2}", entry.Id, entry.Type.ToString(), entry.Path);
+				Console.WriteLine("SelectedSource => #{0}, {1}, {2}, {3}",
+					entry.Id, entry.Type.ToString(), entry.Path, entry.Version);
 			Console.WriteLine("ScheduleType = {0}", plan.ScheduleType.ToString());
 
 			//try

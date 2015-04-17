@@ -1,5 +1,6 @@
 ﻿using NLog;
 using System;
+using System.Collections.Generic;
 
 namespace Teltec.Backup.App.Models
 {
@@ -18,6 +19,7 @@ namespace Teltec.Backup.App.Models
 
 		public BackupPlanFile()
 		{
+			Versions = new List<BackupedFile>();
 		}
 
 		public BackupPlanFile(BackupPlan plan)
@@ -52,13 +54,6 @@ namespace Teltec.Backup.App.Models
 		{
 			get { return _Path; }
 			set { SetField(ref _Path, value); }
-		}
-
-		private BackupPlanPathNode _PathNode;
-		public virtual BackupPlanPathNode PathNode
-		{
-			get { return _PathNode; }
-			set { _PathNode = value; }
 		}
 
 		private long _LastSize;
@@ -112,6 +107,20 @@ namespace Teltec.Backup.App.Models
 		{
 			get { return _UpdatedAt; }
 			set { SetField(ref _UpdatedAt, value); }
+		}
+
+		private BackupPlanPathNode _PathNode;
+		public virtual BackupPlanPathNode PathNode
+		{
+			get { return _PathNode; }
+			set { _PathNode = value; }
+		}
+
+		private IList<BackupedFile> _Versions;
+		public virtual IList<BackupedFile> Versions
+		{
+			get { return _Versions; }
+			protected set { _Versions = value; }
 		}
 
 		#region Object overrides

@@ -65,7 +65,7 @@ namespace Teltec.Backup.App.Controls
 		public static BackupPlanTreeNode CreateFileVersionNode(BackupPlanPathNode pathNode, IFileVersion version)
 		{
 			Assert.AreEqual(EntryType.FILE, pathNode.Type);
-			BackupPlanTreeNode node = new BackupPlanTreeNode(version.Version, 0, 0);
+			BackupPlanTreeNode node = new BackupPlanTreeNode(version.Name, 0, 0);
 			node.ImageKey = "file_version";
 			EntryInfo info = new EntryInfo(TypeEnum.FILE_VERSION, pathNode.Name, pathNode.Path, version);
 			node.Data.InfoObject = info;
@@ -174,13 +174,22 @@ namespace Teltec.Backup.App.Controls
 		private void PopulateFile(BackupPlanPathNode pathNode)
 		{
 			Assert.AreEqual(EntryType.FILE, pathNode.Type);
-			
-			// TODO: retrieve file versions to populate the tree.
+
+#if true
 			BackupedFileRepository dao = new BackupedFileRepository();
 			IList<BackupedFile> backupedFiles = dao.GetCompletedByPlanAndPath(pathNode.BackupPlan, pathNode.Path);
-			IEnumerable<IFileVersion> versions = from file in backupedFiles
-									  select new FileVersion { Version = file.Backup.Id.ToString() };
-
+			IEnumerable<IFileVersion> versions =
+				from f in backupedFiles
+				select new FileVersion { Name = f.Backup.FinishedAt.ToString(), Version = f.Backup.Id.ToString() };
+#else
+			// *** DO NOT USE THIS APPROACH BECAUSE IT WILL NOT SHOW A BACKUP VERSION THAT HAS JUST BEEN CREATED! ***
+			// I know it's a problem related to the NHibernate caching mechanism, but I don't want to deal with it right now. Sorry! :-)
+			IList<BackupedFile> backupedFiles = pathNode.PlanFile.Versions;
+			IEnumerable<IFileVersion> versions =
+				from f in backupedFiles
+				where f.TransferStatus == Storage.TransferStatus.COMPLETED
+				select new FileVersion { Name = f.Backup.FinishedAt.ToString(), Version = f.Backup.Id.ToString() };
+#endif
 			foreach (IFileVersion version in versions)
 			{
 				BackupPlanTreeNode versionNode = AddFileVersionNode(pathNode, version);
