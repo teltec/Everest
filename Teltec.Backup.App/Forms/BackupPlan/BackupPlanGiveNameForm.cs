@@ -22,6 +22,13 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			};
 		}
 
+		protected override void OnShown(EventArgs e)
+		{
+			base.OnShown(e);
+
+			textBox1.Focus();
+		}
+
 		protected override bool IsValid()
 		{
 			bool emptyName = String.IsNullOrEmpty(this.Plan.Name);
