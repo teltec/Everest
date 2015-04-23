@@ -1,6 +1,6 @@
-﻿namespace Teltec.Backup.App.Forms.BackupPlan
+﻿namespace Teltec.Backup.App.Forms.RestorePlan
 {
-	partial class BackupPlanViewControl
+	partial class RestorePlanViewControl
 	{
 		/// <summary> 
 		/// Required designer variable.
@@ -39,7 +39,6 @@
 			this.panelActions = new System.Windows.Forms.Panel();
 			this.panelContents = new System.Windows.Forms.Panel();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
-			this.llblRestore = new System.Windows.Forms.LinkLabel();
 			this.groupBox1.SuspendLayout();
 			this.panelTitle.SuspendLayout();
 			this.panelActions.SuspendLayout();
@@ -113,14 +112,14 @@
 			this.lblDuration.TabIndex = 23;
 			this.lblDuration.Text = "{{ Duration }}";
 			// 
-			// lblFilesUploaded
+			// lblFilesTransferred
 			// 
 			this.lblFilesTransferred.AutoSize = true;
 			this.lblFilesTransferred.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblFilesTransferred.Location = new System.Drawing.Point(132, 108);
 			this.lblFilesTransferred.Margin = new System.Windows.Forms.Padding(3);
 			this.lblFilesTransferred.Name = "lblFilesTransferred";
-			this.lblFilesTransferred.Size = new System.Drawing.Size(96, 13);
+			this.lblFilesTransferred.Size = new System.Drawing.Size(104, 13);
 			this.lblFilesTransferred.TabIndex = 22;
 			this.lblFilesTransferred.Text = "{{ FilesTransferred }}";
 			// 
@@ -175,9 +174,9 @@
 			this.label6.Location = new System.Drawing.Point(6, 127);
 			this.label6.Margin = new System.Windows.Forms.Padding(3);
 			this.label6.Name = "label6";
-			this.label6.Size = new System.Drawing.Size(100, 13);
+			this.label6.Size = new System.Drawing.Size(101, 13);
 			this.label6.TabIndex = 17;
-			this.label6.Text = "Backup duration";
+			this.label6.Text = "Restore duration";
 			// 
 			// label5
 			// 
@@ -186,9 +185,9 @@
 			this.label5.Location = new System.Drawing.Point(6, 108);
 			this.label5.Margin = new System.Windows.Forms.Padding(3);
 			this.label5.Name = "label5";
-			this.label5.Size = new System.Drawing.Size(89, 13);
+			this.label5.Size = new System.Drawing.Size(85, 13);
 			this.label5.TabIndex = 16;
-			this.label5.Text = "Files uploaded";
+			this.label5.Text = "Restored files";
 			// 
 			// label4
 			// 
@@ -230,9 +229,9 @@
 			this.label1.Location = new System.Drawing.Point(6, 13);
 			this.label1.Margin = new System.Windows.Forms.Padding(3);
 			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(50, 13);
+			this.label1.Size = new System.Drawing.Size(51, 13);
 			this.label1.TabIndex = 12;
-			this.label1.Text = "Backup";
+			this.label1.Text = "Restore";
 			// 
 			// llblDeletePlan
 			// 
@@ -282,7 +281,6 @@
 			// 
 			// panelActions
 			// 
-			this.panelActions.Controls.Add(this.llblRestore);
 			this.panelActions.Controls.Add(this.llblEditPlan);
 			this.panelActions.Controls.Add(this.llblDeletePlan);
 			this.panelActions.Controls.Add(this.llblRunNow);
@@ -310,24 +308,13 @@
 			this.timer1.Interval = 1000;
 			this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
 			// 
-			// llblRestore
-			// 
-			this.llblRestore.AutoSize = true;
-			this.llblRestore.Location = new System.Drawing.Point(292, 8);
-			this.llblRestore.Name = "llblRestore";
-			this.llblRestore.Size = new System.Drawing.Size(44, 13);
-			this.llblRestore.TabIndex = 16;
-			this.llblRestore.TabStop = true;
-			this.llblRestore.Text = "Restore";
-			this.llblRestore.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.llblRestore_LinkClicked);
-			// 
-			// BackupPlanViewControl
+			// RestorePlanViewControl
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.Controls.Add(this.panelTitle);
 			this.Controls.Add(this.panelContents);
-			this.Name = "BackupPlanViewControl";
+			this.Name = "RestorePlanViewControl";
 			this.Padding = new System.Windows.Forms.Padding(8);
 			this.Size = new System.Drawing.Size(414, 219);
 			this.groupBox1.ResumeLayout(false);
@@ -367,7 +354,6 @@
 		private System.Windows.Forms.Timer timer1;
 		private System.Windows.Forms.Label lblLastSuccessfulRun;
 		private System.Windows.Forms.Label label8;
-		private System.Windows.Forms.LinkLabel llblRestore;
 
 	}
 }

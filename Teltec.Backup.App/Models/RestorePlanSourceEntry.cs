@@ -40,7 +40,7 @@ namespace Teltec.Backup.App.Models
 			set { SetField(ref _PathNode, value); }
 		}
 
-		public const int VersionMaxLen = 10;
+		public const int VersionMaxLen = 10; // Enough to hold a 32-bit number as string.
 		private string _Version;
 		public virtual string Version
 		{

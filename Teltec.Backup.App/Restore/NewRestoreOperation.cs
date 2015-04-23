@@ -52,6 +52,11 @@ namespace Teltec.Backup.App.Restore
 			}, CancellationTokenSource.Token);
 		}
 
+		protected override Task DoVersionFiles(Models.Restore restore, LinkedList<CustomVersionedFile> files)
+		{
+			return Versioner.NewRestore(restore, files);
+		}
+
 		#endregion
 
 		#region Event handlers

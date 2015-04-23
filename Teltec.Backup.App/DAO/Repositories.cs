@@ -312,17 +312,17 @@ namespace Teltec.Backup.App.DAO
 		//	};
 		//}
 
-		public Models.RestorePlanFile GetByPath(string path, bool ignoreCase = false)
-		{
-			Assert.IsNotNullOrEmpty(path);
-			ICriteria crit = Session.CreateCriteria(PersistentType);
-			string pathPropertyName = this.GetPropertyName((Models.RestorePlanFile x) => x.Path);
-			SimpleExpression expr = Restrictions.Eq(pathPropertyName, path);
-			if (ignoreCase)
-				expr = expr.IgnoreCase();
-			crit.Add(expr);
-			return crit.UniqueResult<Models.RestorePlanFile>();
-		}
+		//public Models.RestorePlanFile GetByPath(string path, bool ignoreCase = false)
+		//{
+		//	Assert.IsNotNullOrEmpty(path);
+		//	ICriteria crit = Session.CreateCriteria(PersistentType);
+		//	string pathPropertyName = this.GetPropertyName((Models.RestorePlanFile x) => x.Path);
+		//	SimpleExpression expr = Restrictions.Eq(pathPropertyName, path);
+		//	if (ignoreCase)
+		//		expr = expr.IgnoreCase();
+		//	crit.Add(expr);
+		//	return crit.UniqueResult<Models.RestorePlanFile>();
+		//}
 
 		public IList<Models.RestorePlanFile> GetAllByPlan(Models.RestorePlan plan)
 		{

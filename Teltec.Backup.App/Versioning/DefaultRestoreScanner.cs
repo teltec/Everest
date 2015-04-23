@@ -115,7 +115,8 @@ namespace Teltec.Backup.App.Versioning
 					: null;
 				version = latestFileVersion;
 			}
-			var item = new CustomVersionedFile { Path = node.Path, Version = version };
+			// TODO: To fill the `Size` property below we need to find the `BackupPlanFile` corresponding to the informed version.
+			var item = new CustomVersionedFile { Path = node.Path, Version = version, Size = 0 };
 
 			Result.AddLast(item);
 

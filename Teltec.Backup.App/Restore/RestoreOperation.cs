@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Versioning;
 using Teltec.Storage;
-using Teltec.Storage.Agent;
 using Teltec.Storage.Implementations.S3;
 using Teltec.Storage.Utils;
 
@@ -75,6 +74,19 @@ namespace Teltec.Backup.App.Restore
 			get { Assert.IsNotNull(Restore); return Restore.FinishedAt; }
 		}
 
+		public string Sources
+		{
+			get
+			{
+				Debug.Assert(RestoreAgent != null || Restore != null);
+				const string delimiter = ", ", trail = "...";
+				const int maxLength = 50;
+				return RestoreAgent != null
+					? RestoreAgent.FilesAsDelimitedString(delimiter, maxLength, trail)
+					: Restore.RestorePlan.SelectedSourcesAsDelimitedString(delimiter, maxLength, trail);
+			}
+		}
+
 		#endregion
 
 		#region Constructors
@@ -88,7 +100,7 @@ namespace Teltec.Backup.App.Restore
 
 		#region Transfer
 
-		protected IncrementalFileVersioner Versioner; // IDisposable
+		protected RestoreFileVersioner Versioner; // IDisposable
 		protected RestoreOperationOptions Options;
 		protected CustomRestoreAgent RestoreAgent;
 
@@ -123,7 +135,7 @@ namespace Teltec.Backup.App.Restore
 			RestoreAgent = new CustomRestoreAgent(TransferAgent);
 			RestoreAgent.Results.Monitor = TransferListControl;
 
-			//Versioner = new IncrementalFileVersioner(CancellationTokenSource.Token);
+			Versioner = new RestoreFileVersioner(CancellationTokenSource.Token);
 
 			RegisterResultsEventHandlers(Restore, RestoreAgent.Results);
 
@@ -194,6 +206,7 @@ namespace Teltec.Backup.App.Restore
 		}
 
 		protected abstract Task<LinkedList<CustomVersionedFile>> GetFilesToProcess(Models.Restore restore);
+		protected abstract Task DoVersionFiles(Models.Restore restore, LinkedList<CustomVersionedFile> files);
 
 		protected async void DoRestore(CustomRestoreAgent agent, Models.Restore restore, RestoreOperationOptions options)
 		{
@@ -239,12 +252,53 @@ namespace Teltec.Backup.App.Restore
 				}
 			}
 
-			agent.Files = filesToProcess;
+			//
+			// Versioning
+			//
 
 			{
-				var message = string.Format("Estimate restore size: {0} files, {1}",
-					agent.Files.Count(), FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
-				Info(message);
+				Task versionerTask = DoVersionFiles(restore, filesToProcess);
+
+				{
+					var message = string.Format("Processing files started.");
+					Info(message);
+					//StatusInfo.Update(RestoreStatusLevel.INFO, message);
+					OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.ProcessingFilesStarted, Message = message });
+				}
+
+				try
+				{
+					await versionerTask;
+				}
+				catch (Exception ex)
+				{
+					Debug.WriteLine("Exception Message: " + ex.Message);
+				}
+
+				if (versionerTask.IsFaulted || versionerTask.IsCanceled)
+				{
+					Versioner.Undo();
+					OnFailure(agent, restore, versionerTask.Exception);
+					return;
+				}
+
+				// IMPORTANT: Must happen before any attempt to get `FileVersioner.FilesToBackup`.
+				Versioner.Save();
+
+				agent.Files = Versioner.FilesToTransfer;
+
+				{
+					var message = string.Format("Processing files finished.");
+					Info(message);
+					//StatusInfo.Update(BackupStatusLevel.INFO, message);
+					OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.ProcessingFilesFinished, Message = message });
+				}
+
+				{
+					var message = string.Format("Estimate restore size: {0} files, {1}",
+						agent.Files.Count(), FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
+					Info(message);
+				}
 			}
 
 			//

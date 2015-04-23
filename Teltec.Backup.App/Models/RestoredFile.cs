@@ -37,12 +37,20 @@ namespace Teltec.Backup.App.Models
 			protected set { _File = value; }
 		}
 
-		//private RestoreFileStatus _FileStatus;
-		//public virtual RestoreFileStatus FileStatus
-		//{
-		//	get { return _FileStatus; }
-		//	set { SetField(ref _FileStatus, value); }
-		//}
+		public virtual string Version // Non-persistent property.
+		{
+			get
+			{
+				return BackupedFile != null ? BackupedFile.Backup.Version : null;
+			}
+		}
+
+		private BackupedFile _BackupedFile;
+		public virtual BackupedFile BackupedFile
+		{
+			get { return _BackupedFile; }
+			protected set { _BackupedFile = value; }
+		}
 
 		private TransferStatus _TransferStatus;
 		public virtual TransferStatus TransferStatus

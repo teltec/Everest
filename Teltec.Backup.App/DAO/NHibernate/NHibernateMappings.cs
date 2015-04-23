@@ -550,7 +550,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 	{
 		public RestoredFileMap()
 		{
-			string UNIQUE_KEY_NAME = "uk_restored_file_restore_file";
+			string UNIQUE_KEY_NAME = "uk_restored_files";
 
 			Table("restored_files");
 
@@ -573,12 +573,6 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Cascade.None()
 				.UniqueKey(UNIQUE_KEY_NAME)
 				;
-
-			//Map(p => p.FileStatus)
-			//	.Column("file_status")
-			//	.Not.Nullable()
-			//	.CustomType<GenericEnumMapper<Models.RestoreFileStatus>>()
-			//	;
 
 			Map(p => p.TransferStatus)
 				.Column("transfer_status")

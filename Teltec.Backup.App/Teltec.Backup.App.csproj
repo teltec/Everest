@@ -136,6 +136,18 @@
     </Compile>
     <Compile Include="Controls\EntryTreeNodeData.cs" />
     <Compile Include="Controls\TypeEnum.cs" />
+    <Compile Include="Forms\RestorePlan\RestorePlanViewControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\RestorePlanViewControl.Designer.cs">
+      <DependentUpon>RestorePlanViewControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\RestorePlanListControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\RestorePlanListControl.Designer.cs">
+      <DependentUpon>RestorePlanListControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\RestorePlan\RestorePlanSelectSourceForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -259,6 +271,7 @@
     <Compile Include="Versioning\DefaultRestoreScanner.cs" />
     <Compile Include="Versioning\IncrementalFileVersioner.cs" />
     <Compile Include="Versioning\DefaultPathScanner.cs" />
+    <Compile Include="Versioning\RestoreFileVersioner.cs" />
     <None Include="Migrations\Configuration.cs_" />
     <Compile Include="Models\AmazonS3Account.cs" />
     <Compile Include="Backup\BackupOperation.cs" />
@@ -296,6 +309,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanViewControl.resx">
       <DependentUpon>BackupPlanViewControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RestorePlan\RestorePlanViewControl.resx">
+      <DependentUpon>RestorePlanViewControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RestorePlan\RestorePlanListControl.resx">
+      <DependentUpon>RestorePlanListControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectSourceForm.resx">
       <DependentUpon>RestorePlanSelectSourceForm.cs</DependentUpon>

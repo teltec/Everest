@@ -1,5 +1,6 @@
 ﻿using NLog;
 using System;
+using Teltec.Backup.App.Versioning;
 
 namespace Teltec.Backup.App.Models
 {
@@ -58,7 +59,7 @@ namespace Teltec.Backup.App.Models
 		public virtual BackupPlanPathNode PathNode
 		{
 			get { return _PathNode; }
-			protected set { _PathNode = value; }
+			set { _PathNode = value; }
 		}
 
 		//private BackupFileStatus _LastStatus;
@@ -81,6 +82,13 @@ namespace Teltec.Backup.App.Models
 		//	get { return _UpdatedAt; }
 		//	set { SetField(ref _UpdatedAt, value); }
 		//}
+
+		private CustomVersionedFile _VersionedFile;
+		public virtual CustomVersionedFile VersionedFile // Non-persistent property.
+		{
+			get { return _VersionedFile; }
+			set { SetField(ref _VersionedFile, value); }
+		}
 
 		#region Object overrides
 
@@ -134,6 +142,8 @@ namespace Teltec.Backup.App.Models
 
 		#endregion
 
+		#region Operators
+
 		public static bool operator ==(RestorePlanFile x, RestorePlanFile y)
 		{
 			return Equals(x, y);
@@ -143,5 +153,7 @@ namespace Teltec.Backup.App.Models
 		{
 			return !(x == y);
 		}
+
+		#endregion
 	}
 }

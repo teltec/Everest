@@ -4,23 +4,25 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Backup.App.Backup;
 using Teltec.Backup.App.DAO;
+using Teltec.Backup.App.Forms.RestorePlan;
+using Teltec.Backup.App.Restore;
 using Teltec.Common;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
 using Teltec.Storage.Utils;
 
-namespace Teltec.Backup.App.Forms.BackupPlan
+namespace Teltec.Backup.App.Forms.RestorePlan
 {
-	public partial class BackupPlanViewControl : ObservableUserControl, IDisposable
+	public partial class RestorePlanViewControl : ObservableUserControl, IDisposable
 	{
-		private readonly BackupPlanRepository _daoBackupPlan = new BackupPlanRepository();
-		private readonly BackupRepository _daoBackup = new BackupRepository();
+		private readonly RestorePlanRepository _daoRestorePlan = new RestorePlanRepository();
+		private readonly RestoreRepository _daoRestore = new RestoreRepository();
 
-		BackupOperation RunningBackup = null;
-		TransferResults BackupResults = null;
-		bool MustResumeLastBackup = false;
+		RestoreOperation RunningRestore = null;
+		TransferResults RestoreResults = null;
+		bool MustResumeLastRestore = false;
 
-		public BackupPlanViewControl()
+		public RestorePlanViewControl()
 		{
 			InitializeComponent();
 
@@ -54,31 +56,31 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				lblLastRun.DataBindings.Add(lblLastRunTextBinding);
 				lblLastSuccessfulRun.DataBindings.Add(lblLastSuccessfulRunTextBinding);
 
-				NewBackupOperation(this.Model as Models.BackupPlan);
+				NewRestoreOperation(this.Model as Models.RestorePlan);
 			};
 		}
 
-		private void NewBackupOperation(Models.BackupPlan plan)
+		private void NewRestoreOperation(Models.RestorePlan plan)
 		{
-			Models.Backup latestBackup = _daoBackup.GetLatestByPlan(plan);
-			MustResumeLastBackup = latestBackup != null && latestBackup.NeedsResume();
+			Models.Restore latestRestore = _daoRestore.GetLatestByPlan(plan);
+			MustResumeLastRestore = latestRestore != null && latestRestore.NeedsResume();
 
 			// Create new backup or resume the last unfinished one.
-			BackupOperation obj = MustResumeLastBackup
-				? new ResumeBackupOperation(latestBackup) as BackupOperation
-				: new NewBackupOperation(plan) as BackupOperation;
+			RestoreOperation obj = /* MustResumeLastRestore
+				? new ResumeRestoreOperation(latestRestore) as RestoreOperation
+				: */ new NewRestoreOperation(plan) as RestoreOperation;
 
 			obj.Updated += (sender2, e2) => UpdateStatsInfo(e2.Status);
 			//obj.EventLog = ...
 			//obj.TransferListControl = ...
 
 			// IMPORTANT: Dispose before assigning.
-			if (RunningBackup != null)
-				RunningBackup.Dispose();
+			if (RunningRestore != null)
+				RunningRestore.Dispose();
 
-			RunningBackup = obj;
+			RunningRestore = obj;
 
-			UpdateStatsInfo(BackupOperationStatus.Unknown);
+			UpdateStatsInfo(RestoreOperationStatus.Unknown);
 		}
 
 		#region Binding formatters
@@ -111,7 +113,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void llblEditPlan_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{
-			using (var presenter = new NewBackupPlanPresenter(this.Model as Models.BackupPlan))
+			using (var presenter = new NewRestorePlanPresenter(this.Model as Models.RestorePlan))
 			{
 				presenter.ShowDialog(this.ParentForm);
 			}
@@ -119,18 +121,18 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void llblDeletePlan_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{
-			Models.BackupPlan plan = Model as Models.BackupPlan;
-			_daoBackupPlan.Delete(plan);
+			Models.RestorePlan plan = Model as Models.RestorePlan;
+			_daoRestorePlan.Delete(plan);
 			Model = null;
 			OnDelete(this, e);
 		}
 
 		private void llblRunNow_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{
-			if (RunningBackup.IsRunning)
+			if (RunningRestore.IsRunning)
 			{
 				this.llblRunNow.Enabled = false;
-				RunningBackup.Cancel();
+				RunningRestore.Cancel();
 				this.llblRunNow.Enabled = true;
 			}
 			else
@@ -138,11 +140,11 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				this.llblRunNow.Enabled = false;
 
 				// Create new backup operation for every 'Run' click.
-				NewBackupOperation(this.Model as Models.BackupPlan);
+				NewRestoreOperation(this.Model as Models.RestorePlan);
 
 				// FIXME: Re-enable before starting the backup because it's not an async task.
 				this.llblRunNow.Enabled = true;
-				RunningBackup.Start(out BackupResults);
+				RunningRestore.Start(out RestoreResults);
 			}
 		}
 
@@ -157,7 +159,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void timer1_Tick(object sender, EventArgs e)
 		{
-			UpdateDuration(RunningBackup.IsRunning ? BackupOperationStatus.Updated : BackupOperationStatus.Finished);
+			UpdateDuration(RunningRestore.IsRunning ? RestoreOperationStatus.Updated : RestoreOperationStatus.Finished);
 		}
 
 		static string LBL_RUNNOW_RUNNING = "Cancel";
@@ -173,64 +175,63 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		static string LBL_DURATION_INITIAL = "Not started";
 		static string LBL_FILES_TRANSFER_STOPPED = "Not started";
 
-		private void UpdateStatsInfo(BackupOperationStatus status)
+		private void UpdateStatsInfo(RestoreOperationStatus status)
 		{
-			if (RunningBackup == null)
+			if (RunningRestore == null)
 				return;
 
 			switch (status)
 			{
 				default: throw new ArgumentException("Unhandled status", "status");
-				case BackupOperationStatus.Unknown:
+				case RestoreOperationStatus.Unknown:
 					{
-						this.lblSources.Text = RunningBackup.Sources;
-						this.lblStatus.Text = MustResumeLastBackup ? LBL_STATUS_INTERRUPTED : LBL_STATUS_STOPPED;
-						this.llblRunNow.Text = MustResumeLastBackup ? LBL_RUNNOW_RESUME : LBL_RUNNOW_STOPPED;
+						this.lblSources.Text = RunningRestore.Sources;
+						this.lblStatus.Text = MustResumeLastRestore ? LBL_STATUS_INTERRUPTED : LBL_STATUS_STOPPED;
+						this.llblRunNow.Text = MustResumeLastRestore ? LBL_RUNNOW_RESUME : LBL_RUNNOW_STOPPED;
 						this.lblFilesTransferred.Text = LBL_FILES_TRANSFER_STOPPED;
 						this.lblDuration.Text = LBL_DURATION_INITIAL;
 						break;
 					}
-				case BackupOperationStatus.Started:
-				case BackupOperationStatus.Resumed:
+				case RestoreOperationStatus.Started:
+				case RestoreOperationStatus.Resumed:
 					{
-						Assert.IsNotNull(BackupResults);
-						this.lblSources.Text = RunningBackup.Sources;
+						Assert.IsNotNull(RestoreResults);
+						this.lblSources.Text = RunningRestore.Sources;
 						this.llblRunNow.Text = LBL_RUNNOW_RUNNING;
 						this.lblStatus.Text = LBL_STATUS_STARTED;
 						this.lblDuration.Text = LBL_DURATION_STARTED;
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							BackupResults.Stats.Completed, BackupResults.Stats.Total);
+							RestoreResults.Stats.Completed, RestoreResults.Stats.Total);
 
 						this.llblEditPlan.Enabled = false;
 						this.llblDeletePlan.Enabled = false;
-						this.llblRestore.Enabled = false;
 
 						timer1.Enabled = true;
 						timer1.Start();
 						break;
 					}
-				case BackupOperationStatus.ScanningFilesStarted:
+				case RestoreOperationStatus.ScanningFilesStarted:
 					{
 						this.lblSources.Text = "Scanning files...";
 						break;
 					}
-				case BackupOperationStatus.ScanningFilesFinished:
+				case RestoreOperationStatus.ScanningFilesFinished:
 					{
 						break;
 					}
-				case BackupOperationStatus.ProcessingFilesStarted:
+				case RestoreOperationStatus.ProcessingFilesStarted:
 					{
 						this.lblSources.Text = "Processing files...";
 						break;
 					}
-				case BackupOperationStatus.ProcessingFilesFinished:
+				case RestoreOperationStatus.ProcessingFilesFinished:
 					{
-						this.lblSources.Text = RunningBackup.Sources;
+						this.lblSources.Text = RunningRestore.Sources;
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							BackupResults.Stats.Completed, BackupResults.Stats.Total);
+							RestoreResults.Stats.Completed, RestoreResults.Stats.Total);
 						break;
 					}
-				case BackupOperationStatus.Finished:
+				case RestoreOperationStatus.Finished:
 					{
 						UpdateDuration(status);
 						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
@@ -238,54 +239,52 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 						this.llblEditPlan.Enabled = true;
 						this.llblDeletePlan.Enabled = true;
-						this.llblRestore.Enabled = true;
 
 						timer1.Stop();
 						timer1.Enabled = false;
 
 						// Update timestamps.
-						Models.BackupPlan plan = Model as Models.BackupPlan;
+						Models.RestorePlan plan = Model as Models.RestorePlan;
 						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
-						_daoBackupPlan.Update(plan);
+						_daoRestorePlan.Update(plan);
 						break;
 					}
-				case BackupOperationStatus.Updated:
+				case RestoreOperationStatus.Updated:
 					{
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							BackupResults.Stats.Completed, BackupResults.Stats.Total);
+							RestoreResults.Stats.Completed, RestoreResults.Stats.Total);
 						break;
 					}
-				case BackupOperationStatus.Failed:
-				case BackupOperationStatus.Canceled:
+				case RestoreOperationStatus.Failed:
+				case RestoreOperationStatus.Canceled:
 					{
 						UpdateDuration(status);
 
-						this.lblSources.Text = RunningBackup.Sources;
+						this.lblSources.Text = RunningRestore.Sources;
 						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
-						this.lblStatus.Text = status == BackupOperationStatus.Canceled ? LBL_STATUS_CANCELED : LBL_STATUS_FAILED;
+						this.lblStatus.Text = status == RestoreOperationStatus.Canceled ? LBL_STATUS_CANCELED : LBL_STATUS_FAILED;
 
 						this.llblEditPlan.Enabled = true;
 						this.llblDeletePlan.Enabled = true;
-						this.llblRestore.Enabled = true;
 
 						timer1.Stop();
 						timer1.Enabled = false;
 
 						// Update timestamps.
-						Models.BackupPlan plan = Model as Models.BackupPlan;
+						Models.RestorePlan plan = Model as Models.RestorePlan;
 						plan.LastRunAt = DateTime.UtcNow;
-						_daoBackupPlan.Update(plan);
+						_daoRestorePlan.Update(plan);
 						break;
 					}
 			}
 		}
 
-		private void UpdateDuration(BackupOperationStatus status)
+		private void UpdateDuration(RestoreOperationStatus status)
 		{
-			Assert.IsNotNull(RunningBackup);
+			Assert.IsNotNull(RunningRestore);
 			var duration = !status.IsEnded()
-				? DateTime.UtcNow - RunningBackup.StartedAt.Value
-				: RunningBackup.FinishedAt.Value - RunningBackup.StartedAt.Value;
+				? DateTime.UtcNow - RunningRestore.StartedAt.Value
+				: RunningRestore.FinishedAt.Value - RunningRestore.StartedAt.Value;
 			lblDuration.Text = TimeSpanUtils.GetReadableTimespan(duration);
 		}
 
@@ -376,20 +375,15 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			if (disposing && (components != null))
 			{
 				components.Dispose();
-				if (RunningBackup != null)
+				if (RunningRestore != null)
 				{
-					RunningBackup.Dispose();
-					RunningBackup = null;
+					RunningRestore.Dispose();
+					RunningRestore = null;
 				}
 			}
 			base.Dispose(disposing);
 		}
 
 		#endregion
-
-		private void llblRestore_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-		{
-			throw new NotImplementedException();
-		}
 	}
 }

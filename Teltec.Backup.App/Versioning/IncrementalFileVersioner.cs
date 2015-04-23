@@ -622,7 +622,7 @@ namespace Teltec.Backup.App.Versioning
 			}
 
 			// 3. Insert/Update `Backup` and its `BackupedFile`s into the database, also saving
-			//	  the `BackuPlanFile`s instances that may have been changed by step 1.2. 
+			//	  the `BackupPlanFile`s instances that may have been changed by step 1.2. 
 			using (ITransaction tx = session.BeginTransaction())
 			{
 				daoBackup.Update(tx, Backup);
