@@ -7,6 +7,7 @@ using Teltec.Backup.App.Controls;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Models;
 using Teltec.Common.Extensions;
+using Teltec.Storage.Versioning;
 
 namespace Teltec.Backup.App.Forms.RestorePlan
 {
@@ -46,7 +47,8 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 					Plan = plan.BackupPlan,
 					Type = e.Type.ToTypeEnum(),
 					Path = e.Path,
-					State = Teltec.Common.Controls.CheckState.Checked
+					State = Teltec.Common.Controls.CheckState.Checked,
+					InfoObject = new EntryInfo(e.Type.ToTypeEnum(), e.PathNode.Name, e.Path, new FileVersion { Version = e.Version })
 				}
 			);
 		}

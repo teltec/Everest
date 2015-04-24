@@ -36,5 +36,17 @@ namespace Teltec.Backup.App.Models
 				case PathNode.TypeEnum.FILE: return EntryType.FILE;
 			}
 		}
+
+		public static EntryType ToEntryType(this TypeEnum value)
+		{
+			switch (value)
+			{
+				default: throw new ArgumentException(string.Format("Unhandled {0} value", typeof(TypeEnum).FullName), "value");
+				case TypeEnum.DRIVE: return EntryType.DRIVE;
+				case TypeEnum.FOLDER: return EntryType.FOLDER;
+				case TypeEnum.FILE: return EntryType.FILE;
+				case TypeEnum.FILE_VERSION: return EntryType.FILE_VERSION;
+			}
+		}
 	}
 }

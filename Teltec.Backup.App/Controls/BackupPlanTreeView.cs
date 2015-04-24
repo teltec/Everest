@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Teltec.Backup.App.DAO;
@@ -57,14 +58,6 @@ namespace Teltec.Backup.App.Controls
 			ResumeLayout(false);
 		}
 
-		private IFileVersion BuildVersion(Models.BackupPlan plan)
-		{
-			if (!plan.Id.HasValue)
-				return null;
-			IFileVersion obj = new FileVersion();
-			obj.Version = plan.Id.Value.ToString();
-			return obj;
-		}
 
 		public void PopulateDrives()
 		{
@@ -147,7 +140,8 @@ namespace Teltec.Backup.App.Controls
 					return;
 				case CheckState.Checked:
 					// If it's checked, add it and ignore its child nodes.
-					// This means the entire folder is checked - regardless of what it contains.
+					// This means the entire folder was checked - regardless of what it contains - or
+					// the file itself was checked, and not a specific version.
 					if (CheckedDataSource != null)
 					{
 						string path = node.Data.Path;
@@ -213,9 +207,17 @@ namespace Teltec.Backup.App.Controls
 			set { _CheckedDataSource = ExpandCheckedDataSource(value); PopulateTreeView(); }
 		}
 
+		private string BuildNodeKey(BackupPlanTreeNodeData data, IFileVersion version)
+		{
+			switch (data.Type)
+			{
+				default: return data.Path;
+				case TypeEnum.FILE_VERSION: return data.Path + (version == null ? string.Empty : "#" + version.Version);
+			}
+		}
+
 		private void ExpandCheckedDataSourceAddParents(Dictionary<string, BackupPlanTreeNodeData> expandedDict, string path)
 		{
-			IFileVersion version = BuildVersion(Plan);
 			PathNodes nodes = new PathNodes(path);
 			PathNode nodeParent = nodes.ParentNode;
 
@@ -224,23 +226,24 @@ namespace Teltec.Backup.App.Controls
 				EntryTreeNodeData newTag = null;
 				switch (nodeParent.Type)
 				{
+					default: throw new ArgumentException("Unhandled TypeEnum", "nodeParent.Type");
 					case PathNode.TypeEnum.FILE:
 						{
-							EntryInfo info = new EntryInfo(TypeEnum.FILE, nodeParent.Name, nodeParent.Path, version);
+							EntryInfo info = new EntryInfo(TypeEnum.FILE, nodeParent.Name, nodeParent.Path);
 							newTag = new BackupPlanTreeNodeData(Plan, info);
 							newTag.State = CheckState.Mixed;
 							break;
 						}
 					case PathNode.TypeEnum.FOLDER:
 						{
-							EntryInfo info = new EntryInfo(TypeEnum.FOLDER, nodeParent.Name, nodeParent.Path, version);
+							EntryInfo info = new EntryInfo(TypeEnum.FOLDER, nodeParent.Name, nodeParent.Path);
 							newTag = new BackupPlanTreeNodeData(Plan, info);
 							newTag.State = CheckState.Mixed;
 							break;
 						}
 					case PathNode.TypeEnum.DRIVE:
 						{
-							EntryInfo info = new EntryInfo(TypeEnum.DRIVE, nodeParent.Name, nodeParent.Path, version);
+							EntryInfo info = new EntryInfo(TypeEnum.DRIVE, nodeParent.Name, nodeParent.Path);
 							newTag = new BackupPlanTreeNodeData(Plan, info);
 							newTag.State = CheckState.Mixed;
 							break;
@@ -257,13 +260,26 @@ namespace Teltec.Backup.App.Controls
 			}
 		}
 
+		private void ExpandCheckedDataSourceFileVersionNode(Dictionary<string, BackupPlanTreeNodeData> expandedDict, BackupPlanTreeNodeData nodeData)
+		{
+			Assert.AreEqual(TypeEnum.FILE_VERSION, nodeData.Type);
+
+			nodeData.State = CheckState.Checked;
+
+			EntryInfo info = new EntryInfo(TypeEnum.FILE, nodeData.Name, nodeData.Path, null);
+			EntryTreeNodeData newTag = new BackupPlanTreeNodeData(Plan, info);
+			newTag.State = CheckState.Mixed;
+
+			string nodeKey = BuildNodeKey(nodeData, info.Version);
+			if (!expandedDict.ContainsKey(nodeKey))
+				expandedDict.Add(nodeKey, newTag as BackupPlanTreeNodeData);
+		}
+
 		private Dictionary<string, BackupPlanTreeNodeData> ExpandCheckedDataSource(
 			Dictionary<string, BackupPlanTreeNodeData> dict)
 		{
 			if (dict == null)
 				return null;
-
-			IFileVersion version = BuildVersion(Plan);
 
 			Dictionary<string, BackupPlanTreeNodeData> expandedDict =
 				new Dictionary<string, BackupPlanTreeNodeData>(dict.Count * 2);
@@ -285,12 +301,37 @@ namespace Teltec.Backup.App.Controls
 						hasParents = false;
 						break;
 				}
+
+				
 				if (obj.Value.InfoObject == null)
-					obj.Value.InfoObject = new EntryInfo(obj.Value.Type, obj.Value.Name, obj.Value.Path, version);
-				// TODO: fill obj.Value.UserObject?
-				expandedDict.Add(obj.Key, obj.Value);
-				if (hasParents)
-					ExpandCheckedDataSourceAddParents(expandedDict, obj.Value.Path);
+					obj.Value.InfoObject = new EntryInfo(obj.Value.Type, obj.Value.Name, obj.Value.Path, obj.Value.Version);
+
+				string nodeKey = BuildNodeKey(obj.Value, obj.Value.Version);
+				if (!expandedDict.ContainsKey(nodeKey))
+				{
+					expandedDict.Add(nodeKey, obj.Value);
+
+					if (hasParents)
+					{
+						if (obj.Value.Type == TypeEnum.FILE_VERSION)
+							ExpandCheckedDataSourceFileVersionNode(expandedDict, obj.Value);
+						ExpandCheckedDataSourceAddParents(expandedDict, obj.Value.Path);
+					}
+				}
+			}
+
+			// Load all respective `BackupPlanPathNode`s.
+			foreach (var obj in expandedDict)
+			{
+				BackupPlanTreeNodeData nodeData = obj.Value;
+				if (nodeData.UserObject == null)
+				{
+					Models.EntryType nodeType = Models.EntryTypeExtensions.ToEntryType(nodeData.Type);
+					if (nodeData.Type == TypeEnum.FILE_VERSION)
+						nodeType = Models.EntryType.FILE;
+					BackupPlanPathNodeRepository daoPathNode = new BackupPlanPathNodeRepository();
+					nodeData.UserObject = daoPathNode.GetByPlanAndTypeAndPath(Plan, nodeType, nodeData.Path);
+				}
 			}
 
 			return expandedDict;
@@ -330,11 +371,14 @@ namespace Teltec.Backup.App.Controls
 					{
 						string path = node.Data.Path;
 						BackupPlanTreeNodeData match;
-						bool found = CheckedDataSource.TryGetValue(path, out match);
-						if (found && match.Type == node.Data.Type)
+						bool found = CheckedDataSource.TryGetValue(BuildNodeKey(node.Data, node.Data.Version), out match);
+						if (found)
 						{
-							node.Data = match;
-							SetStateImage(node, (int)match.State);
+							//node.Data = match;
+							if (match.Type == node.Data.Type)
+							{
+								SetStateImage(node, (int)match.State);
+							}
 						}
 						break;
 					}
@@ -350,9 +394,15 @@ namespace Teltec.Backup.App.Controls
 
 			if (node.Data.Type != TypeEnum.LOADING)
 			{
+#if false
 				string path = node.Data.Path;
 				if (CheckedDataSource.ContainsKey(path))
 					CheckedDataSource.Remove(path);
+#else
+				string nodeKey = BuildNodeKey(node.Data, node.Data.Version);
+				if (CheckedDataSource.ContainsKey(nodeKey))
+					CheckedDataSource.Remove(nodeKey);
+#endif
 			}
 		}
 
