@@ -44,10 +44,10 @@ namespace Teltec.Backup.App.Forms
 			{
 				presenter.ShowDialog(this);
 			}
-			//restorePlanListControl1.RefreshPlans();
+			restorePlanListControl1.RefreshPlans();
 			// Focusing is needed in some cases to avoid the mouse scrolling to stops working.
-			// One case I confirmed is after going through all the `NewBackupPlanPresenter` process.
-			//restorePlanListControl1.Focus();
+			// One case I confirmed is after going through all the `NewRestorePlanPresenter` process.
+			restorePlanListControl1.Focus();
 		}
 
 		private void ChangedToTab(int tabPageIndex)

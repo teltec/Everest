@@ -1,5 +1,6 @@
 ﻿using NLog;
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using Teltec.Backup.App.DAO;
 
@@ -21,14 +22,53 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			this.layoutPanel.SetFlowBreak(e.Control, true);
 		}
 
+		public bool ControlsAlreadyContainControlForPlan(Models.BackupPlan plan)
+		{
+			foreach (Control ctrl in this.layoutPanel.Controls)
+			{
+				if (!(ctrl is BackupPlanViewControl))
+					continue;
+
+				BackupPlanViewControl obj = ctrl as BackupPlanViewControl;
+				Models.BackupPlan objPlan = obj.Model as Models.BackupPlan;
+
+				if (objPlan.Id.Equals(plan.Id))
+					return true;
+			}
+			return false;
+		}
+
+		public void RemoveAllExceptRunning()
+		{
+			List<Control> toBeRemoved = new List<Control>();
+
+			// Remove all that are not running.
+			foreach (Control ctrl in this.layoutPanel.Controls)
+			{
+				if (!(ctrl is BackupPlanViewControl))
+					continue;
+
+				BackupPlanViewControl obj = ctrl as BackupPlanViewControl;
+				if (!obj.IsRunning)
+					toBeRemoved.Add(ctrl);
+			}
+
+			// Remove them.
+			foreach (Control ctrl in toBeRemoved)
+				this.layoutPanel.Controls.Remove(ctrl);
+		}
+
 		public void LoadPlans()
 		{
-			this.layoutPanel.Controls.Clear();
+			RemoveAllExceptRunning();
 
 			var plans = dao.GetAll();
 
 			foreach (var plan in plans)
 			{
+				if (ControlsAlreadyContainControlForPlan(plan))
+					continue;
+
 				BackupPlanViewControl viewControl = new BackupPlanViewControl();
 				viewControl.Model = plan;
 				viewControl.Deleted += (object sender, EventArgs e) =>
