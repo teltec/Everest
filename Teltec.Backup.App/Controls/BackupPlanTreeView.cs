@@ -301,7 +301,6 @@ namespace Teltec.Backup.App.Controls
 						hasParents = false;
 						break;
 				}
-
 				
 				if (obj.Value.InfoObject == null)
 					obj.Value.InfoObject = new EntryInfo(obj.Value.Type, obj.Value.Name, obj.Value.Path, obj.Value.Version);

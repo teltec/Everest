@@ -260,9 +260,18 @@ namespace Teltec.Backup.App.Controls
 				}
 				if (obj.Value.InfoObject == null)
 					obj.Value.InfoObject = new EntryInfo(obj.Value.Type, obj.Value.Name, obj.Value.Path);
-				expandedDict.Add(obj.Key, obj.Value);
-				if (hasParents)
-					ExpandCheckedDataSourceAddParents(expandedDict, obj.Value.Path);
+
+				string nodeKey = obj.Key;
+				if (!expandedDict.ContainsKey(nodeKey))
+				{
+					expandedDict.Add(nodeKey, obj.Value);
+
+					if (hasParents)
+					{
+						if (hasParents)
+							ExpandCheckedDataSourceAddParents(expandedDict, obj.Value.Path);
+					}
+				}
 			}
 
 			return expandedDict;

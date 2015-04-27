@@ -140,7 +140,7 @@ namespace Teltec.Backup.App.Controls
 			FileInfo[] subFiles = dir.GetFiles();
 			foreach (DirectoryInfo subDir in subDirs)
 			{
-				EntryInfo subInfo = new EntryInfo(TypeEnum.FOLDER, subDir.Name, subDir.FullName);
+				EntryInfo subInfo = new EntryInfo(TypeEnum.FOLDER, subDir.Name, subDir.FullName + System.IO.Path.DirectorySeparatorChar);
 				FileSystemTreeNode subFolderNode = AddFolderNode(subInfo);
 			}
 			foreach (var file in subFiles)
