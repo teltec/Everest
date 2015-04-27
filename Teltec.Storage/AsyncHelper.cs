@@ -6,6 +6,18 @@ namespace Teltec.Storage
 {
 	public static class AsyncHelper
 	{
+		public static TaskScheduler _TaskSchedulerInstance;
+		public static TaskScheduler TaskSchedulerInstance
+		{
+			get
+			{
+				int threadCount = Environment.ProcessorCount > 4 ? Environment.ProcessorCount : 4;
+				if (_TaskSchedulerInstance == null)
+					_TaskSchedulerInstance = new System.Threading.Tasks.Schedulers.QueuedTaskScheduler(threadCount);
+				return _TaskSchedulerInstance;
+			}
+		}
+
 		public static Task ExecuteOnBackround(Action action)
 		{
 			return ExecuteOnBackround(action, CancellationToken.None);
@@ -17,7 +29,7 @@ namespace Teltec.Storage
 			//			  reports `IsCompleted` rather than `IsFaulted` when an exception
 			//			  is thrown from inside the task.
 			TaskCreationOptions options = TaskCreationOptions.DenyChildAttach;
-			TaskScheduler scheduler = new System.Threading.Tasks.Schedulers.QueuedTaskScheduler(Environment.ProcessorCount);
+			TaskScheduler scheduler = TaskSchedulerInstance;
 			//TaskScheduler scheduler = TaskScheduler.Default;
 			return Task.Factory.StartNew(action, token, options, scheduler);
 			//return Task.Run(action, token);
@@ -26,7 +38,7 @@ namespace Teltec.Storage
 		public static Task<T> ExecuteOnBackround<T>(Func<T> action, CancellationToken token)
 		{
 			TaskCreationOptions options = TaskCreationOptions.DenyChildAttach;
-			TaskScheduler scheduler = new System.Threading.Tasks.Schedulers.QueuedTaskScheduler(Environment.ProcessorCount);
+			TaskScheduler scheduler = TaskSchedulerInstance;
 			//TaskScheduler scheduler = TaskScheduler.Default;
 			return Task.Factory.StartNew<T>(action, token, options, scheduler);
 		}
