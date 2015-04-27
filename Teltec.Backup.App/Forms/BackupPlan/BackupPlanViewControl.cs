@@ -20,6 +20,11 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		TransferResults BackupResults = null;
 		bool MustResumeLastBackup = false;
 
+		public bool IsRunning
+		{
+			get { return RunningBackup != null ? RunningBackup.IsRunning : false; }
+		}
+
 		public BackupPlanViewControl()
 		{
 			InitializeComponent();

@@ -22,6 +22,11 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 		TransferResults RestoreResults = null;
 		bool MustResumeLastRestore = false;
 
+		public bool IsRunning
+		{
+			get { return RunningRestore != null ? RunningRestore.IsRunning : false; }
+		}
+
 		public RestorePlanViewControl()
 		{
 			InitializeComponent();
