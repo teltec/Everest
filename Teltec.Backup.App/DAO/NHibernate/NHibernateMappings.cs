@@ -17,6 +17,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Not.Nullable()
 				.ReadOnly().Access.None()
 				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>()
+				.Index("idx_type")
 				;
 
 			DiscriminateSubClassesOnColumn("type");
@@ -82,6 +83,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("storage_account_type")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>()
+				.Index("idx_storage_account_type")
 				;
 
 			//Map(p => p.StorageAccountId)
@@ -148,12 +150,15 @@ namespace Teltec.Backup.App.DAO.NHibernate
  				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.None()
+				.Index("idx_backup_plan_id")
+				.Index("idx_backup_plan_id_type")
 				;
 
 			Map(p => p.Type)
 				.Column("type")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<Models.EntryType>>()
+				.Index("idx_backup_plan_id_type")
 				;
 
 			Map(p => p.Path)
@@ -178,6 +183,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.None()
+				.Index("idx_backup_plan_id")
 				;
 
 			Map(p => p.StartedAt)
@@ -210,7 +216,8 @@ namespace Teltec.Backup.App.DAO.NHibernate
 	{
 		public BackupedFileMap()
 		{
-			string UNIQUE_KEY_NAME = "uk_backuped_file_backup_file";
+			string UNIQUE_KEY_NAME = "uk_backuped_file_backup_file"; // (backup_id, backup_plan_file_Id)
+			string INDEX_BACKUP_XFERSTATUS_FILE = "idx_backup_xferstatus_file";
 
 			Table("backuped_files");
 
@@ -223,6 +230,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				//.Not.Nullable()
 				.Cascade.None()
 				.UniqueKey(UNIQUE_KEY_NAME)
+				.Index(INDEX_BACKUP_XFERSTATUS_FILE)
 				;
 
 			References(fk => fk.File)
@@ -232,6 +240,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				//.Not.Nullable()
 				.Cascade.None()
 				.UniqueKey(UNIQUE_KEY_NAME)
+				.Index(INDEX_BACKUP_XFERSTATUS_FILE)
 				;
 
 			Map(p => p.FileSize)
@@ -248,6 +257,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("transfer_status")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<TransferStatus>>()
+				.Index(INDEX_BACKUP_XFERSTATUS_FILE)
 				;
 
 			Map(p => p.UpdatedAt)
@@ -264,7 +274,8 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		public BackupPlanFileMap()
 		{
 			string UNIQUE_KEY_PLAN_PATH = "uk_backup_plan_path";
-			string UNIQUE_KEY_PATHNODE = "uk_backup_plan_path_node";
+			string UNIQUE_KEY_PLAN_PATHNODE = "uk_backup_plan_path_node";
+			string INDEX_PATHNODE = "idx_path_node";
 
 			Table("backup_plan_files");
 
@@ -277,6 +288,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				//.Not.Nullable()
 				.Cascade.None()
 				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
+				.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
 				;
 
 			Map(p => p.Path)
@@ -329,7 +341,8 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.All()
-				.UniqueKey(UNIQUE_KEY_PATHNODE)
+				.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
+				.Index(INDEX_PATHNODE)
 				;
 
 			HasMany(p => p.Versions)
@@ -346,6 +359,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		{
 			string UNIQUE_KEY_PLAN_PARENT_NAME = "uk_backup_plan_path_node"; // (backup_plan_id, parent_id, name)
 			string UNIQUE_KEY_PLAN_PATH = "uk_backup_plan_path_node_path"; // (backup_plan_id, path)
+			string INDEX_BACKUP_PLAN_TYPE_NAME = "idx_backup_plan_type_name"; // (backup_plan_id, type, name)
 
 			Table("backup_plan_path_nodes");
 
@@ -358,6 +372,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				//.Not.Nullable()
 				.Cascade.None()
 				.UniqueKey(UNIQUE_KEY_PLAN_PARENT_NAME)
+				.Index(INDEX_BACKUP_PLAN_TYPE_NAME)
 				;
 
 			References(fk => fk.Parent)
@@ -370,6 +385,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("type")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<Models.EntryType>>()
+				.Index(INDEX_BACKUP_PLAN_TYPE_NAME)
 				;
 
 			Map(p => p.Name)
@@ -377,6 +393,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Not.Nullable()
 				.Length(Models.BackupPlanPathNode.NameMaxLen)
 				.UniqueKey(UNIQUE_KEY_PLAN_PARENT_NAME)
+				.Index(INDEX_BACKUP_PLAN_TYPE_NAME)
 				;
 
 			Map(p => p.Path)
@@ -555,6 +572,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		public RestoredFileMap()
 		{
 			string UNIQUE_KEY_NAME = "uk_restored_files";
+			string INDEX_RESTORE_XFERSTATUS_FILE = "idx_restore_xferstatus_file";
 
 			Table("restored_files");
 
@@ -567,6 +585,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				//.Not.Nullable()
 				.Cascade.None()
 				.UniqueKey(UNIQUE_KEY_NAME)
+				.Index(INDEX_RESTORE_XFERSTATUS_FILE)
 				;
 
 			References(fk => fk.File)
@@ -576,12 +595,14 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				//.Not.Nullable()
 				.Cascade.None()
 				.UniqueKey(UNIQUE_KEY_NAME)
+				.Index(INDEX_RESTORE_XFERSTATUS_FILE)
 				;
 
 			Map(p => p.TransferStatus)
 				.Column("transfer_status")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<TransferStatus>>()
+				.Index(INDEX_RESTORE_XFERSTATUS_FILE)
 				;
 
 			Map(p => p.UpdatedAt)
@@ -598,6 +619,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		public RestorePlanFileMap()
 		{
 			string UNIQUE_KEY_NAME = "uk_restore_plan_path";
+			string INDEX_PATHNODE = "idx_path_node";
 
 			Table("restore_plan_files");
 
@@ -624,6 +646,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Not.Nullable()
 				//.LazyLoad(Laziness.Proxy)
 				.Cascade.None()
+				.Index(INDEX_PATHNODE)
 				;
 
 			//Map(p => p.LastSize)
