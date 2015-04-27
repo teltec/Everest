@@ -37,6 +37,13 @@ namespace Teltec.Backup.App.Models
 			protected set { _File = value; }
 		}
 
+		private long _FileSize;
+		public virtual long FileSize
+		{
+			get { return _FileSize; }
+			set { SetField(ref _FileSize, value); }
+		}
+
 		private BackupFileStatus _FileStatus;
 		public virtual BackupFileStatus FileStatus
 		{

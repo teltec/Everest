@@ -557,6 +557,7 @@ namespace Teltec.Backup.App.Versioning
 						// Create `BackupedFile`.
 						backupedFile = new BackupedFile(Backup, entry);
 					}
+					backupedFile.FileSize = entry.LastSize;
 					backupedFile.FileStatus = entry.LastStatus;
 					switch (entry.LastStatus)
 					{

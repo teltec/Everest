@@ -234,6 +234,10 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.UniqueKey(UNIQUE_KEY_NAME)
 				;
 
+			Map(p => p.FileSize)
+				.Column("file_size")
+				;
+
 			Map(p => p.FileStatus)
 				.Column("file_status")
 				.Not.Nullable()

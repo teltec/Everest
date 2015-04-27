@@ -106,6 +106,8 @@ namespace Teltec.Backup.App.Versioning
 		{
 			CancellationToken.ThrowIfCancellationRequested();
 
+			long size = 0;
+
 			// If `version` is not not informed, then find the file's latest version.
 			if (version == null)
 			{
@@ -114,9 +116,15 @@ namespace Teltec.Backup.App.Versioning
 					? new FileVersion { Name = f.Backup.VersionName, Version = f.Backup.Version }
 					: null;
 				version = latestFileVersion;
+				size = f.FileSize;
 			}
-			// TODO: To fill the `Size` property below we need to find the `BackupPlanFile` corresponding to the informed version.
-			var item = new CustomVersionedFile { Path = node.Path, Version = version, Size = 0 };
+			else
+			{
+				BackupedFile f = node.PlanFile.Versions.First(p => p.Backup.Version.Equals(version.Version));
+				size = f.FileSize;
+			}
+
+			var item = new CustomVersionedFile { Path = node.Path, Version = version, Size = size };
 
 			Result.AddLast(item);
 
