@@ -14,7 +14,9 @@ namespace Teltec.Common
 {
 	public class ObservableUserControl : UserControl, IObservableObject
 	{
+#pragma warning disable 0067
 		public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning restore 0067
 		protected ObservableObject _ObservableObj = new ObservableObject();
 
 		public void NotifyPropertyChanged(string propertyName)

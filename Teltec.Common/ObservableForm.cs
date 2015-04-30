@@ -7,9 +7,11 @@ using System.Windows.Forms;
 namespace Teltec.Common
 {
     public class ObservableForm : Form, IObservableObject
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected ObservableObject _ObservableObj = new ObservableObject();
+	{
+#pragma warning disable 0067
+		public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning restore 0067
+		protected ObservableObject _ObservableObj = new ObservableObject();
 
         public void NotifyPropertyChanged(string propertyName)
         {
