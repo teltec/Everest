@@ -68,8 +68,10 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		public static bool IsTransient(ISession session, object obj)
 		{
 			ISessionFactoryImplementor sessionFactoryImpl = session.SessionFactory as ISessionFactoryImplementor;
+			// Here `obj` may be an instance of an NHibernate proxy, so we cannot simply use
+			// `obj.GetType().FullName`, we need to get the real underlying type.
 			var persister = new SessionFactoryHelper(sessionFactoryImpl)
-				.RequireClassPersister(obj.GetType().FullName);
+				.RequireClassPersister(NHibernateUtil.GetClass(obj).FullName);
 			bool? yes = persister.IsTransient(obj, (ISessionImplementor)session);
 			return yes ?? default(bool);
 		}
@@ -115,6 +117,8 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			fluentConfig.Mappings(m => m.FluentMappings
 				.Add<StorageAccountMap>()
 				.Add<AmazonS3AccountMap>()
+				.Add<PlanScheduleDayOfWeekMap>()
+				.Add<PlanScheduleMap>()
 				.Add<BackupPlanMap>()
 				.Add<BackupPlanSourceEntryMap>()
 				.Add<BackupMap>()

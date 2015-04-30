@@ -2,6 +2,7 @@
 using System;
 using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Models;
+using Teltec.Common.Extensions;
 using Teltec.Forms.Wizard;
 
 namespace Teltec.Backup.App.Forms.BackupPlan
@@ -53,6 +54,39 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			foreach (BackupPlanSourceEntry entry in plan.SelectedSources)
 				Console.WriteLine("SelectedSource => #{0}, {1}, {2}", entry.Id, entry.Type.ToString(), entry.Path);
 			Console.WriteLine("ScheduleType = {0}", plan.ScheduleType.ToString());
+			
+			PlanSchedule schedule = plan.Schedule;
+			switch (plan.ScheduleType)
+			{
+				case Models.BackupPlan.EScheduleType.RunManually:
+					break;
+				case Models.BackupPlan.EScheduleType.Specific:
+					Console.WriteLine("OccursSpecificallyAt = {0}", schedule.OccursSpecificallyAt.Value);
+					break;
+				case Models.BackupPlan.EScheduleType.Recurring:
+					Console.WriteLine("RecurrencyFrequencyType      = {0}", schedule.RecurrencyFrequencyType.Value);
+					switch (schedule.RecurrencyFrequencyType.Value)
+					{
+						case FrequencyTypeEnum.DAILY:
+							break;
+						case FrequencyTypeEnum.WEEKLY:
+							Console.WriteLine("OccursAtDaysOfWeek           = {0}", schedule.OccursAtDaysOfWeek.ToReadableString());
+							break;
+						case FrequencyTypeEnum.MONTHLY:
+							Console.WriteLine("MonthlyOccurrenceType        = {0}", schedule.MonthlyOccurrenceType.Value);
+							Console.WriteLine("OccursMonthlyAtDayOfWeek     = {0}", schedule.OccursMonthlyAtDayOfWeek.Value);
+							break;
+						case FrequencyTypeEnum.DAY_OF_MONTH:
+							Console.WriteLine("OccursAtDayOfMonth           = {0}", schedule.OccursAtDayOfMonth.Value);
+							break;
+					}
+					Console.WriteLine("RecurrencySpecificallyAtTime = {0}", schedule.RecurrencySpecificallyAtTime.Value);
+					Console.WriteLine("RecurrencyTimeInterval       = {0}", schedule.RecurrencyTimeInterval.Value);
+					Console.WriteLine("RecurrencyTimeUnit           = {0}", schedule.RecurrencyTimeUnit.Value);
+					Console.WriteLine("RecurrencyWindowStartsAtTime = {0}", schedule.RecurrencyWindowStartsAtTime.Value);
+					Console.WriteLine("RecurrencyWindowEndsAtTime   = {0}", schedule.RecurrencyWindowEndsAtTime.Value);
+					break;
+			}
 
 			//try
 			//{

@@ -24,6 +24,22 @@ namespace Teltec.Backup.App.DAO
 
 	#endregion
 
+	#region Schedule
+
+	public class PlanScheduleRepository : BaseRepository<Models.PlanSchedule, Int32?>
+	{
+		public PlanScheduleRepository()
+		{
+		}
+
+		public PlanScheduleRepository(ISession session)
+			: base(session)
+		{
+		}
+	}
+
+	#endregion
+
 	#region Backup
 
 	public class BackupPlanRepository : BaseRepository<Models.BackupPlan, Int32?>

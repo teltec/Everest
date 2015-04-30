@@ -1,4 +1,6 @@
 ﻿using FluentNHibernate.Mapping;
+using NHibernate.Type;
+using System;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
 
@@ -62,6 +64,94 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		}
 	}
 
+	#region Plan Schedule
+
+	class PlanScheduleDayOfWeekMap : ClassMap<Models.PlanScheduleDayOfWeek>
+	{
+		public PlanScheduleDayOfWeekMap()
+		{
+			Table("plan_schedule_days_of_week");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_plan_schedule_days_of_week").UnsavedValue(null);
+
+			References(fk => fk.Schedule)
+				.Column("plan_schedule_id")
+				.Nullable()
+				//.LazyLoad(Laziness.Proxy)
+				.Cascade.None()
+				;
+
+			Map(p => p.DayOfWeek)
+				.Column("day_of_week")
+				.CustomType<GenericEnumMapper<DayOfWeek>>()
+				;
+		}
+	}
+
+	class PlanScheduleMap : ClassMap<Models.PlanSchedule>
+	{
+		public PlanScheduleMap()
+		{
+			Table("plan_schedules");
+
+			Id(p => p.Id, "id").GeneratedBy.Native("seq_plan_schedules").UnsavedValue(null);
+
+			Map(p => p.OccursSpecificallyAt)
+				.Column("occurs_specifically_at")
+				;
+
+			Map(p => p.RecurrencyFrequencyType)
+				.Column("recurrency_frequency_type")
+				.CustomType<GenericEnumMapper<Models.FrequencyTypeEnum>>()
+				;
+
+			Map(p => p.RecurrencySpecificallyAtTime)
+				.Column("recurrency_specifically_at_time")
+				.CustomType<TimeAsTimeSpanType>()
+				;
+
+			Map(p => p.RecurrencyTimeInterval)
+				.Column("recurrency_time_interval")
+				;
+
+			Map(p => p.RecurrencyTimeUnit)
+				.Column("recurrency_time_unit")
+				.CustomType<GenericEnumMapper<Models.TimeUnitEnum>>()
+				;
+
+			Map(p => p.RecurrencyWindowStartsAtTime)
+				.Column("recurrency_window_starts_at")
+				.CustomType<TimeAsTimeSpanType>()
+				;
+
+			Map(p => p.RecurrencyWindowEndsAtTime)
+				.Column("recurrency_window_ends_at")
+				.CustomType<TimeAsTimeSpanType>()
+				;
+
+			HasMany(p => p.OccursAtDaysOfWeek)
+				.KeyColumn("plan_schedule_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag()
+				;
+
+			Map(p => p.MonthlyOccurrenceType)
+				.Column("monthly_occurence_type")
+				.CustomType<GenericEnumMapper<Models.MonthlyOccurrenceTypeEnum>>()
+				;
+
+			Map(p => p.OccursMonthlyAtDayOfWeek)
+				.Column("monthly_at_day_of_week")
+				;
+
+			Map(p => p.OccursAtDayOfMonth)
+				.Column("occurs_at_day_of_month")
+				;
+		}
+	}
+
+	#endregion
+
 	#region Backup
 
 	class BackupPlanMap : ClassMap<Models.BackupPlan>
@@ -120,6 +210,13 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("schedule_type")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<Models.BackupPlan.EScheduleType>>()
+				;
+
+			References(fk => fk.Schedule)
+				.Column("plan_schedule_id")
+				.Nullable()
+				//.LazyLoad(Laziness.Proxy)
+				.Cascade.All()
 				;
 
 			Map(p => p.LastRunAt)
@@ -464,6 +561,13 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				.Column("schedule_type")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<Models.RestorePlan.EScheduleType>>()
+				;
+
+			References(fk => fk.Schedule)
+				.Column("plan_schedule_id")
+				.Nullable()
+				//.LazyLoad(Laziness.Proxy)
+				.Cascade.All()
 				;
 
 			Map(p => p.LastRunAt)
