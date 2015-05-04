@@ -110,15 +110,8 @@ namespace Teltec.Backup.App.Models
 
 		#region Schedule
 
-		public enum EScheduleType
-		{
-			RunManually = 0,
-			Specific = 1,
-			Recurring = 2,
-		}
-
-		private EScheduleType _ScheduleType;
-		public virtual EScheduleType ScheduleType
+		private ScheduleTypeEnum _ScheduleType;
+		public virtual ScheduleTypeEnum ScheduleType
 		{
 			get { return _ScheduleType; }
 			set { SetField(ref _ScheduleType, value); }
@@ -126,17 +119,17 @@ namespace Teltec.Backup.App.Models
 
 		public virtual bool IsRunManually
 		{
-			get { return ScheduleType == EScheduleType.RunManually; }
+			get { return ScheduleType == ScheduleTypeEnum.RUN_MANUALLY; }
 		}
 
 		public virtual bool IsSpecific
 		{
-			get { return ScheduleType == EScheduleType.Specific; }
+			get { return ScheduleType == ScheduleTypeEnum.SPECIFIC; }
 		}
 
 		public virtual bool IsRecurring
 		{
-			get { return ScheduleType == EScheduleType.Recurring; }
+			get { return ScheduleType == ScheduleTypeEnum.RECURRING; }
 		}
 
 		private PlanSchedule _Schedule = new PlanSchedule();

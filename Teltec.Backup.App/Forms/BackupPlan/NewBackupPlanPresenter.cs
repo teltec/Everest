@@ -54,37 +54,54 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			foreach (BackupPlanSourceEntry entry in plan.SelectedSources)
 				Console.WriteLine("SelectedSource => #{0}, {1}, {2}", entry.Id, entry.Type.ToString(), entry.Path);
 			Console.WriteLine("ScheduleType = {0}", plan.ScheduleType.ToString());
+			Console.WriteLine("Schedule.ScheduleType = {0}", plan.Schedule.ScheduleType.ToString());
 			
 			PlanSchedule schedule = plan.Schedule;
 			switch (plan.ScheduleType)
 			{
-				case Models.BackupPlan.EScheduleType.RunManually:
+				case Models.ScheduleTypeEnum.RUN_MANUALLY:
 					break;
-				case Models.BackupPlan.EScheduleType.Specific:
-					Console.WriteLine("OccursSpecificallyAt = {0}", schedule.OccursSpecificallyAt.Value);
+				case Models.ScheduleTypeEnum.SPECIFIC:
+					Console.WriteLine("OccursSpecificallyAt = {0}", schedule.OccursSpecificallyAt.HasValue ? schedule.OccursSpecificallyAt.Value.ToString() : "null");
 					break;
-				case Models.BackupPlan.EScheduleType.Recurring:
-					Console.WriteLine("RecurrencyFrequencyType      = {0}", schedule.RecurrencyFrequencyType.Value);
-					switch (schedule.RecurrencyFrequencyType.Value)
+				case Models.ScheduleTypeEnum.RECURRING:
+					Console.WriteLine("RecurrencyFrequencyType      = {0}",
+						schedule.RecurrencyFrequencyType.HasValue ? schedule.RecurrencyFrequencyType.Value.ToString() : "null");
+					Console.WriteLine("RecurrencyDailyFrequencyType = {0}",
+						schedule.RecurrencyDailyFrequencyType.HasValue ? schedule.RecurrencyDailyFrequencyType.Value.ToString() : "null");
+
+					if (schedule.RecurrencyFrequencyType.HasValue)
 					{
-						case FrequencyTypeEnum.DAILY:
-							break;
-						case FrequencyTypeEnum.WEEKLY:
-							Console.WriteLine("OccursAtDaysOfWeek           = {0}", schedule.OccursAtDaysOfWeek.ToReadableString());
-							break;
-						case FrequencyTypeEnum.MONTHLY:
-							Console.WriteLine("MonthlyOccurrenceType        = {0}", schedule.MonthlyOccurrenceType.Value);
-							Console.WriteLine("OccursMonthlyAtDayOfWeek     = {0}", schedule.OccursMonthlyAtDayOfWeek.Value);
-							break;
-						case FrequencyTypeEnum.DAY_OF_MONTH:
-							Console.WriteLine("OccursAtDayOfMonth           = {0}", schedule.OccursAtDayOfMonth.Value);
-							break;
+						switch (schedule.RecurrencyFrequencyType.Value)
+						{
+							case FrequencyTypeEnum.DAILY:
+								break;
+							case FrequencyTypeEnum.WEEKLY:
+								Console.WriteLine("OccursAtDaysOfWeek           = {0}",
+									schedule.OccursAtDaysOfWeek != null ? schedule.OccursAtDaysOfWeek.ToReadableString() : "null");
+								break;
+							case FrequencyTypeEnum.MONTHLY:
+								Console.WriteLine("MonthlyOccurrenceType        = {0}",
+									schedule.MonthlyOccurrenceType.HasValue ? schedule.MonthlyOccurrenceType.Value.ToString() : "null");
+								Console.WriteLine("OccursMonthlyAtDayOfWeek     = {0}",
+									schedule.OccursMonthlyAtDayOfWeek.HasValue ? schedule.OccursMonthlyAtDayOfWeek.Value.ToString() : "null");
+								break;
+							case FrequencyTypeEnum.DAY_OF_MONTH:
+								Console.WriteLine("OccursAtDayOfMonth           = {0}",
+									schedule.OccursAtDayOfMonth.HasValue ? schedule.OccursAtDayOfMonth.Value.ToString() : "null");
+								break;
+						}
 					}
-					Console.WriteLine("RecurrencySpecificallyAtTime = {0}", schedule.RecurrencySpecificallyAtTime.Value);
-					Console.WriteLine("RecurrencyTimeInterval       = {0}", schedule.RecurrencyTimeInterval.Value);
-					Console.WriteLine("RecurrencyTimeUnit           = {0}", schedule.RecurrencyTimeUnit.Value);
-					Console.WriteLine("RecurrencyWindowStartsAtTime = {0}", schedule.RecurrencyWindowStartsAtTime.Value);
-					Console.WriteLine("RecurrencyWindowEndsAtTime   = {0}", schedule.RecurrencyWindowEndsAtTime.Value);
+					Console.WriteLine("RecurrencySpecificallyAtTime = {0}",
+						schedule.RecurrencySpecificallyAtTime.HasValue ? schedule.RecurrencySpecificallyAtTime.Value.ToString() : "null");
+					Console.WriteLine("RecurrencyTimeInterval       = {0}",
+						schedule.RecurrencyTimeInterval.HasValue ? schedule.RecurrencyTimeInterval.Value.ToString() : "null");
+					Console.WriteLine("RecurrencyTimeUnit           = {0}",
+						schedule.RecurrencyTimeUnit.HasValue ? schedule.RecurrencyTimeUnit.Value.ToString() : "null");
+					Console.WriteLine("RecurrencyWindowStartsAtTime = {0}",
+						schedule.RecurrencyWindowStartsAtTime.HasValue ? schedule.RecurrencyWindowStartsAtTime.Value.ToString() : "null");
+					Console.WriteLine("RecurrencyWindowEndsAtTime   = {0}",
+						schedule.RecurrencyWindowEndsAtTime.HasValue ? schedule.RecurrencyWindowEndsAtTime.Value.ToString() : "null");
 					break;
 			}
 

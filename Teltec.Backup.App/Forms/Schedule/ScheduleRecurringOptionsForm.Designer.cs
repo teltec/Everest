@@ -29,6 +29,14 @@
 		private void InitializeComponent()
 		{
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
+			this.panelWeekly = new System.Windows.Forms.Panel();
+			this.cbWeeklySaturday = new System.Windows.Forms.CheckBox();
+			this.cbWeeklySunday = new System.Windows.Forms.CheckBox();
+			this.cbWeeklyFriday = new System.Windows.Forms.CheckBox();
+			this.cbWeeklyThursday = new System.Windows.Forms.CheckBox();
+			this.cbWeeklyWednesday = new System.Windows.Forms.CheckBox();
+			this.cbWeeklyTuesday = new System.Windows.Forms.CheckBox();
+			this.cbWeeklyMonday = new System.Windows.Forms.CheckBox();
 			this.label2 = new System.Windows.Forms.Label();
 			this.cbFrequencyType = new System.Windows.Forms.ComboBox();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -44,10 +52,22 @@
 			this.panel1 = new System.Windows.Forms.Panel();
 			this.btnConfirm = new System.Windows.Forms.Button();
 			this.btnCancel = new System.Windows.Forms.Button();
+			this.panelMonthly = new System.Windows.Forms.Panel();
+			this.label4 = new System.Windows.Forms.Label();
+			this.cbMonthlyOccurrence = new System.Windows.Forms.ComboBox();
+			this.label5 = new System.Windows.Forms.Label();
+			this.cbMonthlyDay = new System.Windows.Forms.ComboBox();
+			this.panelDayOfMonth = new System.Windows.Forms.Panel();
+			this.nudDayOfMonth = new System.Windows.Forms.NumericUpDown();
+			this.label7 = new System.Windows.Forms.Label();
 			this.groupBox1.SuspendLayout();
+			this.panelWeekly.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.nudInterval)).BeginInit();
 			this.panel1.SuspendLayout();
+			this.panelMonthly.SuspendLayout();
+			this.panelDayOfMonth.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.nudDayOfMonth)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// groupBox1
@@ -57,12 +77,99 @@
 			this.groupBox1.AutoSize = true;
 			this.groupBox1.Controls.Add(this.label2);
 			this.groupBox1.Controls.Add(this.cbFrequencyType);
+			this.groupBox1.Controls.Add(this.panelWeekly);
+			this.groupBox1.Controls.Add(this.panelDayOfMonth);
+			this.groupBox1.Controls.Add(this.panelMonthly);
 			this.groupBox1.Location = new System.Drawing.Point(12, 12);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(501, 111);
+			this.groupBox1.Size = new System.Drawing.Size(522, 111);
 			this.groupBox1.TabIndex = 5;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Frequency";
+			// 
+			// panelWeekly
+			// 
+			this.panelWeekly.Controls.Add(this.cbWeeklySaturday);
+			this.panelWeekly.Controls.Add(this.cbWeeklySunday);
+			this.panelWeekly.Controls.Add(this.cbWeeklyFriday);
+			this.panelWeekly.Controls.Add(this.cbWeeklyThursday);
+			this.panelWeekly.Controls.Add(this.cbWeeklyWednesday);
+			this.panelWeekly.Controls.Add(this.cbWeeklyTuesday);
+			this.panelWeekly.Controls.Add(this.cbWeeklyMonday);
+			this.panelWeekly.Location = new System.Drawing.Point(12, 45);
+			this.panelWeekly.Name = "panelWeekly";
+			this.panelWeekly.Size = new System.Drawing.Size(491, 45);
+			this.panelWeekly.TabIndex = 8;
+			// 
+			// cbWeeklySaturday
+			// 
+			this.cbWeeklySaturday.AutoSize = true;
+			this.cbWeeklySaturday.Location = new System.Drawing.Point(359, 4);
+			this.cbWeeklySaturday.Name = "cbWeeklySaturday";
+			this.cbWeeklySaturday.Size = new System.Drawing.Size(68, 17);
+			this.cbWeeklySaturday.TabIndex = 5;
+			this.cbWeeklySaturday.Text = "Saturday";
+			this.cbWeeklySaturday.UseVisualStyleBackColor = true;
+			// 
+			// cbWeeklySunday
+			// 
+			this.cbWeeklySunday.AutoSize = true;
+			this.cbWeeklySunday.Location = new System.Drawing.Point(359, 25);
+			this.cbWeeklySunday.Name = "cbWeeklySunday";
+			this.cbWeeklySunday.Size = new System.Drawing.Size(62, 17);
+			this.cbWeeklySunday.TabIndex = 6;
+			this.cbWeeklySunday.Text = "Sunday";
+			this.cbWeeklySunday.UseVisualStyleBackColor = true;
+			// 
+			// cbWeeklyFriday
+			// 
+			this.cbWeeklyFriday.AutoSize = true;
+			this.cbWeeklyFriday.Location = new System.Drawing.Point(239, 4);
+			this.cbWeeklyFriday.Name = "cbWeeklyFriday";
+			this.cbWeeklyFriday.Size = new System.Drawing.Size(54, 17);
+			this.cbWeeklyFriday.TabIndex = 4;
+			this.cbWeeklyFriday.Text = "Friday";
+			this.cbWeeklyFriday.UseVisualStyleBackColor = true;
+			// 
+			// cbWeeklyThursday
+			// 
+			this.cbWeeklyThursday.AutoSize = true;
+			this.cbWeeklyThursday.Location = new System.Drawing.Point(111, 25);
+			this.cbWeeklyThursday.Name = "cbWeeklyThursday";
+			this.cbWeeklyThursday.Size = new System.Drawing.Size(70, 17);
+			this.cbWeeklyThursday.TabIndex = 3;
+			this.cbWeeklyThursday.Text = "Thursday";
+			this.cbWeeklyThursday.UseVisualStyleBackColor = true;
+			// 
+			// cbWeeklyWednesday
+			// 
+			this.cbWeeklyWednesday.AutoSize = true;
+			this.cbWeeklyWednesday.Location = new System.Drawing.Point(111, 4);
+			this.cbWeeklyWednesday.Name = "cbWeeklyWednesday";
+			this.cbWeeklyWednesday.Size = new System.Drawing.Size(83, 17);
+			this.cbWeeklyWednesday.TabIndex = 2;
+			this.cbWeeklyWednesday.Text = "Wednesday";
+			this.cbWeeklyWednesday.UseVisualStyleBackColor = true;
+			// 
+			// cbWeeklyTuesday
+			// 
+			this.cbWeeklyTuesday.AutoSize = true;
+			this.cbWeeklyTuesday.Location = new System.Drawing.Point(10, 25);
+			this.cbWeeklyTuesday.Name = "cbWeeklyTuesday";
+			this.cbWeeklyTuesday.Size = new System.Drawing.Size(67, 17);
+			this.cbWeeklyTuesday.TabIndex = 1;
+			this.cbWeeklyTuesday.Text = "Tuesday";
+			this.cbWeeklyTuesday.UseVisualStyleBackColor = true;
+			// 
+			// cbWeeklyMonday
+			// 
+			this.cbWeeklyMonday.AutoSize = true;
+			this.cbWeeklyMonday.Location = new System.Drawing.Point(10, 4);
+			this.cbWeeklyMonday.Name = "cbWeeklyMonday";
+			this.cbWeeklyMonday.Size = new System.Drawing.Size(64, 17);
+			this.cbWeeklyMonday.TabIndex = 0;
+			this.cbWeeklyMonday.Text = "Monday";
+			this.cbWeeklyMonday.UseVisualStyleBackColor = true;
 			// 
 			// label2
 			// 
@@ -85,6 +192,7 @@
 			this.cbFrequencyType.Name = "cbFrequencyType";
 			this.cbFrequencyType.Size = new System.Drawing.Size(121, 21);
 			this.cbFrequencyType.TabIndex = 5;
+			this.cbFrequencyType.SelectedIndexChanged += new System.EventHandler(this.FrequencyTypeChanged);
 			// 
 			// groupBox2
 			// 
@@ -115,6 +223,7 @@
 			this.dudUnit.Name = "dudUnit";
 			this.dudUnit.Size = new System.Drawing.Size(75, 20);
 			this.dudUnit.TabIndex = 16;
+			this.dudUnit.SelectedItemChanged += new System.EventHandler(this.dudUnit_SelectedItemChanged);
 			// 
 			// dtpTo
 			// 
@@ -187,6 +296,7 @@
 			this.rbtnOccursEvery.TabIndex = 9;
 			this.rbtnOccursEvery.Text = "Occurs every";
 			this.rbtnOccursEvery.UseVisualStyleBackColor = true;
+			this.rbtnOccursEvery.CheckedChanged += new System.EventHandler(this.DailyFrequencyTypeChanged);
 			// 
 			// dtpOccursAt
 			// 
@@ -210,6 +320,7 @@
 			this.rbtnOccursAt.TabStop = true;
 			this.rbtnOccursAt.Text = "Occurs at";
 			this.rbtnOccursAt.UseVisualStyleBackColor = true;
+			this.rbtnOccursAt.CheckedChanged += new System.EventHandler(this.DailyFrequencyTypeChanged);
 			// 
 			// panel1
 			// 
@@ -247,6 +358,106 @@
 			this.btnCancel.UseVisualStyleBackColor = true;
 			this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
 			// 
+			// panelMonthly
+			// 
+			this.panelMonthly.Controls.Add(this.label5);
+			this.panelMonthly.Controls.Add(this.cbMonthlyDay);
+			this.panelMonthly.Controls.Add(this.label4);
+			this.panelMonthly.Controls.Add(this.cbMonthlyOccurrence);
+			this.panelMonthly.Location = new System.Drawing.Point(12, 45);
+			this.panelMonthly.Name = "panelMonthly";
+			this.panelMonthly.Size = new System.Drawing.Size(491, 45);
+			this.panelMonthly.TabIndex = 9;
+			// 
+			// label4
+			// 
+			this.label4.AutoSize = true;
+			this.label4.Location = new System.Drawing.Point(7, 7);
+			this.label4.Name = "label4";
+			this.label4.Size = new System.Drawing.Size(63, 13);
+			this.label4.TabIndex = 8;
+			this.label4.Text = "Occurrence";
+			// 
+			// cbMonthlyOccurrence
+			// 
+			this.cbMonthlyOccurrence.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cbMonthlyOccurrence.Items.AddRange(new object[] {
+            "First",
+            "Second",
+            "Third",
+            "Fourth",
+            "Penultimate",
+            "Last"});
+			this.cbMonthlyOccurrence.Location = new System.Drawing.Point(91, 4);
+			this.cbMonthlyOccurrence.Name = "cbMonthlyOccurrence";
+			this.cbMonthlyOccurrence.Size = new System.Drawing.Size(121, 21);
+			this.cbMonthlyOccurrence.TabIndex = 7;
+			// 
+			// label5
+			// 
+			this.label5.AutoSize = true;
+			this.label5.Location = new System.Drawing.Point(233, 7);
+			this.label5.Name = "label5";
+			this.label5.Size = new System.Drawing.Size(26, 13);
+			this.label5.TabIndex = 10;
+			this.label5.Text = "Day";
+			// 
+			// cbMonthlyDay
+			// 
+			this.cbMonthlyDay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cbMonthlyDay.Items.AddRange(new object[] {
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"});
+			this.cbMonthlyDay.Location = new System.Drawing.Point(301, 4);
+			this.cbMonthlyDay.Name = "cbMonthlyDay";
+			this.cbMonthlyDay.Size = new System.Drawing.Size(121, 21);
+			this.cbMonthlyDay.TabIndex = 9;
+			// 
+			// panelDayOfMonth
+			// 
+			this.panelDayOfMonth.Controls.Add(this.nudDayOfMonth);
+			this.panelDayOfMonth.Controls.Add(this.label7);
+			this.panelDayOfMonth.Location = new System.Drawing.Point(12, 45);
+			this.panelDayOfMonth.Name = "panelDayOfMonth";
+			this.panelDayOfMonth.Size = new System.Drawing.Size(491, 45);
+			this.panelDayOfMonth.TabIndex = 12;
+			// 
+			// nudDayOfMonth
+			// 
+			this.nudDayOfMonth.Location = new System.Drawing.Point(91, 4);
+			this.nudDayOfMonth.Maximum = new decimal(new int[] {
+            31,
+            0,
+            0,
+            0});
+			this.nudDayOfMonth.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			this.nudDayOfMonth.Name = "nudDayOfMonth";
+			this.nudDayOfMonth.Size = new System.Drawing.Size(75, 20);
+			this.nudDayOfMonth.TabIndex = 11;
+			this.nudDayOfMonth.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			// 
+			// label7
+			// 
+			this.label7.AutoSize = true;
+			this.label7.Location = new System.Drawing.Point(7, 7);
+			this.label7.Name = "label7";
+			this.label7.Size = new System.Drawing.Size(26, 13);
+			this.label7.TabIndex = 8;
+			this.label7.Text = "Day";
+			// 
 			// ScheduleRecurringOptionsForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -263,10 +474,17 @@
 			this.Text = "Schedule Recurring Options";
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
+			this.panelWeekly.ResumeLayout(false);
+			this.panelWeekly.PerformLayout();
 			this.groupBox2.ResumeLayout(false);
 			this.groupBox2.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.nudInterval)).EndInit();
 			this.panel1.ResumeLayout(false);
+			this.panelMonthly.ResumeLayout(false);
+			this.panelMonthly.PerformLayout();
+			this.panelDayOfMonth.ResumeLayout(false);
+			this.panelDayOfMonth.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.nudDayOfMonth)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -290,6 +508,22 @@
 		private System.Windows.Forms.Button btnConfirm;
 		private System.Windows.Forms.Button btnCancel;
 		private System.Windows.Forms.DomainUpDown dudUnit;
+		private System.Windows.Forms.Panel panelWeekly;
+		private System.Windows.Forms.CheckBox cbWeeklySaturday;
+		private System.Windows.Forms.CheckBox cbWeeklySunday;
+		private System.Windows.Forms.CheckBox cbWeeklyFriday;
+		private System.Windows.Forms.CheckBox cbWeeklyThursday;
+		private System.Windows.Forms.CheckBox cbWeeklyWednesday;
+		private System.Windows.Forms.CheckBox cbWeeklyTuesday;
+		private System.Windows.Forms.CheckBox cbWeeklyMonday;
+		private System.Windows.Forms.Panel panelMonthly;
+		private System.Windows.Forms.Label label5;
+		private System.Windows.Forms.ComboBox cbMonthlyDay;
+		private System.Windows.Forms.Label label4;
+		private System.Windows.Forms.ComboBox cbMonthlyOccurrence;
+		private System.Windows.Forms.Panel panelDayOfMonth;
+		private System.Windows.Forms.NumericUpDown nudDayOfMonth;
+		private System.Windows.Forms.Label label7;
 
 	}
 }

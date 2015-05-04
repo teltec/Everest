@@ -106,6 +106,7 @@
 			this.rbtnManual.TabStop = true;
 			this.rbtnManual.Text = "Run manually";
 			this.rbtnManual.UseVisualStyleBackColor = true;
+			this.rbtnManual.CheckedChanged += new System.EventHandler(this.ScheduleTypeChanged);
 			// 
 			// panel2
 			// 
@@ -149,6 +150,7 @@
 			this.rbtnSpecific.TabStop = true;
 			this.rbtnSpecific.Text = "Specific date";
 			this.rbtnSpecific.UseVisualStyleBackColor = true;
+			this.rbtnSpecific.CheckedChanged += new System.EventHandler(this.ScheduleTypeChanged);
 			// 
 			// panel3
 			// 
@@ -186,7 +188,7 @@
 			this.rbtnRecurring.TabStop = true;
 			this.rbtnRecurring.Text = "Recurring";
 			this.rbtnRecurring.UseVisualStyleBackColor = true;
-			this.rbtnRecurring.CheckedChanged += new System.EventHandler(this.rbtnRecurring_CheckedChanged);
+			this.rbtnRecurring.CheckedChanged += new System.EventHandler(this.ScheduleTypeChanged);
 			// 
 			// BackupPlanScheduleForm
 			// 

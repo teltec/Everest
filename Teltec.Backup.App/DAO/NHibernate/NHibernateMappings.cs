@@ -96,6 +96,12 @@ namespace Teltec.Backup.App.DAO.NHibernate
 
 			Id(p => p.Id, "id").GeneratedBy.Native("seq_plan_schedules").UnsavedValue(null);
 
+			Map(p => p.ScheduleType)
+				.Column("schedule_type")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<Models.ScheduleTypeEnum>>()
+				;
+
 			Map(p => p.OccursSpecificallyAt)
 				.Column("occurs_specifically_at")
 				;
@@ -103,6 +109,11 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			Map(p => p.RecurrencyFrequencyType)
 				.Column("recurrency_frequency_type")
 				.CustomType<GenericEnumMapper<Models.FrequencyTypeEnum>>()
+				;
+
+			Map(p => p.RecurrencyDailyFrequencyType)
+				.Column("recurrency_daily_frequency_type")
+				.CustomType<GenericEnumMapper<Models.DailyFrequencyTypeEnum>>()
 				;
 
 			Map(p => p.RecurrencySpecificallyAtTime)
@@ -209,7 +220,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			Map(p => p.ScheduleType)
 				.Column("schedule_type")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<Models.BackupPlan.EScheduleType>>()
+				.CustomType<GenericEnumMapper<Models.ScheduleTypeEnum>>()
 				;
 
 			References(fk => fk.Schedule)
