@@ -81,6 +81,7 @@
     <Compile Include="ObservableUserControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="ObservableWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
