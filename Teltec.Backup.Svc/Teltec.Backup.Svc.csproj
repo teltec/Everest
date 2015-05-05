@@ -38,10 +38,17 @@
     <Compile Include="Service.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Unmanaged.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.ServiceProcess" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Teltec.Backup.App\Teltec.Backup.App.csproj">
+      <Project>{aa94a2c3-545b-4e24-9d46-ae45740c461a}</Project>
+      <Name>Teltec.Backup.App</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
