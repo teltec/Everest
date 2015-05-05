@@ -74,7 +74,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			if (DoValidate && !IsValid())
 			{
 				e.Cancel = true;
-				this.ShowErrorMessage("Please, select a scheduling option.");
+				this.ShowErrorMessage("Please, correct your scheduling options.");
 			}
 			base.OnBeforeNextOrFinish(sender, e);
 		}

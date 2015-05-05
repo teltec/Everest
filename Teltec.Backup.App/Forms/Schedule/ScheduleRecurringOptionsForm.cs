@@ -642,7 +642,11 @@ namespace Teltec.Backup.App.Forms.Schedule
 		protected virtual void form_ConfirmEvent(Form sender, EventArgs e)
 		{
 			FormToModel();
-			OnConfirm();
+
+			if (!this.Schedule.IsRecurringValid())
+				this.ShowErrorMessage("Please, correct your scheduling options.");
+			else
+				OnConfirm();
 		}
 
 		protected virtual void CloseAndDipose()

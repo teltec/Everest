@@ -314,10 +314,98 @@ namespace Teltec.Backup.App.Models
 			}
 		}
 
-		public virtual bool IsValid()
+		public virtual bool IsRecurringValid()
 		{
 			bool isValid = true;
 
+			switch (RecurrencyFrequencyType.Value)
+			{
+				default: throw new ArgumentException(
+					string.Format("Unhandled value for {0}: {1}", typeof(FrequencyTypeEnum).FullName, RecurrencyFrequencyType.Value),
+					this.GetPropertyName((PlanSchedule x) => x.RecurrencyFrequencyType));
+				case FrequencyTypeEnum.DAILY:
+					{
+						break;
+					}
+				case FrequencyTypeEnum.WEEKLY:
+					{
+						isValid = OccursAtDaysOfWeek != null && OccursAtDaysOfWeek.Count > 0;
+						if (!isValid)
+							return false;
+
+						break;
+					}
+				case FrequencyTypeEnum.MONTHLY:
+					{
+						isValid = MonthlyOccurrenceType.HasValue;
+						if (!isValid)
+							return false;
+
+						isValid = MonthlyOccurrenceType.Value != MonthlyOccurrenceTypeEnum.UNDEFINED;
+						if (!isValid)
+							return false;
+
+						isValid = OccursMonthlyAtDayOfWeek.HasValue;
+						if (!isValid)
+							return false;
+
+						break;
+					}
+				case FrequencyTypeEnum.DAY_OF_MONTH:
+					{
+						isValid = OccursAtDayOfMonth.HasValue;
+						if (!isValid)
+							return false;
+
+						// TODO: Validate whether the informed day of month exists for all months?
+						//       For example, February doesn't have days 30 and 31, and only has 29 on leap years.
+
+						break;
+					}
+			}
+
+			if (!RecurrencyDailyFrequencyType.HasValue)
+				return false;
+
+			switch (RecurrencyDailyFrequencyType.Value)
+			{
+				default: throw new ArgumentException(
+					string.Format("Unhandled value for {0}: {1}", typeof(DailyFrequencyTypeEnum).FullName, RecurrencyDailyFrequencyType.Value),
+					this.GetPropertyName((PlanSchedule x) => x.RecurrencyDailyFrequencyType));
+				case DailyFrequencyTypeEnum.SPECIFIC:
+					{
+						if (!RecurrencySpecificallyAtTime.HasValue)
+							return false;
+
+						break;
+					}
+				case DailyFrequencyTypeEnum.EVERY:
+					{
+						if (!RecurrencyTimeUnit.HasValue)
+							return false;
+
+						if (!RecurrencyTimeInterval.HasValue)
+							return false;
+
+						short interval = RecurrencyTimeInterval.Value;
+						if (interval < MinimumRecurrencyTimeInterval || interval > MaximumRecurrencyTimeInterval)
+							return false;
+
+						if (!RecurrencyWindowStartsAtTime.HasValue)
+							return false;
+
+						if (!RecurrencyWindowEndsAtTime.HasValue)
+							return false;
+
+						break;
+					}
+			}
+			
+			return true;
+		}
+
+		public virtual bool IsValid()
+		{
 			switch (ScheduleType)
 			{
 				default: throw new ArgumentException(
@@ -335,89 +423,8 @@ namespace Teltec.Backup.App.Models
 					}
 				case ScheduleTypeEnum.RECURRING:
 					{
-						switch (RecurrencyFrequencyType.Value)
-						{
-							default: throw new ArgumentException(
-								string.Format("Unhandled value for {0}: {1}", typeof(FrequencyTypeEnum).FullName, RecurrencyFrequencyType.Value),
-								this.GetPropertyName((PlanSchedule x ) => x.RecurrencyFrequencyType));
-							case FrequencyTypeEnum.DAILY:
-								{
-									break;
-								}
-							case FrequencyTypeEnum.WEEKLY:
-								{
-									isValid = OccursAtDaysOfWeek != null && OccursAtDaysOfWeek.Count > 0;
-									if (!isValid)
-										return false;
-
-									break;
-								}
-							case FrequencyTypeEnum.MONTHLY:
-								{
-									isValid = MonthlyOccurrenceType.HasValue;
-									if (!isValid)
-										return false;
-
-									isValid = MonthlyOccurrenceType.Value != MonthlyOccurrenceTypeEnum.UNDEFINED;
-									if (!isValid)
-										return false;
-
-									isValid = OccursMonthlyAtDayOfWeek.HasValue;
-									if (!isValid)
-										return false;
-
-									break;
-								}
-							case FrequencyTypeEnum.DAY_OF_MONTH:
-								{
-									isValid = OccursAtDayOfMonth.HasValue;
-									if (!isValid)
-										return false;
-
-									// TODO: Validate whether the informed day of month exists for all months?
-									//       For example, February doesn't have days 30 and 31, and only has 29 on leap years.
-
-									break;
-								}
-						}
-
-						if (!RecurrencyDailyFrequencyType.HasValue)
+						if (!IsRecurringValid())
 							return false;
-
-						switch (RecurrencyDailyFrequencyType.Value)
-						{
-							default: throw new ArgumentException(
-								string.Format("Unhandled value for {0}: {1}", typeof(DailyFrequencyTypeEnum).FullName, RecurrencyDailyFrequencyType.Value),
-								this.GetPropertyName((PlanSchedule x) => x.RecurrencyDailyFrequencyType));
-							case DailyFrequencyTypeEnum.SPECIFIC:
-								{
-									if (!RecurrencySpecificallyAtTime.HasValue)
-										return false;
-
-									break;
-								}
-							case DailyFrequencyTypeEnum.EVERY:
-								{
-									if (!RecurrencyTimeUnit.HasValue)
-										return false;
-
-									if (!RecurrencyTimeInterval.HasValue)
-										return false;
-
-									short interval = RecurrencyTimeInterval.Value;
-									if (interval < MinimumRecurrencyTimeInterval || interval > MaximumRecurrencyTimeInterval)
-										return false;
-
-									if (!RecurrencyWindowStartsAtTime.HasValue)
-										return false;
-
-									if (!RecurrencyWindowEndsAtTime.HasValue)
-										return false;
-
-									break;
-								}
-						}
-
 						break;
 					}
 			}
