@@ -17,6 +17,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.FileSystem.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.Svc", "Teltec.Backup.Svc\Teltec.Backup.Svc.csproj", "{134C9546-EC3F-4C05-87E3-5E11DDEB1BCE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E56C573E-986E-4412-B54F-BD3C9AB4F918}"
+	ProjectSection(SolutionItems) = preProject
+		connections.config = connections.config
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

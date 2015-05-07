@@ -4,12 +4,12 @@ using NHibernate;
 using NHibernate.Cfg;
 using NHibernate.Engine;
 using NHibernate.Event;
-using NHibernate.Event.Default;
 using NHibernate.Hql.Util;
 using NHibernate.Tool.hbm2ddl;
 using NLog;
 using System;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace Teltec.Backup.App.DAO.NHibernate
 {
@@ -109,8 +109,10 @@ namespace Teltec.Backup.App.DAO.NHibernate
 
 		private static Configuration CreateConfiguration()
 		{
+			string dbFilePath = Application.CommonAppDataPath + @"\database.sqlite3";
+
 			FluentConfiguration fluentConfig = Fluently.Configure();
-			fluentConfig.Database(SQLiteConfiguration.Standard.UsingFile("database.sqlite3"));
+			fluentConfig.Database(SQLiteConfiguration.Standard.UsingFile(dbFilePath));
 			fluentConfig.Diagnostics(diag => diag.Enable().OutputToConsole());
 
 			// Mappings.

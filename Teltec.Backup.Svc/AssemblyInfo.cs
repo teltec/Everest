@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Teltec.Backup.App")]
+[assembly: AssemblyTitle("Teltec.Backup.Svc")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Teltec Solutions Ltda")]
@@ -24,7 +24,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("6bc1a29d-9145-4e91-bf41-6a258420e237")]
+[assembly: Guid("d2cfef35-0ee0-4b15-9ab2-96ae76f8f04b")]
 
 // Version information for an assembly consists of the following four values:
 //
