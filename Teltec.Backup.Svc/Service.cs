@@ -108,19 +108,12 @@ namespace Teltec.Backup.Svc
 			Console.WriteLine("hello");
 		}
 
-		private string BuildTaskName(Teltec.Backup.App.Models.BackupPlan plan)
+		private string BuildTaskName(Teltec.Backup.App.Models.ISchedulablePlan plan)
 		{
-			string name = string.Format("BackupPlan#{0}", plan.Id.Value);
-			return name;
+			return plan.ScheduleParamName;
 		}
 
-		private string BuildTaskName(Teltec.Backup.App.Models.RestorePlan plan)
-		{
-			string name = string.Format("RestorePlan#{0}", plan.Id.Value);
-			return name;
-		}
-
-		private Trigger[] BuildTriggers(Teltec.Backup.App.Models.BackupPlan plan)
+		private Trigger[] BuildTriggers(Teltec.Backup.App.Models.ISchedulablePlan plan)
 		{
 			List<Trigger> triggers = new List<Trigger>();
 			Teltec.Backup.App.Models.PlanSchedule schedule = plan.Schedule;
@@ -351,12 +344,7 @@ namespace Teltec.Backup.Svc
 			}
 		}
 
-		private Task FindScheduledTask(Teltec.Backup.App.Models.BackupPlan plan)
-		{
-			return FindScheduledTask(BuildTaskName(plan));
-		}
-
-		private Task FindScheduledTask(Teltec.Backup.App.Models.RestorePlan plan)
+		private Task FindScheduledTask(Teltec.Backup.App.Models.ISchedulablePlan plan)
 		{
 			return FindScheduledTask(BuildTaskName(plan));
 		}
@@ -366,12 +354,7 @@ namespace Teltec.Backup.Svc
 			return FindScheduledTask(taskName) != null;
 		}
 
-		private bool HasScheduledTask(Teltec.Backup.App.Models.BackupPlan plan)
-		{
-			return HasScheduledTask(BuildTaskName(plan));
-		}
-
-		private bool HasScheduledTask(Teltec.Backup.App.Models.RestorePlan plan)
+		private bool HasScheduledTask(Teltec.Backup.App.Models.ISchedulablePlan plan)
 		{
 			return HasScheduledTask(BuildTaskName(plan));
 		}
@@ -386,7 +369,7 @@ namespace Teltec.Backup.Svc
 			}
 		}
 
-		private void ScheduleBackup(Teltec.Backup.App.Models.BackupPlan plan, bool reschedule = false)
+		private void SchedulePlanExecution(Teltec.Backup.App.Models.ISchedulablePlan plan, bool reschedule = false)
 		{
 			string taskName = BuildTaskName(plan);
 
@@ -460,23 +443,28 @@ namespace Teltec.Backup.Svc
 				td.Triggers.AddRange(BuildTriggers(plan));
 
 				// Create an action that will launch Notepad whenever the trigger fires
-				td.Actions.Add(new ExecAction(@"C:\Users\jardel\Desktop\Projects\TeltecBackup\timestamp.bat", plan.Id.Value.ToString(), null));
+				td.Actions.Add(new ExecAction(@"C:\Users\jardel\Desktop\Projects\TeltecBackup\timestamp.bat", plan.ScheduleParamId.ToString(), null));
 
 				// Register the task in the root folder
 				ts.RootFolder.RegisterTaskDefinition(taskName, td, TaskCreation.CreateOrUpdate, null, null, TaskLogonType.InteractiveToken, null);
 			}
 		}
 
-		List<App.Models.BackupPlan> AllBackupPlans = new List<App.Models.BackupPlan>();
+		List<App.Models.ISchedulablePlan> AllSchedulablePlans = new List<App.Models.ISchedulablePlan>();
 
 		private void ReloadPlansAndRescheduler()
 		{
-			App.DAO.BackupPlanRepository daoBackupPlans = new App.DAO.BackupPlanRepository();
-			AllBackupPlans = daoBackupPlans.GetAll();
+			AllSchedulablePlans.Clear();
 
-			foreach (var plan in AllBackupPlans)
+			App.DAO.BackupPlanRepository daoBackupPlans = new App.DAO.BackupPlanRepository();
+			App.DAO.RestorePlanRepository daoRestorePlans = new App.DAO.RestorePlanRepository();
+
+			AllSchedulablePlans.AddRange(daoBackupPlans.GetAll());
+			AllSchedulablePlans.AddRange(daoRestorePlans.GetAll());
+
+			foreach (var plan in AllSchedulablePlans)
 			{
-				ScheduleBackup(plan, true);
+				SchedulePlanExecution(plan, true);
 			}
 		}
 

@@ -571,7 +571,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			Map(p => p.ScheduleType)
 				.Column("schedule_type")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<Models.RestorePlan.EScheduleType>>()
+				.CustomType<GenericEnumMapper<Models.ScheduleTypeEnum>>()
 				;
 
 			References(fk => fk.Schedule)

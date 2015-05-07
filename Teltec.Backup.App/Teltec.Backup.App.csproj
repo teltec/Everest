@@ -203,6 +203,7 @@
       <DependentUpon>ScheduleRecurringOptionsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Models\EntryType.cs" />
+    <Compile Include="Models\ISchedulablePlan.cs" />
     <Compile Include="Models\PlanSchedule.cs" />
     <Compile Include="Models\Restore.cs" />
     <Compile Include="Models\BackupPlanPathNode.cs" />

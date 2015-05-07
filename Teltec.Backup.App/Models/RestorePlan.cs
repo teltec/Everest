@@ -7,7 +7,7 @@ using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.App.Models
 {
-	public class RestorePlan : BaseEntity<Int32?>
+	public class RestorePlan : BaseEntity<Int32?>, ISchedulablePlan
 	{
 		private Int32? _Id;
 		public virtual Int32? Id
@@ -16,7 +16,7 @@ namespace Teltec.Backup.App.Models
 			set { SetField(ref _Id, value); }
 		}
 
-				#region Name
+		#region Name
 
 		public const int NameMaxLen = 128;
 		private String _Name;
@@ -88,33 +88,21 @@ namespace Teltec.Backup.App.Models
 
 		#region Schedule
 
-		public enum EScheduleType
+		public virtual string ScheduleParamId
 		{
-			RunManually = 0,
-			Specific = 1,
-			Recurring = 2,
+			get { return this.Id.HasValue ? this.Id.Value.ToString() : string.Empty; }
 		}
 
-		private EScheduleType _ScheduleType;
-		public virtual EScheduleType ScheduleType
+		public virtual string ScheduleParamName
+		{
+			get { return string.Format("{0}#{1}", this.GetType().Name, this.Id.HasValue ? this.Id.Value.ToString() : string.Empty); }
+		}
+
+		private ScheduleTypeEnum _ScheduleType;
+		public virtual ScheduleTypeEnum ScheduleType
 		{
 			get { return _ScheduleType; }
 			set { SetField(ref _ScheduleType, value); }
-		}
-
-		public virtual bool IsRunManually
-		{
-			get { return ScheduleType == EScheduleType.RunManually; }
-		}
-
-		public virtual bool IsSpecific
-		{
-			get { return ScheduleType == EScheduleType.Specific; }
-		}
-
-		public virtual bool IsRecurring
-		{
-			get { return ScheduleType == EScheduleType.Recurring; }
 		}
 
 		private PlanSchedule _Schedule = new PlanSchedule();
@@ -122,6 +110,21 @@ namespace Teltec.Backup.App.Models
 		{
 			get { return _Schedule; }
 			set { SetField(ref _Schedule, value); }
+		}
+
+		public virtual bool IsRunManually
+		{
+			get { return ScheduleType == ScheduleTypeEnum.RUN_MANUALLY; }
+		}
+
+		public virtual bool IsSpecific
+		{
+			get { return ScheduleType == ScheduleTypeEnum.SPECIFIC; }
+		}
+
+		public virtual bool IsRecurring
+		{
+			get { return ScheduleType == ScheduleTypeEnum.RECURRING; }
 		}
 
 		#endregion

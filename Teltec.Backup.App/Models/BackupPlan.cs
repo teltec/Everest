@@ -4,7 +4,7 @@ using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.App.Models
 {
-	public class BackupPlan : BaseEntity<Int32?>
+	public class BackupPlan : BaseEntity<Int32?>, ISchedulablePlan
 	{
 		private Int32? _Id;
 		public virtual Int32? Id
@@ -110,11 +110,33 @@ namespace Teltec.Backup.App.Models
 
 		#region Schedule
 
+		public virtual string ScheduleParamId
+		{
+			get { return this.Id.HasValue ? this.Id.Value.ToString() : string.Empty; }
+		}
+
+		public virtual string ScheduleParamName
+		{
+			get { return string.Format("{0}#{1}", this.GetType().Name, this.Id.HasValue ? this.Id.Value.ToString() : string.Empty); }
+		}
+
 		private ScheduleTypeEnum _ScheduleType;
 		public virtual ScheduleTypeEnum ScheduleType
 		{
 			get { return _ScheduleType; }
 			set { SetField(ref _ScheduleType, value); }
+		}
+
+		private PlanSchedule _Schedule = new PlanSchedule();
+		public virtual PlanSchedule Schedule
+		{
+			get { return _Schedule; }
+			set
+			{
+				if (value == null)
+					value = new PlanSchedule();
+				SetField(ref _Schedule, value);
+			}
 		}
 
 		public virtual bool IsRunManually
@@ -130,18 +152,6 @@ namespace Teltec.Backup.App.Models
 		public virtual bool IsRecurring
 		{
 			get { return ScheduleType == ScheduleTypeEnum.RECURRING; }
-		}
-
-		private PlanSchedule _Schedule = new PlanSchedule();
-		public virtual PlanSchedule Schedule
-		{
-			get { return _Schedule; }
-			set
-			{
-				if (value == null)
-					value = new PlanSchedule();
-				SetField(ref _Schedule, value);
-			}
 		}
 
 		#endregion
