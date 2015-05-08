@@ -67,12 +67,12 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 
 		private void NewRestoreOperation(Models.RestorePlan plan)
 		{
-			Models.Restore latestRestore = _daoRestore.GetLatestByPlan(plan);
-			MustResumeLastRestore = latestRestore != null && latestRestore.NeedsResume();
+			Models.Restore latest = _daoRestore.GetLatestByPlan(plan);
+			MustResumeLastRestore = latest != null && latest.NeedsResume();
 
-			// Create new backup or resume the last unfinished one.
+			// Create new restore or resume the last unfinished one.
 			RestoreOperation obj = /* MustResumeLastRestore
-				? new ResumeRestoreOperation(latestRestore) as RestoreOperation
+				? new ResumeRestoreOperation(latest) as RestoreOperation
 				: */ new NewRestoreOperation(plan) as RestoreOperation;
 
 			obj.Updated += (sender2, e2) => UpdateStatsInfo(e2.Status);
@@ -144,7 +144,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 			{
 				this.llblRunNow.Enabled = false;
 
-				// Create new backup operation for every 'Run' click.
+				// Create new restore operation for every 'Run' click.
 				NewRestoreOperation(this.Model as Models.RestorePlan);
 
 				// FIXME: Re-enable before starting the backup because it's not an async task.

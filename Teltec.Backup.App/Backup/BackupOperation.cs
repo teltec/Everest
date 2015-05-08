@@ -294,7 +294,7 @@ namespace Teltec.Backup.App.Backup
 					return;
 				}
 
-				// IMPORTANT: Must happen before any attempt to get `FileVersioner.FilesToBackup`.
+				// IMPORTANT: Must happen before any attempt to get `Versioner.FilesToTransfer`.
 				Versioner.Save();
 
 				agent.Files = Versioner.FilesToTransfer;

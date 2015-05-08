@@ -65,12 +65,12 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void NewBackupOperation(Models.BackupPlan plan)
 		{
-			Models.Backup latestBackup = _daoBackup.GetLatestByPlan(plan);
-			MustResumeLastBackup = latestBackup != null && latestBackup.NeedsResume();
+			Models.Backup latest = _daoBackup.GetLatestByPlan(plan);
+			MustResumeLastBackup = latest != null && latest.NeedsResume();
 
 			// Create new backup or resume the last unfinished one.
 			BackupOperation obj = MustResumeLastBackup
-				? new ResumeBackupOperation(latestBackup) as BackupOperation
+				? new ResumeBackupOperation(latest) as BackupOperation
 				: new NewBackupOperation(plan) as BackupOperation;
 
 			obj.Updated += (sender2, e2) => UpdateStatsInfo(e2.Status);
