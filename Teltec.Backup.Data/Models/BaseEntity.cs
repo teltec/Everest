@@ -3,7 +3,7 @@ using Teltec.Common;
 
 namespace Teltec.Backup.Data.Models
 {
-	public abstract class BaseEntity<ID> : ObservableObject, IPersistentEntity //where ID : class
+	public abstract class BaseEntity<ID> : ObservableObject, IPersistentEntity, IAuditable //where ID : class
 	{
 		private bool _saved = false;
 
