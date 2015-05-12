@@ -181,12 +181,6 @@
     <Compile Include="Forms\RestorePlan\RestorePlanSelectSourceForm.Designer.cs">
       <DependentUpon>RestorePlanSelectSourceForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\RestorePlan\RestorePlanScheduleForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\RestorePlan\RestorePlanScheduleForm.Designer.cs">
-      <DependentUpon>RestorePlanScheduleForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="Forms\RestorePlan\NewRestorePlanPresenter.cs" />
     <Compile Include="Forms\RestorePlan\RestorePlanSelectBackupPlanForm.cs">
       <SubType>Form</SubType>
@@ -243,11 +237,11 @@
     <Compile Include="Forms\BackupPlan\BackupPlanListControl.Designer.cs">
       <DependentUpon>BackupPlanListControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\BackupPlan\BackupPlanScheduleForm.cs">
+    <Compile Include="Forms\Schedule\SchedulablePlanForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\BackupPlan\BackupPlanScheduleForm.Designer.cs">
-      <DependentUpon>BackupPlanScheduleForm.cs</DependentUpon>
+    <Compile Include="Forms\Schedule\SchedulablePlanForm.Designer.cs">
+      <DependentUpon>SchedulablePlanForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\BackupPlan\BackupPlanSelectAccountForm.cs">
       <SubType>Form</SubType>
@@ -333,8 +327,8 @@
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanListControl.resx">
       <DependentUpon>BackupPlanListControl.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\BackupPlan\BackupPlanScheduleForm.resx">
-      <DependentUpon>BackupPlanScheduleForm.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\Schedule\SchedulablePlanForm.resx">
+      <DependentUpon>SchedulablePlanForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanSelectAccountForm.resx">
       <DependentUpon>BackupPlanSelectAccountForm.cs</DependentUpon>
@@ -356,9 +350,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectSourceForm.resx">
       <DependentUpon>RestorePlanSelectSourceForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\RestorePlan\RestorePlanScheduleForm.resx">
-      <DependentUpon>RestorePlanScheduleForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectBackupPlanForm.resx">
       <DependentUpon>RestorePlanSelectBackupPlanForm.cs</DependentUpon>

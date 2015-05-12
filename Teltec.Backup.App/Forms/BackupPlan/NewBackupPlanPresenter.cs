@@ -1,6 +1,7 @@
 ﻿using NLog;
 using System;
 using Teltec.Backup.App.DAO;
+using Teltec.Backup.App.Forms.Schedule;
 using Teltec.Backup.App.Models;
 using Teltec.Common.Extensions;
 using Teltec.Forms.Wizard;
@@ -31,7 +32,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			RegisterFormClass(typeof(BackupPlanSelectAccountForm), options);
 			RegisterFormClass(typeof(BackupPlanGiveNameForm), options);
 			RegisterFormClass(typeof(BackupPlanSelectSourceForm), options);
-			RegisterFormClass(typeof(BackupPlanScheduleForm), options);
+			RegisterFormClass(typeof(SchedulablePlanForm<Models.BackupPlan>), options);
 		}
 
 		public override void OnCancel()

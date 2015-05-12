@@ -1,6 +1,6 @@
-﻿namespace Teltec.Backup.App.Forms.BackupPlan
+﻿namespace Teltec.Backup.App.Forms.Schedule
 {
-	partial class BackupPlanScheduleForm
+	partial class SchedulablePlanForm<T>
 	{
 		/// <summary>
 		/// Required designer variable.

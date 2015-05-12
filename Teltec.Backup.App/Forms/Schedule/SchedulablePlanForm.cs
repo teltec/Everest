@@ -1,28 +1,25 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Globalization;
 using System.Windows.Forms;
-using Teltec.Common.Extensions;
-using System.Data;
-using Teltec.Backup.App.Forms.Schedule;
 using Teltec.Backup.App.DAO;
+using Teltec.Common.Extensions;
 
-namespace Teltec.Backup.App.Forms.BackupPlan
+namespace Teltec.Backup.App.Forms.Schedule
 {
-	public partial class BackupPlanScheduleForm : Teltec.Forms.Wizard.WizardForm
+	public partial class SchedulablePlanForm<T> : Teltec.Forms.Wizard.WizardForm where T : Models.ISchedulablePlan
 	{
 		private readonly PlanScheduleRepository daoSchedule = new PlanScheduleRepository();
 
-		private Models.BackupPlan Plan = new Models.BackupPlan();
+		private T Plan = (T)Activator.CreateInstance(typeof(T));
 
-		public BackupPlanScheduleForm()
+		public SchedulablePlanForm()
 		{
 			InitializeComponent();
 
 			// Setup data bindings
 			this.ModelChangedEvent += (sender, args) =>
 			{
-				this.Plan = args.Model as Models.BackupPlan;
+				this.Plan = (T)args.Model;
 
 				//
 				// Default values
