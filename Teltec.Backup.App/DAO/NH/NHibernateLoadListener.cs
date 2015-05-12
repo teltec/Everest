@@ -1,6 +1,6 @@
 ﻿using NHibernate.Event;
 
-namespace Teltec.Backup.App.DAO.NHibernate
+namespace Teltec.Backup.App.DAO.NH
 {
 	// REFERENCE: http://nhibernate.info/doc/nh/en/index.html
 	public class NHibernateLoadListener : ILoadEventListener

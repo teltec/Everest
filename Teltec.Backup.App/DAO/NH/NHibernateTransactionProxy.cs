@@ -3,7 +3,7 @@ using NHibernate;
 using System;
 using System.Dynamic;
 
-namespace Teltec.Backup.App.DAO.NHibernate
+namespace Teltec.Backup.App.DAO.NH
 {
 	//
 	// REFERENCE: http://stackoverflow.com/a/8387156/298054

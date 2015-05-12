@@ -8,10 +8,11 @@ using NHibernate.Hql.Util;
 using NHibernate.Tool.hbm2ddl;
 using NLog;
 using System;
+using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace Teltec.Backup.App.DAO.NHibernate
+namespace Teltec.Backup.App.DAO.NH
 {
 	public static class NHibernateHelper
 	{
@@ -42,6 +43,9 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				_sessions.Value = SessionFactory.OpenSession();
 				//_sessions.Value.FlushMode = FlushMode.Never;
 			}
+
+			//if (!_sessions.Value.IsConnected)
+			//	_sessions.Value.Reconnect();
 
 			return _sessions.Value;
 		}
@@ -107,34 +111,66 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			}
 		}
 
+		public enum SupportedDatabaseType
+		{
+			SQLITE3 = 1,
+			SQLEXPRESS_2012 = 2,
+		}
+
+		public static readonly SupportedDatabaseType DatabaseType = SupportedDatabaseType.SQLEXPRESS_2012;
+
 		private static Configuration CreateConfiguration()
 		{
-			string dbFilePath = Application.CommonAppDataPath + @"\database.sqlite3";
-
 			FluentConfiguration fluentConfig = Fluently.Configure();
-			fluentConfig.Database(SQLiteConfiguration.Standard.UsingFile(dbFilePath));
-			fluentConfig.Diagnostics(diag => diag.Enable().OutputToConsole());
 
-			// Mappings.
-			fluentConfig.Mappings(m => m.FluentMappings
-				.Add<StorageAccountMap>()
-				.Add<AmazonS3AccountMap>()
-				.Add<PlanScheduleDayOfWeekMap>()
-				.Add<PlanScheduleMap>()
-				.Add<BackupPlanMap>()
-				.Add<BackupPlanSourceEntryMap>()
-				.Add<BackupMap>()
-				.Add<BackupPlanFileMap>()
-				.Add<BackupPlanPathNodeMap>()
-				.Add<BackupedFileMap>()
-				.Add<RestorePlanMap>()
-				.Add<RestorePlanSourceEntryMap>()
-				.Add<RestoreMap>()
-				.Add<RestorePlanFileMap>()
-				.Add<RestoredFileMap>()
-			);
+			switch (DatabaseType)
+			{
+				case SupportedDatabaseType.SQLEXPRESS_2012:
+					{
+						AppDomain.CurrentDomain.SetData("DataDirectory", Application.CommonAppDataPath);
+
+						// IMPORTANT: The database MUST ALREADY EXIST.
+						fluentConfig.Database(MsSqlConfiguration.MsSql2012.ConnectionString(x =>
+							x.Server(@".\SQLEXPRESS").Database("teltec_backup").TrustedConnection()).UseReflectionOptimizer());
+						
+						break;
+					}
+				case SupportedDatabaseType.SQLITE3:
+					{
+						string dbFilePath = Application.CommonAppDataPath + @"\database.sqlite3";
+						fluentConfig.Database(SQLiteConfiguration.Standard.UsingFile(dbFilePath));
+						break;
+					}
+			}
+
+			//fluentConfig.Diagnostics(diag => diag.Enable().OutputToConsole());
+
+			// Add all mappings from this assembly.
+			fluentConfig.Mappings(m => m.FluentMappings.AddFromAssembly(Assembly.GetExecutingAssembly()));
 
 			Configuration config = fluentConfig.BuildConfiguration();
+			//config.SetProperty(NHibernate.Cfg.Environment.Hbm2ddlAuto, "true");
+
+			if (DatabaseType == SupportedDatabaseType.SQLEXPRESS_2012)
+			{
+				config.DataBaseIntegration(db =>
+				{
+					db.BatchSize = 20;
+					db.Dialect<NHibernate.Dialect.MsSql2012Dialect>();
+					db.Driver<NHibernate.Driver.Sql2008ClientDriver>();
+					//db.HqlToSqlSubstitutions = "true 1, false 0, yes 'Y', no 'N'";
+					db.IsolationLevel = System.Data.IsolationLevel.ReadCommitted;
+					db.KeywordsAutoImport = Hbm2DDLKeyWords.AutoQuote;
+					db.LogFormattedSql = true;
+					db.LogSqlInConsole = true;
+					//db.OrderInserts = true;
+					//db.PrepareCommands = true;
+					db.SchemaAction = SchemaAutoAction.Update;
+				});
+			}
+
+			UpdateSchema(config);
+			ValidateSchema(config);
 
 			// Register interceptors.
 			config.SetInterceptor(new NHibernateAuditInterceptor());
@@ -153,12 +189,12 @@ namespace Teltec.Backup.App.DAO.NHibernate
 				new NHibernatePersistentEntityListener(),
 			});
 
-			UpdateSchema(config);
-			ValidateSchema(config);
-
 			return config;
 		}
 
+		// Summary:
+		//   Check the existing tables against the mappings and throw an exception
+		//   if there are differences.
 		private static bool ValidateSchema(Configuration config)
 		{
 			SchemaValidator validator = new SchemaValidator(config);
@@ -170,21 +206,33 @@ namespace Teltec.Backup.App.DAO.NHibernate
 			}
 			catch (Exception ex)
 			{
-				logger.Fatal("Schema validation error", ex);
+				logger.FatalException("SCHEMA VALIDATION ERROR", ex);
+				throw ex;
 			}
 			finally
 			{
 				validator = null;
 			}
-			return false;
+			//return false;
 		}
 
+		// Summary:
+		//   Check every table against the mappings, and, if there are changes,
+		//	 use DDL commands to update the tables so that they match the schema.
 		private static void UpdateSchema(Configuration config)
 		{
 			SchemaUpdate schema = new SchemaUpdate(config);
 			const bool useStdOut = true;
 			const bool doUpdate = true;
 			schema.Execute(useStdOut, doUpdate);
+			if (schema.Exceptions != null)
+			{
+				foreach (var ex in schema.Exceptions)
+				{
+					logger.FatalException("SCHEMA UPDATE ERROR", ex);
+					throw ex;
+				}
+			}
 			schema = null;
 		}
 

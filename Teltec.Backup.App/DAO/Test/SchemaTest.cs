@@ -1,7 +1,7 @@
 ﻿using System;
 using NHibernate.Tool.hbm2ddl;
 using NUnit.Framework;
-using Teltec.Backup.App.DAO.NHibernate;
+using Teltec.Backup.App.DAO.NH;
 
 namespace Teltec.Backup.App.DAO.Test
 {

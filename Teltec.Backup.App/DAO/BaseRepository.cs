@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Teltec.Backup.App.DAO.NHibernate;
+using Teltec.Backup.App.DAO.NH;
 using Teltec.Backup.App.Models;
 
 namespace Teltec.Backup.App.DAO
@@ -303,17 +303,17 @@ namespace Teltec.Backup.App.DAO
 
 		protected bool IsTransient(ISession session, T obj)
 		{
-			return NHibernate.NHibernateHelper.IsTransient(Session, obj);
+			return NH.NHibernateHelper.IsTransient(Session, obj);
 		}
 
 		public ISession GetSession()
 		{
-			return NHibernate.NHibernateHelper.GetSession();
+			return NH.NHibernateHelper.GetSession();
 		}
 
 		public IStatelessSession GetStatelessSession()
 		{
-			return NHibernate.NHibernateHelper.GetStatelessSession();
+			return NH.NHibernateHelper.GetStatelessSession();
 		}
 
 		private ISession _Session;

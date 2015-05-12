@@ -4,15 +4,30 @@ using System;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
 
-namespace Teltec.Backup.App.DAO.NHibernate
+namespace Teltec.Backup.App.DAO.NH
 {
+	public static class IdentifyCreator
+	{
+		public static IdentityPart CustomGeneratedBy(this IdentityPart idMapping, string sequenceName)
+		{
+			switch (NHibernateHelper.DatabaseType)
+			{
+				default: throw new ArgumentNullException("Unhandled database type");
+				case NHibernateHelper.SupportedDatabaseType.SQLEXPRESS_2012:
+					return idMapping.GeneratedBy.Native(sequenceName);
+				case NHibernateHelper.SupportedDatabaseType.SQLITE3:
+					return idMapping.GeneratedBy.Native(sequenceName).UnsavedValue(null);
+			}
+		}
+	}
+
 	class StorageAccountMap : ClassMap<Models.StorageAccount>
 	{
 		public StorageAccountMap()
 		{
 			Table("storage_accounts");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_storage_accounts").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_storage_accounts");
 
 			Map(p => p.Type)
 				.Column("type")
@@ -40,19 +55,18 @@ namespace Teltec.Backup.App.DAO.NHibernate
 					.Column("display_name")
 					.Not.Nullable()
 					.UniqueKey("uk_display_name")
-					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen)
+					.Length(Models.AmazonS3Account.DisplayNameMaxLen)
 					;
 
 				x.Map(p => p.AccessKey)
 					.Column("access_key")
 					.Not.Nullable()
-					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen)
+					.Length(Models.AmazonS3Account.AccessKeyIdMaxLen)
 					;
 
 				x.Map(p => p.SecretKey)
 					.Column("secret_key")
 					.Not.Nullable()
-					.Length(Models.AmazonS3Account.AccessKeyNameMaxLen)
 					;
 
 				x.Map(p => p.BucketName)
@@ -72,7 +86,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		{
 			Table("plan_schedule_days_of_week");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_plan_schedule_days_of_week").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_plan_schedule_days_of_week");
 
 			References(fk => fk.Schedule)
 				.Column("plan_schedule_id")
@@ -94,7 +108,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		{
 			Table("plan_schedules");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_plan_schedules").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_plan_schedules");
 
 			Map(p => p.ScheduleType)
 				.Column("schedule_type")
@@ -171,7 +185,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		{
 			Table("backup_plans");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plans").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_backup_plans");
 
 			Map(p => p.Name)
 				.Column("name")
@@ -250,7 +264,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		{
 			Table("backup_plans_source_entries");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plans_source_entries").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_backup_plans_source_entries");
 
 			References(fk => fk.BackupPlan)
 				.Column("backup_plan_id")
@@ -283,7 +297,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		{
 			Table("backups");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_backus").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_backups");
 
 			References(fk => fk.BackupPlan)
 				.Column("backup_plan_id")
@@ -329,7 +343,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 
 			Table("backuped_files");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_backuped_files").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_backuped_files");
 
 			References(fk => fk.Backup)
 				.Column("backup_id")
@@ -387,7 +401,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 
 			Table("backup_plan_files");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plan_files").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_backup_plan_files");
 
 			References(fk => fk.BackupPlan)
 				.Column("backup_plan_id")
@@ -471,7 +485,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 
 			Table("backup_plan_path_nodes");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_backup_plan_path_nodes").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_backup_plan_path_nodes");
 
 			References(fk => fk.BackupPlan)
 				.Column("backup_plan_id")
@@ -534,7 +548,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		{
 			Table("restore_plans");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_restore_plans").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_restore_plans");
 
 			Map(p => p.Name)
 				.Column("name")
@@ -604,7 +618,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 
 			Table("restore_plans_source_entries");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_restore_plans_source_entries").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_restore_plans_source_entries");
 
 			References(fk => fk.RestorePlan)
 				.Column("restore_plan_id")
@@ -646,7 +660,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 		{
 			Table("restores");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_restores").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_restores");
 
 			References(fk => fk.RestorePlan)
 				.Column("restore_plan_id")
@@ -691,7 +705,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 
 			Table("restored_files");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_restored_files").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_restored_files");
 
 			References(fk => fk.Restore)
 				.Column("restore_id")
@@ -738,7 +752,7 @@ namespace Teltec.Backup.App.DAO.NHibernate
 
 			Table("restore_plan_files");
 
-			Id(p => p.Id, "id").GeneratedBy.Native("seq_restore_plan_files").UnsavedValue(null);
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_restore_plan_files");
 
 			References(fk => fk.RestorePlan)
 				.Column("restore_plan_id")

@@ -1,4 +1,4 @@
-﻿using Teltec.Backup.App.DAO.NHibernate;
+﻿using Teltec.Backup.App.DAO.NH;
 using Teltec.Common;
 
 namespace Teltec.Backup.App.Models

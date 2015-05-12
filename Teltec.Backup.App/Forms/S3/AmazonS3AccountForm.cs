@@ -44,11 +44,11 @@ namespace Teltec.Backup.App.Forms.S3
 		{
 			CleanData();
 
-			//if (!IsValid())
-			//{
-			//	MessageBox.Show("Invalid data");
-			//	return;
-			//}
+			if (!IsValid())
+			{
+				MessageBox.Show("Invalid data. Please verify.");
+				return;
+			}
 
 			if (AccountSaved != null)
 				AccountSaved(this, new AmazonS3AccountSaveEventArgs(_account));
@@ -70,14 +70,17 @@ namespace Teltec.Backup.App.Forms.S3
 
 		private bool HasValidCredentials()
 		{
+			bool hasDisplayName = !string.IsNullOrEmpty(_account.DisplayName);
+			bool hasValidDisplayName = hasDisplayName
+				&& _account.DisplayName.Length <= AmazonS3Account.DisplayNameMaxLen;
 			bool hasAccessKey = _account.AccessKey != null;
 			bool hasValidAccessKey = hasAccessKey
-				&& _account.AccessKey.Length >= AmazonS3Account.AccessKeyNameMinLen
-				&& _account.AccessKey.Length <= AmazonS3Account.AccessKeyNameMaxLen;
+				&& _account.AccessKey.Length >= AmazonS3Account.AccessKeyIdMinLen
+				&& _account.AccessKey.Length <= AmazonS3Account.AccessKeyIdMaxLen;
 			bool hasSecretKey = _account.SecretKey != null;
 			bool hasValidSecretKey = hasSecretKey && _account.SecretKey.Length > 0;
 
-			return hasValidAccessKey && hasValidSecretKey;
+			return hasValidDisplayName && hasValidAccessKey && hasValidSecretKey;
 		}
 
 		private void cbBucketName_DropDown(object sender, EventArgs e)

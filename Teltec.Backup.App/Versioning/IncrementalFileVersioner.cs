@@ -11,7 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.DAO.NHibernate;
+using Teltec.Backup.App.DAO.NH;
 using Teltec.Backup.App.Models;
 using Teltec.FileSystem;
 using Teltec.Storage;

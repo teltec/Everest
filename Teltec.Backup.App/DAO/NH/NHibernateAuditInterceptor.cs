@@ -3,7 +3,7 @@ using NHibernate.Type;
 using NLog;
 using System;
 
-namespace Teltec.Backup.App.DAO.NHibernate
+namespace Teltec.Backup.App.DAO.NH
 {
 	// REFERENCE: http://nhibernate.info/doc/nh/en/index.html
 	[Serializable]

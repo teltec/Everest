@@ -15,8 +15,8 @@ namespace Teltec.Backup.App.Models
 		}
 
         // http://docs.aws.amazon.com/IAM/latest/APIReference/API_AccessKey.html
-        public const int AccessKeyNameMinLen = 16;
-        public const int AccessKeyNameMaxLen = 32;
+        public const int AccessKeyIdMinLen = 16;
+        public const int AccessKeyIdMaxLen = 32;
         private String _AccessKey;
 		public virtual String AccessKey
         {
