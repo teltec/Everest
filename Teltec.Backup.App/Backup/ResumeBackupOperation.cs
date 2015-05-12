@@ -1,13 +1,13 @@
 ﻿using NLog;
 using NUnit.Framework;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Teltec.Backup.App.DAO;
+using Teltec.Backup.Data.DAO;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Backup
 {

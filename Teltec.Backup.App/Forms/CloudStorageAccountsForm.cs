@@ -1,10 +1,9 @@
 ﻿using NLog;
 using System;
-using System.Linq;
 using System.Windows.Forms;
-using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Forms.S3;
-using Teltec.Backup.App.Models;
+using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms
 {

@@ -3,7 +3,7 @@ using Amazon.S3.Model;
 using System;
 using System.Globalization;
 using System.Windows.Forms;
-using Teltec.Backup.App.Models;
+using Teltec.Backup.Data.Models;
 using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.App.Forms.S3

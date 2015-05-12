@@ -4,9 +4,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows.Forms;
 using Teltec.Backup.App.Controls;
-using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.Models;
+using Teltec.Backup.Data.DAO;
 using Teltec.Common.Extensions;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms.BackupPlan
 {
@@ -42,7 +42,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				e => new FileSystemTreeNodeData
 				{
 					Id = e.Id,
-					Type = e.Type.ToTypeEnum(),
+					Type = Models.EntryTypeExtensions.ToTypeEnum(e.Type),
 					Path = e.Path,
 					State = Teltec.Common.Controls.CheckState.Checked
 				}
@@ -60,7 +60,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		{
 			Models.BackupPlan plan = Model as Models.BackupPlan;
 			
-			ICollection<BackupPlanSourceEntry> entries = tvFiles.GetCheckedTagData().ToBackupPlanSourceEntry(plan, _dao);
+			ICollection<Models.BackupPlanSourceEntry> entries = tvFiles.GetCheckedTagData().ToBackupPlanSourceEntry(plan, _dao);
 			plan.SelectedSources.Clear();
 			plan.SelectedSources.AddRange(entries);
 

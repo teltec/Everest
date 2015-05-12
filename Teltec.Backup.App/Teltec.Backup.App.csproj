@@ -162,7 +162,6 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\EntryTreeNodeData.cs" />
-    <Compile Include="Controls\TypeEnum.cs" />
     <Compile Include="Forms\RestorePlan\RestorePlanViewControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -200,37 +199,12 @@
     <Compile Include="Forms\Schedule\ScheduleRecurringOptionsForm.Designer.cs">
       <DependentUpon>ScheduleRecurringOptionsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Models\EntryType.cs" />
-    <Compile Include="Models\ISchedulablePlan.cs" />
-    <Compile Include="Models\PlanSchedule.cs" />
-    <Compile Include="Models\Restore.cs" />
-    <Compile Include="Models\BackupPlanPathNode.cs" />
-    <Compile Include="Models\RestoredFile.cs" />
-    <Compile Include="Models\RestorePlan.cs" />
-    <Compile Include="Models\RestorePlanFile.cs" />
-    <Compile Include="Models\RestorePlanSourceEntry.cs" />
     <Compile Include="Restore\CustomRestoreAgent.cs" />
     <Compile Include="Backup\ResumeBackupOperation.cs" />
     <Compile Include="Backup\NewBackupOperation.cs" />
     <Compile Include="Backup\CustomBackupAgent.cs" />
-    <Compile Include="DAO\NH\NHibernateMappings.cs" />
-    <Compile Include="DAO\NH\IAuditable.cs" />
-    <Compile Include="DAO\NH\NHibernateAuditInterceptor.cs" />
-    <Compile Include="DAO\NH\NHibernateHelper.cs" />
-    <Compile Include="DAO\NH\NHibernateLoadListener.cs" />
-    <Compile Include="DAO\NH\NHibernatePersistentEntityListener.cs" />
-    <Compile Include="DAO\Repositories.cs" />
-    <Compile Include="DAO\NH\NHibernateTransactionProxy.cs" />
-    <Compile Include="DAO\Test\SchemaTest.cs" />
     <Compile Include="FileManager.cs" />
-    <Compile Include="Models\Backup.cs" />
-    <Compile Include="Models\BackupedFile.cs" />
-    <Compile Include="Models\BackupPlanFile.cs" />
-    <Compile Include="Models\EStorageAccountType.cs" />
-    <Compile Include="Models\BaseEntity.cs" />
-    <Compile Include="DAO\NH\IPersistentEntity.cs" />
     <Compile Include="Provider.cs" />
-    <Compile Include="DAO\BaseRepository.cs" />
     <Compile Include="Forms\BackupPlan\BackupPlanListControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -296,7 +270,6 @@
     </Compile>
     <Compile Include="Restore\NewRestoreOperation.cs" />
     <Compile Include="Restore\RestoreOperation.cs" />
-    <Compile Include="Versioning\CustomVersionedFile.cs" />
     <Compile Include="Versioning\DefaultRestoreScanner.cs" />
     <Compile Include="Versioning\IncrementalFileVersioner.cs" />
     <Compile Include="Versioning\DefaultPathScanner.cs" />
@@ -305,11 +278,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="Migrations\Configuration.cs_" />
-    <Compile Include="Models\AmazonS3Account.cs" />
     <Compile Include="Backup\BackupOperation.cs" />
-    <Compile Include="Models\BackupPlan.cs" />
-    <Compile Include="Models\BackupPlanSourceEntry.cs" />
-    <Compile Include="Models\StorageAccount.cs" />
     <Compile Include="Forms\CloudStorageAccountsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -426,6 +395,10 @@
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Teltec.Backup.Data\Teltec.Backup.Data.csproj">
+      <Project>{991059ef-f7d6-4fd8-b462-1f54467f6a33}</Project>
+      <Name>Teltec.Backup.Data</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>
       <Name>Teltec.Common</Name>

@@ -1,9 +1,9 @@
 ﻿using NLog;
 using System;
-using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Forms.Schedule;
-using Teltec.Backup.App.Models;
+using Teltec.Backup.Data.DAO;
 using Teltec.Forms.Wizard;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms.RestorePlan
 {
@@ -52,7 +52,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 
 			Console.WriteLine("Name = {0}", plan.Name);
 			Console.WriteLine("BackupPlan = {0}", plan.BackupPlan.Name);
-			foreach (RestorePlanSourceEntry entry in plan.SelectedSources)
+			foreach (Models.RestorePlanSourceEntry entry in plan.SelectedSources)
 				Console.WriteLine("SelectedSource => #{0}, {1}, {2}, {3}",
 					entry.Id, entry.Type.ToString(), entry.Path, entry.Version);
 			Console.WriteLine("ScheduleType = {0}", plan.ScheduleType.ToString());

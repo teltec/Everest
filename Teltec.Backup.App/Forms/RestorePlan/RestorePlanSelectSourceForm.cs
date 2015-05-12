@@ -4,10 +4,10 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows.Forms;
 using Teltec.Backup.App.Controls;
-using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.Models;
+using Teltec.Backup.Data.DAO;
 using Teltec.Common.Extensions;
 using Teltec.Storage.Versioning;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms.RestorePlan
 {
@@ -45,10 +45,10 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 				{
 					Id = e.Id,
 					Plan = plan.BackupPlan,
-					Type = e.Type.ToTypeEnum(),
+					Type = Models.EntryTypeExtensions.ToTypeEnum(e.Type),
 					Path = e.Path,
 					State = Teltec.Common.Controls.CheckState.Checked,
-					InfoObject = new EntryInfo(e.Type.ToTypeEnum(), e.PathNode.Name, e.Path, new FileVersion { Version = e.Version })
+					InfoObject = new EntryInfo(Models.EntryTypeExtensions.ToTypeEnum(e.Type), e.PathNode.Name, e.Path, new FileVersion { Version = e.Version })
 				}
 			);
 		}
@@ -64,7 +64,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 		{
 			Models.RestorePlan plan = Model as Models.RestorePlan;
 			
-			ICollection<RestorePlanSourceEntry> entries = tvFiles.GetCheckedTagData().ToRestorePlanSourceEntry(plan, _dao);
+			ICollection<Models.RestorePlanSourceEntry> entries = tvFiles.GetCheckedTagData().ToRestorePlanSourceEntry(plan, _dao);
 			plan.SelectedSources.Clear();
 			plan.SelectedSources.AddRange(entries);
 

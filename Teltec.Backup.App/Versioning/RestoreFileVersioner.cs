@@ -7,12 +7,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.DAO.NH;
-using Teltec.Backup.App.Models;
-using Teltec.FileSystem;
+using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Data.DAO.NH;
+using Teltec.Backup.Data.Versioning;
 using Teltec.Storage;
-using Teltec.Storage.Versioning;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Versioning
 {
@@ -46,7 +45,7 @@ namespace Teltec.Backup.App.Versioning
 			Restore = restore;
 
 			RestorePlanFileRepository daoRestorePlanFile = new RestorePlanFileRepository();
-			AllFilesFromPlan = daoRestorePlanFile.GetAllByPlan(restore.RestorePlan).ToDictionary<RestorePlanFile, string>(p => p.Path);
+			AllFilesFromPlan = daoRestorePlanFile.GetAllByPlan(restore.RestorePlan).ToDictionary<Models.RestorePlanFile, string>(p => p.Path);
 
 			await ExecuteOnBackround(() =>
 			{
@@ -66,11 +65,11 @@ namespace Teltec.Backup.App.Versioning
 		// Contains ALL `RestorePlanFile`s that were registered at least once for the plan associated to this restore.
 		// Fact 1: ALL of its items are also contained (distributed) in:
 		//		`SuppliedFiles`
-		Dictionary<string, RestorePlanFile> AllFilesFromPlan;
+		Dictionary<string, Models.RestorePlanFile> AllFilesFromPlan;
 
 		// Contains ALL `RestorePlanFile`s that were informed to be included in this restore.
 		// Fact 1: ALL of its items are also contained in `AllFilesFromPlan`.
-		LinkedList<RestorePlanFile> SuppliedFiles;
+		LinkedList<Models.RestorePlanFile> SuppliedFiles;
 
 		// After `Save()`, contains ALL `CustomVersionedFile`s that are eligible for transfer.
 		TransferSet<CustomVersionedFile> TransferSet = new TransferSet<CustomVersionedFile>();
@@ -102,13 +101,13 @@ namespace Teltec.Backup.App.Versioning
 		// Returns the complete list of `RestorePlanFile`s that are related to `files`.
 		// NOTE: Does not save to the database because this method is run by a secondary thread.
 		//
-		private LinkedList<RestorePlanFile> DoLoadOrCreateRestorePlanFiles(Models.RestorePlan plan, LinkedList<CustomVersionedFile> files)
+		private LinkedList<Models.RestorePlanFile> DoLoadOrCreateRestorePlanFiles(Models.RestorePlan plan, LinkedList<CustomVersionedFile> files)
 		{
 			Assert.IsNotNull(plan);
 			Assert.IsNotNull(files);
 			Assert.IsNotNull(AllFilesFromPlan);
 
-			LinkedList<RestorePlanFile> result = new LinkedList<RestorePlanFile>();
+			LinkedList<Models.RestorePlanFile> result = new LinkedList<Models.RestorePlanFile>();
 			BackupPlanPathNodeRepository daoPathNode = new BackupPlanPathNodeRepository();
 
 			// Check all files.
@@ -120,17 +119,17 @@ namespace Teltec.Backup.App.Versioning
 				//
 				// Create or update `RestorePlanFile`.
 				//
-				RestorePlanFile restorePlanFile = null;
+				Models.RestorePlanFile restorePlanFile = null;
 				bool backupPlanFileAlreadyExists = AllFilesFromPlan.TryGetValue(file.Path, out restorePlanFile);
 
 				if (!backupPlanFileAlreadyExists)
 				{
-					restorePlanFile = new RestorePlanFile(plan, file.Path);
+					restorePlanFile = new Models.RestorePlanFile(plan, file.Path);
 					restorePlanFile.CreatedAt = DateTime.UtcNow;
 				}
 
-				BackupPlanPathNode pathNode = daoPathNode.GetByPlanAndTypeAndPath(plan.BackupPlan, EntryType.FILE, file.Path);
-				Assert.IsNotNull(pathNode, string.Format("{0} has no corresponding {1}", file.Path, typeof(BackupPlanPathNode).Name));
+				Models.BackupPlanPathNode pathNode = daoPathNode.GetByPlanAndTypeAndPath(plan.BackupPlan, Models.EntryType.FILE, file.Path);
+				Assert.IsNotNull(pathNode, string.Format("{0} has no corresponding {1}", file.Path, typeof(Models.BackupPlanPathNode).Name));
 				restorePlanFile.PathNode = pathNode;
 				restorePlanFile.VersionedFile = file;
 				result.AddLast(restorePlanFile);
@@ -143,7 +142,7 @@ namespace Teltec.Backup.App.Versioning
 		// Summary:
 		// ...
 		//
-		private IEnumerable<CustomVersionedFile> GetFilesToTransfer(Models.Restore restore, LinkedList<RestorePlanFile> files)
+		private IEnumerable<CustomVersionedFile> GetFilesToTransfer(Models.Restore restore, LinkedList<Models.RestorePlanFile> files)
 		{
 			return files.Select(p => p.VersionedFile);
 		}
@@ -183,7 +182,7 @@ namespace Teltec.Backup.App.Versioning
 			// 1. Create `RestorePlanFile`s and `RestoredFile`s as necessary and add them to the `Restore`.
 			using (ITransaction tx = session.BeginTransaction())
 			{
-				foreach (RestorePlanFile entry in FilesToInsertOrUpdate)
+				foreach (Models.RestorePlanFile entry in FilesToInsertOrUpdate)
 				{
 					// Since we're running in the same thread that does update UI.
 					Application.DoEvents();
@@ -195,11 +194,11 @@ namespace Teltec.Backup.App.Versioning
 					// the `restore_plan_file_id` column.
 					daoRestorePlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved 
 
-					RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(Restore, entry.Path);
+					Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(Restore, entry.Path);
 					if (restoredFile == null) // If we're resuming, this should already exist.
 					{
 						// Create `RestoredFile`.
-						restoredFile = new RestoredFile(Restore, entry);
+						restoredFile = new Models.RestoredFile(Restore, entry);
 					}
 					restoredFile.UpdatedAt = DateTime.UtcNow;
 					daoRestoredFile.InsertOrUpdate(tx, restoredFile);

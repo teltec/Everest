@@ -2,14 +2,13 @@
 using System;
 using System.ComponentModel;
 using System.Windows.Forms;
-using Teltec.Backup.App.Backup;
-using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.Forms.RestorePlan;
 using Teltec.Backup.App.Restore;
+using Teltec.Backup.Data.DAO;
 using Teltec.Common;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
 using Teltec.Storage.Utils;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms.RestorePlan
 {

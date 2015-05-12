@@ -16,6 +16,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.FileSystem.Tests", "Teltec.FileSystem.Tests\Teltec.FileSystem.Tests.csproj", "{FE9FBDAE-343F-4EFF-9428-722AACD1D10E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.Svc", "Teltec.Backup.Svc\Teltec.Backup.Svc.csproj", "{134C9546-EC3F-4C05-87E3-5E11DDEB1BCE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{991059EF-F7D6-4FD8-B462-1F54467F6A33} = {991059EF-F7D6-4FD8-B462-1F54467F6A33}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E56C573E-986E-4412-B54F-BD3C9AB4F918}"
 	ProjectSection(SolutionItems) = preProject
@@ -25,8 +28,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.PlanExecutor", "Teltec.Backup.PlanExecutor\Teltec.Backup.PlanExecutor.csproj", "{0D704DE4-13FE-4603-A903-6CD9939A2645}"
+	ProjectSection(ProjectDependencies) = postProject
+		{991059EF-F7D6-4FD8-B462-1F54467F6A33} = {991059EF-F7D6-4FD8-B462-1F54467F6A33}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Installer", "Installer\Installer.csproj", "{BECAF938-12DC-4512-9987-FB82AC30F8A2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{991059EF-F7D6-4FD8-B462-1F54467F6A33} = {991059EF-F7D6-4FD8-B462-1F54467F6A33}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.Data", "Teltec.Backup.Data\Teltec.Backup.Data.csproj", "{991059EF-F7D6-4FD8-B462-1F54467F6A33}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -70,6 +81,10 @@ Global
 		{BECAF938-12DC-4512-9987-FB82AC30F8A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BECAF938-12DC-4512-9987-FB82AC30F8A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BECAF938-12DC-4512-9987-FB82AC30F8A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{991059EF-F7D6-4FD8-B462-1F54467F6A33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{991059EF-F7D6-4FD8-B462-1F54467F6A33}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{991059EF-F7D6-4FD8-B462-1F54467F6A33}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{991059EF-F7D6-4FD8-B462-1F54467F6A33}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

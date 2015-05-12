@@ -1,10 +1,10 @@
 ﻿using NLog;
 using System;
-using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Forms.Schedule;
-using Teltec.Backup.App.Models;
+using Teltec.Backup.Data.DAO;
 using Teltec.Common.Extensions;
 using Teltec.Forms.Wizard;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms.BackupPlan
 {
@@ -52,12 +52,12 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			Console.WriteLine("Name = {0}", plan.Name);
 			Console.WriteLine("StorageAccount = {0}", plan.StorageAccount.DisplayName);
 			Console.WriteLine("StorageAccountType = {0}", plan.StorageAccountType.ToString());
-			foreach (BackupPlanSourceEntry entry in plan.SelectedSources)
+			foreach (Models.BackupPlanSourceEntry entry in plan.SelectedSources)
 				Console.WriteLine("SelectedSource => #{0}, {1}, {2}", entry.Id, entry.Type.ToString(), entry.Path);
 			Console.WriteLine("ScheduleType = {0}", plan.ScheduleType.ToString());
 			Console.WriteLine("Schedule.ScheduleType = {0}", plan.Schedule.ScheduleType.ToString());
-			
-			PlanSchedule schedule = plan.Schedule;
+
+			Models.PlanSchedule schedule = plan.Schedule;
 			switch (plan.ScheduleType)
 			{
 				case Models.ScheduleTypeEnum.RUN_MANUALLY:
@@ -75,19 +75,19 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 					{
 						switch (schedule.RecurrencyFrequencyType.Value)
 						{
-							case FrequencyTypeEnum.DAILY:
+							case Models.FrequencyTypeEnum.DAILY:
 								break;
-							case FrequencyTypeEnum.WEEKLY:
+							case Models.FrequencyTypeEnum.WEEKLY:
 								Console.WriteLine("OccursAtDaysOfWeek           = {0}",
 									schedule.OccursAtDaysOfWeek != null ? schedule.OccursAtDaysOfWeek.ToReadableString() : "null");
 								break;
-							case FrequencyTypeEnum.MONTHLY:
+							case Models.FrequencyTypeEnum.MONTHLY:
 								Console.WriteLine("MonthlyOccurrenceType        = {0}",
 									schedule.MonthlyOccurrenceType.HasValue ? schedule.MonthlyOccurrenceType.Value.ToString() : "null");
 								Console.WriteLine("OccursMonthlyAtDayOfWeek     = {0}",
 									schedule.OccursMonthlyAtDayOfWeek.HasValue ? schedule.OccursMonthlyAtDayOfWeek.Value.ToString() : "null");
 								break;
-							case FrequencyTypeEnum.DAY_OF_MONTH:
+							case Models.FrequencyTypeEnum.DAY_OF_MONTH:
 								Console.WriteLine("OccursAtDayOfMonth           = {0}",
 									schedule.OccursAtDayOfMonth.HasValue ? schedule.OccursAtDayOfMonth.Value.ToString() : "null");
 								break;

@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.Models;
+using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Data.FileSystem;
 using Teltec.Storage.Versioning;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Controls
 {
@@ -16,7 +17,7 @@ namespace Teltec.Backup.App.Controls
 		{
 		}
 
-		public BackupPlanTreeNodeData(BackupPlan plan, EntryInfo infoObject)
+		public BackupPlanTreeNodeData(Models.BackupPlan plan, EntryInfo infoObject)
 		{
 			Plan = plan;
 			InfoObject = infoObject;
@@ -47,23 +48,23 @@ namespace Teltec.Backup.App.Controls
 	public static class BackupPlanTreeNodeDataExtensions
 	{
 		// Convert collection of `FileSystemTreeView.TreeNodeTag` to `RestorePlanSourceEntry`.
-		public static List<RestorePlanSourceEntry> ToRestorePlanSourceEntry(
-			this Dictionary<string, BackupPlanTreeNodeData> dataDict, RestorePlan plan, RestorePlanSourceEntryRepository dao)
+		public static List<Models.RestorePlanSourceEntry> ToRestorePlanSourceEntry(
+			this Dictionary<string, BackupPlanTreeNodeData> dataDict, Models.RestorePlan plan, RestorePlanSourceEntryRepository dao)
 		{
-			List<RestorePlanSourceEntry> sources = new List<RestorePlanSourceEntry>(dataDict.Count);
+			List<Models.RestorePlanSourceEntry> sources = new List<Models.RestorePlanSourceEntry>(dataDict.Count);
 			foreach (var entry in dataDict)
 			{
 				BackupPlanTreeNodeData data = entry.Value;
-				RestorePlanSourceEntry source = null;
+				Models.RestorePlanSourceEntry source = null;
 				if (data.Id != null)
 					source = dao.Get(data.Id as long?);
 				else
-					source = new RestorePlanSourceEntry();
+					source = new Models.RestorePlanSourceEntry();
 				source.RestorePlan = plan;
 				source.Type = data.ToEntryType();
 				source.Path = data.Path;
-				source.PathNode = data.UserObject as BackupPlanPathNode;
-				if (source.Type == EntryType.FILE_VERSION)
+				source.PathNode = data.UserObject as Models.BackupPlanPathNode;
+				if (source.Type == Models.EntryType.FILE_VERSION)
 					source.Version = data.Version.Version;
 				sources.Add(source);
 			}

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Teltec.Backup.Data.FileSystem;
 using Teltec.Common.Controls;
 using Teltec.FileSystem;
 

@@ -1,11 +1,4 @@
 ﻿using SimpleInjector;
-using System;
-using System.Collections.Generic;
-using System.Data.Entity;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Teltec.Backup.App.Models;
 
 namespace Teltec.Backup.App
 {

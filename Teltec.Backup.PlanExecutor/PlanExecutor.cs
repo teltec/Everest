@@ -4,10 +4,10 @@ using System.Diagnostics;
 using System.Threading;
 using Teltec.Backup.App;
 using Teltec.Backup.App.Backup;
-using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.Models;
 using Teltec.Backup.App.Restore;
+using Teltec.Backup.Data.DAO;
 using Teltec.Storage;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.PlanExecutor
 {
@@ -97,7 +97,7 @@ namespace Teltec.Backup.PlanExecutor
 			if (!validPlanType)
 				ExitShowingHelpText(1);
 
-			ISchedulablePlan plan = null;
+			Models.ISchedulablePlan plan = null;
 
 			switch (selectedPlanType)
 			{
@@ -131,12 +131,12 @@ namespace Teltec.Backup.PlanExecutor
 			{
 				case PlanTypeEnum.Backup:
 					{
-						RunBackupOperation(plan as BackupPlan);
+						RunBackupOperation(plan as Models.BackupPlan);
 						break;
 					}
 				case PlanTypeEnum.Restore:
 					{
-						RunRestoreOperation(plan as RestorePlan);
+						RunRestoreOperation(plan as Models.RestorePlan);
 						break;
 					}
 			}
@@ -154,11 +154,11 @@ namespace Teltec.Backup.PlanExecutor
 			Environment.Exit(exitCode);
 		}
 
-		private void RunBackupOperation(BackupPlan plan)
+		private void RunBackupOperation(Models.BackupPlan plan)
 		{
 			var dao = new BackupRepository();
 
-			App.Models.Backup latest = dao.GetLatestByPlan(plan);
+			Models.Backup latest = dao.GetLatestByPlan(plan);
 			MustResumeLastOperation = latest != null && latest.NeedsResume();
 
 			// Create new backup or resume the last unfinished one.
@@ -180,16 +180,16 @@ namespace Teltec.Backup.PlanExecutor
 			RunningOperation.Start(out TransferResults);
 		}
 
-		private void RunRestoreOperation(RestorePlan plan)
+		private void RunRestoreOperation(Models.RestorePlan plan)
 		{
 			var dao = new RestoreRepository();
 
-			Restore latest = dao.GetLatestByPlan(plan);
+			Models.Restore latest = dao.GetLatestByPlan(plan);
 			MustResumeLastOperation = latest != null && latest.NeedsResume();
 
 			// Create new restore or resume the last unfinished one.
 			RestoreOperation obj = /* MustResumeLastOperation
-				? new  Restore.ResumeRestoreOperation(latest) as  Restore.RestoreOperation
+				? new ResumeRestoreOperation(latest) as RestoreOperation
 				: */ new NewRestoreOperation(plan) as RestoreOperation;
 
 			obj.Updated += (sender2, e2) => RestoreUpdateStatsInfo(e2.Status);
@@ -286,7 +286,7 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Backup finished.");
 
 						// Update timestamps.
-						BackupPlan plan = Model as BackupPlan;
+						Models.BackupPlan plan = Model as Models.BackupPlan;
 						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
 						_daoBackupPlan.Update(plan);
 
@@ -326,7 +326,7 @@ namespace Teltec.Backup.PlanExecutor
 							TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
 						// Update timestamps.
-						BackupPlan plan = Model as BackupPlan;
+						Models.BackupPlan plan = Model as Models.BackupPlan;
 						plan.LastRunAt = DateTime.UtcNow;
 						_daoBackupPlan.Update(plan);
 
@@ -426,7 +426,7 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Restore finished.");
 
 						// Update timestamps.
-						RestorePlan plan = Model as RestorePlan;
+						Models.RestorePlan plan = Model as Models.RestorePlan;
 						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
 						_daoRestorePlan.Update(plan);
 
@@ -465,7 +465,7 @@ namespace Teltec.Backup.PlanExecutor
 							TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
 						// Update timestamps.
-						RestorePlan plan = Model as RestorePlan;
+						Models.RestorePlan plan = Model as Models.RestorePlan;
 						plan.LastRunAt = DateTime.UtcNow;
 						_daoRestorePlan.Update(plan);
 

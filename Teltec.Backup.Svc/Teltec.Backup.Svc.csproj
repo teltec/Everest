@@ -141,6 +141,10 @@
       <Project>{aa94a2c3-545b-4e24-9d46-ae45740c461a}</Project>
       <Name>Teltec.Backup.App</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Teltec.Backup.Data\Teltec.Backup.Data.csproj">
+      <Project>{991059ef-f7d6-4fd8-b462-1f54467f6a33}</Project>
+      <Name>Teltec.Backup.Data</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>
       <Name>Teltec.Common</Name>

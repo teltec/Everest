@@ -194,7 +194,7 @@
 			// 
 			// amazonS3AccountBindingSource
 			// 
-			this.amazonS3AccountBindingSource.DataSource = typeof(Teltec.Backup.App.Models.AmazonS3Account);
+			this.amazonS3AccountBindingSource.DataSource = typeof(Teltec.Backup.Data.Models.AmazonS3Account);
 			// 
 			// AmazonS3AccountForm
 			// 

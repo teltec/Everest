@@ -7,6 +7,8 @@ using System.Linq;
 using System.Security.Principal;
 using System.ServiceProcess;
 using System.Threading;
+using Teltec.Backup.Data.DAO;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.Svc
 {
@@ -108,22 +110,22 @@ namespace Teltec.Backup.Svc
 			Console.WriteLine("hello");
 		}
 
-		private string BuildTaskName(Teltec.Backup.App.Models.ISchedulablePlan plan)
+		private string BuildTaskName(Models.ISchedulablePlan plan)
 		{
 			return plan.ScheduleParamName;
 		}
 
-		private Trigger[] BuildTriggers(Teltec.Backup.App.Models.ISchedulablePlan plan)
+		private Trigger[] BuildTriggers(Models.ISchedulablePlan plan)
 		{
 			List<Trigger> triggers = new List<Trigger>();
-			Teltec.Backup.App.Models.PlanSchedule schedule = plan.Schedule;
+			Models.PlanSchedule schedule = plan.Schedule;
 			switch (schedule.ScheduleType)
 			{
-				case App.Models.ScheduleTypeEnum.RUN_MANUALLY:
+				case Models.ScheduleTypeEnum.RUN_MANUALLY:
 					{
 						break;
 					}
-				case App.Models.ScheduleTypeEnum.SPECIFIC:
+				case Models.ScheduleTypeEnum.SPECIFIC:
 					{
 						DateTime? optional = schedule.OccursSpecificallyAt;
 						if (!optional.HasValue)
@@ -139,7 +141,7 @@ namespace Teltec.Backup.Svc
 						triggers.Add(tr);
 						break;
 					}
-				case App.Models.ScheduleTypeEnum.RECURRING:
+				case Models.ScheduleTypeEnum.RECURRING:
 					{
 						if (!schedule.RecurrencyFrequencyType.HasValue)
 							break;
@@ -148,7 +150,7 @@ namespace Teltec.Backup.Svc
 
 						switch (schedule.RecurrencyFrequencyType.Value)
 						{
-							case App.Models.FrequencyTypeEnum.DAILY:
+							case Models.FrequencyTypeEnum.DAILY:
 								{
 									tr = Trigger.CreateTrigger(TaskTriggerType.Daily);
 									
@@ -160,7 +162,7 @@ namespace Teltec.Backup.Svc
 									
 									break;
 								}
-							case App.Models.FrequencyTypeEnum.WEEKLY:
+							case Models.FrequencyTypeEnum.WEEKLY:
 								{
 									if (schedule.OccursAtDaysOfWeek == null || schedule.OccursAtDaysOfWeek.Count == 0)
 										break;
@@ -169,7 +171,7 @@ namespace Teltec.Backup.Svc
 
 									WeeklyTrigger wt = tr as WeeklyTrigger;
 
-									App.Models.PlanScheduleDayOfWeek matchDay = null;
+									Models.PlanScheduleDayOfWeek matchDay = null;
 
 									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Monday);
 									if (matchDay != null)
@@ -201,7 +203,7 @@ namespace Teltec.Backup.Svc
 									
 									break;
 								}
-							case App.Models.FrequencyTypeEnum.MONTHLY:
+							case Models.FrequencyTypeEnum.MONTHLY:
 								{
 									if (!schedule.MonthlyOccurrenceType.HasValue || !schedule.OccursMonthlyAtDayOfWeek.HasValue)
 										break;
@@ -212,22 +214,22 @@ namespace Teltec.Backup.Svc
 
 									switch (schedule.MonthlyOccurrenceType.Value)
 									{
-										case App.Models.MonthlyOccurrenceTypeEnum.FIRST:
+										case Models.MonthlyOccurrenceTypeEnum.FIRST:
 											mt.WeeksOfMonth = WhichWeek.FirstWeek;
 											break;
-										case App.Models.MonthlyOccurrenceTypeEnum.SECOND:
+										case Models.MonthlyOccurrenceTypeEnum.SECOND:
 											mt.WeeksOfMonth = WhichWeek.SecondWeek;
 											break;
-										case App.Models.MonthlyOccurrenceTypeEnum.THIRD:
+										case Models.MonthlyOccurrenceTypeEnum.THIRD:
 											mt.WeeksOfMonth = WhichWeek.ThirdWeek;
 											break;
-										case App.Models.MonthlyOccurrenceTypeEnum.FOURTH:
+										case Models.MonthlyOccurrenceTypeEnum.FOURTH:
 											mt.WeeksOfMonth = WhichWeek.FourthWeek;
 											break;
-										case App.Models.MonthlyOccurrenceTypeEnum.PENULTIMATE:
+										case Models.MonthlyOccurrenceTypeEnum.PENULTIMATE:
 											mt.WeeksOfMonth = WhichWeek.ThirdWeek;
 											break;
-										case App.Models.MonthlyOccurrenceTypeEnum.LAST:
+										case Models.MonthlyOccurrenceTypeEnum.LAST:
 											mt.WeeksOfMonth = WhichWeek.LastWeek;
 											break;
 									}
@@ -259,7 +261,7 @@ namespace Teltec.Backup.Svc
 
 									break;
 								}
-							case App.Models.FrequencyTypeEnum.DAY_OF_MONTH:
+							case Models.FrequencyTypeEnum.DAY_OF_MONTH:
 								{
 									if (!schedule.OccursAtDayOfMonth.HasValue)
 										break;
@@ -301,10 +303,10 @@ namespace Teltec.Backup.Svc
 						{
 							switch (schedule.RecurrencyTimeUnit.Value)
 							{
-								case App.Models.TimeUnitEnum.HOURS:
+								case Models.TimeUnitEnum.HOURS:
 									tr.Repetition.Interval = TimeSpan.FromHours(schedule.RecurrencyTimeInterval.Value);
 									break;
-								case App.Models.TimeUnitEnum.MINUTES:
+								case Models.TimeUnitEnum.MINUTES:
 									tr.Repetition.Interval = TimeSpan.FromMinutes(schedule.RecurrencyTimeInterval.Value);
 									break;
 							}
@@ -344,7 +346,7 @@ namespace Teltec.Backup.Svc
 			}
 		}
 
-		private Task FindScheduledTask(Teltec.Backup.App.Models.ISchedulablePlan plan)
+		private Task FindScheduledTask(Models.ISchedulablePlan plan)
 		{
 			return FindScheduledTask(BuildTaskName(plan));
 		}
@@ -354,7 +356,7 @@ namespace Teltec.Backup.Svc
 			return FindScheduledTask(taskName) != null;
 		}
 
-		private bool HasScheduledTask(Teltec.Backup.App.Models.ISchedulablePlan plan)
+		private bool HasScheduledTask(Models.ISchedulablePlan plan)
 		{
 			return HasScheduledTask(BuildTaskName(plan));
 		}
@@ -369,7 +371,7 @@ namespace Teltec.Backup.Svc
 			}
 		}
 
-		private void SchedulePlanExecution(Teltec.Backup.App.Models.ISchedulablePlan plan, bool reschedule = false)
+		private void SchedulePlanExecution(Models.ISchedulablePlan plan, bool reschedule = false)
 		{
 			string taskName = BuildTaskName(plan);
 
@@ -450,14 +452,14 @@ namespace Teltec.Backup.Svc
 			}
 		}
 
-		List<App.Models.ISchedulablePlan> AllSchedulablePlans = new List<App.Models.ISchedulablePlan>();
+		List<Models.ISchedulablePlan> AllSchedulablePlans = new List<Models.ISchedulablePlan>();
 
 		private void ReloadPlansAndRescheduler()
 		{
 			AllSchedulablePlans.Clear();
 
-			App.DAO.BackupPlanRepository daoBackupPlans = new App.DAO.BackupPlanRepository();
-			App.DAO.RestorePlanRepository daoRestorePlans = new App.DAO.RestorePlanRepository();
+			BackupPlanRepository daoBackupPlans = new BackupPlanRepository();
+			RestorePlanRepository daoRestorePlans = new RestorePlanRepository();
 
 			AllSchedulablePlans.AddRange(daoBackupPlans.GetAll());
 			AllSchedulablePlans.AddRange(daoRestorePlans.GetAll());

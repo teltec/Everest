@@ -1,9 +1,10 @@
 ﻿using NLog;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.App.Versioning;
+using Teltec.Backup.Data.Versioning;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Restore
 {

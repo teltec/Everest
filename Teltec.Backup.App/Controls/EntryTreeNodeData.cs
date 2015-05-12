@@ -1,5 +1,6 @@
 ﻿using System;
-using Teltec.Backup.App.Models;
+using Teltec.Backup.Data.FileSystem;
+using Teltec.Backup.Data.Models;
 using Teltec.Common.Controls;
 
 namespace Teltec.Backup.App.Controls

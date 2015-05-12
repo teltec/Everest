@@ -1,10 +1,6 @@
-﻿using SimpleInjector;
-using System;
-using System.Data.Entity;
+﻿using System;
 using System.Windows.Forms;
 using Teltec.Backup.App.Forms;
-using Teltec.Backup.App.Models;
-
 namespace Teltec.Backup.App
 {
     static class Program

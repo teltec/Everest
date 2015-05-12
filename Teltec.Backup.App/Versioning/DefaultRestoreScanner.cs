@@ -3,7 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Teltec.Backup.App.Models;
+using Teltec.Backup.Data.Models;
+using Teltec.Backup.Data.Versioning;
 using Teltec.Storage;
 using Teltec.Storage.Versioning;
 

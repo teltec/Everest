@@ -7,11 +7,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Teltec.Backup.App.DAO;
 using Teltec.Backup.App.Versioning;
+using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Data.Versioning;
 using Teltec.Storage;
 using Teltec.Storage.Implementations.S3;
 using Teltec.Storage.Utils;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Restore
 {

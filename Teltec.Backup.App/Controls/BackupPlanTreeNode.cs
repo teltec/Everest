@@ -3,8 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using Teltec.Backup.App.DAO;
-using Teltec.Backup.App.Models;
+using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Data.FileSystem;
+using Teltec.Backup.Data.Models;
 using Teltec.Storage.Versioning;
 
 namespace Teltec.Backup.App.Controls
