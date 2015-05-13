@@ -70,7 +70,7 @@ namespace Teltec.Backup.App.Versioning
 				}
 				catch (Exception ex)
 				{
-					string message = string.Format("Failed to scan entry {0}: {1}", entry.Path, ex.Message);
+					string message = string.Format("Failed to scan entry \"{0}\" - {1}", entry.Path, ex.Message);
 					logger.Error(message, ex);
 				}
 			}

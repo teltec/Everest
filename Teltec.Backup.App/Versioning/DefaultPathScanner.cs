@@ -66,7 +66,7 @@ namespace Teltec.Backup.App.Versioning
 				}
 				catch (Exception ex)
 				{
-					string message = string.Format("Failed to scan entry {0}: {1}", entry.Path, ex.Message);
+					string message = string.Format("Failed to scan entry \"{0}\" - {1}", entry.Path, ex.Message);
 					logger.Error(message, ex);
 				}
 			}
@@ -84,18 +84,29 @@ namespace Teltec.Backup.App.Versioning
 				return;
 			}
 
-			// IMPORTANT: The condition above, `if (!directory.Exists)`, doesn't guarantee the
-			// directory will exist at this point! We probably shouldn't try to detect this but
+			// IMPORTANT: The condition above, `if (!file.Exists)`, doesn't guarantee the
+			// file will exist at this point! We probably shouldn't try to detect this but
 			// handle any exceptions that may be raised.
 
 			CancellationToken.ThrowIfCancellationRequested();
 
-			var item = file.FullName;
+			try
+			{
+				var item = file.FullName;
 
-			Result.AddLast(item);
+				Result.AddLast(item);
 
-			if (FileAdded != null)
-				FileAdded(this, item);
+				if (FileAdded != null)
+					FileAdded(this, item);
+			}
+			catch (OperationCanceledException ex)
+			{
+				throw ex; // Rethrow!
+			}
+			catch (Exception ex)
+			{
+				HandleException(EntryType.FILE, file.FullName, ex);
+			}
 		}
 
 		private void AddDirectory(string path)
@@ -105,6 +116,7 @@ namespace Teltec.Backup.App.Versioning
 
 		private void AddDirectory(DirectoryInfo directory)
 		{
+			
 			if (!directory.Exists)
 			{
 				logger.Warn("Directory {0} does not exist", directory.FullName);
@@ -117,15 +129,50 @@ namespace Teltec.Backup.App.Versioning
 
 			CancellationToken.ThrowIfCancellationRequested();
 
-			FileInfo[] files = directory.GetFiles(); // System.IO.DirectoryNotFoundException
-			// Add all files from this directory.
-			foreach (FileInfo file in files)
-				AddFile(file);
+			try
+			{
+				FileInfo[] files = directory.GetFiles(); // System.IO.DirectoryNotFoundException
+				// Add all files from this directory.
+				foreach (FileInfo file in files)
+					AddFile(file);
 
-			DirectoryInfo[] directories = directory.GetDirectories();
-			// Add all sub-directories recursively.
-			foreach (DirectoryInfo subdir in directories)
-				AddDirectory(subdir);
+				DirectoryInfo[] directories = directory.GetDirectories();
+				// Add all sub-directories recursively.
+				foreach (DirectoryInfo subdir in directories)
+					AddDirectory(subdir);
+			}
+			catch (OperationCanceledException ex)
+			{
+				throw ex; // Rethrow!
+			}
+			catch (Exception ex)
+			{
+				HandleException(EntryType.FOLDER, directory.FullName, ex);
+			}
+		}
+
+		private void HandleException(EntryType type, string path, Exception ex)
+		{
+			string message = null;
+
+			switch (type)
+			{
+				case EntryType.DRIVE:
+					message = string.Format("Failed to scan volume \"{0}\" - {1}", path, ex.Message);
+					break;
+				case EntryType.FOLDER:
+					message = string.Format("Failed to scan directory \"{0}\" - {1}", path, ex.Message);
+					break;
+				case EntryType.FILE:
+					message = string.Format("Failed to scan file \"{0}\" - {1}", path, ex.Message);
+					break;
+			}
+
+			if (!string.IsNullOrEmpty(message))
+			{
+				logger.Error(message, ex);
+				// TODO: Should we register this to show ERRORS/FAILURES in the backup operation?
+			}
 		}
 	}
 }
