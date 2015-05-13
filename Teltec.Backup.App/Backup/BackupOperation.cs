@@ -358,7 +358,7 @@ namespace Teltec.Backup.App.Backup
 		{
 			IsRunning = false;
 
-			var message = string.Format("Backup failed: {0}", exception.Message);
+			var message = string.Format("Backup failed: {0}", exception != null ? exception.Message : "Canceled?");
 			Error(message);
 			//StatusInfo.Update(BackupStatusLevel.ERROR, message);
 

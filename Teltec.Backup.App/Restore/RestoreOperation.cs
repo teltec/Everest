@@ -348,7 +348,8 @@ namespace Teltec.Backup.App.Restore
 		{
 			IsRunning = false;
 
-			var message = string.Format("Restore failed: {0}", exception.Message);
+			var message = string.Format("Restore failed: {0}", exception != null ? exception.Message : "Canceled?");
+
 			Error(message);
 			//StatusInfo.Update(RestoreStatusLevel.ERROR, message);
 
