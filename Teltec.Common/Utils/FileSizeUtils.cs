@@ -1,6 +1,6 @@
 ﻿using System.Windows.Forms;
 
-namespace Teltec.Storage.Utils
+namespace Teltec.Common.Utils
 {
 	public static class FileSizeUtils
 	{

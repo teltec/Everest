@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Teltec.Storage.Utils
+namespace Teltec.Common.Utils
 {
 	public class TimeSpanUtils
 	{

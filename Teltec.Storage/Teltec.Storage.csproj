@@ -88,8 +88,6 @@
     </Compile>
     <Compile Include="Schedulers\QueuedTaskScheduler.cs" />
     <Compile Include="TransferProgressArgs.cs" />
-    <Compile Include="Utils\FileSizeUtils.cs" />
-    <Compile Include="Utils\TimeSpanUtils.cs" />
     <Compile Include="Versioning\IVersionedFile.cs" />
   </ItemGroup>
   <ItemGroup>

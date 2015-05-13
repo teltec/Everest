@@ -83,6 +83,8 @@
     </Compile>
     <Compile Include="ObservableWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\FileSizeUtils.cs" />
+    <Compile Include="Utils\TimeSpanUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Controls\AdvancedTreeView.resx">
