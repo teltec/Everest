@@ -34,11 +34,12 @@ namespace Teltec.Backup.App.Restore
 			// Scan files.
 			DefaultRestoreScanner scanner = new DefaultRestoreScanner(restore.RestorePlan, CancellationTokenSource.Token);
 
+#if DEBUG
 			scanner.FileAdded += (object sender, CustomVersionedFile file) =>
 			{
 				logger.Debug("ADDED: File {0} @ {1}", file.Path, file.Version);
-				cancellationToken.ThrowIfCancellationRequested();
 			};
+#endif
 
 			LinkedList<CustomVersionedFile> files = scanner.Scan();
 

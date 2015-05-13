@@ -38,7 +38,9 @@ namespace Teltec.Backup.Data.DAO.NH
 
 			if (!_sessions.IsValueCreated)
 			{
+#if DEBUG
 				logger.Debug("### Opening a new ISession");
+#endif
 				// Open a new NHibernate session
 				_sessions.Value = SessionFactory.OpenSession();
 				//_sessions.Value.FlushMode = FlushMode.Never;
@@ -60,7 +62,9 @@ namespace Teltec.Backup.Data.DAO.NH
 
 			if (!_statelessSessions.IsValueCreated)
 			{
+#if DEBUG
 				logger.Debug("### Opening a new stateless ISession");
+#endif
 				// Open a new NHibernate stateless session
 				_statelessSessions.Value = SessionFactory.OpenStatelessSession();
 				//_statelessSessions.Value.FlushMode = FlushMode.Never;
@@ -161,8 +165,13 @@ namespace Teltec.Backup.Data.DAO.NH
 					//db.HqlToSqlSubstitutions = "true 1, false 0, yes 'Y', no 'N'";
 					db.IsolationLevel = System.Data.IsolationLevel.ReadCommitted;
 					db.KeywordsAutoImport = Hbm2DDLKeyWords.AutoQuote;
+#if DEBUG
 					db.LogFormattedSql = true;
 					db.LogSqlInConsole = true;
+#else
+					db.LogFormattedSql = false;
+					db.LogSqlInConsole = false;
+#endif
 					//db.OrderInserts = true;
 					//db.PrepareCommands = true;
 					db.SchemaAction = SchemaAutoAction.Update;
@@ -173,7 +182,9 @@ namespace Teltec.Backup.Data.DAO.NH
 			ValidateSchema(config);
 
 			// Register interceptors.
+#if DEBUG
 			config.SetInterceptor(new NHibernateAuditInterceptor());
+#endif
 
 			// Register listeners.
 			config.AppendListeners(ListenerType.Load, new ILoadEventListener[] {

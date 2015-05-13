@@ -33,11 +33,12 @@ namespace Teltec.Backup.App.Backup
 			// Scan files.
 			DefaultPathScanner scanner = new DefaultPathScanner(backup.BackupPlan, CancellationTokenSource.Token);
 
+#if DEBUG
 			scanner.FileAdded += (object sender, string file) =>
 			{
 				logger.Debug("ADDED: File {0}", file);
-				cancellationToken.ThrowIfCancellationRequested();
 			};
+#endif
 
 			LinkedList<string> files = scanner.Scan();
 
