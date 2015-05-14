@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
 using Teltec.Backup.Data.Versioning;
+using Teltec.Stats;
 using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
 
@@ -156,14 +157,10 @@ namespace Teltec.Backup.App.Versioning
 
 		//
 		// Summary:
-		// 1. Insert or update all `RestorePlanFile`s from the restore plan associated with this restore operation.
-		// 2. Create `RestoredFile`s as necessary and add them to the `Restore`.
-		// 3. Insert/Update `Restore` and its `RestoredFile`s into the database.
-		// 4. Create versioned files and remove files that won't belong to this restore.
-		//
-		// IMPORTANT:
-		//	Do not allow cancelation during database manipulations until we have a better
-		//	transaction management.
+		// 1. Create `RestorePlanFile`s and `RestoredFile`s as necessary and add them to the `Restore`.
+		// 2. Insert/Update `Restore` and its `RestorededFile`s into the database, also saving
+		//	  the `RestorePlanFile`s instances that may have been changed by step 1.2. 
+		// 3. Create versioned files and remove files that won't belong to this restore.
 		//
 		public void Save()
 		{
@@ -179,48 +176,102 @@ namespace Teltec.Backup.App.Versioning
 			var FilesToTrack = SuppliedFiles;
 			var FilesToInsertOrUpdate = FilesToTrack;
 
-			// 1. Create `RestorePlanFile`s and `RestoredFile`s as necessary and add them to the `Restore`.
+			BlockPerfStats stats = new BlockPerfStats();
+
 			using (ITransaction tx = session.BeginTransaction())
 			{
-				foreach (Models.RestorePlanFile entry in FilesToInsertOrUpdate)
+				try
 				{
-					// Since we're running in the same thread that does update UI.
-					Application.DoEvents();
+					// ------------------------------------------------------------------------------------
 
-					// 1.1 - Insert/Update RestorePlanFile's and RestoredFile's if they don't exist yet.
+					stats.Begin("STEP 1");
 
-					// IMPORTANT: It's important that we guarantee the referenced `RestorePlanFile` has a valid `Id`
-					// before we reference it elsewhere, otherwise NHibernate won't have a valid value to put on
-					// the `restore_plan_file_id` column.
-					daoRestorePlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved 
-
-					Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(Restore, entry.Path);
-					if (restoredFile == null) // If we're resuming, this should already exist.
+					// 1. Create `RestorePlanFile`s and `RestoredFile`s as necessary and add them to the `Restore`.
+					foreach (Models.RestorePlanFile entry in FilesToInsertOrUpdate)
 					{
-						// Create `RestoredFile`.
-						restoredFile = new Models.RestoredFile(Restore, entry);
+						// Throw if the operation was canceled.
+						CancellationToken.ThrowIfCancellationRequested();
+
+						ProcessBatch(session);
+
+						// 1.1 - Insert/Update RestorePlanFile's and RestoredFile's if they don't exist yet.
+
+						// IMPORTANT: It's important that we guarantee the referenced `RestorePlanFile` has a valid `Id`
+						// before we reference it elsewhere, otherwise NHibernate won't have a valid value to put on
+						// the `restore_plan_file_id` column.
+						daoRestorePlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved 
+
+						Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(Restore, entry.Path);
+						if (restoredFile == null) // If we're resuming, this should already exist.
+						{
+							// Create `RestoredFile`.
+							restoredFile = new Models.RestoredFile(Restore, entry);
+						}
+						restoredFile.UpdatedAt = DateTime.UtcNow;
+						daoRestoredFile.InsertOrUpdate(tx, restoredFile);
+
+						Restore.Files.Add(restoredFile);
+						//daoRestore.Update(tx, Restore);
 					}
-					restoredFile.UpdatedAt = DateTime.UtcNow;
-					daoRestoredFile.InsertOrUpdate(tx, restoredFile);
 
-					Restore.Files.Add(restoredFile);
-					//daoRestore.Update(tx, Backup);
+					stats.End();
+
+					// ------------------------------------------------------------------------------------
+
+					stats.Begin("STEP 2");
+
+					// 2. Insert/Update `Restore` and its `RestorededFile`s into the database, also saving
+					//	  the `RestorePlanFile`s instances that may have been changed by step 1.2. 
+					daoRestore.Update(tx, Restore);
+
+					stats.End();
+
+					// ------------------------------------------------------------------------------------
+
+					tx.Commit();
 				}
-				tx.Commit();
-			}
-
-			// 2. Insert/Update `Restore` and its `RestorededFile`s into the database, also saving
-			//	  the `RestorePlanFile`s instances that may have been changed by step 1.2. 
-			using (ITransaction tx = session.BeginTransaction())
-			{
-				daoRestore.Update(tx, Restore);
-				tx.Commit();
+				catch (OperationCanceledException)
+				{
+					tx.Rollback(); // Rollback the transaction
+					throw;
+				}
+				catch (Exception)
+				{
+					tx.Rollback(); // Rollback the transaction
+					throw;
+				}
+				finally
+				{
+					session.Close();
+				}
 			}
 
 			IsSaved = true;
 
 			// 3. Create versioned files and remove files that won't belong to this restore.
 			TransferSet.Files = GetFilesToTransfer(Restore, SuppliedFiles);
+		}
+
+		private short BatchCounter = 0;
+
+		private void ProcessBatch(ISession session)
+		{
+			++BatchCounter;
+
+			// Since we're running in the same thread that does update UI.
+			if (BatchCounter % NHibernateHelper.BatchSize == 0)
+			{
+				// Flush a batch of operations and release memory.
+				if (session != null)
+				{
+					session.Flush();
+					session.Clear();
+				}
+
+				Application.DoEvents();
+
+				BatchCounter = 0;
+			}
 		}
 
 		#region Dispose Pattern Implementation

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
 using Teltec.Backup.Data.Versioning;
 using Teltec.FileSystem;
+using Teltec.Stats;
 using Teltec.Storage;
 using Teltec.Storage.Versioning;
 using Models = Teltec.Backup.Data.Models;
@@ -213,6 +215,9 @@ namespace Teltec.Backup.App.Versioning
 			Assert.IsNotNull(filePaths);
 			Assert.IsNotNull(AllFilesFromPlan);
 
+			BlockPerfStats stats = new BlockPerfStats();
+			stats.Begin();
+
 			LinkedList<Models.BackupPlanFile> result = new LinkedList<Models.BackupPlanFile>();
 
 			// Check all files.
@@ -236,6 +241,8 @@ namespace Teltec.Backup.App.Versioning
 				result.AddLast(backupPlanFile);
 			}
 
+			stats.End();
+
 			return result;
 		}
 
@@ -248,6 +255,9 @@ namespace Teltec.Backup.App.Versioning
 		private void DoUpdateBackupPlanFilesStatus(LinkedList<Models.BackupPlanFile> files, bool isNewVersion)
 		{
 			Assert.IsNotNull(files);
+
+			BlockPerfStats stats = new BlockPerfStats();
+			stats.Begin();
 
 			// Check all files.
 			foreach (Models.BackupPlanFile entry in files)
@@ -319,6 +329,8 @@ namespace Teltec.Backup.App.Versioning
 					entry.UpdatedAt = DateTime.UtcNow;
 				}
 			}
+
+			stats.End();
 		}
 
 		//
@@ -429,6 +441,8 @@ namespace Teltec.Backup.App.Versioning
 		{
 			foreach (Models.BackupPlanFile entry in files)
 			{
+				ProcessBatch(null);
+
 				// Throw if the operation was canceled.
 				CancellationToken.ThrowIfCancellationRequested();
 
@@ -490,6 +504,7 @@ namespace Teltec.Backup.App.Versioning
 							Path = entry.Path,
 							Size = entry.LastSize,
 							Checksum = null,
+							//Checksum = entry.LastChecksum,
 							Version = version,
 							LastWriteTimeUtc = entry.LastWrittenAt,
 						};
@@ -507,15 +522,16 @@ namespace Teltec.Backup.App.Versioning
 
 		//
 		// Summary:
-		// 1. Insert or update all `BackupPlanFile`s from the backup plan associated with this backup operation.
-		// 2. Create `BackupedFile`s as necessary and add them to the `Backup`.
-		// 3. Insert/Update `Backup` and its `BackupedFile`s into the database.
-		// 4. Create versioned files and remove files that won't belong to this backup.
+		// 1 - Split path into its components and INSERT new path nodes if they don't exist yet.
+		// 2 - Insert/Update `BackupPlanFile`s as necessary.
+		// 3 - Insert/Update `BackupedFile`s as necessary.
+		// 4 - Update all `BackupPlanFile`s that already exist for the backup plan associated
+		//     with this backup operation.
+		// 5 - Insert/Update `Backup` and its `BackupedFile`s into the database, also saving
+		//     the `BackupPlanFile`s instances that may have been changed by step 2. 
+		// 6 - Create versioned files and remove files that won't belong to this backup.
 		//
-		// IMPORTANT:
-		//	Do not allow cancelation during database manipulations until we have a better
-		//	transaction management.
-		//
+		[MethodImpl(MethodImplOptions.NoInlining)]
 		public void Save()
 		{
 			Assert.IsFalse(IsSaved);
@@ -537,106 +553,176 @@ namespace Teltec.Backup.App.Versioning
 					|| ((f.LastStatus == Models.BackupFileStatus.REMOVED || f.LastStatus == Models.BackupFileStatus.DELETED) && (f.LastStatus != f.PreviousLastStatus))
 					// Skip all UNCHANGED files.
 				select f;
-			
-			// 1. Create `BackupedFile`s as necessary and add them to the `Backup`.
-			foreach (Models.BackupPlanFile entry in FilesToInsertOrUpdate)
+
+			BlockPerfStats stats = new BlockPerfStats();
+
+			using (ITransaction tx = session.BeginTransaction())
 			{
-				// Since we're running in the same thread that does update UI.
-				Application.DoEvents();
-
-				// 1.1 - Insert/Update BackupPlanFile's and BackupedFile's if they don't exist yet.
-				using (ITransaction tx = session.BeginTransaction())
+				try
 				{
-					// IMPORTANT: It's important that we guarantee the referenced `BackupPlanFile` has a valid `Id`
-					// before we reference it elsewhere, otherwise NHibernate won't have a valid value to put on
-					// the `backup_plan_file_id` column.
-					daoBackupPlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved 
+					// ------------------------------------------------------------------------------------
 
-					Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(Backup, entry.Path);
-					if (backupedFile == null) // If we're resuming, this should already exist.
-					{
-						// Create `BackupedFile`.
-						backupedFile = new Models.BackupedFile(Backup, entry);
-					}
-					backupedFile.FileSize = entry.LastSize;
-					backupedFile.FileStatus = entry.LastStatus;
-					switch (entry.LastStatus)
-					{
-						default:
-							backupedFile.TransferStatus = default(TransferStatus);
-							break;
-						case Models.BackupFileStatus.REMOVED:
-						case Models.BackupFileStatus.DELETED:
-							backupedFile.TransferStatus = TransferStatus.COMPLETED;
-							break;
-					}
-					backupedFile.UpdatedAt = DateTime.UtcNow;
-					daoBackupedFile.InsertOrUpdate(tx, backupedFile);
-					
-					Backup.Files.Add(backupedFile);
-					//daoBackup.Update(tx, Backup);
-					
-					tx.Commit();
-				}
+					stats.Begin("STEP 1");
 
-				// 1.2 - Split path into its components and INSERT new path nodes if they don't exist yet.
-				//       IMPORTANT: This step depends on 1.1 because it references the recently created `BackupPlanFile`s.
-				using (ITransaction tx = session.BeginTransaction())
-				{
-					PathNodes pathNodes = new PathNodes(entry.Path);
-
-					Models.BackupPlanPathNode previousNode = null;
-					foreach (var pathNode in pathNodes.Nodes)
+					// 1 - Split path into its components and INSERT new path nodes if they don't exist yet.
+					foreach (Models.BackupPlanFile entry in FilesToInsertOrUpdate)
 					{
-						Models.BackupPlanPathNode planPathNode = daoBackupPlanPathNode.GetByPlanAndTypeAndPath(Backup.BackupPlan,
-							Models.EntryTypeExtensions.ToEntryType(pathNode.Type), pathNode.Path);
-						if (planPathNode == null)
+						// Throw if the operation was canceled.
+						CancellationToken.ThrowIfCancellationRequested();
+
+						ProcessBatch(session);
+
+						PathNodes pathNodes = new PathNodes(entry.Path);
+
+						Models.BackupPlanPathNode previousNode = null;
+						foreach (var pathNode in pathNodes.Nodes)
 						{
-							//BackupPlanFile planFile = daoBackupPlanFile.GetByPlanAndPath(Backup.BackupPlan, entry.Path);
-							//Assert.NotNull(planFile, string.Format("Required {0} not found in the database.", typeof(BackupPlanFile).Name))
-							planPathNode = new Models.BackupPlanPathNode(entry,
-								Models.EntryTypeExtensions.ToEntryType(pathNode.Type),
-								pathNode.Name, pathNode.Path, previousNode);
-							if (previousNode != null)
-								previousNode.SubNodes.Add(planPathNode);
-							daoBackupPlanPathNode.Insert(tx, planPathNode);
+							Models.BackupPlanPathNode planPathNode = daoBackupPlanPathNode.GetByPlanAndTypeAndPath(Backup.BackupPlan,
+								Models.EntryTypeExtensions.ToEntryType(pathNode.Type), pathNode.Path);
+							if (planPathNode == null)
+							{
+								//BackupPlanFile planFile = daoBackupPlanFile.GetByPlanAndPath(Backup.BackupPlan, entry.Path);
+								//Assert.NotNull(planFile, string.Format("Required {0} not found in the database.", typeof(BackupPlanFile).Name))
+								planPathNode = new Models.BackupPlanPathNode(entry,
+									Models.EntryTypeExtensions.ToEntryType(pathNode.Type),
+									pathNode.Name, pathNode.Path, previousNode);
+								if (previousNode != null)
+									previousNode.SubNodes.Add(planPathNode);
+								daoBackupPlanPathNode.Insert(tx, planPathNode);
+							}
+							previousNode = planPathNode;
+							//session.Evict(planPathNode); // Force future queries to re-load it and its relationships.
 						}
-						previousNode = planPathNode;
-						//session.Evict(planPathNode); // Force future queries to re-load it and its relationships.
+
+						entry.PathNode = previousNode;
 					}
 
-					entry.PathNode = previousNode;
+					stats.End();
+
+					// ------------------------------------------------------------------------------------
+
+					stats.Begin("STEP 2");
+
+					// 2 - Insert/Update `BackupPlanFile`s as necessary.
+					foreach (Models.BackupPlanFile entry in FilesToInsertOrUpdate)
+					{
+						// Throw if the operation was canceled.
+						CancellationToken.ThrowIfCancellationRequested();
+
+						ProcessBatch(session);
+
+						// IMPORTANT: It's important that we guarantee the referenced `BackupPlanFile` has a valid `Id`
+						// before we reference it elsewhere, otherwise NHibernate won't have a valid value to put on
+						// the `backup_plan_file_id` column.
+						daoBackupPlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved 
+					}
+
+					stats.End();
+
+					// ------------------------------------------------------------------------------------
+
+					stats.Begin("STEP 3");
+
+					// 3 - Insert/Update `BackupedFile`s as necessary and add them to the `Backup`.
+					List<Models.BackupedFile> backupedFiles = new List<Models.BackupedFile>(FilesToInsertOrUpdate.Count());
+
+					foreach (Models.BackupPlanFile entry in FilesToInsertOrUpdate)
+					{
+						// Throw if the operation was canceled.
+						CancellationToken.ThrowIfCancellationRequested();
+
+						ProcessBatch(session);
+
+						Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(Backup, entry.Path);
+						if (backupedFile == null) // If we're resuming, this should already exist.
+						{
+							// Create `BackupedFile`.
+							backupedFile = new Models.BackupedFile(Backup, entry);
+						}
+						backupedFile.FileSize = entry.LastSize;
+						backupedFile.FileStatus = entry.LastStatus;
+						switch (entry.LastStatus)
+						{
+							default:
+								backupedFile.TransferStatus = default(TransferStatus);
+								break;
+							case Models.BackupFileStatus.REMOVED:
+							case Models.BackupFileStatus.DELETED:
+								backupedFile.TransferStatus = TransferStatus.COMPLETED;
+								break;
+						}
+						backupedFile.UpdatedAt = DateTime.UtcNow;
+						daoBackupedFile.InsertOrUpdate(tx, backupedFile);
+
+						backupedFiles.Add(backupedFile);
+					}
+
+					stats.End();
+
+					// ------------------------------------------------------------------------------------
+
+					stats.Begin("STEP 4");
+
+					// 4 - Update all `BackupPlanFile`s that already exist for the backup plan associated with this backup operation.
+					{
+						var AllFilesFromPlanThatWerentUpdatedYet = AllFilesFromPlan.Values.Except(FilesToInsertOrUpdate);
+						foreach (Models.BackupPlanFile file in AllFilesFromPlanThatWerentUpdatedYet)
+						{
+							// Throw if the operation was canceled.
+							CancellationToken.ThrowIfCancellationRequested();
+
+							ProcessBatch(session);
+
+							//Console.WriteLine("2: {0}", file.Path);
+							daoBackupPlanFile.Update(tx, file);
+						}
+					}
+
+					stats.End();
+
+					// ------------------------------------------------------------------------------------
+
+					stats.Begin("STEP 5");
+
+					// 5 - Insert/Update `Backup` and its `BackupedFile`s into the database, also saving
+					//     the `BackupPlanFile`s instances that may have been changed by step 2.  
+					{
+						foreach (var bf in backupedFiles)
+						{
+							// Throw if the operation was canceled.
+							CancellationToken.ThrowIfCancellationRequested();
+
+							Backup.Files.Add(bf);
+						}
+
+						daoBackup.Update(tx, Backup);
+					}
+
+					stats.End();
+
+					// ------------------------------------------------------------------------------------
 
 					tx.Commit();
 				}
-			} // end for-each
-
-			// 2. Update all `BackupPlanFile`s that already exist for the backup plan associated with this backup operation.
-			using (ITransaction tx = session.BeginTransaction())
-			{
-				var AllFilesFromPlanThatWerentUpdatedYet = AllFilesFromPlan.Values.Except(FilesToInsertOrUpdate);
-				foreach (Models.BackupPlanFile file in AllFilesFromPlanThatWerentUpdatedYet)
+				catch (OperationCanceledException)
 				{
-					// Since we're running in the same thread that does update UI.
-					Application.DoEvents();
-					//Console.WriteLine("2: {0}", file.Path);
-					daoBackupPlanFile.Update(tx, file);
+					tx.Rollback(); // Rollback the transaction
+					throw;
 				}
-				
-				tx.Commit();
-			}
-
-			// 3. Insert/Update `Backup` and its `BackupedFile`s into the database, also saving
-			//	  the `BackupPlanFile`s instances that may have been changed by step 1.2. 
-			using (ITransaction tx = session.BeginTransaction())
-			{
-				daoBackup.Update(tx, Backup);
-				tx.Commit();
+				catch (Exception)
+				{
+					tx.Rollback(); // Rollback the transaction
+					throw;
+				}
+				finally
+				{
+					session.Close();
+				}
 			}
 
 			IsSaved = true;
 
-			// 4. Create versioned files and remove files that won't belong to this backup.
+			// 6 - Create versioned files and remove files that won't belong to this backup.
 			TransferSet.Files = GetFilesToTransfer(Backup, SuppliedFiles);
 
 			// Test to see if things are okay!
@@ -644,7 +730,29 @@ namespace Teltec.Backup.App.Versioning
 				var transferCount = TransferSet.Files.Count();
 				var filesCount = ChangeSet.AddedFiles.Count() + ChangeSet.ModifiedFiles.Count();
 
-				Assert.IsTrue(transferCount == filesCount, "FilesToTransfer must be equal (BackupPlanAddedFiles + BackupPlanModifiedFiles)");
+				Assert.IsTrue(transferCount == filesCount, "TransferSet.Files must be equal (ChangeSet.AddedFiles + ChangeSet.ModifiedFiles)");
+			}
+		}
+
+		private short BatchCounter = 0;
+
+		private void ProcessBatch(ISession session)
+		{
+			++BatchCounter;
+
+			// Since we're running in the same thread that does update UI.
+			if (BatchCounter % NHibernateHelper.BatchSize == 0)
+			{
+				// Flush a batch of operations and release memory.
+				if (session != null)
+				{ 
+					session.Flush();
+					session.Clear();
+				}
+
+				Application.DoEvents();
+
+				BatchCounter = 0;
 			}
 		}
 

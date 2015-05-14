@@ -17,6 +17,7 @@ namespace Teltec.Backup.Data.DAO
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		//private bool _canDisposeSession = false;
+		//private bool _canDisposeStatelessSession = false;
 
 		protected Type _PersistentType = typeof(T);
 		protected Type PersistentType { get { return _PersistentType; } }
@@ -42,6 +43,12 @@ namespace Teltec.Backup.Data.DAO
 		{
 			//_canDisposeSession = false;
 			Session = session;
+		}
+
+		public BaseRepository(IStatelessSession session)
+		{
+			//_canDisposeStatelessSession = false;
+			StatelessSession = session;
 		}
 
 		public T Get(ID id)

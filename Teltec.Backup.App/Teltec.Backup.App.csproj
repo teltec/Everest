@@ -411,6 +411,10 @@
       <Project>{03b4f6d7-e176-41fc-bd45-a2fbfa739248}</Project>
       <Name>Teltec.Forms.Wizard</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Teltec.Stats\Teltec.Stats.csproj">
+      <Project>{0d8d6b88-6e57-4b67-80cb-9804acd8f83a}</Project>
+      <Name>Teltec.Stats</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Teltec.Storage\Teltec.Storage.csproj">
       <Project>{0c04ed53-6f3c-4f66-bd02-9391ad199b2d}</Project>
       <Name>Teltec.Storage</Name>

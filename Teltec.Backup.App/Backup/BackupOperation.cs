@@ -245,7 +245,7 @@ namespace Teltec.Backup.App.Backup
 				}
 				catch (Exception ex)
 				{
-					Debug.WriteLine("Exception Message: " + ex.Message);
+					logger.ErrorException("Caught Exception", ex);
 				}
 
 				if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
@@ -284,7 +284,7 @@ namespace Teltec.Backup.App.Backup
 				}
 				catch (Exception ex)
 				{
-					Debug.WriteLine("Exception Message: " + ex.Message);
+					logger.ErrorException("Caught Exception", ex);
 				}
 
 				if (versionerTask.IsFaulted || versionerTask.IsCanceled)
@@ -294,8 +294,19 @@ namespace Teltec.Backup.App.Backup
 					return;
 				}
 
-				// IMPORTANT: Must happen before any attempt to get `Versioner.FilesToTransfer`.
-				Versioner.Save();
+				try
+				{
+					// IMPORTANT: Must happen before any attempt to get `Versioner.FilesToTransfer`.
+					Versioner.Save();
+				}
+				catch (Exception ex)
+				{
+					logger.ErrorException("Caught Exception", ex);
+
+					Versioner.Undo();
+					OnFailure(agent, backup, ex);
+					return;
+				}
 
 				agent.Files = Versioner.FilesToTransfer;
 

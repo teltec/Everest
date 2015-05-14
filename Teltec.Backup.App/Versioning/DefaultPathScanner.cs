@@ -2,8 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Teltec.Backup.Data.Models;
+using Teltec.Stats;
 using Teltec.Storage;
 
 namespace Teltec.Backup.App.Versioning
@@ -25,8 +27,12 @@ namespace Teltec.Backup.App.Versioning
 		#region PathScanner
 
 		// TODO(jweyrich): Should return a HashSet/ISet instead?
+		[MethodImpl(MethodImplOptions.NoInlining)]
 		public override LinkedList<string> Scan()
 		{
+			BlockPerfStats stats = new BlockPerfStats();
+			stats.Begin();
+
 			Result = new LinkedList<string>();
 
 			//
@@ -70,6 +76,8 @@ namespace Teltec.Backup.App.Versioning
 					logger.Error(message, ex);
 				}
 			}
+
+			stats.End();
 
 			return Result;
 		}

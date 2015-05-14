@@ -18,6 +18,8 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+		public static readonly short BatchSize = 20;
+
 		// TODO(jweyrich): When to dispose it?
 		private static ISessionFactory _sessionFactory;
 
@@ -27,6 +29,7 @@ namespace Teltec.Backup.Data.DAO.NH
 		// TODO(jweyrich): When to dispose it?
 		private static readonly ThreadLocal<ISession> _sessions = new ThreadLocal<ISession>();
 		private static readonly ThreadLocal<IStatelessSession> _statelessSessions = new ThreadLocal<IStatelessSession>();
+
 
 		public static ISession GetSession()
 		{
@@ -159,7 +162,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			{
 				config.DataBaseIntegration(db =>
 				{
-					db.BatchSize = 20;
+					db.BatchSize = NHibernateHelper.BatchSize;
 					db.Dialect<NHibernate.Dialect.MsSql2012Dialect>();
 					db.Driver<NHibernate.Driver.Sql2008ClientDriver>();
 					//db.HqlToSqlSubstitutions = "true 1, false 0, yes 'Y', no 'N'";
