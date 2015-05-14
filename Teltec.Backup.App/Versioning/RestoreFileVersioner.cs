@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
 using Teltec.Backup.Data.Versioning;
@@ -43,14 +42,17 @@ namespace Teltec.Backup.App.Versioning
 			Assert.AreEqual(TransferStatus.RUNNING, restore.Status);
 			Assert.IsNotNull(files);
 
-			Restore = restore;
-
-			RestorePlanFileRepository daoRestorePlanFile = new RestorePlanFileRepository();
-			AllFilesFromPlan = daoRestorePlanFile.GetAllByPlan(restore.RestorePlan).ToDictionary<Models.RestorePlanFile, string>(p => p.Path);
-
 			await ExecuteOnBackround(() =>
 			{
+				RestoreRepository daoRestore = new RestoreRepository();
+				Restore = daoRestore.Get(restore.Id);
+
+				RestorePlanFileRepository daoRestorePlanFile = new RestorePlanFileRepository();
+				AllFilesFromPlan = daoRestorePlanFile.GetAllByPlan(restore.RestorePlan).ToDictionary<Models.RestorePlanFile, string>(p => p.Path);
+
 				Execute(restore, files, newRestore);
+				
+				Save();
 			}, CancellationToken);
 		}
 
@@ -192,8 +194,6 @@ namespace Teltec.Backup.App.Versioning
 						// Throw if the operation was canceled.
 						CancellationToken.ThrowIfCancellationRequested();
 
-						ProcessBatch(session);
-
 						// 1.1 - Insert/Update RestorePlanFile's and RestoredFile's if they don't exist yet.
 
 						// IMPORTANT: It's important that we guarantee the referenced `RestorePlanFile` has a valid `Id`
@@ -212,8 +212,11 @@ namespace Teltec.Backup.App.Versioning
 
 						Restore.Files.Add(restoredFile);
 						//daoRestore.Update(tx, Restore);
+
+						ProcessBatch(session);
 					}
 
+					ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -222,8 +225,11 @@ namespace Teltec.Backup.App.Versioning
 
 					// 2. Insert/Update `Restore` and its `RestorededFile`s into the database, also saving
 					//	  the `RestorePlanFile`s instances that may have been changed by step 1.2. 
-					daoRestore.Update(tx, Restore);
+					{
+						daoRestore.Update(tx, Restore);
+					}
 
+					ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -254,12 +260,11 @@ namespace Teltec.Backup.App.Versioning
 
 		private short BatchCounter = 0;
 
-		private void ProcessBatch(ISession session)
+		private void ProcessBatch(ISession session, bool forceFlush = false)
 		{
 			++BatchCounter;
 
-			// Since we're running in the same thread that does update UI.
-			if (BatchCounter % NHibernateHelper.BatchSize == 0)
+			if (BatchCounter % NHibernateHelper.BatchSize == 0 || forceFlush)
 			{
 				// Flush a batch of operations and release memory.
 				if (session != null)
@@ -267,8 +272,6 @@ namespace Teltec.Backup.App.Versioning
 					session.Flush();
 					session.Clear();
 				}
-
-				Application.DoEvents();
 
 				BatchCounter = 0;
 			}

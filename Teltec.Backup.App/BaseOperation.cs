@@ -52,9 +52,22 @@ namespace Teltec.Backup.App
 		protected void Log(System.Diagnostics.EventLogEntryType type, string format, params object[] args)
 		{
 			string message = string.Format(format, args);
-			Console.WriteLine(message);
+			
 			if (EventLog != null)
 				EventLog.WriteEntry(message, type);
+
+			switch (type)
+			{
+				case System.Diagnostics.EventLogEntryType.Error:
+					logger.Error(message);
+					break;
+				case System.Diagnostics.EventLogEntryType.Warning:
+					logger.Warn(message);
+					break;
+				case System.Diagnostics.EventLogEntryType.Information:
+					logger.Info(message);
+					break;
+			}
 		}
 
 		protected void Warn(string format, params object[] args)

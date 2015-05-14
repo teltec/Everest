@@ -10,7 +10,6 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
 using Teltec.Backup.Data.Versioning;
@@ -49,14 +48,17 @@ namespace Teltec.Backup.App.Versioning
 			Assert.AreEqual(TransferStatus.RUNNING, backup.Status);
 			Assert.IsNotNull(filePaths);
 
-			Backup = backup;
-
-			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
-			AllFilesFromPlan = daoBackupPlanFile.GetAllByPlan(backup.BackupPlan).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
-
 			await ExecuteOnBackround(() =>
 			{
+				BackupRepository daoBackup = new BackupRepository();
+				Backup = daoBackup.Get(backup.Id);
+				
+				BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
+				AllFilesFromPlan = daoBackupPlanFile.GetAllByPlan(backup.BackupPlan).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
+
 				Execute(backup, filePaths, newVersion);
+
+				Save();
 			}, CancellationToken);
 		}
 
@@ -532,7 +534,7 @@ namespace Teltec.Backup.App.Versioning
 		// 6 - Create versioned files and remove files that won't belong to this backup.
 		//
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		public void Save()
+		private void Save()
 		{
 			Assert.IsFalse(IsSaved);
 
@@ -570,8 +572,6 @@ namespace Teltec.Backup.App.Versioning
 						// Throw if the operation was canceled.
 						CancellationToken.ThrowIfCancellationRequested();
 
-						ProcessBatch(session);
-
 						PathNodes pathNodes = new PathNodes(entry.Path);
 
 						Models.BackupPlanPathNode previousNode = null;
@@ -587,7 +587,10 @@ namespace Teltec.Backup.App.Versioning
 									Models.EntryTypeExtensions.ToEntryType(pathNode.Type),
 									pathNode.Name, pathNode.Path, previousNode);
 								if (previousNode != null)
+								{
+									planPathNode.Parent = previousNode;
 									previousNode.SubNodes.Add(planPathNode);
+								}
 								daoBackupPlanPathNode.Insert(tx, planPathNode);
 							}
 							previousNode = planPathNode;
@@ -595,8 +598,11 @@ namespace Teltec.Backup.App.Versioning
 						}
 
 						entry.PathNode = previousNode;
+
+						ProcessBatch(session);
 					}
 
+					ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -609,14 +615,15 @@ namespace Teltec.Backup.App.Versioning
 						// Throw if the operation was canceled.
 						CancellationToken.ThrowIfCancellationRequested();
 
-						ProcessBatch(session);
-
 						// IMPORTANT: It's important that we guarantee the referenced `BackupPlanFile` has a valid `Id`
 						// before we reference it elsewhere, otherwise NHibernate won't have a valid value to put on
 						// the `backup_plan_file_id` column.
-						daoBackupPlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved 
+						daoBackupPlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved
+
+						ProcessBatch(session);
 					}
 
+					ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -624,14 +631,12 @@ namespace Teltec.Backup.App.Versioning
 					stats.Begin("STEP 3");
 
 					// 3 - Insert/Update `BackupedFile`s as necessary and add them to the `Backup`.
-					List<Models.BackupedFile> backupedFiles = new List<Models.BackupedFile>(FilesToInsertOrUpdate.Count());
+					//List<Models.BackupedFile> backupedFiles = new List<Models.BackupedFile>(FilesToInsertOrUpdate.Count());
 
 					foreach (Models.BackupPlanFile entry in FilesToInsertOrUpdate)
 					{
 						// Throw if the operation was canceled.
 						CancellationToken.ThrowIfCancellationRequested();
-
-						ProcessBatch(session);
 
 						Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(Backup, entry.Path);
 						if (backupedFile == null) // If we're resuming, this should already exist.
@@ -654,9 +659,12 @@ namespace Teltec.Backup.App.Versioning
 						backupedFile.UpdatedAt = DateTime.UtcNow;
 						daoBackupedFile.InsertOrUpdate(tx, backupedFile);
 
-						backupedFiles.Add(backupedFile);
+						//backupedFiles.Add(backupedFile);
+
+						ProcessBatch(session);
 					}
 
+					ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -671,13 +679,14 @@ namespace Teltec.Backup.App.Versioning
 							// Throw if the operation was canceled.
 							CancellationToken.ThrowIfCancellationRequested();
 
-							ProcessBatch(session);
-
 							//Console.WriteLine("2: {0}", file.Path);
 							daoBackupPlanFile.Update(tx, file);
+
+							ProcessBatch(session);
 						}
 					}
 
+					ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -687,17 +696,20 @@ namespace Teltec.Backup.App.Versioning
 					// 5 - Insert/Update `Backup` and its `BackupedFile`s into the database, also saving
 					//     the `BackupPlanFile`s instances that may have been changed by step 2.  
 					{
-						foreach (var bf in backupedFiles)
-						{
-							// Throw if the operation was canceled.
-							CancellationToken.ThrowIfCancellationRequested();
-
-							Backup.Files.Add(bf);
-						}
+						//foreach (var bf in backupedFiles)
+						//{
+						//	// Throw if the operation was canceled.
+						//	CancellationToken.ThrowIfCancellationRequested();
+						//
+						//	Backup.Files.Add(bf);
+						//
+						//	ProcessBatch(session);
+						//}
 
 						daoBackup.Update(tx, Backup);
 					}
 
+					ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -736,12 +748,11 @@ namespace Teltec.Backup.App.Versioning
 
 		private short BatchCounter = 0;
 
-		private void ProcessBatch(ISession session)
+		private void ProcessBatch(ISession session, bool forceFlush = false)
 		{
 			++BatchCounter;
 
-			// Since we're running in the same thread that does update UI.
-			if (BatchCounter % NHibernateHelper.BatchSize == 0)
+			if (BatchCounter % NHibernateHelper.BatchSize == 0 || forceFlush)
 			{
 				// Flush a batch of operations and release memory.
 				if (session != null)
@@ -749,8 +760,6 @@ namespace Teltec.Backup.App.Versioning
 					session.Flush();
 					session.Clear();
 				}
-
-				Application.DoEvents();
 
 				BatchCounter = 0;
 			}

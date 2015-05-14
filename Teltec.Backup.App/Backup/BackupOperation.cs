@@ -125,7 +125,7 @@ namespace Teltec.Backup.App.Backup
 			Assert.AreEqual(Models.EStorageAccountType.AmazonS3, Backup.BackupPlan.StorageAccountType);
 
 			AmazonS3AccountRepository dao = new AmazonS3AccountRepository();
-			Models.AmazonS3Account s3account = dao.Get(Backup.BackupPlan.StorageAccount.Id);
+			Models.AmazonS3Account s3account = dao.GetForReadOnly(Backup.BackupPlan.StorageAccount.Id);
 
 			//
 			// Dispose and recycle previous objects, if needed.
@@ -205,14 +205,16 @@ namespace Teltec.Backup.App.Backup
 				daoBackupedFile.Update(backupedFile);
 
 				var message = string.Format("Started {0}", args.FilePath);
-				//Info(message);
+				Info(message);
 				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
 			};
 			results.Progress += (object sender, TransferFileProgressArgs args) =>
 			{
-				//var message = string.Format("Progress {0}% {1} ({2}/{3} bytes)",
-				//	args.PercentDone, args.FilePath, args.TransferredBytes, args.TotalBytes);
-				//Info(message);
+#if DEBUG
+				var message = string.Format("Progress {0}% {1} ({2}/{3} bytes)",
+					args.PercentDone, args.FilePath, args.TransferredBytes, args.TotalBytes);
+				Info(message);
+#endif
 				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = null });
 			};
 		}
@@ -246,12 +248,15 @@ namespace Teltec.Backup.App.Backup
 				catch (Exception ex)
 				{
 					logger.ErrorException("Caught Exception", ex);
-				}
 
-				if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
-				{
-					OnFailure(agent, backup, filesToProcessTask.Exception);
-					return;
+					if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
+					{
+						if (filesToProcessTask.IsCanceled)
+							OnCancelation(agent, backup, ex); // filesToProcessTask.Exception
+						else
+							OnFailure(agent, backup, ex); // filesToProcessTask.Exception
+						return;
+					}
 				}
 
 				filesToProcess = filesToProcessTask.Result;
@@ -285,27 +290,16 @@ namespace Teltec.Backup.App.Backup
 				catch (Exception ex)
 				{
 					logger.ErrorException("Caught Exception", ex);
-				}
 
-				if (versionerTask.IsFaulted || versionerTask.IsCanceled)
-				{
-					Versioner.Undo();
-					OnFailure(agent, backup, versionerTask.Exception);
-					return;
-				}
-
-				try
-				{
-					// IMPORTANT: Must happen before any attempt to get `Versioner.FilesToTransfer`.
-					Versioner.Save();
-				}
-				catch (Exception ex)
-				{
-					logger.ErrorException("Caught Exception", ex);
-
-					Versioner.Undo();
-					OnFailure(agent, backup, ex);
-					return;
+					if (versionerTask.IsFaulted || versionerTask.IsCanceled)
+					{
+						Versioner.Undo();
+						if (versionerTask.IsCanceled)
+							OnCancelation(agent, backup, ex); // versionerTask.Exception
+						else
+							OnFailure(agent, backup, ex); // versionerTask.Exception
+						return;
+					}
 				}
 
 				agent.Files = Versioner.FilesToTransfer;
@@ -365,11 +359,25 @@ namespace Teltec.Backup.App.Backup
 				Updated(this, e);
 		}
 
+		public void OnCancelation(CustomBackupAgent agent, Models.Backup backup, Exception exception)
+		{
+			IsRunning = false;
+
+			var message = string.Format("Backup canceled: {0}", exception != null ? exception.Message : "Exception not informed");
+			Error(message);
+			//StatusInfo.Update(BackupStatusLevel.ERROR, message);
+
+			backup.WasCanceled();
+			_daoBackup.Update(backup);
+
+			OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Canceled, Message = message });
+		}
+
 		public void OnFailure(CustomBackupAgent agent, Models.Backup backup, Exception exception)
 		{
 			IsRunning = false;
 
-			var message = string.Format("Backup failed: {0}", exception != null ? exception.Message : "Canceled?");
+			var message = string.Format("Backup failed: {0}", exception != null ? exception.Message : "Exception not informed");
 			Error(message);
 			//StatusInfo.Update(BackupStatusLevel.ERROR, message);
 

@@ -115,7 +115,7 @@ namespace Teltec.Backup.App.Restore
 			Assert.AreEqual(Models.EStorageAccountType.AmazonS3, Restore.RestorePlan.BackupPlan.StorageAccountType);
 
 			AmazonS3AccountRepository dao = new AmazonS3AccountRepository();
-			Models.AmazonS3Account s3account = dao.Get(Restore.RestorePlan.BackupPlan.StorageAccount.Id);
+			Models.AmazonS3Account s3account = dao.GetForReadOnly(Restore.RestorePlan.BackupPlan.StorageAccount.Id);
 
 			//
 			// Dispose and recycle previous objects, if needed.
@@ -195,14 +195,16 @@ namespace Teltec.Backup.App.Restore
 				daoRestoredFile.Update(restoredFile);
 
 				var message = string.Format("Started {0}", args.FilePath);
-				//Info(message);
+				Info(message);
 				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
 			};
 			results.Progress += (object sender, TransferFileProgressArgs args) =>
 			{
-				//var message = string.Format("Progress {0}% {1} ({2}/{3} bytes)",
-				//	args.PercentDone, args.FilePath, args.TransferredBytes, args.TotalBytes);
-				//Info(message);
+#if DEBUG
+				var message = string.Format("Progress {0}% {1} ({2}/{3} bytes)",
+					args.PercentDone, args.FilePath, args.TransferredBytes, args.TotalBytes);
+				Info(message);
+#endif
 				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = null });
 			};
 		}
@@ -236,12 +238,15 @@ namespace Teltec.Backup.App.Restore
 				catch (Exception ex)
 				{
 					logger.ErrorException("Caught Exception", ex);
-				}
 
-				if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
-				{
-					OnFailure(agent, restore, filesToProcessTask.Exception);
-					return;
+					if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
+					{
+						if (filesToProcessTask.IsCanceled)
+							OnCancelation(agent, restore, ex); // filesToProcessTask.Exception
+						else
+							OnFailure(agent, restore, ex); // filesToProcessTask.Exception
+						return;
+					}
 				}
 
 				filesToProcess = filesToProcessTask.Result;
@@ -275,27 +280,16 @@ namespace Teltec.Backup.App.Restore
 				catch (Exception ex)
 				{
 					logger.ErrorException("Caught Exception", ex);
-				}
 
-				if (versionerTask.IsFaulted || versionerTask.IsCanceled)
-				{
-					Versioner.Undo();
-					OnFailure(agent, restore, versionerTask.Exception);
-					return;
-				}
-
-				try
-				{
-					// IMPORTANT: Must happen before any attempt to get `Versioner.FilesToTransfer`.
-					Versioner.Save();
-				}
-				catch (Exception ex)
-				{
-					logger.ErrorException("Caught Exception", ex);
-
-					Versioner.Undo();
-					OnFailure(agent, restore, ex);
-					return;
+					if (versionerTask.IsFaulted || versionerTask.IsCanceled)
+					{
+						Versioner.Undo();
+						if (versionerTask.IsCanceled)
+							OnCancelation(agent, restore, ex); // versionerTask.Exception
+						else
+							OnFailure(agent, restore, ex); // versionerTask.Exception
+						return;
+					}
 				}
 
 				agent.Files = Versioner.FilesToTransfer;
@@ -353,6 +347,20 @@ namespace Teltec.Backup.App.Restore
 		{
 			if (Updated != null)
 				Updated(this, e);
+		}
+
+		public void OnCancelation(CustomRestoreAgent agent, Models.Restore restore, Exception exception)
+		{
+			IsRunning = false;
+
+			var message = string.Format("Restore canceled: {0}", exception != null ? exception.Message : "Exception not informed");
+			Error(message);
+			//StatusInfo.Update(RestoreStatusLevel.ERROR, message);
+
+			restore.DidFail();
+			_daoRestore.Update(restore);
+
+			OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Failed, Message = message });
 		}
 
 		public void OnFailure(CustomRestoreAgent agent, Models.Restore restore, Exception exception)

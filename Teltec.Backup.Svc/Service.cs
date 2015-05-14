@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32.TaskScheduler;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,6 +15,8 @@ namespace Teltec.Backup.Svc
 {
 	public partial class Service : ServiceBase
 	{
+		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
 		#region Trap application termination
 
 		/// <summary>
@@ -524,11 +527,37 @@ namespace Teltec.Backup.Svc
 		private void Log(EventLogEntryType type, string message)
 		{
 			EventLog.WriteEntry(message, type);
+			switch (type)
+			{
+				case EventLogEntryType.Error:
+					logger.Error(message);
+					break;
+				case EventLogEntryType.Warning:
+					logger.Warn(message);
+					break;
+				case EventLogEntryType.Information:
+					logger.Info(message);
+					break;
+			}
 		}
 
 		private void Log(EventLogEntryType type, string format, params object[] args)
 		{
-			EventLog.WriteEntry(string.Format(format, args), type);
+			string message = string.Format(format, args);
+			EventLog.WriteEntry(message, type);
+			
+			switch (type)
+			{
+				case EventLogEntryType.Error:
+					logger.Error(message);
+					break;
+				case EventLogEntryType.Warning:
+					logger.Warn(message);
+					break;
+				case EventLogEntryType.Information:
+					logger.Info(message);
+					break;
+			}
 		}
 
 		private void Info(string message)
