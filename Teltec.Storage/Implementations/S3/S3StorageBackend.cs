@@ -105,7 +105,9 @@ namespace Teltec.Storage.Implementations.S3
 
 				long filePosition = 0;
 
-				for (int partNumber = 1; filePosition < contentLength; partNumber++)
+				long partTotal = (long)Math.Ceiling((decimal)contentLength / PART_SIZE);
+
+				for (int partNumber = 1; partNumber <= partTotal; partNumber++)
 				{
 					if (cancellationToken != null)
 						cancellationToken.ThrowIfCancellationRequested();
