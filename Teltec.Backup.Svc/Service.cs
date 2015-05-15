@@ -540,70 +540,61 @@ namespace Teltec.Backup.Svc
 
 		#region Logging
 
-		private void Log(EventLogEntryType type, string message)
+		public System.Diagnostics.EventLog EventLog;
+
+		protected void Log(System.Diagnostics.EventLogEntryType type, string message)
 		{
-			EventLog.WriteEntry(message, type);
+			if (EventLog != null)
+				EventLog.WriteEntry(message, type);
+
 			switch (type)
 			{
-				case EventLogEntryType.Error:
+				case System.Diagnostics.EventLogEntryType.Error:
 					logger.Error(message);
 					break;
-				case EventLogEntryType.Warning:
+				case System.Diagnostics.EventLogEntryType.Warning:
 					logger.Warn(message);
 					break;
-				case EventLogEntryType.Information:
+				case System.Diagnostics.EventLogEntryType.Information:
 					logger.Info(message);
 					break;
 			}
 		}
 
-		private void Log(EventLogEntryType type, string format, params object[] args)
+		protected void Log(System.Diagnostics.EventLogEntryType type, string format, params object[] args)
 		{
 			string message = string.Format(format, args);
-			EventLog.WriteEntry(message, type);
-			
-			switch (type)
-			{
-				case EventLogEntryType.Error:
-					logger.Error(message);
-					break;
-				case EventLogEntryType.Warning:
-					logger.Warn(message);
-					break;
-				case EventLogEntryType.Information:
-					logger.Info(message);
-					break;
-			}
+			Log(type, message);
 		}
 
-		private void Info(string message)
+		protected void Warn(string message)
 		{
-			Log(EventLogEntryType.Information, message);
+			Log(System.Diagnostics.EventLogEntryType.Warning, message);
 		}
 
-		private void Info(string format, params object[] args)
+		protected void Warn(string format, params object[] args)
 		{
-			Log(EventLogEntryType.Information, format, args);
+			Log(System.Diagnostics.EventLogEntryType.Warning, format, args);
 		}
 
-		private void Error(string message)
+		protected void Error(string message)
 		{
-			Log(EventLogEntryType.Error, message);
+			Log(System.Diagnostics.EventLogEntryType.Error, message);
 		}
 
-		private void Error(string format, params object[] args)
+		protected void Error(string format, params object[] args)
 		{
-			Log(EventLogEntryType.Error, format, args);
+			Log(System.Diagnostics.EventLogEntryType.Error, format, args);
 		}
 
-		private void Warn(string message)
+		protected void Info(string message)
 		{
-			Log(EventLogEntryType.Warning, message);
+			Log(System.Diagnostics.EventLogEntryType.Information, message);
 		}
 
-		private void Warn(string format, params object[] args)
+		protected void Info(string format, params object[] args)
 		{
-			Log(EventLogEntryType.Warning, format, args);
+			Log(System.Diagnostics.EventLogEntryType.Information, format, args);
 		}
 
 		#endregion

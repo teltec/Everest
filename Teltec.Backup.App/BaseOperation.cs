@@ -57,10 +57,8 @@ namespace Teltec.Backup.App
 
 		public System.Diagnostics.EventLog EventLog;
 
-		protected void Log(System.Diagnostics.EventLogEntryType type, string format, params object[] args)
+		protected void Log(System.Diagnostics.EventLogEntryType type, string message)
 		{
-			string message = string.Format(format, args);
-			
 			if (EventLog != null)
 				EventLog.WriteEntry(message, type);
 
@@ -78,14 +76,35 @@ namespace Teltec.Backup.App
 			}
 		}
 
+		protected void Log(System.Diagnostics.EventLogEntryType type, string format, params object[] args)
+		{
+			string message = string.Format(format, args);
+			Log(type, message);
+		}
+
+		protected void Warn(string message)
+		{
+			Log(System.Diagnostics.EventLogEntryType.Warning, message);
+		}
+
 		protected void Warn(string format, params object[] args)
 		{
 			Log(System.Diagnostics.EventLogEntryType.Warning, format, args);
 		}
 
+		protected void Error(string message)
+		{
+			Log(System.Diagnostics.EventLogEntryType.Error, message);
+		}
+
 		protected void Error(string format, params object[] args)
 		{
 			Log(System.Diagnostics.EventLogEntryType.Error, format, args);
+		}
+
+		protected void Info(string message)
+		{
+			Log(System.Diagnostics.EventLogEntryType.Information, message);
 		}
 
 		protected void Info(string format, params object[] args)
