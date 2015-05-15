@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.Principal;
 using System.ServiceProcess;
 using System.Threading;
@@ -100,18 +101,16 @@ namespace Teltec.Backup.Svc
 
 		#region Service implementation
 
-		static System.Timers.Timer timer;
-
 		public Service()
 		{
 			ServiceName = typeof(Teltec.Backup.Svc.Service).Namespace;
 			CanShutdown = true;
 		}
 
-		static void timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-		{
-			Console.WriteLine("hello");
-		}
+		//static void timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+		//{
+		//	Console.Write("hello");
+		//}
 
 		private string BuildTaskName(Models.ISchedulablePlan plan)
 		{
@@ -399,9 +398,6 @@ namespace Teltec.Backup.Svc
 
 			Info("Scheduling task {0}", taskName);
 
-			string marker = "--\nScheduleBackup started at " + DateTime.Now + "\n";
-			File.WriteAllText(@"C:\TeltecBackup\history.txt", marker);
-
 			// Get the service on the local machine
 			using (TaskService ts = new TaskService())
 			{
@@ -447,8 +443,17 @@ namespace Teltec.Backup.Svc
 				// Create triggers to fire the task when planned.
 				td.Triggers.AddRange(BuildTriggers(plan));
 
-				// Create an action that will launch Notepad whenever the trigger fires
-				td.Actions.Add(new ExecAction(@"C:\Users\jardel\Desktop\Projects\TeltecBackup\timestamp.bat", plan.ScheduleParamId.ToString(), null));
+				bool isBackup = plan is Models.BackupPlan;
+				bool isRestore = plan is Models.RestorePlan;
+				if (!isBackup && !isRestore)
+					throw new InvalidOperationException("Unhandled plan type");
+
+				// Create an action that will launch the PlanExecutor
+				string planType = isBackup ? "backup" : isRestore ? "restore" : string.Empty;
+				string executorCwd = GetExecutableDirectoryPath();
+				string executorPath = string.Format(@"{0}\{1}", executorCwd, "Teltec.Backup.PlanExecutor.exe");
+				string executorArgs = string.Format("-t {0} -p {1}", planType, plan.ScheduleParamId);
+				td.Actions.Add(new ExecAction(executorPath, executorArgs, executorCwd));
 
 				// Register the task in the root folder
 				ts.RootFolder.RegisterTaskDefinition(taskName, td, TaskCreation.CreateOrUpdate, null, null, TaskLogonType.InteractiveToken, null);
@@ -473,18 +478,20 @@ namespace Teltec.Backup.Svc
 			}
 		}
 
-		private static void start_timer()
-		{
-			timer.Start();
-		}
+		//static System.Timers.Timer timer;
+
+		//private static void start_timer()
+		//{
+		//	timer.Start();
+		//}
 
 		protected override void OnStart(string[] args)
 		{
 			Info("Service is starting...");
-			timer = new System.Timers.Timer();
-			timer.Interval = 2500; //1000 * 60 * 60 * 24; // Set interval of one day 
-			timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Elapsed);
-			start_timer();
+			//timer = new System.Timers.Timer();
+			//timer.Interval = 2500; //1000 * 60 * 60 * 24; // Set interval of one day 
+			//timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Elapsed);
+			//start_timer();
 			Info("Service was started.");
 			ReloadPlansAndRescheduler();
 		}
@@ -492,7 +499,7 @@ namespace Teltec.Backup.Svc
 		protected override void OnStop()
 		{
 			Info("Service is stopping...");
-			timer.Stop();
+			//timer.Stop();
 			Info("Service was stopped.");
 		}
 
@@ -518,6 +525,15 @@ namespace Teltec.Backup.Svc
 					OnRefresh();
 					break;
 			}
+		}
+
+		#endregion
+
+		#region Utils
+
+		private string GetExecutableDirectoryPath()
+		{
+			return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 		}
 
 		#endregion
