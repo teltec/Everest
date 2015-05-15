@@ -127,7 +127,19 @@ namespace Teltec.Backup.PlanExecutor
 				logger.Info("Running {0} #{1}", options.PlanType, options.PlanIdentifier);
 			}
 
-			switch (selectedPlanType)
+			RunOperation(selectedPlanType, plan);
+
+			while (!RunningOperationEndedEvent.WaitOne(250))
+			{
+				RunningOperation.DoEvents();
+			}
+
+			Console.WriteLine("Operation finished.");
+		}
+
+		private void RunOperation(PlanTypeEnum planType, object plan)
+		{
+			switch (planType)
 			{
 				case PlanTypeEnum.Backup:
 					{
@@ -140,10 +152,6 @@ namespace Teltec.Backup.PlanExecutor
 						break;
 					}
 			}
-
-			RunningOperationEndedEvent.WaitOne();
-
-			Console.WriteLine("Operation finished.");
 		}
 
 		private void ExitShowingHelpText(int exitCode)
@@ -160,6 +168,16 @@ namespace Teltec.Backup.PlanExecutor
 
 			Models.Backup latest = dao.GetLatestByPlan(plan);
 			MustResumeLastOperation = latest != null && latest.NeedsResume();
+
+			if (MustResumeLastOperation)
+			{
+				logger.Warn(
+					"The backup (#{0}) has not finished yet."
+					+ " If it's still running, please, wait until it finishes,"
+					+ " otherwise you should resume it manually.",
+					latest.Id);
+				return;
+			}
 
 			// Create new backup or resume the last unfinished one.
 			BackupOperation obj = /* MustResumeLastOperation
@@ -186,6 +204,16 @@ namespace Teltec.Backup.PlanExecutor
 
 			Models.Restore latest = dao.GetLatestByPlan(plan);
 			MustResumeLastOperation = latest != null && latest.NeedsResume();
+
+			if (MustResumeLastOperation)
+			{
+				logger.Warn(
+					"The restore (#{0}) has not finished yet."
+					+ " If it's still running, please, wait until it finishes,"
+					+ " otherwise you should resume it manually.",
+					latest.Id);
+				return;
+			}
 
 			// Create new restore or resume the last unfinished one.
 			RestoreOperation obj = /* MustResumeLastOperation

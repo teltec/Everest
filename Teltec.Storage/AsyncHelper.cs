@@ -69,8 +69,8 @@ namespace Teltec.Storage
 		{
 			task.ContinueWith(t =>
 			{
-				var excetion = t.Exception;
-				onFaulted(excetion);
+				var exception = t.Exception;
+				onFaulted(exception);
 			}, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnFaulted);
 			return task;
 		}

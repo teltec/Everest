@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Windows.Threading; // Requires WindowsBase assembly.
+using System.Security.Permissions; // Requires WindowsBase assembly.
+using System.Windows.Threading;
 
 namespace Teltec.Storage
 {
@@ -26,5 +27,28 @@ namespace Teltec.Storage
 		{
 			return _Dispatcher.Invoke(callback);
 		}
+
+		#region Code from MSDN
+
+		//
+		// Originally from https://msdn.microsoft.com/en-us/library/system.windows.threading.dispatcherframe.aspx
+		//
+
+		[SecurityPermissionAttribute(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
+		public void DoEvents()
+		{
+			DispatcherFrame frame = new DispatcherFrame();
+			_Dispatcher.BeginInvoke(DispatcherPriority.Background,
+				new DispatcherOperationCallback(ExitFrame), frame);
+			Dispatcher.PushFrame(frame);
+		}
+
+		private static object ExitFrame(object frame)
+		{
+			((DispatcherFrame)frame).Continue = false;
+			return null;
+		}
+
+		#endregion
 	}
 }

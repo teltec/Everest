@@ -22,6 +22,14 @@ namespace Teltec.Backup.App
 
 		#endregion
 
+		public void DoEvents()
+		{
+			if (TransferAgent == null)
+				return;
+
+			TransferAgent.EventDispatcher.DoEvents();
+		}
+
 		public abstract void Start(out TransferResults results);
 
 		#region Task
