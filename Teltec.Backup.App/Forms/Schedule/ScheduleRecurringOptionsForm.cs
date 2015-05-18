@@ -575,11 +575,27 @@ namespace Teltec.Backup.App.Forms.Schedule
 					panelWeekly.Visible = false;
 					panelMonthly.Visible = true;
 					panelDayOfMonth.Visible = false;
+
+					//
+					// Defaults
+					//
+					if (!Schedule.MonthlyOccurrenceType.HasValue)
+						Schedule.MonthlyOccurrenceType = Models.MonthlyOccurrenceTypeEnum.FIRST;
+					if (!Schedule.OccursMonthlyAtDayOfWeek.HasValue)
+						Schedule.OccursMonthlyAtDayOfWeek = DayOfWeek.Monday;
+
 					break;
 				case 3: // Day of Month
 					panelWeekly.Visible = false;
 					panelMonthly.Visible = false;
 					panelDayOfMonth.Visible = true;
+
+					//
+					// Defaults
+					//
+					if (!Schedule.OccursAtDayOfMonth.HasValue)
+						Schedule.OccursAtDayOfMonth = 1;
+
 					break;
 			}
 		}
