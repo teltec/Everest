@@ -17,7 +17,7 @@ using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Restore
 {
-	public enum RestoreOperationStatus
+	public enum RestoreOperationStatus : byte
 	{
 		Unknown = 0,
 		Started = 1,

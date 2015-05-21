@@ -37,11 +37,14 @@ namespace Teltec.Backup.PlanExecutor
 		Restore = 1,
 	}
 
-	class PlanExecutor
+	class PlanExecutor : IDisposable
 	{
 		static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		static readonly Options options = new Options();
+
+		static OperationProgressReporter Reporter = new OperationProgressReporter(50052);
+		static OperationProgressWatcher Watcher = new OperationProgressWatcher(50052);
 
 		static void Main(string[] args)
 		{
@@ -50,6 +53,10 @@ namespace Teltec.Backup.PlanExecutor
 
 			try
 			{
+				Watcher.Subscribe((OperationProgressMessage msg) =>
+				{
+					Console.WriteLine("RECEIVED: {0}", msg.TextMessage);
+				});
 				var executor = new PlanExecutor();
 				executor.Run();
 				LetMeDebugThisBeforeExiting();
@@ -87,7 +94,7 @@ namespace Teltec.Backup.PlanExecutor
 		/// <summary>
 		///  Event set when the process is terminated.
 		/// </summary>
-		static readonly ManualResetEvent RunningOperationEndedEvent = new ManualResetEvent(false);
+		readonly ManualResetEvent RunningOperationEndedEvent = new ManualResetEvent(false);
 
 		private void Run()
 		{
@@ -239,6 +246,18 @@ namespace Teltec.Backup.PlanExecutor
 			if (RunningOperation == null)
 				return;
 
+			Models.BackupPlan plan = Model as Models.BackupPlan;
+
+			OperationProgressMessage message = new OperationProgressMessage
+			{
+				Version = Protocol.Version,
+				OperationType = OperationType.Backup,
+				OperationId = plan.Id.Value,
+				OperationStatus = (byte)status,
+				TransferResults = new TransferResultsMsg(TransferResults),
+				TextMessage = null,
+			};
+
 			switch (status)
 			{
 				default: throw new ArgumentException("Unhandled status", "status");
@@ -257,6 +276,7 @@ namespace Teltec.Backup.PlanExecutor
 				case BackupOperationStatus.Resumed:
 					{
 						logger.Info("{0} backup", status == BackupOperationStatus.Resumed ? "Resuming" : "Starting");
+
 						/*
 						Assert.IsNotNull(BackupResults);
 						this.lblSources.Text = RunningBackup.Sources;
@@ -314,7 +334,6 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Backup finished.");
 
 						// Update timestamps.
-						Models.BackupPlan plan = Model as Models.BackupPlan;
 						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
 						_daoBackupPlan.Update(plan);
 
@@ -325,6 +344,7 @@ namespace Teltec.Backup.PlanExecutor
 				case BackupOperationStatus.Updated:
 					{
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
+
 						/*
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
 							BackupResults.Stats.Completed, BackupResults.Stats.Total);
@@ -354,7 +374,6 @@ namespace Teltec.Backup.PlanExecutor
 							TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
 						// Update timestamps.
-						Models.BackupPlan plan = Model as Models.BackupPlan;
 						plan.LastRunAt = DateTime.UtcNow;
 						_daoBackupPlan.Update(plan);
 
@@ -363,12 +382,25 @@ namespace Teltec.Backup.PlanExecutor
 						break;
 					}
 			}
+
+			Reporter.Publish(message);
 		}
 
 		private void RestoreUpdateStatsInfo(RestoreOperationStatus status)
 		{
 			if (RunningOperation == null)
 				return;
+
+			Models.RestorePlan plan = Model as Models.RestorePlan;
+
+			OperationProgressMessage message = new OperationProgressMessage
+			{
+				Version = Protocol.Version,
+				OperationType = OperationType.Restore,
+				OperationId = plan.Id.Value,
+				OperationStatus = (byte)status,
+				TransferResults = new TransferResultsMsg(TransferResults),
+			};
 
 			switch (status)
 			{
@@ -388,6 +420,7 @@ namespace Teltec.Backup.PlanExecutor
 				case RestoreOperationStatus.Resumed:
 					{
 						logger.Info("{0} restore", status == RestoreOperationStatus.Resumed ? "Resuming" : "Starting");
+
 						/*
 						Assert.IsNotNull(RestoreResults);
 						this.lblSources.Text = RunningRestore.Sources;
@@ -408,6 +441,7 @@ namespace Teltec.Backup.PlanExecutor
 				case RestoreOperationStatus.ScanningFilesStarted:
 					{
 						logger.Info("Scanning files...");
+
 						/*
 						this.lblSources.Text = "Scanning files...";
 						*/
@@ -421,6 +455,7 @@ namespace Teltec.Backup.PlanExecutor
 				case RestoreOperationStatus.ProcessingFilesStarted:
 					{
 						logger.Info("Processing files...");
+
 						/*
 						this.lblSources.Text = "Processing files...";
 						*/
@@ -430,6 +465,7 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("Processing files finished.");
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
+
 						/*
 						this.lblSources.Text = RunningRestore.Sources;
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
@@ -454,7 +490,6 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Restore finished.");
 
 						// Update timestamps.
-						Models.RestorePlan plan = Model as Models.RestorePlan;
 						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
 						_daoRestorePlan.Update(plan);
 
@@ -465,6 +500,7 @@ namespace Teltec.Backup.PlanExecutor
 				case RestoreOperationStatus.Updated:
 					{
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
+
 						/*
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
 							RestoreResults.Stats.Completed, RestoreResults.Stats.Total);
@@ -493,7 +529,6 @@ namespace Teltec.Backup.PlanExecutor
 							TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
 						// Update timestamps.
-						Models.RestorePlan plan = Model as Models.RestorePlan;
 						plan.LastRunAt = DateTime.UtcNow;
 						_daoRestorePlan.Update(plan);
 
@@ -502,6 +537,45 @@ namespace Teltec.Backup.PlanExecutor
 						break;
 					}
 			}
+			
+			Reporter.Publish(message);
 		}
+
+		#region Dispose Pattern Implementation
+
+		bool _shouldDispose = false;
+		bool _isDisposed;
+
+		/// <summary>
+		/// Implements the Dispose pattern
+		/// </summary>
+		/// <param name="disposing">Whether this object is being disposed via a call to Dispose
+		/// or garbage collected.</param>
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!this._isDisposed)
+			{
+				if (disposing && _shouldDispose)
+				{
+					if (Reporter != null)
+					{
+						Reporter.Dispose();
+						Reporter = null;
+					}
+				}
+				this._isDisposed = true;
+			}
+		}
+
+		/// <summary>
+		/// Disposes of all managed and unmanaged resources.
+		/// </summary>
+		public void Dispose()
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 }
