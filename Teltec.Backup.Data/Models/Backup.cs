@@ -87,25 +87,45 @@ namespace Teltec.Backup.Data.Models
 
 		public virtual void DidStart()
 		{
-			StartedAt = DateTime.UtcNow;
+			DidStartAt(DateTime.UtcNow);
+		}
+
+		public virtual void DidStartAt(DateTime when)
+		{
+			StartedAt = when;
 			Status = TransferStatus.RUNNING;
 		}
 
 		public virtual void DidComplete()
 		{
-			FinishedAt = DateTime.UtcNow;
+			DidCompleteAt(DateTime.UtcNow);
+		}
+
+		public virtual void DidCompleteAt(DateTime when)
+		{
+			FinishedAt = when;
 			Status = TransferStatus.COMPLETED;
 		}
 
 		public virtual void DidFail()
 		{
-			FinishedAt = DateTime.UtcNow;
+			DidFailAt(DateTime.UtcNow);
+		}
+
+		public virtual void DidFailAt(DateTime when)
+		{
+			FinishedAt = when;
 			Status = TransferStatus.FAILED;
 		}
 
 		public virtual void WasCanceled()
 		{
-			FinishedAt = DateTime.UtcNow;
+			WasCanceledAt(DateTime.UtcNow);
+		}
+
+		public virtual void WasCanceledAt(DateTime when)
+		{
+			FinishedAt = when;
 			Status = TransferStatus.CANCELED;
 		}
 

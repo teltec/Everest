@@ -11,7 +11,7 @@ namespace Teltec.Backup.App.Forms
     {
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 		private readonly BackupPlanRepository _dao = new BackupPlanRepository();
-
+		
         public MainForm()
         {
             InitializeComponent();

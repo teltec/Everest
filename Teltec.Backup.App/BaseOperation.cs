@@ -18,7 +18,11 @@ namespace Teltec.Backup.App
 
 		#region Properties
 
-		public bool IsRunning { get; protected set; }
+		// NOTE: The setter of `IsRunning` is no longer protected because we currently need
+		// to change it in `BackupPlanViewControl`.
+		public virtual bool IsRunning { get; /* protected */set; }
+		
+		public virtual Int32? OperationId { get { throw new NotImplementedException(); } }
 
 		#endregion
 

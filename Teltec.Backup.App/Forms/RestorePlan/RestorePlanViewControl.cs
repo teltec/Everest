@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Backup.App.Restore;
 using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Ipc.PubSub;
 using Teltec.Common;
 using Teltec.Common.Extensions;
 using Teltec.Common.Utils;
@@ -16,6 +17,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 	{
 		private readonly RestorePlanRepository _daoRestorePlan = new RestorePlanRepository();
 		private readonly RestoreRepository _daoRestore = new RestoreRepository();
+		private OperationProgressWatcher Watcher = new OperationProgressWatcher(50052);
 
 		RestoreOperation RunningRestore = null;
 		TransferResults RestoreResults = null;
@@ -29,6 +31,14 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 		public RestorePlanViewControl()
 		{
 			InitializeComponent();
+
+			EventDispatcher dispatcher = new EventDispatcher();
+
+			Watcher.Subscribe((RestoreUpdateMsg msg) =>
+			{
+				// IMPORTANT: Always invoke from Main thread!
+				dispatcher.Invoke(() => { ProcessRemoteMessage(msg); });
+			});
 
 			this.ModelChangedEvent += (sender, args) =>
 			{
@@ -179,7 +189,64 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 		static string LBL_DURATION_INITIAL = "Not started";
 		static string LBL_FILES_TRANSFER_STOPPED = "Not started";
 
-		private void UpdateStatsInfo(RestoreOperationStatus status)
+		private void ProcessRemoteMessage(RestoreUpdateMsg msg)
+		{
+			if (Model == null)
+				return;
+
+			Models.RestorePlan plan = this.Model as Models.RestorePlan;
+
+			if (msg.IsAssignableFrom(typeof(RestoreUpdateMsg)))
+			{
+				RestoreOperationStatus opStatus = (RestoreOperationStatus)Enum.ToObject(
+					typeof(RestoreOperationStatus), msg.OperationStatus);
+
+				switch (opStatus)
+				{
+					case RestoreOperationStatus.Updated:
+						{
+							RemoteRestoreOperation operation = RunningRestore as RemoteRestoreOperation;
+							msg.TransferResults.CopyTo(RestoreResults);
+							break;
+						}
+					case RestoreOperationStatus.Started:
+					case RestoreOperationStatus.Resumed:
+						{
+							RemoteRestoreOperation operation = new RemoteRestoreOperation(plan);
+							operation.RemoteRestore.DidStartAt(msg.StartedAt);
+							operation.IsRunning = true;
+							RunningRestore = operation;
+							RestoreResults = new TransferResults();
+							break;
+						}
+					case RestoreOperationStatus.Finished:
+						{
+							RemoteRestoreOperation operation = RunningRestore as RemoteRestoreOperation;
+							operation.IsRunning = false;
+							operation.RemoteRestore.DidCompleteAt(msg.FinishedAt);
+							break;
+						}
+					case RestoreOperationStatus.Failed:
+						{
+							RemoteRestoreOperation operation = RunningRestore as RemoteRestoreOperation;
+							operation.IsRunning = false;
+							operation.RemoteRestore.DidFailAt(msg.FinishedAt);
+							break;
+						}
+					case RestoreOperationStatus.Canceled:
+						{
+							RemoteRestoreOperation operation = RunningRestore as RemoteRestoreOperation;
+							operation.IsRunning = false;
+							operation.RemoteRestore.WasCanceledAt(msg.FinishedAt);
+							break;
+						}
+				}
+
+				UpdateStatsInfo(opStatus, true);
+			}
+		}
+
+		private void UpdateStatsInfo(RestoreOperationStatus status, bool runningRemotely = false)
 		{
 			if (RunningRestore == null)
 				return;
@@ -247,10 +314,13 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 						timer1.Stop();
 						timer1.Enabled = false;
 
-						// Update timestamps.
-						Models.RestorePlan plan = Model as Models.RestorePlan;
-						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
-						_daoRestorePlan.Update(plan);
+						if (!runningRemotely)
+						{
+							// Update timestamps.
+							Models.RestorePlan plan = Model as Models.RestorePlan;
+							plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
+							_daoRestorePlan.Update(plan);
+						}
 						break;
 					}
 				case RestoreOperationStatus.Updated:
@@ -274,10 +344,13 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 						timer1.Stop();
 						timer1.Enabled = false;
 
-						// Update timestamps.
-						Models.RestorePlan plan = Model as Models.RestorePlan;
-						plan.LastRunAt = DateTime.UtcNow;
-						_daoRestorePlan.Update(plan);
+						if (!runningRemotely)
+						{
+							// Update timestamps.
+							Models.RestorePlan plan = Model as Models.RestorePlan;
+							plan.LastRunAt = DateTime.UtcNow;
+							_daoRestorePlan.Update(plan);
+						}
 						break;
 					}
 			}
@@ -383,6 +456,11 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 				{
 					RunningRestore.Dispose();
 					RunningRestore = null;
+				}
+				if (Watcher != null)
+				{
+					Watcher.Dispose();
+					Watcher = null;
 				}
 			}
 			base.Dispose(disposing);

@@ -26,12 +26,12 @@ namespace Teltec.Storage
 			private int _Canceled = 0;
 			private int _Completed = 0;
 
-			public int Total { get { return _Total; } internal set { _Total = value; } }
-			public int Pending { get { return _Pending; } internal set { _Pending = value; } }
-			public int Running { get { return _Running; } internal set { _Running = value; } }
-			public int Failed { get { return _Failed; } internal set { _Failed = value; } }
-			public int Canceled { get { return _Canceled; } internal set { _Canceled = value; } }
-			public int Completed { get { return _Completed; } internal set { _Completed = value; } }
+			public int Total { get { return _Total; } set { _Total = value; } }
+			public int Pending { get { return _Pending; } set { _Pending = value; } }
+			public int Running { get { return _Running; } set { _Running = value; } }
+			public int Failed { get { return _Failed; } set { _Failed = value; } }
+			public int Canceled { get { return _Canceled; } set { _Canceled = value; } }
+			public int Completed { get { return _Completed; } set { _Completed = value; } }
 
 			internal void Reset(int pending)
 			{

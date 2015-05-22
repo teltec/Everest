@@ -148,6 +148,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Backup\RemoteBackupOperation.cs" />
     <Compile Include="BaseOperation.cs" />
     <Compile Include="Controls\EntryInfo.cs" />
     <Compile Include="Controls\EntryTreeNode.cs" />
@@ -269,6 +270,7 @@
       <DependentUpon>201502041721361_RenameBackupPlanSourceEntryId.cs</DependentUpon>
     </Compile>
     <Compile Include="Restore\NewRestoreOperation.cs" />
+    <Compile Include="Restore\RemoteRestoreOperation.cs" />
     <Compile Include="Restore\RestoreOperation.cs" />
     <Compile Include="Versioning\DefaultRestoreScanner.cs" />
     <Compile Include="Versioning\IncrementalFileVersioner.cs" />
@@ -398,6 +400,10 @@
     <ProjectReference Include="..\Teltec.Backup.Data\Teltec.Backup.Data.csproj">
       <Project>{991059ef-f7d6-4fd8-b462-1f54467f6a33}</Project>
       <Name>Teltec.Backup.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Teltec.Backup.Ipc\Teltec.Backup.Ipc.csproj">
+      <Project>{e0f1bb0e-7c53-4215-bbe8-133de93d5905}</Project>
+      <Name>Teltec.Backup.Ipc</Name>
     </ProjectReference>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>

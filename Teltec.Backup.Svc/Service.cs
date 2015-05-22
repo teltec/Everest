@@ -540,8 +540,6 @@ namespace Teltec.Backup.Svc
 
 		#region Logging
 
-		public System.Diagnostics.EventLog EventLog;
-
 		protected void Log(System.Diagnostics.EventLogEntryType type, string message)
 		{
 			if (EventLog != null)

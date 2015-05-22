@@ -2,88 +2,124 @@
 using System;
 using Teltec.Storage;
 
+//
+// Protobuf-net manual at http://www.codeproject.com/Articles/642677/Protobuf-net-the-unofficial-manual#without
+//
 namespace Teltec.Backup.Ipc.PubSub
 {
-	public static class Protocol
+	public abstract class ProtocolMsg
 	{
-		public static readonly Byte Version = 1;
+		public bool IsAssignableFrom(Type expectedType)
+		{
+			return GetType().IsAssignableFrom(expectedType);
+		}
 	}
 
-	public enum OperationType : byte
+	public abstract class ProtocolMsgPart
 	{
-		Backup = 0,
-		Restore = 1,
-	}
-
-	public enum OperationStatus : byte
-	{
-		Unknown = 0,
-		Started = 1,
-		Resumed = 2,
-		ScanningFilesStarted = 3,
-		ScanningFilesFinished = 4,
-		ProcessingFilesStarted = 5,
-		ProcessingFilesFinished = 6,
-		Updated = 7,
-		Canceled = 8,
-		Failed = 9,
-		Finished = 10,
 	}
 
 	[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-	public class TransferResultsMsg
+	public class StatisticsMsgPart : ProtocolMsgPart
 	{
-		public Statistics Stats;
+		public int Total;
+		public int Pending;
+		public int Running;
+		public int Failed;
+		public int Canceled;
+		public int Completed;
 
-		[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-		public class Statistics
+		public static StatisticsMsgPart CopyFrom(TransferResults.Statistics other)
 		{
-			public int Total;
-			public int Pending;
-			public int Running;
-			public int Failed;
-			public int Canceled;
-			public int Completed;
+			if (other == null)
+				return null;
+			
+			StatisticsMsgPart obj = new StatisticsMsgPart();
 
-			public Statistics()
-			{
-			}
+			obj.Total = other.Total;
+			obj.Pending = other.Pending;
+			obj.Running = other.Running;
+			obj.Failed = other.Failed;
+			obj.Canceled = other.Canceled;
+			obj.Completed = other.Completed;
 
-			public Statistics(TransferResults.Statistics other)
-			{
-				if (other == null)
-					return;
-
-				Total = other.Total;
-				Pending = other.Pending;
-				Running = other.Running;
-				Failed = other.Failed;
-				Canceled = other.Canceled;
-				Completed = other.Completed;
-			}
+			return obj;
 		}
 
-		public TransferResultsMsg()
-		{
-		}
-
-		public TransferResultsMsg(TransferResults other)
+		public void CopyTo(TransferResults.Statistics other)
 		{
 			if (other == null)
 				return;
 
-			if (other.Stats != null)
-				Stats = new Statistics(other.Stats);
+			other.Total = this.Total;
+			other.Pending = this.Pending;
+			other.Running = this.Running;
+			other.Failed = this.Failed;
+			other.Canceled = this.Canceled;
+			other.Completed = this.Completed;
+		}
+	}
+	
+	[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+	public class TransferResultsMsgPart : ProtocolMsgPart
+	{
+		public StatisticsMsgPart Stats;
+
+		public static TransferResultsMsgPart CopyFrom(TransferResults other)
+		{
+			if (other == null)
+				return null;
+
+			TransferResultsMsgPart obj = new TransferResultsMsgPart();
+
+			obj.Stats = StatisticsMsgPart.CopyFrom(other.Stats);
+
+			return obj;
+		}
+
+		public void CopyTo(TransferResults other)
+		{
+			if (other == null)
+				return;
+
+			if (this.Stats != null)
+				this.Stats.CopyTo(other.Stats);
 		}
 	}
 
 	[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-	public class OperationProgressMessage
+	[ProtoInclude(101, typeof(BackupUpdateMsg))]
+	[ProtoInclude(201, typeof(RestoreUpdateMsg))]
+	public class OperationMsg : ProtocolMsg
 	{
-		public byte Version;
-		public OperationType OperationType;
 		public Int32 OperationId;
-		public byte OperationStatus;
-		public TransferResultsMsg TransferResults;
 	}
+
+	#region Backup operation
+
+	[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+	public class BackupUpdateMsg : OperationMsg
+	{
+		public bool IsResuming;
+		public DateTime StartedAt;
+		public DateTime FinishedAt;
+		public byte OperationStatus;
+		public TransferResultsMsgPart TransferResults;
+	}
+
+	#endregion
+
+	#region Restore operation
+
+	[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+	public class RestoreUpdateMsg : OperationMsg
+	{
+		public bool IsResuming;
+		public DateTime StartedAt;
+		public DateTime FinishedAt;
+		public byte OperationStatus;
+		public TransferResultsMsgPart TransferResults;
+	}
+
+	#endregion
 }

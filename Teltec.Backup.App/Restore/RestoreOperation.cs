@@ -63,6 +63,11 @@ namespace Teltec.Backup.App.Restore
 
 		#region Properties
 
+		public override Int32? OperationId
+		{
+			get { return Restore.Id; }
+		}
+
 		public delegate void UpdateEventHandler(object sender, RestoreOperationEvent e);
 		public event UpdateEventHandler Updated;
 
