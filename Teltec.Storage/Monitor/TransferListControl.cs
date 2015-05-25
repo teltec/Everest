@@ -127,7 +127,7 @@ namespace Teltec.Storage.Monitor
 				ControlDefaults(Path);
 				Path.Name = "Path";
 				Path.Text = Data.FilePath;
-				// NOTE: Cannot use DataBindings because the change event is raised on another thread. 
+				// NOTE: Cannot use DataBindings because the change event is raised on another thread.
 				Path.DataBindings.Add(new Binding("Text", Data,
 					this.GetPropertyName((TransferFileProgressArgs x) => x.FilePath)));
 

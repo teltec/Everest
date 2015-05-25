@@ -2,7 +2,7 @@
 using Teltec.Storage;
 using Teltec.Storage.Agent;
 
-namespace Teltec.Backup.App.Restore
+namespace Teltec.Backup.PlanExecutor.Restore
 {
 	public class CustomRestoreAgent : RestoreAgent<CustomVersionedFile>
 	{

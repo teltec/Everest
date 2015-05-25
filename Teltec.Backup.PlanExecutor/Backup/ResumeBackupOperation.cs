@@ -1,27 +1,34 @@
 ﻿using NLog;
+using NUnit.Framework;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Teltec.Backup.App.Versioning;
+using Teltec.Backup.Data.DAO;
+using Teltec.Common.Extensions;
+using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
 
-namespace Teltec.Backup.App.Backup
+namespace Teltec.Backup.PlanExecutor.Backup
 {
-	public sealed class NewBackupOperation : BackupOperation
+	public sealed class ResumeBackupOperation : BackupOperation
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-
+		
 		#region Constructors
 
-		public NewBackupOperation(Models.BackupPlan plan)
-			: this(plan, new BackupOperationOptions())
+		public ResumeBackupOperation(Models.Backup backup)
+			: this(backup, new BackupOperationOptions())
 		{
 		}
 
-		public NewBackupOperation(Models.BackupPlan plan, BackupOperationOptions options)
+		public ResumeBackupOperation(Models.Backup backup, BackupOperationOptions options)
 			: base(options)
 		{
-			Backup = new Models.Backup(plan);
+			Assert.IsNotNull(backup);
+			Assert.AreEqual(TransferStatus.RUNNING, backup.Status);
+
+			Backup = backup;
 		}
 
 		#endregion
@@ -30,17 +37,16 @@ namespace Teltec.Backup.App.Backup
 
 		private LinkedList<string> DoWork(Models.Backup backup, CancellationToken cancellationToken)
 		{
-			// Scan files.
-			DefaultPathScanner scanner = new DefaultPathScanner(backup.BackupPlan, CancellationTokenSource.Token);
+			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
 
-#if DEBUG
-			scanner.FileAdded += (object sender, string file) =>
-			{
-				logger.Debug("ADDED: File {0}", file);
-			};
-#endif
+			// Load pending `BackupedFiles` from `Backup`.
+			IList<Models.BackupedFile> pendingFiles = daoBackupedFile.GetByBackupAndStatus(backup,
+				TransferStatus.STOPPED, TransferStatus.RUNNING);
 
-			LinkedList<string> files = scanner.Scan();
+			cancellationToken.ThrowIfCancellationRequested();
+
+			// Convert them to a list of paths.
+			LinkedList<string> files = pendingFiles.ToLinkedList<string, Models.BackupedFile>(p => p.File.Path);
 
 			return files;
 		}
@@ -55,7 +61,7 @@ namespace Teltec.Backup.App.Backup
 
 		protected override Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess)
 		{
-			return Versioner.NewVersion(backup, filesToProcess);
+			return Versioner.ResumeVersion(backup, filesToProcess);
 		}
 
 		#endregion
@@ -66,13 +72,13 @@ namespace Teltec.Backup.App.Backup
 		{
 			base.OnStart(agent, backup);
 
-			_daoBackup.Insert(backup);
+			_daoBackup.Update(backup);
 			
-			var message = string.Format("Backup started at {0}", StartedAt);
+			var message = string.Format("Backup resumed at {0}", StartedAt);
 			Info(message);
 			//StatusInfo.Update(BackupStatusLevel.OK, message);
 
-			OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Started, Message = message });
+			OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Resumed, Message = message });
 		}
 
 		#endregion

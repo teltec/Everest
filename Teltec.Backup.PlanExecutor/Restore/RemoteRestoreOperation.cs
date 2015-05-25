@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Teltec.Backup.Data.Versioning;
 using Models = Teltec.Backup.Data.Models;
 
-namespace Teltec.Backup.App.Restore
+namespace Teltec.Backup.PlanExecutor.Restore
 {
 	public sealed class RemoteRestoreOperation : RestoreOperation
 	{

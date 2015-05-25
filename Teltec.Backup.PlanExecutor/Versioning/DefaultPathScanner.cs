@@ -8,7 +8,7 @@ using Teltec.Backup.Data.Models;
 using Teltec.Stats;
 using Teltec.Storage;
 
-namespace Teltec.Backup.App.Versioning
+namespace Teltec.Backup.PlanExecutor.Versioning
 {
 	public sealed class DefaultPathScanner : PathScanner<string>
 	{

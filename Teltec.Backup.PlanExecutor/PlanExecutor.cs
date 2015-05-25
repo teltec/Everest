@@ -2,11 +2,10 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using Teltec.Backup.App;
-using Teltec.Backup.App.Backup;
-using Teltec.Backup.App.Restore;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Ipc.PubSub;
+using Teltec.Backup.PlanExecutor.Backup;
+using Teltec.Backup.PlanExecutor.Restore;
 using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
 

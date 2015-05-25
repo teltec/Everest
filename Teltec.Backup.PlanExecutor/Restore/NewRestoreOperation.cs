@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Teltec.Backup.App.Versioning;
 using Teltec.Backup.Data.Versioning;
+using Teltec.Backup.PlanExecutor.Versioning;
 using Models = Teltec.Backup.Data.Models;
 
-namespace Teltec.Backup.App.Restore
+namespace Teltec.Backup.PlanExecutor.Restore
 {
 	public sealed class NewRestoreOperation : RestoreOperation
 	{

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Teltec.Backup.App
+namespace Teltec.Backup.PlanExecutor
 {
 	public class FileManager
 	{

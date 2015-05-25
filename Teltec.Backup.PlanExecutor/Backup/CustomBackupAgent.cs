@@ -2,7 +2,7 @@
 using Teltec.Storage;
 using Teltec.Storage.Agent;
 
-namespace Teltec.Backup.App.Backup
+namespace Teltec.Backup.PlanExecutor.Backup
 {
 	public class CustomBackupAgent : BackupAgent<CustomVersionedFile>
 	{

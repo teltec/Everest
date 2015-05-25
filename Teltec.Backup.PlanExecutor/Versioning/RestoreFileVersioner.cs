@@ -13,7 +13,7 @@ using Teltec.Stats;
 using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
 
-namespace Teltec.Backup.App.Versioning
+namespace Teltec.Backup.PlanExecutor.Versioning
 {
 	public sealed class RestoreFileVersioner : IDisposable
 	{

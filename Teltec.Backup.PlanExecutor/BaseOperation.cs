@@ -6,14 +6,15 @@ using System.Threading.Tasks;
 using Teltec.Common;
 using Teltec.Storage;
 using Teltec.Storage.Agent;
+using Teltec.Storage.Monitor;
 
-namespace Teltec.Backup.App
+namespace Teltec.Backup.PlanExecutor
 {
 	public abstract class BaseOperation : ObservableObject, IDisposable
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		public Teltec.Storage.Monitor.TransferListControl TransferListControl; // IDisposable, but an external reference.
+		public ITransferMonitor TransferListControl; // May be IDisposable, but it's an external reference.
 		protected IAsyncTransferAgent TransferAgent; // IDisposable
 
 		#region Properties

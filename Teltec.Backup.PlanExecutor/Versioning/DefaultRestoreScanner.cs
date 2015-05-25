@@ -8,7 +8,7 @@ using Teltec.Backup.Data.Versioning;
 using Teltec.Storage;
 using Teltec.Storage.Versioning;
 
-namespace Teltec.Backup.App.Versioning
+namespace Teltec.Backup.PlanExecutor.Versioning
 {
 	public sealed class DefaultRestoreScanner : PathScanner<CustomVersionedFile>
 	{
