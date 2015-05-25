@@ -251,6 +251,7 @@ namespace Teltec.Backup.PlanExecutor
 
 			BackupUpdateMsg message = new BackupUpdateMsg
 			{
+				PlanId = plan.Id.Value,
 				OperationId = RunningOperation.OperationId.Value,
 				OperationStatus = (byte)status,
 			};
@@ -401,6 +402,7 @@ namespace Teltec.Backup.PlanExecutor
 
 			RestoreUpdateMsg message = new RestoreUpdateMsg
 			{
+				PlanId = plan.Id.Value,
 				OperationId = RunningOperation.OperationId.Value,
 				OperationStatus = (byte)status,
 			};

@@ -36,6 +36,15 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 
 			Watcher.Subscribe((RestoreUpdateMsg msg) =>
 			{
+				if (this.Model == null)
+					return;
+
+				Models.RestorePlan plan = this.Model as Models.RestorePlan;
+
+				// Only process messages that are related to the plan associated with this control.
+				if (msg.PlanId != plan.Id.Value)
+					return;
+
 				// IMPORTANT: Always invoke from Main thread!
 				dispatcher.Invoke(() => { ProcessRemoteMessage(msg); });
 			});

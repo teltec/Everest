@@ -92,6 +92,7 @@ namespace Teltec.Backup.Ipc.PubSub
 	[ProtoInclude(201, typeof(RestoreUpdateMsg))]
 	public class OperationMsg : ProtocolMsg
 	{
+		public Int32 PlanId;
 		public Int32 OperationId;
 	}
 
