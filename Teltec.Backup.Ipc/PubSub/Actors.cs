@@ -50,15 +50,15 @@ namespace Teltec.Backup.Ipc.PubSub
 
 		public OperationProgressWatcher(ushort port)
 		{
-			Subscriber = new Subscriber(new[] { new IPEndPoint(IPAddress.Loopback, port) });
+			//Subscriber = new Subscriber(new[] { new IPEndPoint(IPAddress.Loopback, port) });
 		}
 
 		public void Subscribe<T>(Action<T> handler) where T : class
 		{
-			Subscriber.Subscribe<T>(handler);
+			//Subscriber.Subscribe<T>(handler);
 		}
 
-		/// <summary> 
+		/// <summary>
 		/// Clean up any resources being used.
 		/// </summary>
 		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
@@ -82,15 +82,15 @@ namespace Teltec.Backup.Ipc.PubSub
 
 		public OperationProgressReporter(ushort port)
 		{
-			Publisher = new Publisher(new IPEndPoint(IPAddress.Any, port));
+			//Publisher = new Publisher(new IPEndPoint(IPAddress.Any, port));
 		}
 
 		public void Publish<T>(T message) where T : class
 		{
-			Publisher.Publish(message);
+			//Publisher.Publish(message);
 		}
 
-		/// <summary> 
+		/// <summary>
 		/// Clean up any resources being used.
 		/// </summary>
 		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
