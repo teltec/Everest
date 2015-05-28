@@ -983,6 +983,34 @@
     {
         "CustomAction"
         {
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_5E8033A007EC4203B872E124EC182F68"
+            {
+            "Name" = "8:Primary output from Teltec.Backup.Svc (Active)"
+            "Condition" = "8:"
+            "Object" = "8:_94B2F88020E44AD4A91689F8078135C6"
+            "FileType" = "3:2"
+            "InstallAction" = "3:1"
+            "Arguments" = "8:-install"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_99784F75_4DAE_4AA8_B023_1048C8F13FD6"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_9B02AA0E75F54C34A4979143253D9CDD"
+            {
+            "Name" = "8:Primary output from Teltec.Backup.Svc (Active)"
+            "Condition" = "8:"
+            "Object" = "8:_94B2F88020E44AD4A91689F8078135C6"
+            "FileType" = "3:2"
+            "InstallAction" = "3:4"
+            "Arguments" = "8:-uninstall"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_E7CDC9D2_CA03_4897_9CE9_508D5F4AA6FA"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            }
         }
         "DefaultFeature"
         {
@@ -2066,7 +2094,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Setup"
         "ProductCode" = "8:{E9D09FDA-50B4-4AAC-B8FA-B9EB810022DC}"
-        "PackageCode" = "8:{A96F950D-B693-4123-B117-95BE9C492EA0}"
+        "PackageCode" = "8:{2F6190E9-6E6C-42FC-A110-92794032B6D7}"
         "UpgradeCode" = "8:{7D69B827-CDAF-4615-93FB-700B29803A2D}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"

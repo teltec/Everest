@@ -2,6 +2,7 @@
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Configuration.Install;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -17,6 +18,8 @@ namespace Teltec.Backup.Svc
 	public partial class Service : ServiceBase
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+		private static readonly int RefreshCommand = 205;
 
 		#region Trap application termination
 
@@ -52,7 +55,7 @@ namespace Teltec.Backup.Svc
 		static void CatchSpecialConsoleEvents()
 		{
 			// NOTE: Should NOT use `Console.CancelKeyPress` because it does NOT detect some events: window closing, shutdown, etc.
-			
+
 			// Handle special events like: Ctrl+C, window close, kill, shutdown, etc.
 			Handler += new Unmanaged.HandlerRoutine(OnConsoleEvent);
 
@@ -60,42 +63,87 @@ namespace Teltec.Backup.Svc
 		}
 
 		#endregion
-		
-		#region CLI options
 
-		static bool OptionRunAsCLI = false;
+		//static ServiceProcessInstaller ProcessInstaller;
+		//static System.ServiceProcess.ServiceInstaller ServiceInstaller;
 
-		#endregion
+		static void SelfStart(bool run = false)
+		{
+			string serviceName = Assembly.GetExecutingAssembly().GetName().Name;
+
+			ServiceInstaller installer = new ServiceInstaller(serviceName);
+			installer.StartService();
+		}
+
+		static void SelfInstall(bool run = false)
+		{
+			ManagedInstallerClass.InstallHelper(new string[] { Assembly.GetExecutingAssembly().Location });
+
+			//string servicePath = Assembly.GetExecutingAssembly().Location;
+			//string serviceName = Assembly.GetExecutingAssembly().GetName().Name;
+
+			//ServiceInstaller installer = new ServiceInstaller(serviceName);
+			//installer.DesiredAccess = ServiceAccessRights.AllAccess;
+			//installer.BinaryPath = servicePath;
+			//installer.DependsOn = new[] {
+			//	"MSSQL$SQLEXPRESS"
+			//	//"MSSQLSERVER"
+			//};
+
+			//installer.InstallAndStart();
+		}
+
+		static void SelfUninstall()
+		{
+			ManagedInstallerClass.InstallHelper(new string[] { "/u", Assembly.GetExecutingAssembly().Location });
+
+			//string serviceName = Assembly.GetExecutingAssembly().GetName().Name;
+
+			//ServiceInstaller installer = new ServiceInstaller(serviceName);
+			//installer.Uninstall();
+		}
 
 		static void Main(string[] args)
 		{
-			//
-			// Parse arguments
-			//
-			if (args.Contains("-cli"))
+			if (System.Environment.UserInteractive)
 			{
-				OptionRunAsCLI = true;
-			}
+				if (args.Length > 0)
+				{
+					switch (args[0])
+					{
+						case "-install":
+						case "-i":
+							SelfInstall();
+							logger.Info("Service installed");
+							SelfStart();
+							break;
+						case "-uninstall":
+						case "-u":
+							SelfUninstall();
+							logger.Info("Service uninstalled");
+							break;
+					}
+				}
+				else
+				{
+					CatchSpecialConsoleEvents();
 
-			if (OptionRunAsCLI)
-			{
-				CatchSpecialConsoleEvents();
+					Service instance = new Service();
+					instance.OnStart(args);
 
-				Service instance = new Service();
-				instance.OnStart(args);
+					// Sleep until termination
+					TerminationRequestedEvent.WaitOne();
 
-				// Sleep until termination
-				TerminationRequestedEvent.WaitOne();
+					// Do any cleanups here...
+					instance.OnStop();
 
-				// Do any cleanups here...
-				instance.OnStop();
-
-				// Set this to terminate immediately (if not set, the OS will eventually kill the process)
-				TerminationCompletedEvent.Set();
+					// Set this to terminate immediately (if not set, the OS will eventually kill the process)
+					TerminationCompletedEvent.Set();
+				}
 			}
 			else
 			{
-				System.ServiceProcess.ServiceBase.Run(new Service());
+				ServiceBase.Run(new Service());
 			}
 		}
 
@@ -103,14 +151,11 @@ namespace Teltec.Backup.Svc
 
 		public Service()
 		{
+			InitializeComponent();
+
 			ServiceName = typeof(Teltec.Backup.Svc.Service).Namespace;
 			CanShutdown = true;
 		}
-
-		//static void timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-		//{
-		//	Console.Write("hello");
-		//}
 
 		private string BuildTaskName(Models.ISchedulablePlan plan)
 		{
@@ -136,10 +181,10 @@ namespace Teltec.Backup.Svc
 						DateTime whenToStart = optional.Value;
 
 						Trigger tr = Trigger.CreateTrigger(TaskTriggerType.Custom);
-						
+
 						// When to start?
 						tr.StartBoundary = whenToStart;
-						
+
 						triggers.Add(tr);
 						break;
 					}
@@ -147,7 +192,7 @@ namespace Teltec.Backup.Svc
 					{
 						if (!schedule.RecurrencyFrequencyType.HasValue)
 							break;
-						
+
 						Trigger tr = null;
 
 						switch (schedule.RecurrencyFrequencyType.Value)
@@ -155,13 +200,13 @@ namespace Teltec.Backup.Svc
 							case Models.FrequencyTypeEnum.DAILY:
 								{
 									tr = Trigger.CreateTrigger(TaskTriggerType.Daily);
-									
+
 									if (schedule.IsRecurrencyDailyFrequencySpecific)
 									{
 										// Repetition - Occurs every day
 										tr.Repetition.Interval = TimeSpan.FromDays(1);
 									}
-									
+
 									break;
 								}
 							case Models.FrequencyTypeEnum.WEEKLY:
@@ -202,7 +247,7 @@ namespace Teltec.Backup.Svc
 									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Sunday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Sunday;
-									
+
 									break;
 								}
 							case Models.FrequencyTypeEnum.MONTHLY:
@@ -280,7 +325,7 @@ namespace Teltec.Backup.Svc
 									break;
 								}
 						}
-						
+
 						if (tr == null)
 							break;
 
@@ -384,15 +429,26 @@ namespace Teltec.Backup.Svc
 
 				if (existingTask != null)
 				{
-					Info("{0} is already scheduled - {1}", taskName,
-						reschedule ? "rescheduling..." : "rescheduling was not requested");
+					if (plan.IsRunManually)
+					{
+						Info("{0} is already scheduled - Deleting schedule because it's now Manual.", taskName);
 
-					// If we're not rescheduling, stop now.
-					if (!reschedule)
+						// Remove the task we found.
+						ts.RootFolder.DeleteTask(taskName);
 						return;
+					}
+					else
+					{
+						Info("{0} is already scheduled - {1}", taskName,
+							reschedule ? "rescheduling..." : "rescheduling was not requested");
 
-					// Remove the task we found.
-					ts.RootFolder.DeleteTask(taskName);
+						// If we're not rescheduling, stop now.
+						if (!reschedule)
+							return;
+
+						// Remove the task we found.
+						ts.RootFolder.DeleteTask(taskName);
+					}
 				}
 			}
 
@@ -478,47 +534,80 @@ namespace Teltec.Backup.Svc
 			}
 		}
 
-		//static System.Timers.Timer timer;
+		static System.Timers.Timer timer;
 
-		//private static void start_timer()
-		//{
-		//	timer.Start();
-		//}
+		private static void start_timer()
+		{
+			timer.Start();
+		}
+
+		static Int64 ExecutionCounter = 0;
+
+		private void timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+		{
+			ExecutionCounter++;
+
+			Info("Time to check for changes...");
+
+			ReloadPlansAndRescheduler();
+		}
 
 		protected override void OnStart(string[] args)
 		{
+			base.OnStart(args);
+
+			// Update the service state to Start Pending.
+			//ServiceStatus serviceStatus = new ServiceStatus();
+			//serviceStatus.dwServiceType = ServiceInstaller.SERVICE_WIN32_OWN_PROCESS;
+			//serviceStatus.dwCurrentState = ServiceState.StartPending;
+			//serviceStatus.dwControlsAccepted = 205;
+			//serviceStatus.dwCheckPoint++;
+			//serviceStatus.dwWaitHint = 15000;
+			//ServiceInstaller.SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+
 			Info("Service is starting...");
-			//timer = new System.Timers.Timer();
-			//timer.Interval = 2500; //1000 * 60 * 60 * 24; // Set interval of one day 
-			//timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Elapsed);
-			//start_timer();
+
+			timer = new System.Timers.Timer();
+			timer.Interval = 1000 * 60 * 5; // Set interval to 5 minutes
+			timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Elapsed);
+			start_timer();
+
+			// Update the service state to Running.
+			//serviceStatus.dwCurrentState = ServiceState.Running;
+			//ServiceInstaller.SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+
 			Info("Service was started.");
-			ReloadPlansAndRescheduler();
 		}
 
 		protected override void OnStop()
 		{
+			base.OnStop();
+
 			Info("Service is stopping...");
-			//timer.Stop();
+			timer.Stop();
 			Info("Service was stopped.");
 		}
 
 		protected override void OnShutdown()
 		{
+			base.OnShutdown();
+
 			Info("Service is shutting down...");
 			OnStop();
-			Info("Service was shutdown..");
+			Info("Service was shutdown.");
 		}
 
 		private void OnRefresh()
 		{
 			Info("Service is refreshing...");
 			ReloadPlansAndRescheduler();
-			Info("Service was refreshed..");
+			Info("Service was refreshed.");
 		}
 
 		protected override void OnCustomCommand(int command)
 		{
+			base.OnCustomCommand(command);
+
 			switch (command)
 			{
 				case 205:
@@ -596,5 +685,10 @@ namespace Teltec.Backup.Svc
 		}
 
 		#endregion
+
+		private void InitializeComponent()
+		{
+
+		}
 	}
 }
