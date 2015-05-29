@@ -152,15 +152,6 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
-    <Content Include="connections.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="NLog.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="NLog.xsd">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
@@ -179,6 +170,10 @@
     <ProjectReference Include="..\Teltec.Backup.Ipc\Teltec.Backup.Ipc.csproj">
       <Project>{e0f1bb0e-7c53-4215-bbe8-133de93d5905}</Project>
       <Name>Teltec.Backup.Ipc</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Teltec.Backup.Logging\Teltec.Backup.Logging.csproj">
+      <Project>{b77226a6-5fdb-4e24-87df-49c64a9b1454}</Project>
+      <Name>Teltec.Backup.Logging</Name>
     </ProjectReference>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>

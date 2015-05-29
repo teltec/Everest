@@ -36,7 +36,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			//
 			// NOTES:
 			// 1. The ISession is not threadsafe! Never access the same ISession in two concurrent threads.
-			// 2. 
+			// 2.
 			//
 
 			if (!_sessions.IsValueCreated)
@@ -60,7 +60,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			//
 			// NOTES:
 			// 1. The IStatelessSession is not threadsafe! Never access the same IStatelessSession in two concurrent threads.
-			// 2. 
+			// 2.
 			//
 
 			if (!_statelessSessions.IsValueCreated)
@@ -137,9 +137,21 @@ namespace Teltec.Backup.Data.DAO.NH
 						AppDomain.CurrentDomain.SetData("DataDirectory", Application.CommonAppDataPath);
 
 						// IMPORTANT: The database MUST ALREADY EXIST.
-						fluentConfig.Database(MsSqlConfiguration.MsSql2012.ConnectionString(x =>
-							x.Server(@".\SQLEXPRESS").Database("teltec_backup").TrustedConnection()).UseReflectionOptimizer());
-						
+						//fluentConfig.Database(
+						//	MsSqlConfiguration.MsSql2012.ConnectionString(x =>
+						//		x.Server(@".\SQLEXPRESS")
+						//		.Database("teltec_backup")
+						//		.TrustedConnection()
+						//	).UseReflectionOptimizer()
+						//);
+						fluentConfig.Database(
+							MsSqlConfiguration.MsSql2012.ConnectionString(x =>
+								x.Server(@".\SQLEXPRESS")
+								.Database("teltec_backup_db")
+								.Username("teltec_backup_user")
+								.Password("p@55w0rd")
+							).UseReflectionOptimizer()
+						);
 						break;
 					}
 				case SupportedDatabaseType.SQLITE3:
@@ -220,7 +232,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			}
 			catch (Exception ex)
 			{
-				logger.FatalException("SCHEMA VALIDATION ERROR", ex);
+				logger.Fatal("SCHEMA VALIDATION ERROR", ex);
 				throw ex;
 			}
 			finally
@@ -243,7 +255,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			{
 				foreach (var ex in schema.Exceptions)
 				{
-					logger.FatalException("SCHEMA UPDATE ERROR", ex);
+					logger.Fatal("SCHEMA UPDATE ERROR", ex);
 					throw ex;
 				}
 			}

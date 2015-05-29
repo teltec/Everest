@@ -120,6 +120,10 @@
     <Compile Include="Versioning\CustomVersionedFile.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Teltec.Backup.Logging\Teltec.Backup.Logging.csproj">
+      <Project>{b77226a6-5fdb-4e24-87df-49c64a9b1454}</Project>
+      <Name>Teltec.Backup.Logging</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>
       <Name>Teltec.Common</Name>
@@ -137,15 +141,20 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="connections.config" />
-    <None Include="NLog.config" />
-    <None Include="NLog.xsd" />
+    <Content Include="connections.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="bootstrap.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.Data.SQLite.Core.1.0.96.0\build\net45\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.96.0\build\net45\System.Data.SQLite.Core.targets')" />

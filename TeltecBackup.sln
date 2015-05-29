@@ -6,8 +6,14 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Common", "Teltec.Common\Teltec.Common.csproj", "{2894AAE3-E8C9-4EB5-82D4-66ED6DCAD810}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Storage", "Teltec.Storage\Teltec.Storage.csproj", "{0C04ED53-6F3C-4F66-BD02-9391AD199B2D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454} = {B77226A6-5FDB-4E24-87DF-49C64A9B1454}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.App", "Teltec.Backup.App\Teltec.Backup.App.csproj", "{AA94A2C3-545B-4E24-9D46-AE45740C461A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454} = {B77226A6-5FDB-4E24-87DF-49C64A9B1454}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Forms.Wizard", "Teltec.Forms.Wizard\Teltec.Forms.Wizard.csproj", "{03B4F6D7-E176-41FC-BD45-A2FBFA739248}"
 EndProject
@@ -17,19 +23,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.FileSystem.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.Svc", "Teltec.Backup.Svc\Teltec.Backup.Svc.csproj", "{134C9546-EC3F-4C05-87E3-5E11DDEB1BCE}"
 	ProjectSection(ProjectDependencies) = postProject
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454} = {B77226A6-5FDB-4E24-87DF-49C64A9B1454}
 		{991059EF-F7D6-4FD8-B462-1F54467F6A33} = {991059EF-F7D6-4FD8-B462-1F54467F6A33}
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E56C573E-986E-4412-B54F-BD3C9AB4F918}"
-	ProjectSection(SolutionItems) = preProject
-		connections.config = connections.config
-		NLog.config = NLog.config
-		NLog.xsd = NLog.xsd
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.PlanExecutor", "Teltec.Backup.PlanExecutor\Teltec.Backup.PlanExecutor.csproj", "{0D704DE4-13FE-4603-A903-6CD9939A2645}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E0F1BB0E-7C53-4215-BBE8-133DE93D5905} = {E0F1BB0E-7C53-4215-BBE8-133DE93D5905}
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454} = {B77226A6-5FDB-4E24-87DF-49C64A9B1454}
 		{991059EF-F7D6-4FD8-B462-1F54467F6A33} = {991059EF-F7D6-4FD8-B462-1F54467F6A33}
 	EndProjectSection
 EndProject
@@ -39,12 +40,23 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Installer", "Installer\Inst
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.Data", "Teltec.Backup.Data\Teltec.Backup.Data.csproj", "{991059EF-F7D6-4FD8-B462-1F54467F6A33}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454} = {B77226A6-5FDB-4E24-87DF-49C64A9B1454}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Stats", "Teltec.Stats\Teltec.Stats.csproj", "{0D8D6B88-6E57-4B67-80CB-9804ACD8F83A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454} = {B77226A6-5FDB-4E24-87DF-49C64A9B1454}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.Ipc", "Teltec.Backup.Ipc\Teltec.Backup.Ipc.csproj", "{E0F1BB0E-7C53-4215-BBE8-133DE93D5905}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454} = {B77226A6-5FDB-4E24-87DF-49C64A9B1454}
+	EndProjectSection
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup", "Setup\Setup.vdproj", "{8252E4C7-80EB-4BAD-A787-FD95189C65BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.Logging", "Teltec.Backup.Logging\Teltec.Backup.Logging.csproj", "{B77226A6-5FDB-4E24-87DF-49C64A9B1454}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -102,6 +114,10 @@ Global
 		{E0F1BB0E-7C53-4215-BBE8-133DE93D5905}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8252E4C7-80EB-4BAD-A787-FD95189C65BE}.Debug|Any CPU.ActiveCfg = Debug
 		{8252E4C7-80EB-4BAD-A787-FD95189C65BE}.Release|Any CPU.ActiveCfg = Release
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B77226A6-5FDB-4E24-87DF-49C64A9B1454}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
