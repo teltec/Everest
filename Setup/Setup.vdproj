@@ -22,6 +22,12 @@
         "Entry"
         {
         "MsmKey" = "8:_081D7BB13AB3C2A862D76A50962A1027"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_081D7BB13AB3C2A862D76A50962A1027"
         "OwnerKey" = "8:_94FD25D4E067D41E4BD0CAACBA685F22"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -129,6 +135,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_1F3E5746FDEE8C66BAFAA44641649B1E"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_21528D093058D21731823987536FE73C"
         "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
         "MsmSig" = "8:_UNDEFINED"
@@ -189,6 +201,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_31E2694F53853E9C5983EB14321CDC82"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_3E47BF1C83C12354DD716BC660646247"
         "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
         "MsmSig" = "8:_UNDEFINED"
@@ -209,6 +227,12 @@
         {
         "MsmKey" = "8:_4025677BF2386DFE493B614C383B6532"
         "OwnerKey" = "8:_9A0607D6E0324516947A532C59E0F52D"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -245,6 +269,12 @@
         {
         "MsmKey" = "8:_7259E11B12A304FCE6BF1C6C5FB46D99"
         "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_7259E11B12A304FCE6BF1C6C5FB46D99"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -298,6 +328,18 @@
         "Entry"
         {
         "MsmKey" = "8:_821FBFF32C948FEE94DCC2C2E0A15CBE"
+        "OwnerKey" = "8:_E7528B31EDF89E4E215C6E3BCCAD746F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_821FBFF32C948FEE94DCC2C2E0A15CBE"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_821FBFF32C948FEE94DCC2C2E0A15CBE"
         "OwnerKey" = "8:_94FD25D4E067D41E4BD0CAACBA685F22"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -329,6 +371,12 @@
         {
         "MsmKey" = "8:_8D60B9661850B3DF863A4D00B6332238"
         "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_8D60B9661850B3DF863A4D00B6332238"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -478,6 +526,12 @@
         "Entry"
         {
         "MsmKey" = "8:_98ED9E74FD57C2E0D71580A89667ED90"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_98ED9E74FD57C2E0D71580A89667ED90"
         "OwnerKey" = "8:_94FD25D4E067D41E4BD0CAACBA685F22"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -532,6 +586,12 @@
         "Entry"
         {
         "MsmKey" = "8:_A34D9C76E9597723958AC11EB9A226C8"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_A34D9C76E9597723958AC11EB9A226C8"
         "OwnerKey" = "8:_9A0607D6E0324516947A532C59E0F52D"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -579,8 +639,38 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_C991B7CFD8E3160B47415F5EFB89459D"
+        "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_C991B7CFD8E3160B47415F5EFB89459D"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_C991B7CFD8E3160B47415F5EFB89459D"
+        "OwnerKey" = "8:_9A0607D6E0324516947A532C59E0F52D"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_C991B7CFD8E3160B47415F5EFB89459D"
+        "OwnerKey" = "8:_94B2F88020E44AD4A91689F8078135C6"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_D42791D0E672702C944A8721D20A4D2C"
         "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D42791D0E672702C944A8721D20A4D2C"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -593,6 +683,12 @@
         {
         "MsmKey" = "8:_D75BB7831FD1E0BF2D9A4CE957975462"
         "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D75BB7831FD1E0BF2D9A4CE957975462"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -645,6 +741,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_E7528B31EDF89E4E215C6E3BCCAD746F"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_EC713D8EFC01EC85FB6589AA6805E9F4"
         "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
         "MsmSig" = "8:_UNDEFINED"
@@ -665,6 +767,12 @@
         {
         "MsmKey" = "8:_EFC8D7B8FD68D7B5BC1E7376780D0803"
         "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_EFC8D7B8FD68D7B5BC1E7376780D0803"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -693,6 +801,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_F19215F6C31E89EF887EFA7C37DF72E6"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_F24F2A92C28A7016C445388CBD6EEF83"
         "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
         "MsmSig" = "8:_UNDEFINED"
@@ -713,6 +827,18 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_9A0607D6E0324516947A532C59E0F52D"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_E7528B31EDF89E4E215C6E3BCCAD746F"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -785,6 +911,12 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_101CB7179DAE3CB54B77979460419A87"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_C991B7CFD8E3160B47415F5EFB89459D"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -976,6 +1108,14 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.5"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.5 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.5"
+                    }
+                }
             }
         }
     }
@@ -983,17 +1123,17 @@
     {
         "CustomAction"
         {
-            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_5E8033A007EC4203B872E124EC182F68"
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_420D09BAA30940B599BC98E23D772714"
             {
-            "Name" = "8:Primary output from Teltec.Backup.Svc (Active)"
+            "Name" = "8:Primary output from Teltec.Backup.PostInstaller (Active)"
             "Condition" = "8:"
-            "Object" = "8:_94B2F88020E44AD4A91689F8078135C6"
+            "Object" = "8:_55F5CA625DA84B6DB7D77998B0634C09"
             "FileType" = "3:2"
             "InstallAction" = "3:1"
-            "Arguments" = "8:-install"
+            "Arguments" = "8:"
             "EntryPoint" = "8:"
             "Sequence" = "3:1"
-            "Identifier" = "8:_99784F75_4DAE_4AA8_B023_1048C8F13FD6"
+            "Identifier" = "8:_9695DEAD_B574_41E5_9476_0F1A637D54EC"
             "InstallerClass" = "11:TRUE"
             "CustomActionData" = "8:"
             }
@@ -1008,6 +1148,20 @@
             "EntryPoint" = "8:"
             "Sequence" = "3:1"
             "Identifier" = "8:_E7CDC9D2_CA03_4897_9CE9_508D5F4AA6FA"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_B2D5EB7F039B470E8DE929A802CDFECC"
+            {
+            "Name" = "8:Primary output from Teltec.Backup.Svc (Active)"
+            "Condition" = "8:"
+            "Object" = "8:_94B2F88020E44AD4A91689F8078135C6"
+            "FileType" = "3:2"
+            "InstallAction" = "3:1"
+            "Arguments" = "8:-install"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:2"
+            "Identifier" = "8:_99784F75_4DAE_4AA8_B023_1048C8F13FD6"
             "InstallerClass" = "11:TRUE"
             "CustomActionData" = "8:"
             }
@@ -1123,7 +1277,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:TRUE"
+            "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1154,7 +1308,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:TRUE"
+            "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1185,7 +1339,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:TRUE"
+            "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1278,7 +1432,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:TRUE"
+            "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1402,7 +1556,7 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:TRUE"
+            "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -1747,6 +1901,37 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_C991B7CFD8E3160B47415F5EFB89459D"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:Teltec.Backup.Logging, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_C991B7CFD8E3160B47415F5EFB89459D"
+                    {
+                    "Name" = "8:Teltec.Backup.Logging.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:Teltec.Backup.Logging.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_D42791D0E672702C944A8721D20A4D2C"
             {
             "AssemblyRegister" = "3:1"
@@ -1885,6 +2070,37 @@
                     }
                 }
             "SourcePath" = "8:SimpleInjector.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_E7528B31EDF89E4E215C6E3BCCAD746F"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:Teltec.Common, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_E7528B31EDF89E4E215C6E3BCCAD746F"
+                    {
+                    "Name" = "8:Teltec.Common.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:Teltec.Common.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
@@ -2692,6 +2908,34 @@
             "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:ContentFiles"
             "OutputProjectGuid" = "8:{AA94A2C3-545B-4E24-9D46-AE45740C461A}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_55F5CA625DA84B6DB7D77998B0634C09"
+            {
+            "SourcePath" = "8:..\\Teltec.Backup.PostInstaller\\obj\\Debug\\PostInstaller.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{008DBE47-683D-428A-A56F-539E27F9F9F4}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {

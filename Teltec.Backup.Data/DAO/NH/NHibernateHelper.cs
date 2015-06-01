@@ -8,9 +8,9 @@ using NHibernate.Hql.Util;
 using NHibernate.Tool.hbm2ddl;
 using NLog;
 using System;
+using System.IO;
 using System.Reflection;
 using System.Threading;
-using System.Windows.Forms;
 
 namespace Teltec.Backup.Data.DAO.NH
 {
@@ -134,8 +134,6 @@ namespace Teltec.Backup.Data.DAO.NH
 			{
 				case SupportedDatabaseType.SQLEXPRESS_2012:
 					{
-						AppDomain.CurrentDomain.SetData("DataDirectory", Application.CommonAppDataPath);
-
 						// IMPORTANT: The database MUST ALREADY EXIST.
 						//fluentConfig.Database(
 						//	MsSqlConfiguration.MsSql2012.ConnectionString(x =>
@@ -156,7 +154,8 @@ namespace Teltec.Backup.Data.DAO.NH
 					}
 				case SupportedDatabaseType.SQLITE3:
 					{
-						string dbFilePath = Application.CommonAppDataPath + @"\database.sqlite3";
+						string dataDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+						string dbFilePath = dataDirectory + @"\database.sqlite3";
 						fluentConfig.Database(SQLiteConfiguration.Standard.UsingFile(dbFilePath));
 						break;
 					}
