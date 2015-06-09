@@ -183,6 +183,9 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupPlanMap()
 		{
+			string UNIQUE_KEY_NAME = "uk_name"; // (name)
+			string UNIQUE_KEY_SYNC_IDENTIFIERS = "uk_sync_identifiers"; // (original_plan_name, original_hostname)
+
 			Table("backup_plans");
 
 			Id(p => p.Id, "id").CustomGeneratedBy("seq_backup_plans");
@@ -191,7 +194,7 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Column("name")
 				.Not.Nullable()
 				.Length(Models.BackupPlan.NameMaxLen)
-				.UniqueKey("uk_name")
+				.UniqueKey(UNIQUE_KEY_NAME)
 				;
 
 			Map(p => p.StorageAccountType)
@@ -244,10 +247,24 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Cascade.All()
 				;
 
+			Map(p => p.OriginalPlanName)
+				.Column("original_plan_name")
+				//.Not.Nullable()
+				.Length(Models.BackupPlan.OriginalPlanNameMaxLen)
+				.UniqueKey(UNIQUE_KEY_SYNC_IDENTIFIERS)
+				;
+
+			Map(p => p.OriginalHostname)
+				.Column("original_hostname")
+				.Not.Nullable()
+				.Length(Models.BackupPlan.OriginalHostnameMaxLen)
+				.UniqueKey(UNIQUE_KEY_SYNC_IDENTIFIERS)
+				;
+
 			Map(p => p.LastRunAt)
 				.Column("last_run_at")
 				.Nullable()
-				//.CustomType<TimestampType>()
+				.CustomType<TimestampType>()
 				;
 
 			Map(p => p.LastSuccessfulRunAt)

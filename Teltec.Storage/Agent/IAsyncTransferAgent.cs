@@ -24,7 +24,7 @@ namespace Teltec.Storage.Agent
 		string RemoteRootDir { get; set; }
 
 		#region Upload
-		
+
 		event TransferFileProgressHandler UploadFileStarted;
 		event TransferFileProgressHandler UploadFileProgress;
 		event TransferFileExceptionHandler UploadFileCanceled;
@@ -33,7 +33,7 @@ namespace Teltec.Storage.Agent
 
 		Task UploadVersionedFile(string sourcePath, IFileVersion version);
 		Task UploadFile(string sourcePath, string targetPath);
-		
+
 		#endregion
 
 		#region Download

@@ -70,6 +70,7 @@
     <Compile Include="Controls\SemiTransparentPanel.Designer.cs">
       <DependentUpon>SemiTransparentPanel.cs</DependentUpon>
     </Compile>
+    <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="IObservableObject.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="NativeMethods.cs" />

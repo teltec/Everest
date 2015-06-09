@@ -12,7 +12,7 @@ namespace Teltec.Storage.Backend
 
 	public abstract class StorageBackend : IStorageBackend
 	{
-		#region Upload 
+		#region Upload
 
 		public TransferStartedDelegate UploadStarted;
 		public TransferProgressedDelegate UploadProgressed;

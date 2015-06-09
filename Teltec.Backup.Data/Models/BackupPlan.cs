@@ -156,6 +156,26 @@ namespace Teltec.Backup.Data.Models
 
 		#endregion
 
+		#region Identifiers for synchronization across different computers
+
+		public const int OriginalPlanNameMaxLen = NameMaxLen;
+		private String _OriginalPlanName;
+		public virtual String OriginalPlanName
+		{
+			get { return _OriginalPlanName; }
+			set { SetField(ref _OriginalPlanName, value); }
+		}
+
+		public const int OriginalHostnameMaxLen = 255;
+		private String _OriginalHostname;
+		public virtual String OriginalHostname
+		{
+			get { return _OriginalHostname; }
+			set { SetField(ref _OriginalHostname, value); }
+		}
+
+		#endregion
+
 		private DateTime? _LastRunAt;
 		public virtual DateTime? LastRunAt
 		{

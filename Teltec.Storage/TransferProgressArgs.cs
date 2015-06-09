@@ -70,7 +70,7 @@ namespace Teltec.Storage
 
 		public bool IsDone
 		{
-			// TODO(jweyrich): Change to `State == TransferState.COMPLETED` ? 
+			// TODO(jweyrich): Change to `State == TransferState.COMPLETED` ?
 			get { return TransferredBytes == TotalBytes; }
 		}
 

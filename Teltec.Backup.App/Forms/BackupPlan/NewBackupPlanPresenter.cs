@@ -1,5 +1,6 @@
 ﻿using NLog;
 using System;
+using System.Text.RegularExpressions;
 using Teltec.Backup.App.Forms.Schedule;
 using Teltec.Backup.Data.DAO;
 using Teltec.Common.Extensions;
@@ -17,7 +18,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			: this(new Models.BackupPlan())
 		{
 			IsEditingModel = false;
-			
+
 			//Models.BackupPlan plan = Model as Models.BackupPlan;
 			//plan.Name = "Testing name";
 			//plan.ScheduleType = Models.BackupPlan.ScheduleTypeE.RunManually;
@@ -114,13 +115,26 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				}
 				else
 				{
+					plan.OriginalPlanName = NormalizePlanName(plan.Name);
+					plan.OriginalHostname = Environment.MachineName;
 					_dao.Insert(plan);
 				}
 			//}
 			//catch (Exception ex)
 			//{
 			//	MessageBox.Show(ex.Message, "Error");
-			//} 
+			//}
+		}
+
+		public static string NormalizePlanName(string planName)
+		{
+			string normalized = planName.Replace(' ', '_').RemoveDiacritics();
+
+			Regex r = new Regex("^[a-zA-Z0-9_-]+$");
+			if (r.IsMatch(normalized))
+				return normalized;
+
+			throw new ApplicationException("The plan name still contains characters that may cause problems");
 		}
 	}
 }

@@ -8,8 +8,8 @@ namespace Teltec.Storage.Implementations.S3
 {
 	public class S3PathBuilder : PathBuilder
 	{
-		public readonly string DirectorySeparator = "/";
-		public readonly string VersionPostfix = ":";
+		public static readonly string DirectorySeparator = "/";
+		public static readonly string VersionPostfix = ":";
 
 		public override string BuildPath(string path)
 		{

@@ -55,7 +55,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 	public abstract class BackupOperation : BaseOperation
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-		
+
 		protected readonly BackupRepository _daoBackup = new BackupRepository();
 
 		protected Models.Backup Backup;
@@ -155,7 +155,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			Versioner = new IncrementalFileVersioner(CancellationTokenSource.Token);
 
 			RegisterResultsEventHandlers(Backup, BackupAgent.Results);
-			
+
 			results = BackupAgent.Results;
 
 			//
@@ -445,7 +445,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				if (disposing && _shouldDispose)
 				{
 					BackupAgent = null;
-					
+
 					if (Versioner != null)
 					{
 						Versioner.Dispose();

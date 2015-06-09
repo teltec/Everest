@@ -79,7 +79,7 @@ namespace Teltec.Storage.Implementations.S3
 				// Create the input stream to actually read the file.
 				inputStream = new CancelableFileStream(filePath, FileMode.Open, FileAccess.Read, cancellationToken);
 
-				// 1. Initialize.
+				// Step 1: Initialize.
 				InitiateMultipartUploadRequest initiateRequest = new InitiateMultipartUploadRequest
 				{
 					BucketName = this._awsBuckeName,
@@ -97,7 +97,7 @@ namespace Teltec.Storage.Implementations.S3
 						reusedProgressArgs.State = TransferState.TRANSFERRING;
 					});
 
-				// 2. Upload Parts.
+				// Step 2: Upload Parts.
 				// Each part must be at least 5 MB in size, except the last part.
 				// There is no size limit on the last part of your multipart upload.
 				// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadUploadPart.html
@@ -185,7 +185,23 @@ namespace Teltec.Storage.Implementations.S3
 			}
 			catch (Exception exception)
 			{
-				logger.Warn("Exception occurred: {0}", exception.Message);
+				if (exception is AmazonS3Exception)
+				{
+					AmazonS3Exception amznException = exception as AmazonS3Exception;
+					if (amznException.ErrorCode != null && (amznException.ErrorCode.Equals("InvalidAccessKeyId") || amznException.ErrorCode.Equals("InvalidSecurity")))
+					{
+						logger.Warn("Check the provided AWS Credentials.");
+					}
+					else
+					{
+						logger.Warn("Error occurred. Message:'{0}' when uploading object", amznException.Message);
+					}
+				}
+				else
+				{
+					logger.Warn("Exception occurred: {0}", exception.Message);
+				}
+
 				if (initResponse != null)
 				{
 					AbortMultipartUploadRequest abortRequest = new AbortMultipartUploadRequest
@@ -252,7 +268,7 @@ namespace Teltec.Storage.Implementations.S3
 				const int DefaultBufferSize = 8192;
 
 				// REFERENCE: https://github.com/aws/aws-sdk-net/blob/5f19301ee9fa1ec29b11b3dfdee82071a04ed5ae/AWSSDK_DotNet35/Amazon.S3/Model/GetObjectResponse.cs
-				// 2. Download.
+				// Download.
 				// Create the file. If the file already exists, it will be overwritten.
 				using (GetObjectResponse downloadResponse = this._s3Client.GetObject(downloadRequest))
 				using (BufferedStream bufferedStream = new BufferedStream(downloadResponse.ResponseStream))
@@ -324,7 +340,22 @@ namespace Teltec.Storage.Implementations.S3
 			}
 			catch (Exception exception)
 			{
-				logger.Warn("Exception occurred: {0}", exception.Message);
+				if (exception is AmazonS3Exception)
+				{
+					AmazonS3Exception amznException = exception as AmazonS3Exception;
+					if (amznException.ErrorCode != null && (amznException.ErrorCode.Equals("InvalidAccessKeyId") || amznException.ErrorCode.Equals("InvalidSecurity")))
+					{
+						logger.Warn("Check the provided AWS Credentials.");
+					}
+					else
+					{
+						logger.Warn("Error occurred. Message:'{0}' when downloading object", amznException.Message);
+					}
+				}
+				else
+				{
+					logger.Warn("Exception occurred: {0}", exception.Message);
+				}
 
 				// Report failure.
 				if (DownloadFailed != null)
