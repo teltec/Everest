@@ -26,7 +26,7 @@ namespace Teltec.Storage.Implementations.S3
 		public override async Task UploadVersionedFile(string sourcePath, IFileVersion version)
 		{
 			Debug.Assert(PathBuilder != null);
-			string targetPath = PathBuilder.BuildVersionedPath(sourcePath, version);
+			string targetPath = PathBuilder.BuildVersionedRemotePath(sourcePath, version);
 			await UploadFile(sourcePath, targetPath);
 		}
 
@@ -41,7 +41,7 @@ namespace Teltec.Storage.Implementations.S3
 		public override async Task DownloadVersionedFile(string targetPath, IFileVersion version)
 		{
 			Debug.Assert(PathBuilder != null);
-			string sourcePath = PathBuilder.BuildVersionedPath(targetPath, version);
+			string sourcePath = PathBuilder.BuildVersionedRemotePath(targetPath, version);
 			await DownloadFile(targetPath, sourcePath);
 		}
 

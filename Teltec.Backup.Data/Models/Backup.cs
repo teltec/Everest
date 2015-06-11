@@ -12,7 +12,7 @@ namespace Teltec.Backup.Data.Models
 		public Backup()
 		{
 		}
-		
+
 		public Backup(BackupPlan plan)
 			: this()
 		{
@@ -68,20 +68,6 @@ namespace Teltec.Backup.Data.Models
 			get { return _Files; }
 			protected set { SetField(ref _Files, value); }
 		}
-
-		#region Read-only properties
-
-		public virtual string Version
-		{
-			get { return Id.HasValue ? Id.ToString() : string.Empty; }
-		}
-
-		public virtual string VersionName
-		{
-			get { return FinishedAt != null ? FinishedAt.ToString() : string.Empty; }
-		}
-
-		#endregion
 
 		#region Status reporting
 

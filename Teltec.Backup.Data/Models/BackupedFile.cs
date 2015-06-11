@@ -51,6 +51,13 @@ namespace Teltec.Backup.Data.Models
 			set { SetField(ref _FileStatus, value); }
 		}
 
+		private DateTime _FileLastWrittenAt; // Last date the file was modified.
+		public virtual DateTime FileLastWrittenAt
+		{
+			get { return _FileLastWrittenAt; }
+			set { SetField(ref _FileLastWrittenAt, value); }
+		}
+
 		private TransferStatus _TransferStatus;
 		public virtual TransferStatus TransferStatus
 		{
@@ -64,5 +71,21 @@ namespace Teltec.Backup.Data.Models
 			get { return _UpdatedAt; }
 			set { _UpdatedAt = value; }
 		}
+
+		#region Read-only properties
+
+		public static readonly string VersionFormat = "yyyyMMddHHmmss";
+
+		public virtual string Version
+		{
+			get { return FileLastWrittenAt != null ? FileLastWrittenAt.ToString(VersionFormat) : string.Empty; }
+		}
+
+		public virtual string VersionName
+		{
+			get { return FileLastWrittenAt != null ? FileLastWrittenAt.ToString("yyyy/MM/dd - HH:mm:ss") : string.Empty; }
+		}
+
+		#endregion
 	}
 }

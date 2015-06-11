@@ -170,7 +170,7 @@ namespace Teltec.Storage.Agent
 					// The `RootDirectory` of the path builder should always
 					// be our `RemoteRootDir` (not `LocalRootDir`) because
 					// versioning only makes sense on the remote repository.
-					PathBuilder.RootDirectory = RemoteRootDir;
+					PathBuilder.RemoteRootDirectory = RemoteRootDir;
 			}
 		}
 

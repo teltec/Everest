@@ -41,7 +41,7 @@ namespace Teltec.Backup.Data.Models
 		{
 			get
 			{
-				return BackupedFile != null ? BackupedFile.Backup.Version : null;
+				return BackupedFile != null ? BackupedFile.Version : null;
 			}
 		}
 

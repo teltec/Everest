@@ -114,14 +114,15 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			{
 				BackupedFile f = node.PlanFile.Versions.Last();
 				IFileVersion latestFileVersion = f != null
-					? new FileVersion { Name = f.Backup.VersionName, Version = f.Backup.Version }
+					? new FileVersion { Name = f.VersionName, Version = f.Version }
 					: null;
 				version = latestFileVersion;
 				size = f.FileSize;
 			}
 			else
 			{
-				BackupedFile f = node.PlanFile.Versions.First(p => p.Backup.Version.Equals(version.Version));
+				BackupedFile f = node.PlanFile.Versions.First(
+					p => p.Version.Equals(version.Version, StringComparison.InvariantCulture));
 				size = f.FileSize;
 			}
 

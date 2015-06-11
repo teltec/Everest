@@ -392,6 +392,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				.CustomType<GenericEnumMapper<Models.BackupFileStatus>>()
 				;
 
+			Map(p => p.FileLastWrittenAt)
+				.Column("file_last_written_at")
+				.Nullable()
+				//.CustomType<TimestampType>()
+				;
+
 			Map(p => p.TransferStatus)
 				.Column("transfer_status")
 				.Not.Nullable()

@@ -52,7 +52,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			{
 				BackupRepository daoBackup = new BackupRepository();
 				Backup = daoBackup.Get(backup.Id);
-				
+
 				BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
 				AllFilesFromPlan = daoBackupPlanFile.GetAllByPlan(backup.BackupPlan).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
 
@@ -82,7 +82,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					return false;
 
 				FileInfo info = new FileInfo(file.Path);
-				
+
 				// Skip files larger than `MAX_FILESIZE_TO_HASH`.
 				int result = BigInteger.Compare(info.Length, MAX_FILESIZE_TO_HASH);
 				if (result > 0)
@@ -486,8 +486,6 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		//
 		private IEnumerable<CustomVersionedFile> GetFilesToTransfer(Models.Backup backup, LinkedList<Models.BackupPlanFile> files)
 		{
-			IFileVersion version = new FileVersion { Version = backup.Id.Value.ToString() };
-
 			// Update files version.
 			foreach (Models.BackupPlanFile entry in files)
 			{
@@ -501,16 +499,20 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						break;
 					case Models.BackupFileStatus.ADDED:
 					case Models.BackupFileStatus.MODIFIED:
-						yield return new CustomVersionedFile
 						{
-							Path = entry.Path,
-							Size = entry.LastSize,
-							Checksum = null,
-							//Checksum = entry.LastChecksum,
-							Version = version,
-							LastWriteTimeUtc = entry.LastWrittenAt,
-						};
-						break; // YES, it's required!
+							IFileVersion version = new FileVersion
+								{ Version = entry.LastWrittenAt.ToString(Models.BackupedFile.VersionFormat) };
+							yield return new CustomVersionedFile
+							{
+								Path = entry.Path,
+								Size = entry.LastSize,
+								Checksum = null,
+								//Checksum = entry.LastChecksum,
+								Version = version,
+								LastWriteTimeUtc = entry.LastWrittenAt,
+							};
+							break; // YES, it's required!
+						}
 				}
 			}
 		}
@@ -530,7 +532,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		// 4 - Update all `BackupPlanFile`s that already exist for the backup plan associated
 		//     with this backup operation.
 		// 5 - Insert/Update `Backup` and its `BackupedFile`s into the database, also saving
-		//     the `BackupPlanFile`s instances that may have been changed by step 2. 
+		//     the `BackupPlanFile`s instances that may have been changed by step 2.
 		// 6 - Create versioned files and remove files that won't belong to this backup.
 		//
 		[MethodImpl(MethodImplOptions.NoInlining)]
@@ -544,7 +546,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository(session);
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository(session);
 			BackupPlanPathNodeRepository daoBackupPlanPathNode = new BackupPlanPathNodeRepository(session);
-			
+
 			var FilesToTrack = SuppliedFiles.Union(ChangeSet.DeletedFiles);
 			var FilesToInsertOrUpdate =
 				from f in FilesToTrack
@@ -646,6 +648,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						}
 						backupedFile.FileSize = entry.LastSize;
 						backupedFile.FileStatus = entry.LastStatus;
+						backupedFile.FileLastWrittenAt = entry.LastWrittenAt;
 						switch (entry.LastStatus)
 						{
 							default:
@@ -694,7 +697,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					stats.Begin("STEP 5");
 
 					// 5 - Insert/Update `Backup` and its `BackupedFile`s into the database, also saving
-					//     the `BackupPlanFile`s instances that may have been changed by step 2.  
+					//     the `BackupPlanFile`s instances that may have been changed by step 2.
 					{
 						//foreach (var bf in backupedFiles)
 						//{
@@ -756,7 +759,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			{
 				// Flush a batch of operations and release memory.
 				if (session != null)
-				{ 
+				{
 					session.Flush();
 					session.Clear();
 				}
