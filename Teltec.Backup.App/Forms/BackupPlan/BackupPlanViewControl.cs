@@ -17,7 +17,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 	{
 		private readonly BackupPlanRepository _daoBackupPlan = new BackupPlanRepository();
 		private readonly BackupRepository _daoBackup = new BackupRepository();
-		private OperationProgressWatcher Watcher = new OperationProgressWatcher(50052);
+		//private OperationProgressWatcher Watcher = new OperationProgressWatcher(50052);
 
 		BackupOperation RunningOperation = null;
 		TransferResults OperationResults = null;
@@ -34,6 +34,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 			EventDispatcher dispatcher = new EventDispatcher();
 
+			/*
 			Watcher.Subscribe((BackupUpdateMsg msg) =>
 			{
 				if (this.Model == null)
@@ -48,6 +49,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				// IMPORTANT: Always invoke from Main thread!
 				dispatcher.Invoke(() => { ProcessRemoteMessage(msg); });
 			});
+			*/
 
 			this.ModelChangedEvent += (sender, args) =>
 			{
@@ -469,11 +471,13 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 					RunningOperation.Dispose();
 					RunningOperation = null;
 				}
+				/*
 				if (Watcher != null)
 				{
 					Watcher.Dispose();
 					Watcher = null;
 				}
+				*/
 			}
 			base.Dispose(disposing);
 		}

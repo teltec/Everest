@@ -49,7 +49,7 @@ namespace Teltec.Backup.PlanExecutor
 
 		static readonly Options options = new Options();
 
-		static OperationProgressReporter Reporter = new OperationProgressReporter(50052);
+		//static OperationProgressReporter Reporter = new OperationProgressReporter(50052);
 
 		static void Main(string[] args)
 		{
@@ -390,7 +390,7 @@ namespace Teltec.Backup.PlanExecutor
 					}
 			}
 
-			Reporter.Publish(message);
+			//Reporter.Publish(message);
 		}
 
 		private void RestoreUpdateStatsInfo(RestoreOperationStatus status)
@@ -524,7 +524,7 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						/*
 						UpdateDuration(status);
-						
+
 						this.lblSources.Text = RunningRestore.Sources;
 						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
 						this.lblStatus.Text = status == RestoreOperationStatus.Canceled ? LBL_STATUS_CANCELED : LBL_STATUS_FAILED;
@@ -551,8 +551,8 @@ namespace Teltec.Backup.PlanExecutor
 						break;
 					}
 			}
-			
-			Reporter.Publish(message);
+
+			//Reporter.Publish(message);
 		}
 
 		#region Dispose Pattern Implementation
@@ -571,11 +571,13 @@ namespace Teltec.Backup.PlanExecutor
 			{
 				if (disposing && _shouldDispose)
 				{
+					/*
 					if (Reporter != null)
 					{
 						Reporter.Dispose();
 						Reporter = null;
 					}
+					*/
 				}
 				this._isDisposed = true;
 			}

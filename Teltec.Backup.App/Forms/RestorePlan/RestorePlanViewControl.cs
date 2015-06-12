@@ -17,7 +17,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 	{
 		private readonly RestorePlanRepository _daoRestorePlan = new RestorePlanRepository();
 		private readonly RestoreRepository _daoRestore = new RestoreRepository();
-		private OperationProgressWatcher Watcher = new OperationProgressWatcher(50052);
+		//private OperationProgressWatcher Watcher = new OperationProgressWatcher(50052);
 
 		RestoreOperation RunningOperation = null;
 		TransferResults OperationResults = null;
@@ -34,6 +34,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 
 			EventDispatcher dispatcher = new EventDispatcher();
 
+			/*
 			Watcher.Subscribe((RestoreUpdateMsg msg) =>
 			{
 				if (this.Model == null)
@@ -48,6 +49,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 				// IMPORTANT: Always invoke from Main thread!
 				dispatcher.Invoke(() => { ProcessRemoteMessage(msg); });
 			});
+			*/
 
 			this.ModelChangedEvent += (sender, args) =>
 			{
@@ -466,11 +468,13 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 					RunningOperation.Dispose();
 					RunningOperation = null;
 				}
+				/*
 				if (Watcher != null)
 				{
 					Watcher.Dispose();
 					Watcher = null;
 				}
+				*/
 			}
 			base.Dispose(disposing);
 		}

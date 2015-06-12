@@ -1,6 +1,5 @@
 ﻿using ProtobufSockets;
 using System;
-using System.Net;
 
 namespace Teltec.Backup.Ipc.PubSub
 {
