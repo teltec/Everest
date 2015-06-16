@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Teltec.Common;
 using Teltec.Common.Extensions;
 
@@ -85,5 +86,36 @@ namespace Teltec.Storage
 	public class TransferFileProgressArgs : TransferProgressArgs
 	{
 		public string FilePath { get; set; }
+	}
+
+	public class ListingObject
+	{
+		public ListingObject()
+		{
+		}
+
+		public string ETag { get; set; }
+		public string Key { get; set; }
+		public DateTime LastModified { get; set; }
+		//public Owner Owner { get; set; }
+		public long Size { get; set; }
+		//public S3StorageClass StorageClass { get; set; }
+	}
+
+	public class ListingProgressArgs : ObservableEventArgs
+	{
+		private TransferState _State;
+		public TransferState State
+		{
+			get { return _State; }
+			set { SetField(ref _State, value); }
+		}
+
+		private List<ListingObject> _Objects;
+		public List<ListingObject> Objects
+		{
+			get { return _Objects; }
+			set { SetField(ref _Objects, value); }
+		}
 	}
 }

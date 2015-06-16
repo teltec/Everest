@@ -404,4 +404,19 @@ namespace Teltec.Backup.Data.DAO
 	}
 
 	#endregion
+
+	#region Synchronization
+
+	public class SynchronizationRepository : BaseRepository<Models.Synchronization, Int32?>
+	{
+		public SynchronizationRepository()
+		{
+		}
+
+		public SynchronizationRepository(ISession session)
+			: base(session)
+		{
+		}
+	}
+	#endregion
 }

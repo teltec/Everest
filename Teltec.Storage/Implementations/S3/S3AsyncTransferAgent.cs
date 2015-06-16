@@ -53,6 +53,14 @@ namespace Teltec.Storage.Implementations.S3
 			});
 		}
 
+		public override async Task List(string prefix, bool recursive)
+		{
+			await ExecuteOnBackround(() =>
+			{
+				Implementation.List(prefix, recursive, this.CancellationTokenSource.Token);
+			});
+		}
+
 		#endregion
 
 		#region Dispose Pattern Implementation

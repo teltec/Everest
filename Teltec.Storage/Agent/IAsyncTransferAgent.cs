@@ -7,6 +7,8 @@ namespace Teltec.Storage.Agent
 {
 	public delegate void TransferFileProgressHandler(object sender, TransferFileProgressArgs e);
 	public delegate void TransferFileExceptionHandler(object sender, TransferFileProgressArgs e, Exception ex);
+	public delegate void ListingProgressHandler(object sender, ListingProgressArgs e);
+	public delegate void ListingExceptionHandler(object sender, ListingProgressArgs e, Exception ex);
 
 	public interface IAsyncTransferAgent : IDisposable
 	{
@@ -46,6 +48,18 @@ namespace Teltec.Storage.Agent
 
 		Task DownloadVersionedFile(string sourcePath, IFileVersion version);
 		Task DownloadFile(string sourcePath, string targetPath);
+
+		#endregion
+
+		#region Listing
+
+		event ListingProgressHandler ListingStarted;
+		event ListingProgressHandler ListingProgress;
+		event ListingExceptionHandler ListingCanceled;
+		event ListingExceptionHandler ListingFailed;
+		event ListingProgressHandler ListingCompleted;
+
+		Task List(string prefix, bool recursive);
 
 		#endregion
 

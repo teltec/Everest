@@ -101,6 +101,7 @@
     <Compile Include="Models\Backup.cs" />
     <Compile Include="Models\BackupedFile.cs" />
     <Compile Include="Models\BackupPlan.cs" />
+    <Compile Include="Models\SynchronizationFile.cs" />
     <Compile Include="Models\BackupPlanFile.cs" />
     <Compile Include="Models\BackupPlanPathNode.cs" />
     <Compile Include="Models\BackupPlanSourceEntry.cs" />
@@ -115,6 +116,7 @@
     <Compile Include="Models\RestorePlanFile.cs" />
     <Compile Include="Models\RestorePlanSourceEntry.cs" />
     <Compile Include="Models\StorageAccount.cs" />
+    <Compile Include="Models\Synchronization.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Versioning\CustomVersionedFile.cs" />
   </ItemGroup>

@@ -16,5 +16,11 @@ namespace Teltec.Storage.Backend
 		void DownloadFile(string filePath, string keyName, CancellationToken cancellationToken);
 
 		#endregion
+
+		#region Listing
+
+		void List(string prefix, bool recursive, CancellationToken cancellationToken);
+
+		#endregion
 	}
 }

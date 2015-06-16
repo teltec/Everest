@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Teltec.Storage.Backend;
 
@@ -360,6 +361,151 @@ namespace Teltec.Storage.Implementations.S3
 				// Report failure.
 				if (DownloadFailed != null)
 					DownloadFailed(reusedProgressArgs, exception, () =>
+					{
+						reusedProgressArgs.State = TransferState.FAILED;
+					});
+			}
+		}
+
+		#endregion
+
+		#region Listing
+
+		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/ListingObjectKeysUsingNetSDK.html
+		public override void List(string prefix, bool recursive, CancellationToken cancellationToken)
+		{
+			ListingProgressArgs reusedProgressArgs = new ListingProgressArgs
+			{
+				State = TransferState.PENDING,
+				Objects = new List<ListingObject>(),
+			};
+
+			// List request.
+			ListObjectsRequest listRequest = new ListObjectsRequest
+			{
+				BucketName = this._awsBuckeName,
+
+			};
+
+			if (!string.IsNullOrEmpty(prefix))
+				listRequest.Prefix = prefix;
+
+			// Listing Keys Hierarchically Using a Prefix and Delimiter
+			// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/ListingKeysHierarchy.html
+			if (!recursive)
+				listRequest.Delimiter = S3PathBuilder.RemoteDirectorySeparatorChar.ToString();
+
+			try
+			{
+				// Report start - before any possible failures.
+				if (ListingStarted != null)
+					ListingStarted(reusedProgressArgs, () =>
+					{
+						reusedProgressArgs.State = TransferState.STARTED;
+					});
+
+				// Report 0% progress.
+				if (ListingProgressed != null)
+					ListingProgressed(reusedProgressArgs, () =>
+					{
+						reusedProgressArgs.State = TransferState.TRANSFERRING;
+					});
+
+				// Listing.
+				do
+				{
+					if (cancellationToken != null)
+						cancellationToken.ThrowIfCancellationRequested();
+
+					ListObjectsResponse response = this._s3Client.ListObjects(listRequest);
+
+					IEnumerable<S3Object> resultObjects = response.S3Objects;
+
+					//if (!recursive)
+					//{
+					//	// Get the TOP LEVEL objects - those not inside any folders.
+					//	resultObjects = resultObjects.Where(o => !o.Key.Contains(@"/"));
+					//
+					//	// Get the folders at the TOP LEVEL only
+					//	//var topLevelFolders = resultObjects.Except(objects).Where(o => o.Key.Last() == '/' && o.Key.IndexOf(@"/") == o.Key.LastIndexOf(@"/"));
+					//}
+
+					// Process response.
+					foreach (S3Object entry in resultObjects)
+					{
+						Console.WriteLine("Key = {0}, Size = {1}, LastModified = {2}", entry.Key, entry.Size, entry.LastModified);
+					}
+
+					// If response is truncated, set the marker to get the next set of keys.
+					if (response.IsTruncated)
+					{
+						listRequest.Marker = response.NextMarker;
+					}
+					else
+					{
+						listRequest = null;
+					}
+
+					// Report progress.
+					if (ListingProgressed != null)
+					{
+						var queryResults =
+							from obj in resultObjects
+							select new ListingObject
+							{
+								ETag = obj.ETag,
+								Key = obj.Key,
+								LastModified = obj.LastModified,
+								Size = obj.Size,
+							};
+						reusedProgressArgs.Objects.Clear();
+						reusedProgressArgs.Objects.AddRange(queryResults);
+						ListingProgressed(reusedProgressArgs, () =>
+						{
+						});
+					}
+				} while (listRequest != null);
+
+				// Report completion.
+				if (ListingCompleted != null)
+					ListingCompleted(reusedProgressArgs, () =>
+					{
+						reusedProgressArgs.State = TransferState.COMPLETED;
+					});
+			}
+			catch (OperationCanceledException exception)
+			{
+				logger.Info("Listing canceled.");
+
+				// Report cancelation.
+				if (ListingCanceled != null)
+					ListingCanceled(reusedProgressArgs, exception, () =>
+					{
+						reusedProgressArgs.State = TransferState.CANCELED;
+					});
+			}
+			catch (Exception exception)
+			{
+				if (exception is AmazonS3Exception)
+				{
+					AmazonS3Exception amznException = exception as AmazonS3Exception;
+					if (amznException.ErrorCode != null && (amznException.ErrorCode.Equals("InvalidAccessKeyId") || amznException.ErrorCode.Equals("InvalidSecurity")))
+					{
+						logger.Warn("Check the provided AWS Credentials.");
+					}
+					else
+					{
+						logger.Warn("Error occurred. Message:'{0}' when listing objects", amznException.Message);
+					}
+				}
+				else
+				{
+					logger.Warn("Exception occurred: {0}", exception.Message);
+				}
+
+				// Report failure.
+				if (ListingFailed != null)
+					ListingFailed(reusedProgressArgs, exception, () =>
 					{
 						reusedProgressArgs.State = TransferState.FAILED;
 					});

@@ -198,6 +198,7 @@
     <Compile Include="Forms\Schedule\ScheduleRecurringOptionsForm.Designer.cs">
       <DependentUpon>ScheduleRecurringOptionsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\Sync\SyncPresenter.cs" />
     <Compile Include="Provider.cs" />
     <Compile Include="Forms\BackupPlan\BackupPlanListControl.cs">
       <SubType>UserControl</SubType>

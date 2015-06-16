@@ -10,6 +10,12 @@ namespace Teltec.Storage.Backend
 	public delegate void TransferCanceledDelegate(TransferFileProgressArgs e, Exception ex, Action action = null);
 	public delegate void TransferCompletedDelegate(TransferFileProgressArgs e, Action action = null);
 
+	public delegate void ListingStartedDelegate(ListingProgressArgs e, Action action = null);
+	public delegate void ListingProgressedDelegate(ListingProgressArgs e, Action action = null);
+	public delegate void ListingFailedDelegate(ListingProgressArgs e, Exception ex, Action action = null);
+	public delegate void ListingCanceledDelegate(ListingProgressArgs e, Exception ex, Action action = null);
+	public delegate void ListingCompletedDelegate(ListingProgressArgs e, Action action = null);
+
 	public abstract class StorageBackend : IStorageBackend
 	{
 		#region Upload
@@ -33,6 +39,18 @@ namespace Teltec.Storage.Backend
 		public TransferCompletedDelegate DownloadCompleted;
 
 		public abstract void DownloadFile(string filePath, string keyName, CancellationToken cancellationToken);
+
+		#endregion
+
+		#region Listing
+
+		public ListingStartedDelegate ListingStarted;
+		public ListingProgressedDelegate ListingProgressed;
+		public ListingFailedDelegate ListingFailed;
+		public ListingCanceledDelegate ListingCanceled;
+		public ListingCompletedDelegate ListingCompleted;
+
+		public abstract void List(string prefix, bool recursive, CancellationToken cancellationToken);
 
 		#endregion
 

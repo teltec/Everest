@@ -25,6 +25,7 @@ namespace Teltec.Storage.Agent
 		{
 			RegisterUploadDelegates();
 			RegisterDownloadDelegates();
+			RegisterListingDelegates();
 		}
 
 		private void RegisterUploadDelegates()
@@ -141,6 +142,63 @@ namespace Teltec.Storage.Agent
 			};
 		}
 
+		private void RegisterListingDelegates()
+		{
+			// We do all this magic because other threads should NOT change the UI.
+			// We want the changes made to the reusable `ListingProgressArgs` instance
+			// to raise change events on the context of the Main thread.
+			Implementation.ListingStarted += (ListingProgressArgs args, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (ListingStarted != null)
+						ListingStarted.Invoke(this, args);
+				});
+			};
+			Implementation.ListingProgressed += (ListingProgressArgs args, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (ListingProgress != null)
+						ListingProgress.Invoke(this, args);
+				});
+			};
+			Implementation.ListingCanceled += (ListingProgressArgs args, Exception ex, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (ListingCanceled != null)
+						ListingCanceled.Invoke(this, args, ex);
+				});
+			};
+			Implementation.ListingFailed += (ListingProgressArgs args, Exception ex, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (ListingFailed != null)
+						ListingFailed.Invoke(this, args, ex);
+				});
+			};
+			Implementation.ListingCompleted += (ListingProgressArgs args, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (ListingCompleted != null)
+						ListingCompleted.Invoke(this, args);
+				});
+			};
+		}
+
 		#endregion
 
 		protected Task ExecuteOnBackround(Action action)
@@ -197,6 +255,18 @@ namespace Teltec.Storage.Agent
 
 		abstract public Task DownloadVersionedFile(string sourcePath, IFileVersion version);
 		abstract public Task DownloadFile(string sourcePath, string targetPath);
+
+		#endregion
+
+		#region Listing
+
+		public event ListingProgressHandler ListingStarted;
+		public event ListingProgressHandler ListingProgress;
+		public event ListingExceptionHandler ListingCanceled;
+		public event ListingExceptionHandler ListingFailed;
+		public event ListingProgressHandler ListingCompleted;
+
+		abstract public Task List(string prefix, bool recursive);
 
 		#endregion
 

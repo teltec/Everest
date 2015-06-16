@@ -143,6 +143,7 @@
     <Compile Include="Restore\NewRestoreOperation.cs" />
     <Compile Include="Restore\RemoteRestoreOperation.cs" />
     <Compile Include="Restore\RestoreOperation.cs" />
+    <Compile Include="Synchronize\SyncOperation.cs" />
     <Compile Include="Versioning\DefaultPathScanner.cs" />
     <Compile Include="Versioning\DefaultRestoreScanner.cs" />
     <Compile Include="Versioning\IncrementalFileVersioner.cs" />
@@ -212,6 +213,7 @@
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.Data.SQLite.Core.1.0.96.0\build\net45\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.96.0\build\net45\System.Data.SQLite.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
