@@ -116,7 +116,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				else
 				{
 					plan.OriginalPlanName = NormalizePlanName(plan.Name);
-					plan.OriginalHostname = Environment.MachineName;
+					plan.StorageAccount.Hostname = Environment.MachineName;
 					_dao.Insert(plan);
 				}
 			//}

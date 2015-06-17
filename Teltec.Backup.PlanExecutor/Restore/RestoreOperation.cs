@@ -138,7 +138,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
 			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
 			TransferAgent.RemoteRootDir = TransferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP",
-				Restore.RestorePlan.BackupPlan.OriginalHostname, Restore.RestorePlan.BackupPlan.OriginalPlanName);
+				Restore.RestorePlan.BackupPlan.StorageAccount.Hostname, Restore.RestorePlan.BackupPlan.OriginalPlanName);
 
 			RestoreAgent = new CustomRestoreAgent(TransferAgent);
 			RestoreAgent.Results.Monitor = TransferListControl;

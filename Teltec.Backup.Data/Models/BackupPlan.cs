@@ -166,14 +166,6 @@ namespace Teltec.Backup.Data.Models
 			set { SetField(ref _OriginalPlanName, value); }
 		}
 
-		public const int OriginalHostnameMaxLen = 255;
-		private String _OriginalHostname;
-		public virtual String OriginalHostname
-		{
-			get { return _OriginalHostname; }
-			set { SetField(ref _OriginalHostname, value); }
-		}
-
 		#endregion
 
 		private DateTime? _LastRunAt;

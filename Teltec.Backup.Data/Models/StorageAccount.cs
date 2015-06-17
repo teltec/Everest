@@ -23,6 +23,14 @@ namespace Teltec.Backup.Data.Models
 			set { SetField(ref _DisplayName, value); }
 		}
 
+		public const int HostnameMaxLen = 255;
+		private String _Hostname;
+		public virtual String Hostname
+		{
+			get { return _Hostname; }
+			set { SetField(ref _Hostname, value); }
+		}
+
 		//IList<BackupPlan> BackupPlans { get; set; }
     }
 }

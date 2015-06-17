@@ -21,6 +21,8 @@ namespace Teltec.Backup.Data.DAO.NH
 		}
 	}
 
+	#region Accounts
+
 	class StorageAccountMap : ClassMap<Models.StorageAccount>
 	{
 		public StorageAccountMap()
@@ -35,6 +37,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				.ReadOnly().Access.None()
 				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>()
 				.Index("idx_type")
+				;
+
+			Map(p => p.Hostname)
+				.Column("hostname")
+				.Not.Nullable()
+				.Length(Models.StorageAccount.HostnameMaxLen)
 				;
 
 			DiscriminateSubClassesOnColumn("type");
@@ -77,6 +85,8 @@ namespace Teltec.Backup.Data.DAO.NH
 			});
 		}
 	}
+
+	#endregion
 
 	#region Plan Schedule
 
@@ -184,7 +194,6 @@ namespace Teltec.Backup.Data.DAO.NH
 		public BackupPlanMap()
 		{
 			string UNIQUE_KEY_NAME = "uk_name"; // (name)
-			string UNIQUE_KEY_SYNC_IDENTIFIERS = "uk_sync_identifiers"; // (original_plan_name, original_hostname)
 
 			Table("backup_plans");
 
@@ -251,14 +260,6 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Column("original_plan_name")
 				//.Not.Nullable()
 				.Length(Models.BackupPlan.OriginalPlanNameMaxLen)
-				.UniqueKey(UNIQUE_KEY_SYNC_IDENTIFIERS)
-				;
-
-			Map(p => p.OriginalHostname)
-				.Column("original_hostname")
-				.Not.Nullable()
-				.Length(Models.BackupPlan.OriginalHostnameMaxLen)
-				.UniqueKey(UNIQUE_KEY_SYNC_IDENTIFIERS)
 				;
 
 			Map(p => p.LastRunAt)

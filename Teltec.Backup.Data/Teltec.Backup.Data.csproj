@@ -101,6 +101,7 @@
     <Compile Include="Models\Backup.cs" />
     <Compile Include="Models\BackupedFile.cs" />
     <Compile Include="Models\BackupPlan.cs" />
+    <Compile Include="Models\SynchronizationPathNode.cs" />
     <Compile Include="Models\SynchronizationFile.cs" />
     <Compile Include="Models\BackupPlanFile.cs" />
     <Compile Include="Models\BackupPlanPathNode.cs" />
