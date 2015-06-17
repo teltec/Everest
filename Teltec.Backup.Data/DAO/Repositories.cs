@@ -237,8 +237,8 @@ namespace Teltec.Backup.Data.DAO
 			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
 			string backupPlanPropertyName = this.GetPropertyName((Models.Backup x) => x.BackupPlan);
 			crit.CreateAlias(backupPropertyName, "bkp");
-			crit.Add(Restrictions.Eq("bkp." + backupPlanPropertyName, plan)); 
-			
+			crit.Add(Restrictions.Eq("bkp." + backupPlanPropertyName, plan));
+
 			string transferStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
 			crit.Add(Restrictions.Eq(transferStatusPropertyName, TransferStatus.COMPLETED));
 

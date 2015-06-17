@@ -1,12 +1,13 @@
 ﻿using FluentNHibernate.Mapping;
 using NHibernate.Type;
 using System;
+using Teltec.Backup.Data.Models;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
 
 namespace Teltec.Backup.Data.DAO.NH
 {
-	public static class IdentifyCreator
+	public static class IdentityFactory
 	{
 		public static IdentityPart CustomGeneratedBy(this IdentityPart idMapping, string sequenceName)
 		{
