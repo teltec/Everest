@@ -10,7 +10,7 @@ using Teltec.Storage.Monitor;
 
 namespace Teltec.Backup.PlanExecutor
 {
-	public abstract class BaseOperation : ObservableObject, IDisposable
+	public abstract class BaseOperation<TResults> : ObservableObject, IDisposable where TResults : IResults
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -22,7 +22,7 @@ namespace Teltec.Backup.PlanExecutor
 		// NOTE: The setter of `IsRunning` is no longer protected because we currently need
 		// to change it in `BackupPlanViewControl`.
 		public virtual bool IsRunning { get; /* protected */set; }
-		
+
 		public virtual Int32? OperationId { get { throw new NotImplementedException(); } }
 
 		#endregion
@@ -35,7 +35,7 @@ namespace Teltec.Backup.PlanExecutor
 			TransferAgent.EventDispatcher.DoEvents();
 		}
 
-		public abstract void Start(out TransferResults results);
+		public abstract void Start(out TResults results);
 
 		#region Task
 

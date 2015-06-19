@@ -88,7 +88,7 @@ namespace Teltec.Backup.PlanExecutor
 		readonly RestorePlanRepository _daoRestorePlan = new RestorePlanRepository();
 		object Model = null;
 
-		BaseOperation RunningOperation = null;
+		BaseOperation<TransferResults> RunningOperation = null;
 		TransferResults TransferResults = null;
 		bool MustResumeLastOperation = false;
 

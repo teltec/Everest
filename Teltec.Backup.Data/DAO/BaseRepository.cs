@@ -27,7 +27,7 @@ namespace Teltec.Backup.Data.DAO
 
 		protected BaseRepositoryEventHandler<T> BeforeUpdate;
 		protected BaseRepositoryEventHandler<T> AfterUpdate;
-		
+
 		protected BaseRepositoryEventHandler<T> BeforeInsertOrUpdate;
 		protected BaseRepositoryEventHandler<T> AfterInsertOrUpdate;
 
@@ -181,7 +181,7 @@ namespace Teltec.Backup.Data.DAO
 
 			// Remove `instance` from the cache - detach it.
 			//Session.Evict(instance);
-			// Make the detached entity persistent (with the non-flushed changes) .				
+			// Make the detached entity persistent (with the non-flushed changes) .
 			Session.Update(instance);
 
 			if (AfterUpdate != null)

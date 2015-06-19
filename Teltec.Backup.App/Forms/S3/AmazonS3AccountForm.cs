@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Windows.Forms;
 using Teltec.Backup.Data.Models;
 using Teltec.Common.Extensions;
+using Teltec.Common.Types;
 
 namespace Teltec.Backup.App.Forms.S3
 {
@@ -13,6 +14,7 @@ namespace Teltec.Backup.App.Forms.S3
 		public event EventHandler<AmazonS3AccountSaveEventArgs> AccountSaved;
 		public event EventHandler<AmazonS3AccountSaveEventArgs> AccountCanceled;
 		private AmazonS3Account _account;
+		private Tribool _accountAlreadyHasBackup = Tribool.Unknown;
 
 		public AmazonS3AccountForm(AmazonS3Account account)
 		{

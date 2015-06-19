@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Teltec.Backup.Data.Models
 {
@@ -24,7 +25,7 @@ namespace Teltec.Backup.Data.Models
 		}
 
 		public const int HostnameMaxLen = 255;
-		private String _Hostname;
+		private String _Hostname = Environment.MachineName;
 		public virtual String Hostname
 		{
 			get { return _Hostname; }
@@ -32,5 +33,16 @@ namespace Teltec.Backup.Data.Models
 		}
 
 		//IList<BackupPlan> BackupPlans { get; set; }
+
+		#region Files
+
+		private IList<BackupPlanFile> _Files = new List<BackupPlanFile>();
+		public virtual IList<BackupPlanFile> Files
+		{
+			get { return _Files; }
+			protected set { SetField(ref _Files, value); }
+		}
+
+		#endregion
     }
 }

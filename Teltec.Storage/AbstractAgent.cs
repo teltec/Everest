@@ -9,7 +9,7 @@ using Teltec.Storage.Versioning;
 
 namespace Teltec.Storage
 {
-	public abstract class AbstractAgent<T> where T : IVersionedFile
+	public abstract class AbstractAgent<TFile> where TFile : IVersionedFile
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -30,8 +30,8 @@ namespace Teltec.Storage
 			return _FilesAsDelimitedString;
 		}
 
-		private IEnumerable<T> _Files = new List<T>();
-		public IEnumerable<T> Files
+		private IEnumerable<TFile> _Files = new List<TFile>();
+		public IEnumerable<TFile> Files
 		{
 			get { return _Files; }
 			set
@@ -120,7 +120,7 @@ namespace Teltec.Storage
 
 		public void RemoveAllFiles()
 		{
-			Files = new List<T>();
+			Files = new List<TFile>();
 			FilesChanged();
 		}
 

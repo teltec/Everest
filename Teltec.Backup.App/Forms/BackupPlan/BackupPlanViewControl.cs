@@ -169,6 +169,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 				// FIXME: Re-enable before starting the backup because it's not an async task.
 				this.llblRunNow.Enabled = true;
+
 				RunningOperation.Start(out OperationResults);
 			}
 		}

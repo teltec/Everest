@@ -25,7 +25,7 @@ namespace Teltec.Backup.Data.Models
 
 		#endregion
 
-		#region Accounts
+		#region Account
 
 		private EStorageAccountType _StorageAccountType;
 		public virtual EStorageAccountType StorageAccountType
@@ -86,17 +86,6 @@ namespace Teltec.Backup.Data.Models
 
 		#endregion
 
-		#region Files
-
-		private IList<BackupPlanFile> _Files = new List<BackupPlanFile>();
-		public virtual IList<BackupPlanFile> Files
-		{
-			get { return _Files; }
-			protected set { SetField(ref _Files, value); }
-		}
-
-		#endregion
-
 		#region Backups
 
 		private IList<Backup> _Backups = new List<Backup>();
@@ -152,18 +141,6 @@ namespace Teltec.Backup.Data.Models
 		public virtual bool IsRecurring
 		{
 			get { return ScheduleType == ScheduleTypeEnum.RECURRING; }
-		}
-
-		#endregion
-
-		#region Identifiers for synchronization across different computers
-
-		public const int OriginalPlanNameMaxLen = NameMaxLen;
-		private String _OriginalPlanName;
-		public virtual String OriginalPlanName
-		{
-			get { return _OriginalPlanName; }
-			set { SetField(ref _OriginalPlanName, value); }
 		}
 
 		#endregion

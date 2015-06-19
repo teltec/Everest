@@ -115,7 +115,6 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				}
 				else
 				{
-					plan.OriginalPlanName = NormalizePlanName(plan.Name);
 					plan.StorageAccount.Hostname = Environment.MachineName;
 					_dao.Insert(plan);
 				}
@@ -126,6 +125,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			//}
 		}
 
+		/*
 		public static string NormalizePlanName(string planName)
 		{
 			string normalized = planName.Replace(' ', '_').RemoveDiacritics();
@@ -136,5 +136,6 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 			throw new ApplicationException("The plan name still contains characters that may cause problems");
 		}
+		*/
 	}
 }

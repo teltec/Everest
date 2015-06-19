@@ -198,6 +198,12 @@
     <Compile Include="Forms\Schedule\ScheduleRecurringOptionsForm.Designer.cs">
       <DependentUpon>ScheduleRecurringOptionsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\Sync\SyncProgressForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Sync\SyncProgressForm.Designer.cs">
+      <DependentUpon>SyncProgressForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\Sync\SyncSelectAccountForm.cs">
       <SubType>Form</SubType>
     </Compile>

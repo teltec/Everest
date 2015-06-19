@@ -52,7 +52,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 		// ...
 	}
 
-	public abstract class BackupOperation : BaseOperation
+	public abstract class BackupOperation : BaseOperation<TransferResults>
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -148,7 +148,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
 			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
 			TransferAgent.RemoteRootDir = TransferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP",
-				Backup.BackupPlan.StorageAccount.Hostname, Backup.BackupPlan.OriginalPlanName);
+				Backup.BackupPlan.StorageAccount.Hostname);
 
 			BackupAgent = new CustomBackupAgent(TransferAgent);
 			BackupAgent.Results.Monitor = TransferListControl;

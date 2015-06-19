@@ -22,14 +22,15 @@ namespace Teltec.Backup.Data.Models
 			Versions = new List<BackupedFile>();
 		}
 
-		public BackupPlanFile(BackupPlan plan)
+		public BackupPlanFile(StorageAccount account)
 			: this()
 		{
-			BackupPlan = plan;
+			StorageAccountType = account.Type;
+			StorageAccount = account;
 		}
 
-		public BackupPlanFile(BackupPlan plan, string path)
-			: this(plan)
+		public BackupPlanFile(StorageAccount account, string path)
+			: this(account)
 		{
 			Path = path;
 		}
@@ -41,12 +42,41 @@ namespace Teltec.Backup.Data.Models
 			set { SetField(ref _Id, value); }
 		}
 
-		private BackupPlan _BackupPlan;
-		public virtual BackupPlan BackupPlan
+		#region Account
+
+		private EStorageAccountType _StorageAccountType;
+		public virtual EStorageAccountType StorageAccountType
 		{
-			get { return _BackupPlan; }
-			protected set { _BackupPlan = value; }
+			get { return _StorageAccountType; }
+			set { SetField(ref _StorageAccountType, value); }
 		}
+
+		//private int _StorageAccountId;
+		//public virtual int StorageAccountId
+		//{
+		//	get { return _StorageAccountId; }
+		//	set { SetField(ref _StorageAccountId, value); }
+		//}
+
+		//public static ICloudStorageAccount GetStorageAccount(BackupPlan plan, ICloudStorageAccount dao)
+		//{
+		//	switch (plan.StorageAccountType)
+		//	{
+		//		default:
+		//			throw new ArgumentException("Unhandled StorageAccountType", "plan");
+		//		case EStorageAccountType.AmazonS3:
+		//			return dao.Get(plan.StorageAccountId);
+		//	}
+		//}
+
+		private StorageAccount _StorageAccount;
+		public virtual StorageAccount StorageAccount
+		{
+			get { return _StorageAccount; }
+			set { SetField(ref _StorageAccount, value); }
+		}
+
+		#endregion
 
 		public const int PathMaxLen = BackupPlanSourceEntry.PathMaxLen;
 		private string _Path;

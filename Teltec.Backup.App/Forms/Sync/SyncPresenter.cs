@@ -29,7 +29,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			WizardFormOptions options = new WizardFormOptions { DoValidate = true };
 			RegisterFormClass(typeof(SyncSelectAccountForm), options);
 			RegisterFormClass(typeof(SyncProgressForm), options);
-			RegisterFormClass(typeof(SyncCompleteForm), options);
+			//RegisterFormClass(typeof(SyncFinishedForm), options);
 		}
 
 		public override void OnCancel()
@@ -46,6 +46,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 			Models.Synchronization sync = Model as Models.Synchronization;
 
+			/*
 			Console.WriteLine("Name = {0}", plan.Name);
 			Console.WriteLine("StorageAccount = {0}", plan.StorageAccount.DisplayName);
 			Console.WriteLine("StorageAccountType = {0}", plan.StorageAccountType.ToString());
@@ -53,6 +54,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				Console.WriteLine("SelectedSource => #{0}, {1}, {2}", entry.Id, entry.Type.ToString(), entry.Path);
 			Console.WriteLine("ScheduleType = {0}", plan.ScheduleType.ToString());
 			Console.WriteLine("Schedule.ScheduleType = {0}", plan.Schedule.ScheduleType.ToString());
+			*/
 
 			//try
 			//{

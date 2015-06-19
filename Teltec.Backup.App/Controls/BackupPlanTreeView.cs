@@ -71,7 +71,7 @@ namespace Teltec.Backup.App.Controls
 			try
 			{
 				//IFileVersion version = BuildVersion(Plan);
-				IList<Models.BackupPlanPathNode> drives = dao.GetAllDrivesByPlan(Plan);
+				IList<Models.BackupPlanPathNode> drives = dao.GetAllDrivesByStorageAccount(Plan.StorageAccount);
 
 				foreach (var drive in drives)
 				{
@@ -303,7 +303,7 @@ namespace Teltec.Backup.App.Controls
 						hasParents = false;
 						break;
 				}
-				
+
 				if (obj.Value.InfoObject == null)
 					obj.Value.InfoObject = new EntryInfo(obj.Value.Type, obj.Value.Name, obj.Value.Path, obj.Value.Version);
 
@@ -331,7 +331,7 @@ namespace Teltec.Backup.App.Controls
 					if (nodeData.Type == TypeEnum.FILE_VERSION)
 						nodeType = Models.EntryType.FILE;
 					BackupPlanPathNodeRepository daoPathNode = new BackupPlanPathNodeRepository();
-					nodeData.UserObject = daoPathNode.GetByPlanAndTypeAndPath(Plan, nodeType, nodeData.Path);
+					nodeData.UserObject = daoPathNode.GetByStorageAccountAndTypeAndPath(Plan.StorageAccount, nodeType, nodeData.Path);
 				}
 			}
 

@@ -15,7 +15,7 @@ namespace Teltec.Storage
 		COMPLETED = 2,
 	}
 
-	public class TransferResults
+	public class TransferResults : IResults
 	{
 		public class Statistics
 		{

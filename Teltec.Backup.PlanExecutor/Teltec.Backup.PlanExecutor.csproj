@@ -143,6 +143,7 @@
     <Compile Include="Restore\NewRestoreOperation.cs" />
     <Compile Include="Restore\RemoteRestoreOperation.cs" />
     <Compile Include="Restore\RestoreOperation.cs" />
+    <Compile Include="Synchronize\CustomSynchronizationAgent.cs" />
     <Compile Include="Synchronize\SyncOperation.cs" />
     <Compile Include="Versioning\DefaultPathScanner.cs" />
     <Compile Include="Versioning\DefaultRestoreScanner.cs" />

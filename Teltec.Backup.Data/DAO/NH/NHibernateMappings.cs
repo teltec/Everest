@@ -46,6 +46,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Length(Models.StorageAccount.HostnameMaxLen)
 				;
 
+			HasMany(p => p.Files)
+				.KeyColumn("storage_account_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag()
+				;
+
 			DiscriminateSubClassesOnColumn("type");
 		}
 	}
@@ -232,12 +238,6 @@ namespace Teltec.Backup.Data.DAO.NH
 				.AsBag()
 				;
 
-			HasMany(p => p.Files)
-				.KeyColumn("backup_plan_id")
-				.Cascade.AllDeleteOrphan()
-				.AsBag()
-				;
-
 			HasMany(p => p.Backups)
 				.KeyColumn("backup_plan_id")
 				.Cascade.AllDeleteOrphan()
@@ -255,12 +255,6 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Nullable()
 				//.LazyLoad(Laziness.Proxy)
 				.Cascade.All()
-				;
-
-			Map(p => p.OriginalPlanName)
-				.Column("original_plan_name")
-				//.Not.Nullable()
-				.Length(Models.BackupPlan.OriginalPlanNameMaxLen)
 				;
 
 			Map(p => p.LastRunAt)
@@ -420,29 +414,45 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupPlanFileMap()
 		{
-			string UNIQUE_KEY_PLAN_PATH = "uk_backup_plan_path";
-			string UNIQUE_KEY_PLAN_PATHNODE = "uk_backup_plan_path_node";
-			string INDEX_PATHNODE = "idx_path_node";
+			string UNIQUE_KEY_ACCOUNT_PATH = "uk_account_path"; // (storage_account_id, path)
+			string UNIQUE_KEY_ACCOUNT_PATHNODE = "uk_account_path_node"; // (storage_account_id, path_node_id)
+			string INDEX_PATHNODE = "idx_path_node"; // (path_node_id)
 
 			Table("backup_plan_files");
 
 			Id(p => p.Id, "id").CustomGeneratedBy("seq_backup_plan_files");
 
-			References(fk => fk.BackupPlan)
-				.Column("backup_plan_id")
-				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
-				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable()
-				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
-				.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
+			Map(p => p.StorageAccountType)
+				.Column("storage_account_type")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>()
+				.Index("idx_storage_account_type")
 				;
+
+			References(fk => fk.StorageAccount)
+				.Column("storage_account_id")
+				.Not.Nullable()
+				//.LazyLoad(Laziness.Proxy)
+				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY_ACCOUNT_PATH)
+				.UniqueKey(UNIQUE_KEY_ACCOUNT_PATHNODE)
+				;
+
+			//References(fk => fk.BackupPlan)
+			//	.Column("backup_plan_id")
+			//	// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+			//	// seems to set it to `NULL` before deleting the object/row.
+			//	//.Not.Nullable()
+			//	.Cascade.None()
+			//	.UniqueKey(UNIQUE_KEY_PLAN_PATH)
+			//	.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
+			//	;
 
 			Map(p => p.Path)
 				.Column("path")
 				.Not.Nullable()
 				.Length(Models.BackupPlanSourceEntry.PathMaxLen)
-				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
+				.UniqueKey(UNIQUE_KEY_ACCOUNT_PATH)
 				;
 
 			Map(p => p.LastSize)
@@ -488,7 +498,7 @@ namespace Teltec.Backup.Data.DAO.NH
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.All()
-				.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
+				.UniqueKey(UNIQUE_KEY_ACCOUNT_PATHNODE)
 				.Index(INDEX_PATHNODE)
 				;
 
@@ -504,50 +514,66 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupPlanPathNodeMap()
 		{
-			string UNIQUE_KEY_PLAN_PARENT_NAME = "uk_backup_plan_path_node"; // (backup_plan_id, parent_id, name)
-			string UNIQUE_KEY_PLAN_PATH = "uk_backup_plan_path_node_path"; // (backup_plan_id, path)
-			string INDEX_BACKUP_PLAN_TYPE_NAME = "idx_backup_plan_type_name"; // (backup_plan_id, type, name)
+			string UNIQUE_KEY_ACCOUNT_PARENT_NAME = "uk_account_path_node"; // (storage_account_id, parent_id, name)
+			string UNIQUE_KEY_ACCOUNT_PATH = "uk_account_path_node_path"; // (storage_account_id, path)
+			string INDEX_ACCOUNT_TYPE_NAME = "idx_account_type_name"; // (storage_account_id, type, name)
 
 			Table("backup_plan_path_nodes");
 
 			Id(p => p.Id, "id").CustomGeneratedBy("seq_backup_plan_path_nodes");
 
-			References(fk => fk.BackupPlan)
-				.Column("backup_plan_id")
-				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
-				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable()
-				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_PLAN_PARENT_NAME)
-				.Index(INDEX_BACKUP_PLAN_TYPE_NAME)
+			Map(p => p.StorageAccountType)
+				.Column("storage_account_type")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>()
+				.Index("idx_storage_account_type")
 				;
+
+			References(fk => fk.StorageAccount)
+				.Column("storage_account_id")
+				.Not.Nullable()
+				//.LazyLoad(Laziness.Proxy)
+				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY_ACCOUNT_PARENT_NAME)
+				.Index(INDEX_ACCOUNT_TYPE_NAME)
+				;
+
+			//References(fk => fk.BackupPlan)
+			//	.Column("backup_plan_id")
+			//	// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+			//	// seems to set it to `NULL` before deleting the object/row.
+			//	//.Not.Nullable()
+			//	.Cascade.None()
+			//	.UniqueKey(UNIQUE_KEY_PLAN_PARENT_NAME)
+			//	.Index(INDEX_BACKUP_PLAN_TYPE_NAME)
+			//	;
 
 			References(fk => fk.Parent)
 				.Column("parent_id")
 				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_PLAN_PARENT_NAME)
+				.UniqueKey(UNIQUE_KEY_ACCOUNT_PARENT_NAME)
 				;
 
 			Map(p => p.Type)
 				.Column("type")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<Models.EntryType>>()
-				.Index(INDEX_BACKUP_PLAN_TYPE_NAME)
+				.Index(INDEX_ACCOUNT_TYPE_NAME)
 				;
 
 			Map(p => p.Name)
 				.Column("name")
 				.Not.Nullable()
 				.Length(Models.BackupPlanPathNode.NameMaxLen)
-				.UniqueKey(UNIQUE_KEY_PLAN_PARENT_NAME)
-				.Index(INDEX_BACKUP_PLAN_TYPE_NAME)
+				.UniqueKey(UNIQUE_KEY_ACCOUNT_PARENT_NAME)
+				.Index(INDEX_ACCOUNT_TYPE_NAME)
 				;
 
 			Map(p => p.Path)
 				.Column("path")
 				.Not.Nullable()
 				.Length(Models.BackupPlanPathNode.PathMaxLen)
-				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
+				.UniqueKey(UNIQUE_KEY_ACCOUNT_PATH)
 				;
 
 			HasMany(p => p.SubNodes)

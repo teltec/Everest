@@ -178,7 +178,7 @@ namespace Teltec.Backup.App.Controls
 
 #if true
 			BackupedFileRepository dao = new BackupedFileRepository();
-			IList<BackupedFile> backupedFiles = dao.GetCompletedByPlanAndPath(pathNode.BackupPlan, pathNode.Path);
+			IList<BackupedFile> backupedFiles = dao.GetCompletedByStorageAccountAndPath(pathNode.StorageAccount, pathNode.Path);
 			IEnumerable<IFileVersion> versions =
 				from f in backupedFiles
 				select new FileVersion { Name = f.VersionName, Version = f.Version };

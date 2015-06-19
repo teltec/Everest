@@ -7,21 +7,21 @@ namespace Teltec.Backup.Data.Models
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		public SynchronizationFile()
-		{
-		}
+		//public SynchronizationFile()
+		//{
+		//}
 
-		public SynchronizationFile(Synchronization sync)
-			: this()
-		{
-			Synchronization = sync;
-		}
+		//public SynchronizationFile(Synchronization sync)
+		//	: this()
+		//{
+		//	Synchronization = sync;
+		//}
 
-		public SynchronizationFile(Synchronization sync, string path)
-			: this(sync)
-		{
-			Path = path;
-		}
+		//public SynchronizationFile(Synchronization sync, string path)
+		//	: this(sync)
+		//{
+		//	Path = path;
+		//}
 
 		private Int64? _Id;
 		public virtual Int64? Id
@@ -34,7 +34,7 @@ namespace Teltec.Backup.Data.Models
 		public virtual Synchronization Synchronization
 		{
 			get { return _Synchronization; }
-			protected set { _Synchronization = value; }
+			set { _Synchronization = value; }
 		}
 
 		// REFERENCE: http://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers

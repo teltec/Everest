@@ -12,6 +12,7 @@ namespace Teltec.Backup.App.Forms.Sync
 	//                 Should we refactor to avoid code duplication?
 	public partial class SyncSelectAccountForm : Teltec.Forms.Wizard.WizardForm
 	{
+		private readonly SynchronizationRepository _dao = new SynchronizationRepository();
 		private readonly AmazonS3AccountRepository _s3dao = new AmazonS3AccountRepository();
 		private Models.Synchronization Sync = new Models.Synchronization();
 
@@ -78,12 +79,36 @@ namespace Teltec.Backup.App.Forms.Sync
 
 		protected override void OnBeforeNextOrFinish(object sender, CancelEventArgs e)
 		{
-			if (DoValidate && !IsValid())
+			// TODO(jweyrich): Check whether the selected account/bucket has a previous backup, and if it does not,
+			//                 tell the user the account/bucket has no previous backups.
+
+			if (DoValidate)
 			{
-				e.Cancel = true;
-				this.ShowErrorMessage("Please, select an account.");
+				if (!IsValid())
+				{
+					e.Cancel = true;
+					this.ShowErrorMessage("Please, select an account.");
+				}
+				else
+				{
+					bool isTransient = !Sync.Id.HasValue;
+					if (isTransient)
+						CreateSync();
+					else
+						UpdateSync();
+				}
 			}
 			base.OnBeforeNextOrFinish(sender, e);
+		}
+
+		private void CreateSync()
+		{
+			_dao.Insert(Sync);
+		}
+
+		private void UpdateSync()
+		{
+			_dao.Update(Sync);
 		}
 
 		private void LoadAccounts(Models.EStorageAccountType accountType)
@@ -144,9 +169,9 @@ namespace Teltec.Backup.App.Forms.Sync
 			}
 			else
 			{
-				Models.BackupPlan plan = Model as Models.BackupPlan;
-				plan.StorageAccountType = Models.EStorageAccountType.AmazonS3;
-				plan.StorageAccount = _s3dao.Get((int)cbAmazonS3.SelectedValue);
+				Models.Synchronization sync = Model as Models.Synchronization;
+				sync.StorageAccountType = Models.EStorageAccountType.AmazonS3;
+				sync.StorageAccount = _s3dao.Get((int)cbAmazonS3.SelectedValue);
 			}
 		}
 
@@ -171,9 +196,9 @@ namespace Teltec.Backup.App.Forms.Sync
 			}
 			else
 			{
-				Models.BackupPlan plan = Model as Models.BackupPlan;
-				plan.StorageAccountType = Models.EStorageAccountType.FileSystem;
-				//plan.StorageAccount = new CloudStorageAccount { Id = (int)cbFileSystem.SelectedValue };
+				Models.Synchronization sync = Model as Models.Synchronization;
+				sync.StorageAccountType = Models.EStorageAccountType.FileSystem;
+				//sync.StorageAccount = new CloudStorageAccount { Id = (int)cbFileSystem.SelectedValue };
 				throw new NotImplementedException();
 			}
 		}

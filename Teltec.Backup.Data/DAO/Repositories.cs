@@ -113,21 +113,21 @@ namespace Teltec.Backup.Data.DAO
 		//	};
 		//}
 
-		public IList<Models.BackupPlanFile> GetAllByPlan(Models.BackupPlan plan)
+		public IList<Models.BackupPlanFile> GetAllByStorageAccount(Models.StorageAccount account)
 		{
-			Assert.IsNotNull(plan);
+			Assert.IsNotNull(account);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
-			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.BackupPlan);
-			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
+			string storageAccountPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.StorageAccount);
+			crit.Add(Restrictions.Eq(storageAccountPropertyName, account));
 			return crit.List<Models.BackupPlanFile>();
 		}
 
-		public Models.BackupPlanFile GetByPlanAndPath(Models.BackupPlan plan, string path, bool ignoreCase = false)
+		public Models.BackupPlanFile GetByStorageAccountAndPath(Models.StorageAccount account, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNullOrEmpty(path);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
-			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.BackupPlan);
-			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
+			string storageAccountPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.StorageAccount);
+			crit.Add(Restrictions.Eq(storageAccountPropertyName, account));
 			string pathPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.Path);
 			SimpleExpression expr = Restrictions.Eq(pathPropertyName, path);
 			if (ignoreCase)
@@ -148,25 +148,25 @@ namespace Teltec.Backup.Data.DAO
 		{
 		}
 
-		public IList<Models.BackupPlanPathNode> GetAllDrivesByPlan(Models.BackupPlan plan)
+		public IList<Models.BackupPlanPathNode> GetAllDrivesByStorageAccount(Models.StorageAccount account)
 		{
-			Assert.IsNotNull(plan);
+			Assert.IsNotNull(account);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
-			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.BackupPlan);
+			string storageAccountPropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.StorageAccount);
 			string typePropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.Type);
-			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
+			crit.Add(Restrictions.Eq(storageAccountPropertyName, account));
 			crit.Add(Restrictions.Eq(typePropertyName, Models.EntryType.DRIVE));
 			return crit.List<Models.BackupPlanPathNode>();
 		}
 
-		public Models.BackupPlanPathNode GetByPlanAndTypeAndPath(Models.BackupPlan plan, Models.EntryType type, string path, bool ignoreCase = false)
+		public Models.BackupPlanPathNode GetByStorageAccountAndTypeAndPath(Models.StorageAccount account, Models.EntryType type, string path, bool ignoreCase = false)
 		{
-			Assert.IsNotNull(plan);
+			Assert.IsNotNull(account);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
-			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.BackupPlan);
+			string storageAccountPropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.StorageAccount);
 			string typePropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.Type);
 			string pathPropertyName = this.GetPropertyName((Models.BackupPlanPathNode x) => x.Path);
-			crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
+			crit.Add(Restrictions.Eq(storageAccountPropertyName, account));
 			crit.Add(Restrictions.Eq(typePropertyName, type));
 			SimpleExpression expr = Restrictions.Eq(pathPropertyName, path);
 			if (ignoreCase)
@@ -228,16 +228,18 @@ namespace Teltec.Backup.Data.DAO
 			return crit.List<Models.BackupedFile>();
 		}
 
-		public IList<Models.BackupedFile> GetCompletedByPlanAndPath(Models.BackupPlan plan, string path, bool ignoreCase = false)
+		public IList<Models.BackupedFile> GetCompletedByStorageAccountAndPath(Models.StorageAccount account, string path, bool ignoreCase = false)
 		{
-			Assert.IsNotNull(plan);
+			Assert.IsNotNull(account);
 			Assert.IsNotNullOrEmpty(path);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 
 			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
 			string backupPlanPropertyName = this.GetPropertyName((Models.Backup x) => x.BackupPlan);
+			string storageAccountPropertyName = this.GetPropertyName((Models.BackupPlan x) => x.StorageAccount);
 			crit.CreateAlias(backupPropertyName, "bkp");
-			crit.Add(Restrictions.Eq("bkp." + backupPlanPropertyName, plan));
+			crit.CreateAlias("bkp." + backupPlanPropertyName, "plan");
+			crit.Add(Restrictions.Eq("plan." + storageAccountPropertyName, account));
 
 			string transferStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
 			crit.Add(Restrictions.Eq(transferStatusPropertyName, TransferStatus.COMPLETED));
@@ -418,5 +420,40 @@ namespace Teltec.Backup.Data.DAO
 		{
 		}
 	}
+
+	public class SynchronizationFileRepository : BaseRepository<Models.SynchronizationFile, Int64?>
+	{
+		public SynchronizationFileRepository()
+		{
+		}
+
+		public SynchronizationFileRepository(ISession session)
+			: base(session)
+		{
+		}
+
+		public Models.SynchronizationFile GetByURL(string url)
+		{
+			Assert.IsNotNullOrEmpty(url);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string pathPropertyName = this.GetPropertyName((Models.SynchronizationFile x) => x.Path);
+			crit.Add(Restrictions.Eq(pathPropertyName, url));
+			crit.SetMaxResults(1);
+			return crit.UniqueResult<Models.SynchronizationFile>();
+		}
+	}
+
+	public class SynchronizationPathNodeRepository : BaseRepository<Models.SynchronizationPathNode, Int64?>
+	{
+		public SynchronizationPathNodeRepository()
+		{
+		}
+
+		public SynchronizationPathNodeRepository(ISession session)
+			: base(session)
+		{
+		}
+	}
+
 	#endregion
 }

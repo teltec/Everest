@@ -51,7 +51,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				AllFilesFromPlan = daoRestorePlanFile.GetAllByPlan(restore.RestorePlan).ToDictionary<Models.RestorePlanFile, string>(p => p.Path);
 
 				Execute(restore, files, newRestore);
-				
+
 				Save();
 			}, CancellationToken);
 		}
@@ -131,7 +131,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					restorePlanFile.CreatedAt = DateTime.UtcNow;
 				}
 
-				Models.BackupPlanPathNode pathNode = daoPathNode.GetByPlanAndTypeAndPath(plan.BackupPlan, Models.EntryType.FILE, file.Path);
+				Models.BackupPlanPathNode pathNode = daoPathNode.GetByStorageAccountAndTypeAndPath(plan.BackupPlan.StorageAccount, Models.EntryType.FILE, file.Path);
 				Assert.IsNotNull(pathNode, string.Format("{0} has no corresponding {1}", file.Path, typeof(Models.BackupPlanPathNode).Name));
 				restorePlanFile.PathNode = pathNode;
 				restorePlanFile.VersionedFile = file;
@@ -161,7 +161,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		// Summary:
 		// 1. Create `RestorePlanFile`s and `RestoredFile`s as necessary and add them to the `Restore`.
 		// 2. Insert/Update `Restore` and its `RestorededFile`s into the database, also saving
-		//	  the `RestorePlanFile`s instances that may have been changed by step 1.2. 
+		//	  the `RestorePlanFile`s instances that may have been changed by step 1.2.
 		// 3. Create versioned files and remove files that won't belong to this restore.
 		//
 		public void Save()
@@ -174,7 +174,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			RestorePlanFileRepository daoRestorePlanFile = new RestorePlanFileRepository(session);
 			RestoredFileRepository daoRestoredFile = new RestoredFileRepository(session);
 			BackupPlanPathNodeRepository daoBackupPlanPathNode = new BackupPlanPathNodeRepository(session);
-			
+
 			var FilesToTrack = SuppliedFiles;
 			var FilesToInsertOrUpdate = FilesToTrack;
 
@@ -199,7 +199,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						// IMPORTANT: It's important that we guarantee the referenced `RestorePlanFile` has a valid `Id`
 						// before we reference it elsewhere, otherwise NHibernate won't have a valid value to put on
 						// the `restore_plan_file_id` column.
-						daoRestorePlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved 
+						daoRestorePlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved
 
 						Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(Restore, entry.Path);
 						if (restoredFile == null) // If we're resuming, this should already exist.
@@ -224,7 +224,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					stats.Begin("STEP 2");
 
 					// 2. Insert/Update `Restore` and its `RestorededFile`s into the database, also saving
-					//	  the `RestorePlanFile`s instances that may have been changed by step 1.2. 
+					//	  the `RestorePlanFile`s instances that may have been changed by step 1.2.
 					{
 						daoRestore.Update(tx, Restore);
 					}

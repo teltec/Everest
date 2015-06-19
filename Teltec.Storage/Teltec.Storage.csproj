@@ -56,10 +56,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbstractAgent.cs" />
+    <Compile Include="AbstractSyncAgent.cs" />
     <Compile Include="AsyncHelper.cs" />
     <Compile Include="Backend\PathBuilder.cs" />
     <Compile Include="BackupAgent.cs" />
+    <Compile Include="IResults.cs" />
     <Compile Include="RestoreAgent.cs" />
+    <Compile Include="SynchronizationAgent.cs" />
+    <Compile Include="SyncResults.cs" />
     <Compile Include="TransferResults.cs" />
     <Compile Include="Implementations\CancelableFileStream.cs" />
     <Compile Include="Implementations\S3\S3PathBuilder.cs" />
