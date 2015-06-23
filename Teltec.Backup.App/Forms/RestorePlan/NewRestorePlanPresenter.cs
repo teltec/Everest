@@ -28,9 +28,9 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 			Model = plan;
 
 			WizardFormOptions options = new WizardFormOptions { DoValidate = true };
-			// Only show `RestorePlanSelectBackupPlanForm` if the `BackupPlan` is not already informed.
-			if (plan.BackupPlan == null || !plan.BackupPlan.Id.HasValue)
-				RegisterFormClass(typeof(RestorePlanSelectBackupPlanForm), options);
+			// Only show `RestorePlanSelectAccountForm` if the `StorageAccount` is not already informed.
+			if (plan.StorageAccount == null || !plan.StorageAccount.Id.HasValue)
+				RegisterFormClass(typeof(RestorePlanSelectAccountForm), options);
 			RegisterFormClass(typeof(RestorePlanGiveNameForm), options);
 			RegisterFormClass(typeof(RestorePlanSelectSourceForm), options);
 			RegisterFormClass(typeof(SchedulablePlanForm<Models.RestorePlan>), options);
@@ -51,7 +51,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 			Models.RestorePlan plan = Model as Models.RestorePlan;
 
 			Console.WriteLine("Name = {0}", plan.Name);
-			Console.WriteLine("BackupPlan = {0}", plan.BackupPlan.Name);
+			Console.WriteLine("StorageAccount = {0}", plan.StorageAccount.DisplayName);
 			foreach (Models.RestorePlanSourceEntry entry in plan.SelectedSources)
 				Console.WriteLine("SelectedSource => #{0}, {1}, {2}, {3}",
 					entry.Id, entry.Type.ToString(), entry.Path, entry.Version);

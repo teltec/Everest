@@ -161,6 +161,12 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\EntryTreeNodeData.cs" />
+    <Compile Include="Forms\RestorePlan\RestorePlanSelectAccountForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\RestorePlan\RestorePlanSelectAccountForm.Designer.cs">
+      <DependentUpon>RestorePlanSelectAccountForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\RestorePlan\RestorePlanViewControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -180,12 +186,6 @@
       <DependentUpon>RestorePlanSelectSourceForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\RestorePlan\NewRestorePlanPresenter.cs" />
-    <Compile Include="Forms\RestorePlan\RestorePlanSelectBackupPlanForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\RestorePlan\RestorePlanSelectBackupPlanForm.Designer.cs">
-      <DependentUpon>RestorePlanSelectBackupPlanForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="Forms\RestorePlan\RestorePlanGiveNameForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -293,6 +293,9 @@
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanListControl.resx">
       <DependentUpon>BackupPlanListControl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectAccountForm.resx">
+      <DependentUpon>RestorePlanSelectAccountForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\Schedule\SchedulablePlanForm.resx">
       <DependentUpon>SchedulablePlanForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -316,9 +319,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectSourceForm.resx">
       <DependentUpon>RestorePlanSelectSourceForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectBackupPlanForm.resx">
-      <DependentUpon>RestorePlanSelectBackupPlanForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RestorePlan\RestorePlanGiveNameForm.resx">
       <DependentUpon>RestorePlanGiveNameForm.cs</DependentUpon>

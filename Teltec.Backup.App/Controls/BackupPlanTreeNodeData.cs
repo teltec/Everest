@@ -9,7 +9,7 @@ namespace Teltec.Backup.App.Controls
 {
 	public sealed class BackupPlanTreeNodeData : EntryTreeNodeData
 	{
-		public Models.BackupPlan Plan { get; set; }
+		public Models.StorageAccount StorageAccount { get; set; }
 		public IFileVersion Version { get; private set; } // Depends on `InfoObject`
 		public object UserObject { get; set; }
 
@@ -17,9 +17,9 @@ namespace Teltec.Backup.App.Controls
 		{
 		}
 
-		public BackupPlanTreeNodeData(Models.BackupPlan plan, EntryInfo infoObject)
+		public BackupPlanTreeNodeData(Models.StorageAccount account, EntryInfo infoObject)
 		{
-			Plan = plan;
+			StorageAccount = account;
 			InfoObject = infoObject;
 		}
 

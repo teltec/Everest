@@ -131,7 +131,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					restorePlanFile.CreatedAt = DateTime.UtcNow;
 				}
 
-				Models.BackupPlanPathNode pathNode = daoPathNode.GetByStorageAccountAndTypeAndPath(plan.BackupPlan.StorageAccount, Models.EntryType.FILE, file.Path);
+				Models.BackupPlanPathNode pathNode = daoPathNode.GetByStorageAccountAndTypeAndPath(plan.StorageAccount, Models.EntryType.FILE, file.Path);
 				Assert.IsNotNull(pathNode, string.Format("{0} has no corresponding {1}", file.Path, typeof(Models.BackupPlanPathNode).Name));
 				restorePlanFile.PathNode = pathNode;
 				restorePlanFile.VersionedFile = file;

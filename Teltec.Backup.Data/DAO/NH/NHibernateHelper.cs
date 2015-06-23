@@ -49,8 +49,8 @@ namespace Teltec.Backup.Data.DAO.NH
 				//_sessions.Value.FlushMode = FlushMode.Never;
 			}
 
-			//if (!_sessions.Value.IsConnected)
-			//	_sessions.Value.Reconnect();
+			if (!_sessions.Value.IsConnected)
+				_sessions.Value.Reconnect();
 
 			return _sessions.Value;
 		}

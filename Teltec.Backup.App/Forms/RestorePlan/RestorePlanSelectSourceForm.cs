@@ -31,7 +31,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 			this.ModelChangedEvent += (Teltec.Forms.Wizard.WizardForm sender, Teltec.Forms.Wizard.WizardForm.ModelChangedEventArgs e) =>
 			{
 				Models.RestorePlan plan = e.Model as Models.RestorePlan;
-				tvFiles.Plan = plan.BackupPlan;
+				tvFiles.StorageAccount = plan.StorageAccount;
 				// Lazily select nodes that match entries from `plan.SelectedSources`.
 				tvFiles.CheckedDataSource = RestorePlanSelectedSourcesToCheckedDataSource(plan);
 			};
@@ -44,7 +44,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 				e => new BackupPlanTreeNodeData
 				{
 					Id = e.Id,
-					Plan = plan.BackupPlan,
+					StorageAccount = plan.StorageAccount,
 					Type = Models.EntryTypeExtensions.ToTypeEnum(e.Type),
 					Path = e.Path,
 					State = Teltec.Common.Controls.CheckState.Checked,
@@ -63,7 +63,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 		protected override void OnBeforeNextOrFinish(object sender, CancelEventArgs e)
 		{
 			Models.RestorePlan plan = Model as Models.RestorePlan;
-			
+
 			ICollection<Models.RestorePlanSourceEntry> entries = tvFiles.GetCheckedTagData().ToRestorePlanSourceEntry(plan, _dao);
 			plan.SelectedSources.Clear();
 			plan.SelectedSources.AddRange(entries);

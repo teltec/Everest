@@ -115,12 +115,11 @@ namespace Teltec.Backup.PlanExecutor.Restore
 		{
 			Assert.IsFalse(IsRunning);
 			Assert.IsNotNull(Restore);
-			Assert.IsNotNull(Restore.RestorePlan.BackupPlan);
-			Assert.IsNotNull(Restore.RestorePlan.BackupPlan.StorageAccount);
-			Assert.AreEqual(Models.EStorageAccountType.AmazonS3, Restore.RestorePlan.BackupPlan.StorageAccountType);
+			Assert.IsNotNull(Restore.RestorePlan.StorageAccount);
+			Assert.AreEqual(Models.EStorageAccountType.AmazonS3, Restore.RestorePlan.StorageAccountType);
 
 			AmazonS3AccountRepository dao = new AmazonS3AccountRepository();
-			Models.AmazonS3Account s3account = dao.GetForReadOnly(Restore.RestorePlan.BackupPlan.StorageAccount.Id);
+			Models.AmazonS3Account s3account = dao.GetForReadOnly(Restore.RestorePlan.StorageAccount.Id);
 
 			//
 			// Dispose and recycle previous objects, if needed.
@@ -138,7 +137,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
 			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
 			TransferAgent.RemoteRootDir = TransferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP",
-				Restore.RestorePlan.BackupPlan.StorageAccount.Hostname);
+				Restore.RestorePlan.StorageAccount.Hostname);
 
 			RestoreAgent = new CustomRestoreAgent(TransferAgent);
 			RestoreAgent.Results.Monitor = TransferListControl;

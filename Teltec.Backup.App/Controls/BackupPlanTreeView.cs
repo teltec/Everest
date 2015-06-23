@@ -20,14 +20,14 @@ namespace Teltec.Backup.App.Controls
 			this.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.handle_AfterCheck);
 		}
 
-		private Models.BackupPlan _Plan;
-		public Models.BackupPlan Plan
+		private Models.StorageAccount _StorageAccount;
+		public Models.StorageAccount StorageAccount
 		{
-			get { return _Plan; }
-			set { _Plan = value; OnPlanChanged(); }
+			get { return _StorageAccount; }
+			set { _StorageAccount = value; OnStorageAccountChanged(); }
 		}
 
-		private void OnPlanChanged()
+		private void OnStorageAccountChanged()
 		{
 			this.UseWaitCursor = true;
 			PopulateTreeView();
@@ -63,7 +63,7 @@ namespace Teltec.Backup.App.Controls
 
 		public void PopulateDrives()
 		{
-			if (Plan == null)
+			if (StorageAccount == null)
 				return;
 
 			BackupPlanPathNodeRepository dao = new BackupPlanPathNodeRepository();
@@ -71,7 +71,7 @@ namespace Teltec.Backup.App.Controls
 			try
 			{
 				//IFileVersion version = BuildVersion(Plan);
-				IList<Models.BackupPlanPathNode> drives = dao.GetAllDrivesByStorageAccount(Plan.StorageAccount);
+				IList<Models.BackupPlanPathNode> drives = dao.GetAllDrivesByStorageAccount(StorageAccount);
 
 				foreach (var drive in drives)
 				{
@@ -232,21 +232,21 @@ namespace Teltec.Backup.App.Controls
 					case PathNode.TypeEnum.FILE:
 						{
 							EntryInfo info = new EntryInfo(TypeEnum.FILE, nodeParent.Name, nodeParent.Path);
-							newTag = new BackupPlanTreeNodeData(Plan, info);
+							newTag = new BackupPlanTreeNodeData(StorageAccount, info);
 							newTag.State = CheckState.Mixed;
 							break;
 						}
 					case PathNode.TypeEnum.FOLDER:
 						{
 							EntryInfo info = new EntryInfo(TypeEnum.FOLDER, nodeParent.Name, nodeParent.Path);
-							newTag = new BackupPlanTreeNodeData(Plan, info);
+							newTag = new BackupPlanTreeNodeData(StorageAccount, info);
 							newTag.State = CheckState.Mixed;
 							break;
 						}
 					case PathNode.TypeEnum.DRIVE:
 						{
 							EntryInfo info = new EntryInfo(TypeEnum.DRIVE, nodeParent.Name, nodeParent.Path);
-							newTag = new BackupPlanTreeNodeData(Plan, info);
+							newTag = new BackupPlanTreeNodeData(StorageAccount, info);
 							newTag.State = CheckState.Mixed;
 							break;
 						}
@@ -269,7 +269,7 @@ namespace Teltec.Backup.App.Controls
 			nodeData.State = CheckState.Checked;
 
 			EntryInfo info = new EntryInfo(TypeEnum.FILE, nodeData.Name, nodeData.Path, null);
-			EntryTreeNodeData newTag = new BackupPlanTreeNodeData(Plan, info);
+			EntryTreeNodeData newTag = new BackupPlanTreeNodeData(StorageAccount, info);
 			newTag.State = CheckState.Mixed;
 
 			string nodeKey = BuildNodeKey(nodeData, info.Version);
@@ -331,7 +331,7 @@ namespace Teltec.Backup.App.Controls
 					if (nodeData.Type == TypeEnum.FILE_VERSION)
 						nodeType = Models.EntryType.FILE;
 					BackupPlanPathNodeRepository daoPathNode = new BackupPlanPathNodeRepository();
-					nodeData.UserObject = daoPathNode.GetByStorageAccountAndTypeAndPath(Plan.StorageAccount, nodeType, nodeData.Path);
+					nodeData.UserObject = daoPathNode.GetByStorageAccountAndTypeAndPath(StorageAccount, nodeType, nodeData.Path);
 				}
 			}
 

@@ -447,7 +447,6 @@ namespace Teltec.Backup.Data.DAO.NH
 			//	.UniqueKey(UNIQUE_KEY_PLAN_PATH)
 			//	.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
 			//	;
-
 			Map(p => p.Path)
 				.Column("path")
 				.Not.Nullable()
@@ -538,16 +537,6 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Index(INDEX_ACCOUNT_TYPE_NAME)
 				;
 
-			//References(fk => fk.BackupPlan)
-			//	.Column("backup_plan_id")
-			//	// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
-			//	// seems to set it to `NULL` before deleting the object/row.
-			//	//.Not.Nullable()
-			//	.Cascade.None()
-			//	.UniqueKey(UNIQUE_KEY_PLAN_PARENT_NAME)
-			//	.Index(INDEX_BACKUP_PLAN_TYPE_NAME)
-			//	;
-
 			References(fk => fk.Parent)
 				.Column("parent_id")
 				.Cascade.None()
@@ -608,8 +597,20 @@ namespace Teltec.Backup.Data.DAO.NH
 				.UniqueKey("uk_name")
 				;
 
-			References(fk => fk.BackupPlan)
-				.Column("backup_plan_id")
+			Map(p => p.StorageAccountType)
+				.Column("storage_account_type")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>()
+				.Index("idx_storage_account_type")
+				;
+
+			//Map(p => p.StorageAccountId)
+			//	.Column("storage_account_id")
+			//	.Not.Nullable()
+			//	;
+
+			References(fk => fk.StorageAccount)
+				.Column("storage_account_id")
 				.Not.Nullable()
 				//.LazyLoad(Laziness.Proxy)
 				.Cascade.None()
@@ -628,7 +629,7 @@ namespace Teltec.Backup.Data.DAO.NH
 				;
 
 			HasMany(p => p.Restores)
-				.KeyColumn("backup_plan_id")
+				.KeyColumn("restore_plan_id")
 				.Cascade.AllDeleteOrphan()
 				.AsBag()
 				;
