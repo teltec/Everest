@@ -238,6 +238,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				.AsBag()
 				;
 
+			HasMany(p => p.Files)
+				.KeyColumn("backup_plan_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag()
+				;
+
 			HasMany(p => p.Backups)
 				.KeyColumn("backup_plan_id")
 				.Cascade.AllDeleteOrphan()
@@ -414,13 +420,21 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupPlanFileMap()
 		{
-			string UNIQUE_KEY_ACCOUNT_PATH = "uk_account_path"; // (storage_account_id, path)
-			string UNIQUE_KEY_ACCOUNT_PATHNODE = "uk_account_path_node"; // (storage_account_id, path_node_id)
+			string UNIQUE_KEY_PLAN_PATH = "uk_backup_plan_path"; // (backup_plan_id, path)
+			string UNIQUE_KEY_PLAN_PATHNODE = "uk_backup_plan_path_node"; // (backup_plan_id, path_node_id)
 			string INDEX_PATHNODE = "idx_path_node"; // (path_node_id)
 
 			Table("backup_plan_files");
 
 			Id(p => p.Id, "id").CustomGeneratedBy("seq_backup_plan_files");
+
+			References(fk => fk.BackupPlan)
+				.Column("backup_plan_id")
+				.Nullable() // Nullable because Sync creates files with this property set to NULL.
+				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
+				.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
+				;
 
 			Map(p => p.StorageAccountType)
 				.Column("storage_account_type")
@@ -434,24 +448,13 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Not.Nullable()
 				//.LazyLoad(Laziness.Proxy)
 				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_ACCOUNT_PATH)
-				.UniqueKey(UNIQUE_KEY_ACCOUNT_PATHNODE)
 				;
 
-			//References(fk => fk.BackupPlan)
-			//	.Column("backup_plan_id")
-			//	// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
-			//	// seems to set it to `NULL` before deleting the object/row.
-			//	//.Not.Nullable()
-			//	.Cascade.None()
-			//	.UniqueKey(UNIQUE_KEY_PLAN_PATH)
-			//	.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
-			//	;
 			Map(p => p.Path)
 				.Column("path")
 				.Not.Nullable()
 				.Length(Models.BackupPlanSourceEntry.PathMaxLen)
-				.UniqueKey(UNIQUE_KEY_ACCOUNT_PATH)
+				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
 				;
 
 			Map(p => p.LastSize)
@@ -497,7 +500,7 @@ namespace Teltec.Backup.Data.DAO.NH
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.All()
-				.UniqueKey(UNIQUE_KEY_ACCOUNT_PATHNODE)
+				.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
 				.Index(INDEX_PATHNODE)
 				;
 
@@ -1012,7 +1015,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			string UNIQUE_KEY_SYNC_PATH = "uk_synchronization_path_node_path"; // (synchronization_id, path)
 			string INDEX_SYNC_TYPE_NAME = "idx_synchronization_type_name"; // (synchronization_id, type, name)
 
-			Table("Synchronization_path_nodes");
+			Table("synchronization_path_nodes");
 
 			Id(p => p.Id, "id").CustomGeneratedBy("seq_synchronization_path_nodes");
 

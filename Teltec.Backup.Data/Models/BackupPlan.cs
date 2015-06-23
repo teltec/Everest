@@ -86,6 +86,17 @@ namespace Teltec.Backup.Data.Models
 
 		#endregion
 
+		#region Files
+
+		private IList<BackupPlanFile> _Files = new List<BackupPlanFile>();
+		public virtual IList<BackupPlanFile> Files
+		{
+			get { return _Files; }
+			protected set { SetField(ref _Files, value); }
+		}
+
+		#endregion
+
 		#region Backups
 
 		private IList<Backup> _Backups = new List<Backup>();

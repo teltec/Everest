@@ -35,11 +35,31 @@ namespace Teltec.Backup.Data.Models
 			Path = path;
 		}
 
+		public BackupPlanFile(BackupPlan plan)
+			: this(plan.StorageAccount)
+		{
+			BackupPlan = plan;
+		}
+
+		public BackupPlanFile(BackupPlan plan, string path)
+			: this(plan.StorageAccount)
+		{
+			BackupPlan = plan;
+			Path = path;
+		}
+
 		private Int64? _Id;
 		public virtual Int64? Id
 		{
 			get { return _Id; }
 			set { SetField(ref _Id, value); }
+		}
+
+		private BackupPlan _BackupPlan;
+		public virtual BackupPlan BackupPlan
+		{
+			get { return _BackupPlan; }
+			set { SetField(ref _BackupPlan, value); }
 		}
 
 		#region Account

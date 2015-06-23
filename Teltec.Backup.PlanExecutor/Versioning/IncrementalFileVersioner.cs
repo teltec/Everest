@@ -54,7 +54,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				Backup = daoBackup.Get(backup.Id);
 
 				BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
-				AllFilesFromPlan = daoBackupPlanFile.GetAllByStorageAccount(backup.BackupPlan.StorageAccount).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
+				AllFilesFromPlan = daoBackupPlanFile.GetAllByBackupPlan(backup.BackupPlan).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
 
 				Execute(backup, filePaths, newVersion);
 
@@ -236,7 +236,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 				if (!backupPlanFileAlreadyExists)
 				{
-					backupPlanFile = new Models.BackupPlanFile(plan.StorageAccount, path);
+					backupPlanFile = new Models.BackupPlanFile(plan, path);
 					backupPlanFile.CreatedAt = DateTime.UtcNow;
 				}
 

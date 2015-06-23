@@ -122,6 +122,17 @@ namespace Teltec.Backup.Data.DAO
 			return crit.List<Models.BackupPlanFile>();
 		}
 
+		public IList<Models.BackupPlanFile> GetAllByBackupPlan(Models.BackupPlan plan)
+		{
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.BackupPlan);
+			if (plan == null)
+				crit.Add(Restrictions.IsNull(backupPlanPropertyName));
+			else
+				crit.Add(Restrictions.Eq(backupPlanPropertyName, plan));
+			return crit.List<Models.BackupPlanFile>();
+		}
+
 		public Models.BackupPlanFile GetByStorageAccountAndPath(Models.StorageAccount account, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNullOrEmpty(path);
