@@ -9,7 +9,7 @@ namespace Teltec.Storage.Backend
 		string LocalRootDirectory { get; set; }
 
 		string CombineLocalPath(string localBaseDirectory, params string[] relativePaths);
-		string BuildLocalPath(string remotePath);
+		string BuildLocalPath(string remotePath, out string outVersion);
 
 		#endregion
 
@@ -33,7 +33,7 @@ namespace Teltec.Storage.Backend
 		public string LocalRootDirectory { get; set; }
 
 		public abstract string CombineLocalPath(string localBaseDirectory, params string[] relativePaths);
-		public abstract string BuildLocalPath(string remotePath);
+		public abstract string BuildLocalPath(string remotePath, out string outVersion);
 
 		#endregion
 

@@ -86,6 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DAO\BaseRepository.cs" />
+    <Compile Include="DAO\NH\BatchProcessor.cs" />
     <Compile Include="DAO\NH\IAuditable.cs" />
     <Compile Include="DAO\NH\IPersistentEntity.cs" />
     <Compile Include="DAO\NH\NHibernateAuditInterceptor.cs" />

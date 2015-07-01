@@ -19,12 +19,15 @@ namespace Teltec.Storage
 		{
 			private int _FileCount = 0;
 			private long _TotalSize = 0;
+			private int _SavedFileCount = 0;
 
 			public int FileCount { get { return _FileCount; } set { _FileCount = value; } }
 			public Int64 TotalSize { get { return _TotalSize; } set { _TotalSize = value; } }
+			public int SavedFileCount { get { return _SavedFileCount; } set { _SavedFileCount = value; } }
 
 			internal void Reset()
 			{
+				_SavedFileCount = 0;
 				_FileCount = 0;
 				_TotalSize = 0;
 			}

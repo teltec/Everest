@@ -39,6 +39,8 @@
 			this.backupPlanListControl1 = new Teltec.Backup.App.Forms.BackupPlan.BackupPlanListControl();
 			this.tpgRestorePlans = new System.Windows.Forms.TabPage();
 			this.restorePlanListControl1 = new Teltec.Backup.App.Forms.RestorePlan.RestorePlanListControl();
+			this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.synchronizeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.tabControl1.SuspendLayout();
 			this.tpgBackupPlans.SuspendLayout();
@@ -58,7 +60,8 @@
 			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.contasToolStripMenuItem,
             this.backupPlansToolStripMenuItem,
-            this.restorePlansToolStripMenuItem});
+            this.restorePlansToolStripMenuItem,
+            this.optionsToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Size = new System.Drawing.Size(670, 24);
@@ -146,6 +149,21 @@
 			this.restorePlanListControl1.Size = new System.Drawing.Size(656, 284);
 			this.restorePlanListControl1.TabIndex = 0;
 			// 
+			// optionsToolStripMenuItem
+			// 
+			this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.synchronizeToolStripMenuItem});
+			this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+			this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
+			this.optionsToolStripMenuItem.Text = "Options";
+			// 
+			// synchronizeToolStripMenuItem
+			// 
+			this.synchronizeToolStripMenuItem.Name = "synchronizeToolStripMenuItem";
+			this.synchronizeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.synchronizeToolStripMenuItem.Text = "Synchronize";
+			this.synchronizeToolStripMenuItem.Click += new System.EventHandler(this.synchronizeToolStripMenuItem_Click);
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -183,6 +201,8 @@
 		private BackupPlan.BackupPlanListControl backupPlanListControl1;
 		private System.Windows.Forms.TabPage tpgRestorePlans;
 		private RestorePlan.RestorePlanListControl restorePlanListControl1;
+		private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem synchronizeToolStripMenuItem;
     }
 }
 

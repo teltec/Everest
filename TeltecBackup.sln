@@ -60,6 +60,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.Logging", "Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.PostInstaller", "Teltec.Backup.PostInstaller\Teltec.Backup.PostInstaller.csproj", "{008DBE47-683D-428A-A56F-539E27F9F9F4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Storage.Tests", "Teltec.Storage.Tests\Teltec.Storage.Tests.csproj", "{7674A1AC-8777-4248-8348-5614E1D5EBCB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -124,6 +126,10 @@ Global
 		{008DBE47-683D-428A-A56F-539E27F9F9F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{008DBE47-683D-428A-A56F-539E27F9F9F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{008DBE47-683D-428A-A56F-539E27F9F9F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7674A1AC-8777-4248-8348-5614E1D5EBCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7674A1AC-8777-4248-8348-5614E1D5EBCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7674A1AC-8777-4248-8348-5614E1D5EBCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7674A1AC-8777-4248-8348-5614E1D5EBCB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

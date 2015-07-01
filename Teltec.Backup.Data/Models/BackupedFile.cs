@@ -27,8 +27,55 @@ namespace Teltec.Backup.Data.Models
 		public virtual Backup Backup
 		{
 			get { return _Backup; }
-			protected set { _Backup = value; }
+			protected set
+			{
+				_Backup = value;
+				if (_Backup != null)
+				{
+					if (_Backup.BackupPlan != null && _Backup.BackupPlan.StorageAccount != null)
+					{
+						StorageAccountType = _Backup.BackupPlan.StorageAccountType;
+						StorageAccount = _Backup.BackupPlan.StorageAccount;
+					}
+				}
+			}
 		}
+
+		#region Account
+
+		private EStorageAccountType _StorageAccountType;
+		public virtual EStorageAccountType StorageAccountType
+		{
+			get { return _StorageAccountType; }
+			set { SetField(ref _StorageAccountType, value); }
+		}
+
+		//private int _StorageAccountId;
+		//public virtual int StorageAccountId
+		//{
+		//	get { return _StorageAccountId; }
+		//	set { SetField(ref _StorageAccountId, value); }
+		//}
+
+		//public static ICloudStorageAccount GetStorageAccount(BackupPlan plan, ICloudStorageAccount dao)
+		//{
+		//	switch (plan.StorageAccountType)
+		//	{
+		//		default:
+		//			throw new ArgumentException("Unhandled StorageAccountType", "plan");
+		//		case EStorageAccountType.AmazonS3:
+		//			return dao.Get(plan.StorageAccountId);
+		//	}
+		//}
+
+		private StorageAccount _StorageAccount;
+		public virtual StorageAccount StorageAccount
+		{
+			get { return _StorageAccount; }
+			set { SetField(ref _StorageAccount, value); }
+		}
+
+		#endregion
 
 		private BackupPlanFile _File;
 		public virtual BackupPlanFile File

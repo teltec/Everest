@@ -32,9 +32,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		{
 			InitializeComponent();
 
+			/*
 			EventDispatcher dispatcher = new EventDispatcher();
 
-			/*
 			Watcher.Subscribe((BackupUpdateMsg msg) =>
 			{
 				if (this.Model == null)

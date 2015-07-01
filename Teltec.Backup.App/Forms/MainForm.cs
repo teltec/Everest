@@ -11,7 +11,7 @@ namespace Teltec.Backup.App.Forms
     {
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 		private readonly BackupPlanRepository _dao = new BackupPlanRepository();
-		
+
         public MainForm()
         {
             InitializeComponent();
@@ -66,6 +66,14 @@ namespace Teltec.Backup.App.Forms
 		private void tabControl1_Selected(object sender, TabControlEventArgs e)
 		{
 			ChangedToTab(e.TabPageIndex);
+		}
+
+		private void synchronizeToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			using (var presenter = new SyncPresenter())
+			{
+				presenter.ShowDialog(this);
+			}
 		}
     }
 }

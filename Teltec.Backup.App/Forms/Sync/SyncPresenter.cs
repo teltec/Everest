@@ -37,7 +37,8 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			base.OnCancel();
 
 			Models.Synchronization sync = Model as Models.Synchronization;
-			_dao.Refresh(sync);
+			if (sync.Id.HasValue)
+				_dao.Refresh(sync);
 		}
 
 		public override void OnFinish()
@@ -46,15 +47,11 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 			Models.Synchronization sync = Model as Models.Synchronization;
 
-			/*
-			Console.WriteLine("Name = {0}", plan.Name);
-			Console.WriteLine("StorageAccount = {0}", plan.StorageAccount.DisplayName);
-			Console.WriteLine("StorageAccountType = {0}", plan.StorageAccountType.ToString());
-			foreach (Models.BackupPlanSourceEntry entry in plan.SelectedSources)
-				Console.WriteLine("SelectedSource => #{0}, {1}, {2}", entry.Id, entry.Type.ToString(), entry.Path);
-			Console.WriteLine("ScheduleType = {0}", plan.ScheduleType.ToString());
-			Console.WriteLine("Schedule.ScheduleType = {0}", plan.Schedule.ScheduleType.ToString());
-			*/
+			Console.WriteLine("Status = {0}", sync.Status);
+			Console.WriteLine("StorageAccount = {0}", sync.StorageAccount.DisplayName);
+			Console.WriteLine("StorageAccountType = {0}", sync.StorageAccountType.ToString());
+			foreach (Models.BackupedFile entry in sync.Files)
+				Console.WriteLine("SyncedFile => #{0}, {1}, {2}", entry.Id, entry.File.Path, entry.Version);
 
 			//try
 			//{

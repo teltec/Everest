@@ -66,8 +66,8 @@ namespace Teltec.Backup.Data.Models
 
 		#endregion
 
-		private DateTime _StartedAt;
-		public virtual DateTime StartedAt
+		private DateTime? _StartedAt;
+		public virtual DateTime? StartedAt
 		{
 			get { return _StartedAt; }
 			protected set { _StartedAt = value; }
@@ -87,8 +87,8 @@ namespace Teltec.Backup.Data.Models
 			protected set { _Status = value; }
 		}
 
-		private IList<SynchronizationFile> _Files = new List<SynchronizationFile>();
-		public virtual IList<SynchronizationFile> Files
+		private IList<BackupedFile> _Files = new List<BackupedFile>();
+		public virtual IList<BackupedFile> Files
 		{
 			get { return _Files; }
 			protected set { SetField(ref _Files, value); }

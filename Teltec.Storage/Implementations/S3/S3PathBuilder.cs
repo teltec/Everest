@@ -1,4 +1,6 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using Teltec.FileSystem;
 using Teltec.Storage.Backend;
@@ -22,9 +24,80 @@ namespace Teltec.Storage.Implementations.S3
 		//	[<RemoteRootDirectory>/][<drive>:/][<directories>/][<filename>:/<version>/][<filename>]
 		// To
 		//	[<LocalRootDirectory>\][<drive>[:]\][<directories>\][<filename>]
-		public override string BuildLocalPath(string remotePath)
+		public override string BuildLocalPath(string remotePath, out string outVersion)
 		{
-			throw new NotImplementedException();
+			Assert.IsNotNullOrEmpty(remotePath);
+			Assert.IsNotNullOrEmpty(RemoteRootDirectory);
+
+			string remoteBaseDir = RemoteRootDirectory
+				+ (RemoteRootDirectory.EndsWith(RemoteDirectorySeparatorChar.ToString())
+					? string.Empty : RemoteDirectorySeparatorChar.ToString());
+
+			if (!remotePath.StartsWith(remoteBaseDir))
+				throw new ArgumentException(string.Format("Value MUST start with {0}", remoteBaseDir), "remotePath");
+
+			string partialRemotePath = remotePath.Substring(remoteBaseDir.Length);
+			string[] remoteParts = partialRemotePath.Split(RemoteDirectorySeparatorChar);
+
+			bool hasDrive = false;
+			bool hasDirectories = false;
+			bool hasVersion = false;
+			bool hasFilename = false;
+
+			string localDrive = string.Empty;
+			List<string> localDirectories = new List<string>();
+			string localFilename = string.Empty;
+			string localVersion = string.Empty;
+
+			int index = 0;
+
+			// Drive
+			localDrive = remoteParts[index++];
+			hasDrive = true;
+
+			// Folders
+			while (index < remoteParts.Length)
+			{
+				string temp = remoteParts[index];
+				if (temp.EndsWith(RemoteVersionPostfixChar.ToString()))
+					break;
+				index++;
+				localDirectories.Add(temp);
+				hasDirectories = true;
+			}
+
+			// Skip "filename:"
+			if (index < remoteParts.Length)
+			{
+				index++;
+			}
+
+			// Version
+			if (index < remoteParts.Length)
+			{
+				outVersion = remoteParts[index++];
+				hasVersion = true;
+			}
+			else
+			{
+				outVersion = null;
+			}
+
+			// Filename
+			if (index < remoteParts.Length)
+			{
+				localFilename = remoteParts[index++];
+				hasFilename = true;
+			}
+
+			if (index != remoteParts.Length || !hasDrive /* || !hasDirectories */ || !hasVersion || !hasFilename)
+				throw new IndexOutOfRangeException("Failed to parse S3 path");
+
+			string localPath = (hasDrive ? localDrive + (hasDirectories || hasFilename ? LocalDirectorySeparatorChar.ToString() : string.Empty) : string.Empty)
+				+ (hasDirectories ? string.Join(LocalDirectorySeparatorChar.ToString(), localDirectories) + LocalDirectorySeparatorChar : string.Empty)
+				+ (hasFilename ? localFilename : string.Empty);
+
+			return localPath;
 		}
 
 		#endregion

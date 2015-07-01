@@ -441,9 +441,11 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		//
 		private void DoUpdateFilesProperties(LinkedList<Models.BackupPlanFile> files)
 		{
+			BatchProcessor batchProcessor = new BatchProcessor();
+
 			foreach (Models.BackupPlanFile entry in files)
 			{
-				ProcessBatch(null);
+				batchProcessor.ProcessBatch(null);
 
 				// Throw if the operation was canceled.
 				CancellationToken.ThrowIfCancellationRequested();
@@ -542,6 +544,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 			ISession session = NHibernateHelper.GetSession();
 
+			BatchProcessor batchProcessor = new BatchProcessor();
 			BackupRepository daoBackup = new BackupRepository(session);
 			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository(session);
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository(session);
@@ -568,44 +571,20 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 					stats.Begin("STEP 1");
 
+					BackupPlanPathNodeCreator pathNodeCreator = new BackupPlanPathNodeCreator(daoBackupPlanPathNode, tx);
+
 					// 1 - Split path into its components and INSERT new path nodes if they don't exist yet.
 					foreach (Models.BackupPlanFile entry in FilesToInsertOrUpdate)
 					{
 						// Throw if the operation was canceled.
 						CancellationToken.ThrowIfCancellationRequested();
 
-						PathNodes pathNodes = new PathNodes(entry.Path);
+						entry.PathNode = pathNodeCreator.CreateOrUpdatePathNodes(Backup.BackupPlan.StorageAccount, entry);
 
-						Models.BackupPlanPathNode previousNode = null;
-						foreach (var pathNode in pathNodes.Nodes)
-						{
-							Models.BackupPlanPathNode planPathNode = daoBackupPlanPathNode.GetByStorageAccountAndTypeAndPath(
-								Backup.BackupPlan.StorageAccount,
-								Models.EntryTypeExtensions.ToEntryType(pathNode.Type), pathNode.Path);
-							if (planPathNode == null)
-							{
-								//BackupPlanFile planFile = daoBackupPlanFile.GetByPlanAndPath(Backup.BackupPlan, entry.Path);
-								//Assert.NotNull(planFile, string.Format("Required {0} not found in the database.", typeof(BackupPlanFile).Name))
-								planPathNode = new Models.BackupPlanPathNode(entry,
-									Models.EntryTypeExtensions.ToEntryType(pathNode.Type),
-									pathNode.Name, pathNode.Path, previousNode);
-								if (previousNode != null)
-								{
-									planPathNode.Parent = previousNode;
-									previousNode.SubNodes.Add(planPathNode);
-								}
-								daoBackupPlanPathNode.Insert(tx, planPathNode);
-							}
-							previousNode = planPathNode;
-							//session.Evict(planPathNode); // Force future queries to re-load it and its relationships.
-						}
-
-						entry.PathNode = previousNode;
-
-						ProcessBatch(session);
+						batchProcessor.ProcessBatch(session);
 					}
 
-					ProcessBatch(session, true);
+					batchProcessor.ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -623,10 +602,10 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						// the `backup_plan_file_id` column.
 						daoBackupPlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved
 
-						ProcessBatch(session);
+						batchProcessor.ProcessBatch(session);
 					}
 
-					ProcessBatch(session, true);
+					batchProcessor.ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -665,10 +644,10 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 						//backupedFiles.Add(backupedFile);
 
-						ProcessBatch(session);
+						batchProcessor.ProcessBatch(session);
 					}
 
-					ProcessBatch(session, true);
+					batchProcessor.ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -686,11 +665,11 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							//Console.WriteLine("2: {0}", file.Path);
 							daoBackupPlanFile.Update(tx, file);
 
-							ProcessBatch(session);
+							batchProcessor.ProcessBatch(session);
 						}
 					}
 
-					ProcessBatch(session, true);
+					batchProcessor.ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -713,7 +692,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						daoBackup.Update(tx, Backup);
 					}
 
-					ProcessBatch(session, true);
+					batchProcessor.ProcessBatch(session, true);
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -747,25 +726,6 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				var filesCount = ChangeSet.AddedFiles.Count() + ChangeSet.ModifiedFiles.Count();
 
 				Assert.IsTrue(transferCount == filesCount, "TransferSet.Files must be equal (ChangeSet.AddedFiles + ChangeSet.ModifiedFiles)");
-			}
-		}
-
-		private short BatchCounter = 0;
-
-		private void ProcessBatch(ISession session, bool forceFlush = false)
-		{
-			++BatchCounter;
-
-			if (BatchCounter % NHibernateHelper.BatchSize == 0 || forceFlush)
-			{
-				// Flush a batch of operations and release memory.
-				if (session != null)
-				{
-					session.Flush();
-					session.Clear();
-				}
-
-				BatchCounter = 0;
 			}
 		}
 

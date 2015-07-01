@@ -335,6 +335,9 @@
     <EmbeddedResource Include="Forms\Schedule\ScheduleRecurringOptionsForm.resx">
       <DependentUpon>ScheduleRecurringOptionsForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Sync\SyncProgressForm.resx">
+      <DependentUpon>SyncProgressForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\Sync\SyncSelectAccountForm.resx">
       <DependentUpon>SyncSelectAccountForm.cs</DependentUpon>
     </EmbeddedResource>

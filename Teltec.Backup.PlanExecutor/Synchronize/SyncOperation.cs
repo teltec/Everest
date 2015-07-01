@@ -1,14 +1,18 @@
 ﻿using Amazon.Runtime;
+using NHibernate;
 using NLog;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Data.DAO.NH;
 using Teltec.Common.Utils;
+using Teltec.Stats;
 using Teltec.Storage;
-using Teltec.Storage.Agent;
 using Teltec.Storage.Implementations.S3;
 using Models = Teltec.Backup.Data.Models;
 
@@ -18,10 +22,12 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 	{
 		Unknown = 0,
 		Started = 1,
-		Updated = 2,
-		Canceled = 3,
-		Failed = 4,
-		Finished = 5,
+		//Resumed = 2,
+		ListingUpdated = 3,
+		SavingUpdated = 4,
+		Canceled = 5,
+		Failed = 6,
+		Finished = 7,
 	}
 
 	public static class Extensions
@@ -99,7 +105,17 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 
 		protected SyncOperationOptions Options;
 		protected CustomSynchronizationAgent SyncAgent;
-		protected List<Models.SynchronizationFile> Files;
+		protected List<ListingObject> RemoteObjects;
+
+		public string RemoteRootDirectory
+		{
+			get { return TransferAgent != null ? TransferAgent.RemoteRootDir : null; }
+		}
+
+		public string LocalRootDirectory
+		{
+			get { return TransferAgent != null ? TransferAgent.LocalRootDir : null; }
+		}
 
 		public override void Start(out SyncResults results)
 		{
@@ -118,8 +134,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				TransferAgent.Dispose();
 			if (TransferListControl != null)
 				TransferListControl.ClearTransfers();
-			if (Files != null)
-				Files = new List<Models.SynchronizationFile>(4096); // Avoid small resizes without compromising memory.
+
 
 			//
 			// Setup agents.
@@ -128,6 +143,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
 			TransferAgent.RemoteRootDir = TransferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP", s3account.Hostname);
 
+			RemoteObjects = new List<ListingObject>(4096); // Avoid small resizes without compromising memory.
 			SyncAgent = new CustomSynchronizationAgent(TransferAgent);
 
 			results = SyncAgent.Results;
@@ -142,8 +158,6 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 
 		protected void RegisterEventHandlers(Models.Synchronization sync)
 		{
-			SynchronizationFileRepository daoSynchronizationFile = new SynchronizationFileRepository();
-
 			TransferAgent.ListingStarted += (object sender, ListingProgressArgs e) =>
 			{
 				// ...
@@ -154,34 +168,16 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			};
 			TransferAgent.ListingProgress += (object sender, ListingProgressArgs e) =>
 			{
+				RemoteObjects.AddRange(e.Objects);
+
 				foreach (var obj in e.Objects)
 				{
-					Models.SynchronizationFile syncFile = daoSynchronizationFile.GetByURL(obj.Key);
-					if (syncFile.Id.HasValue)
-					{
-						syncFile.Synchronization = sync;
-						syncFile.FileSize = obj.Size;
-						syncFile.LastWrittenAt = obj.LastModified;
-						syncFile.UpdatedAt = DateTime.UtcNow;
-					}
-					else
-					{
-						syncFile = new Models.SynchronizationFile();
-						syncFile.Synchronization = sync;
-						syncFile.Path = obj.Key;
-						syncFile.FileSize = obj.Size;
-						syncFile.LastWrittenAt = obj.LastModified;
-						syncFile.CreatedAt = DateTime.UtcNow;
-					}
-
 					SyncAgent.Results.Stats.FileCount += 1;
-					SyncAgent.Results.Stats.TotalSize += syncFile.FileSize;
-
-					Files.Add(syncFile);
+					SyncAgent.Results.Stats.TotalSize += obj.Size;
 
 					var message = string.Format("Found {0}", obj.Key);
 					Info(message);
-					OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Updated, Message = message });
+					OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });
 				}
 			};
 			TransferAgent.ListingCanceled += (object sender, ListingProgressArgs e, Exception ex) =>
@@ -193,8 +189,179 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				var message = string.Format("Failed: {0}", ex != null ? ex.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(SyncStatusLevel.ERROR, message);
-				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Updated, Message = message });
+				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });
 			};
+		}
+
+		private bool ParseS3Key(string inKey, out Models.EntryType outType, out string outPath, out string outVersion)
+		{
+			outType = Models.EntryType.FILE_VERSION;
+			S3PathBuilder builder = new S3PathBuilder();
+			builder.LocalRootDirectory = this.LocalRootDirectory;
+			builder.RemoteRootDirectory = this.RemoteRootDirectory;
+			outPath = builder.BuildLocalPath(inKey, out outVersion);
+			return true;
+		}
+
+		private void Save()
+		{
+			ISession session = NHibernateHelper.GetSession();
+
+			BatchProcessor batchProcessor = new BatchProcessor();
+			StorageAccountRepository daoStorageAccount = new StorageAccountRepository(session);
+			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository(session);
+			BackupPlanPathNodeRepository daoBackupPlanPathNode = new BackupPlanPathNodeRepository(session);
+			BackupedFileRepository daoBackupedFile = new BackupedFileRepository(session);
+
+			BlockPerfStats stats = new BlockPerfStats();
+
+			using (ITransaction tx = session.BeginTransaction())
+			{
+				try
+				{
+					// ------------------------------------------------------------------------------------
+
+					Models.StorageAccount account = daoStorageAccount.Get(Synchronization.StorageAccount.Id);
+
+					// ------------------------------------------------------------------------------------
+
+					stats.Begin("STEP 1");
+
+					BackupPlanPathNodeCreator pathNodeCreator = new BackupPlanPathNodeCreator(daoBackupPlanPathNode, tx);
+
+					// ...
+					foreach (var obj in RemoteObjects)
+					{
+						// Throw if the operation was canceled.
+						//CancellationToken.ThrowIfCancellationRequested();
+
+						Models.EntryType type;
+						string path = string.Empty;
+						string versionString = string.Empty;
+
+						// Parse obj.Key into its relevant parts.
+						bool ok = ParseS3Key(obj.Key, out type, out path, out versionString);
+
+						DateTime lastWrittenAt = DateTime.ParseExact(versionString, Models.BackupedFile.VersionFormat, CultureInfo.InvariantCulture);
+
+						// Create/Update BackupPlanFile, but do not SAVE it.
+						Models.BackupPlanFile entry = daoBackupPlanFile.GetByStorageAccountAndPath(account, path);
+						Models.BackupedFile version = null;
+
+						if (entry == null)
+						{
+							// Create `BackupPlanFile`.
+							entry = new Models.BackupPlanFile();
+							entry.BackupPlan = null;
+							entry.StorageAccountType = account.Type;
+							entry.StorageAccount = account;
+							entry.Path = path;
+							entry.LastSize = obj.Size;
+							entry.LastWrittenAt = lastWrittenAt;
+							//entry.LastChecksum =
+							entry.LastStatus = Models.BackupFileStatus.UNCHANGED;
+							entry.CreatedAt = DateTime.UtcNow;
+
+							// Create `BackupedFile`.
+							version = new Models.BackupedFile(null, entry);
+							version.StorageAccountType = account.Type;
+							version.StorageAccount = account;
+							version.FileLastWrittenAt = lastWrittenAt;
+							version.FileSize = entry.LastSize;
+							version.FileStatus = Models.BackupFileStatus.MODIFIED;
+							version.TransferStatus = TransferStatus.COMPLETED;
+							version.UpdatedAt = DateTime.UtcNow;
+
+							entry.Versions.Add(version);
+							//daoBackupedFile.Insert(tx, version);
+						}
+						else
+						{
+							// Update `BackupPlanFile`.
+							entry.LastSize = obj.Size;
+							entry.LastWrittenAt = lastWrittenAt;
+							//entry.LastChecksum =
+							//entry.LastStatus = Models.BackupFileStatus.MODIFIED;
+							entry.UpdatedAt = DateTime.UtcNow;
+
+							IList<Models.BackupedFile> versions = null;
+							try
+							{
+								versions = daoBackupedFile.GetCompletedByStorageAccountAndPath(account, path, versionString);
+							}
+							catch (FormatException ex)
+							{
+								logger.ErrorException("Invalid date format?", ex);
+								continue; // TODO(jweyrich): Should we abort?
+							}
+
+							// Check whether our database already contains this exact file + version.
+							if (versions != null && versions.Count == 0)
+							{
+								// Create `BackupedFile`.
+								version = new Models.BackupedFile(null, entry);
+								version.StorageAccountType = account.Type;
+								version.StorageAccount = account;
+								version.FileLastWrittenAt = entry.LastWrittenAt;
+								version.FileSize = entry.LastSize;
+								version.FileStatus = Models.BackupFileStatus.MODIFIED;
+								version.TransferStatus = TransferStatus.COMPLETED;
+								version.UpdatedAt = DateTime.UtcNow;
+
+								entry.Versions.Add(version);
+								//daoBackupedFile.Insert(tx, version);
+							}
+							else
+							{
+								// Update `BackupedFile`.
+								version = versions.First();
+								version.FileLastWrittenAt = entry.LastWrittenAt;
+								version.FileSize = entry.LastSize;
+								version.UpdatedAt = DateTime.UtcNow;
+								//daoBackupedFile.Update(tx, version);
+							}
+						}
+
+						// Create path nodes and INSERT them, if they don't exist yet.
+						entry.PathNode = pathNodeCreator.CreateOrUpdatePathNodes(account, entry);
+
+						// Create or update `BackupPlanFile`.
+						daoBackupPlanFile.InsertOrUpdate(tx, entry);
+
+						bool didFlush = batchProcessor.ProcessBatch(session);
+						//if (didFlush)
+						//{
+						//	// Report save progress
+						//	SyncAgent.Results.Stats.SavedFileCount += 1;
+						//
+						//	var message = string.Format("Saved {0} @ {1}", entry.Path, version.VersionName);
+						//	Info(message);
+						//	OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.SavingUpdated, Message = message });
+						//}
+					}
+
+					batchProcessor.ProcessBatch(session, true);
+					stats.End();
+
+					// ------------------------------------------------------------------------------------
+
+					tx.Commit();
+				}
+				catch (OperationCanceledException)
+				{
+					tx.Rollback(); // Rollback the transaction
+					throw;
+				}
+				catch (Exception)
+				{
+					tx.Rollback(); // Rollback the transaction
+					throw;
+				}
+				finally
+				{
+					session.Close();
+				}
+			}
 		}
 
 		protected async void DoSynchronization(CustomSynchronizationAgent agent, Models.Synchronization sync, SyncOperationOptions options)
@@ -237,17 +404,48 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 					var message = string.Format("Synchronizing files finished.");
 					Info(message);
 					//StatusInfo.Update(SyncStatusLevel.INFO, message);
-					OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Finished, Message = message });
+					//OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Finished, Message = message });
 				}
 
 				{
 					var message = string.Format("Estimated synchronization size: {0} files, {1}",
-						Files.Count(), FileSizeUtils.FileSizeToString(agent.Results.Stats.TotalSize));
+						RemoteObjects.Count(), FileSizeUtils.FileSizeToString(agent.Results.Stats.TotalSize));
 					Info(message);
 				}
+
+				Task saveTask = ExecuteOnBackround(() =>
+					{
+						// Save everything.
+						Save();
+					}, CancellationTokenSource.Token);
+
+				try
+				{
+					await saveTask;
+				}
+				catch (Exception ex)
+				{
+					logger.ErrorException("Caught Exception", ex);
+
+					if (saveTask.IsFaulted || saveTask.IsCanceled)
+					{
+						if (saveTask.IsCanceled)
+							OnCancelation(agent, sync, ex); // saveTask.Exception
+						else
+							OnFailure(agent, sync, ex); // saveTask.Exception
+						return;
+					}
+				}
+
 			}
 
 			OnFinish(agent, sync);
+		}
+
+		private Task ExecuteOnBackround(Action action, CancellationToken token)
+		{
+			return Task.Run(action, token);
+			//return AsyncHelper.ExecuteOnBackround(action, token);
 		}
 
 		#endregion
@@ -304,6 +502,12 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			var message = string.Format("Synchronization finished! Stats: {0} files", stats.FileCount);
 			Info(message);
 			//StatusInfo.Update(SyncStatusLevel.OK, message);
+
+			// TODO(jweyrich): Handle overall failure and cancelation during Sync?
+			sync.DidComplete();
+			_daoSynchronization.Update(sync);
+			OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Finished, Message = message });
+
 /*
 			switch (agent.Results.OverallStatus)
 			//switch (sync.Status)

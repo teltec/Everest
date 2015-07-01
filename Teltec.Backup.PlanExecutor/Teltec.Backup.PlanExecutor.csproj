@@ -130,6 +130,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BackupPlanPathNodeCreator.cs" />
     <Compile Include="Backup\BackupOperation.cs" />
     <Compile Include="Backup\CustomBackupAgent.cs" />
     <Compile Include="Backup\NewBackupOperation.cs" />
@@ -144,6 +145,7 @@
     <Compile Include="Restore\RemoteRestoreOperation.cs" />
     <Compile Include="Restore\RestoreOperation.cs" />
     <Compile Include="Synchronize\CustomSynchronizationAgent.cs" />
+    <Compile Include="Synchronize\NewSyncOperation.cs" />
     <Compile Include="Synchronize\SyncOperation.cs" />
     <Compile Include="Versioning\DefaultPathScanner.cs" />
     <Compile Include="Versioning\DefaultRestoreScanner.cs" />

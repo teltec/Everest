@@ -79,9 +79,6 @@ namespace Teltec.Backup.App.Forms.Sync
 
 		protected override void OnBeforeNextOrFinish(object sender, CancelEventArgs e)
 		{
-			// TODO(jweyrich): Check whether the selected account/bucket has a previous backup, and if it does not,
-			//                 tell the user the account/bucket has no previous backups.
-
 			if (DoValidate)
 			{
 				if (!IsValid())

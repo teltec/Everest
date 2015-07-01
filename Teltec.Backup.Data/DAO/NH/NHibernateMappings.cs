@@ -357,8 +357,9 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupedFileMap()
 		{
-			string UNIQUE_KEY_NAME = "uk_backuped_file_backup_file"; // (backup_id, backup_plan_file_Id)
-			string INDEX_BACKUP_XFERSTATUS_FILE = "idx_backup_xferstatus_file";
+			string UNIQUE_KEY = "uk_backuped_file"; // (storage_account_id, backup_plan_file_id, file_last_written_at)
+			string INDEX_BACKUP_PATH_XFERSTATUS = "idx_backup_path_xferstatus"; // (backup_id, backup_plan_file_id, transfer_status)
+			string INDEX_BACKUP_XFERSTATUS = "idx_backup_xferstatus"; // (backup_id, transfer_status)
 
 			Table("backuped_files");
 
@@ -370,8 +371,28 @@ namespace Teltec.Backup.Data.DAO.NH
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_NAME)
-				.Index(INDEX_BACKUP_XFERSTATUS_FILE)
+				.Index(INDEX_BACKUP_PATH_XFERSTATUS)
+				.Index(INDEX_BACKUP_XFERSTATUS)
+				;
+
+			Map(p => p.StorageAccountType)
+				.Column("storage_account_type")
+				.Not.Nullable()
+				.CustomType<GenericEnumMapper<Models.EStorageAccountType>>()
+				.Index("idx_storage_account_type")
+				;
+
+			//Map(p => p.StorageAccountId)
+			//	.Column("storage_account_id")
+			//	.Not.Nullable()
+			//	;
+
+			References(fk => fk.StorageAccount)
+				.Column("storage_account_id")
+				.Not.Nullable()
+				//.LazyLoad(Laziness.Proxy)
+				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY)
 				;
 
 			References(fk => fk.File)
@@ -380,8 +401,8 @@ namespace Teltec.Backup.Data.DAO.NH
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_NAME)
-				.Index(INDEX_BACKUP_XFERSTATUS_FILE)
+				.UniqueKey(UNIQUE_KEY)
+				.Index(INDEX_BACKUP_PATH_XFERSTATUS)
 				;
 
 			Map(p => p.FileSize)
@@ -397,6 +418,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			Map(p => p.FileLastWrittenAt)
 				.Column("file_last_written_at")
 				.Nullable()
+				.UniqueKey(UNIQUE_KEY)
 				//.CustomType<TimestampType>()
 				;
 
@@ -404,7 +426,8 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Column("transfer_status")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<TransferStatus>>()
-				.Index(INDEX_BACKUP_XFERSTATUS_FILE)
+				.Index(INDEX_BACKUP_PATH_XFERSTATUS)
+				.Index(INDEX_BACKUP_XFERSTATUS)
 				;
 
 			Map(p => p.UpdatedAt)
@@ -905,7 +928,7 @@ namespace Teltec.Backup.Data.DAO.NH
 
 			Map(p => p.StartedAt)
 				.Column("started_at")
-				.Not.Nullable()
+				.Nullable()
 				//.CustomType<TimestampType>()
 				;
 

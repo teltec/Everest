@@ -3,12 +3,25 @@ using NHibernate.Criterion;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
 
 namespace Teltec.Backup.Data.DAO
 {
 	#region Accounts
+
+	public class StorageAccountRepository : BaseRepository<Models.StorageAccount, Int32?>
+	{
+		public StorageAccountRepository()
+		{
+		}
+
+		public StorageAccountRepository(ISession session)
+			: base(session)
+		{
+		}
+	}
 
 	public class AmazonS3AccountRepository : BaseRepository<Models.AmazonS3Account, Int32?>
 	{
@@ -239,21 +252,24 @@ namespace Teltec.Backup.Data.DAO
 			return crit.List<Models.BackupedFile>();
 		}
 
-		public IList<Models.BackupedFile> GetCompletedByStorageAccountAndPath(Models.StorageAccount account, string path, bool ignoreCase = false)
+		public IList<Models.BackupedFile> GetCompletedByStorageAccountAndPath(Models.StorageAccount account, string path, string version = null, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(account);
 			Assert.IsNotNullOrEmpty(path);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 
-			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
-			string backupPlanPropertyName = this.GetPropertyName((Models.Backup x) => x.BackupPlan);
-			string storageAccountPropertyName = this.GetPropertyName((Models.BackupPlan x) => x.StorageAccount);
-			crit.CreateAlias(backupPropertyName, "bkp");
-			crit.CreateAlias("bkp." + backupPlanPropertyName, "plan");
-			crit.Add(Restrictions.Eq("plan." + storageAccountPropertyName, account));
+			string storageAccountPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.StorageAccount);
+			crit.Add(Restrictions.Eq(storageAccountPropertyName, account));
 
 			string transferStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
 			crit.Add(Restrictions.Eq(transferStatusPropertyName, TransferStatus.COMPLETED));
+
+			if (version != null)
+			{
+				DateTime fileLastWrittenAt = DateTime.ParseExact(version, Models.BackupedFile.VersionFormat, CultureInfo.InvariantCulture);
+				string fileLastWrittenAtPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.FileLastWrittenAt);
+				crit.Add(Restrictions.Eq(fileLastWrittenAtPropertyName, fileLastWrittenAt));
+			}
 
 			string filePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
 			string filePathPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.Path);
@@ -429,6 +445,18 @@ namespace Teltec.Backup.Data.DAO
 		public SynchronizationRepository(ISession session)
 			: base(session)
 		{
+		}
+
+		public Models.Synchronization GetLatestByStorageAccount(Models.StorageAccount account)
+		{
+			Assert.IsNotNull(account);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string storageAccountPropertyName = this.GetPropertyName((Models.Synchronization x) => x.StorageAccount);
+			crit.Add(Restrictions.Eq(storageAccountPropertyName, account));
+			string idPropertyName = this.GetPropertyName((Models.Synchronization x) => x.Id);
+			crit.AddOrder(Order.Desc(idPropertyName));
+			crit.SetMaxResults(1);
+			return crit.UniqueResult<Models.Synchronization>();
 		}
 	}
 
