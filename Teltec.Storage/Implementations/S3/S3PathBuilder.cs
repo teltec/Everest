@@ -91,7 +91,7 @@ namespace Teltec.Storage.Implementations.S3
 			}
 
 			if (index != remoteParts.Length || !hasDrive /* || !hasDirectories */ || !hasVersion || !hasFilename)
-				throw new IndexOutOfRangeException("Failed to parse S3 path");
+				throw new IndexOutOfRangeException(string.Format("Failed to parse S3 path - {0}", remotePath));
 
 			string localPath = (hasDrive ? localDrive + (hasDirectories || hasFilename ? LocalDirectorySeparatorChar.ToString() : string.Empty) : string.Empty)
 				+ (hasDirectories ? string.Join(LocalDirectorySeparatorChar.ToString(), localDirectories) + LocalDirectorySeparatorChar : string.Empty)
