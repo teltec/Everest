@@ -55,14 +55,14 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 			//try
 			//{
-				if (IsEditingModel)
-				{
-					_dao.Update(sync);
-				}
-				else
-				{
-					_dao.Insert(sync);
-				}
+			//	if (IsEditingModel)
+			//	{
+			//		_dao.Update(sync);
+			//	}
+			//	else
+			//	{
+			//		_dao.Insert(sync);
+			//	}
 			//}
 			//catch (Exception ex)
 			//{

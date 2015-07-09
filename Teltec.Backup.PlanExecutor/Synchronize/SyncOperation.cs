@@ -203,7 +203,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			return true;
 		}
 
-		private void Save()
+		private void Save(CancellationToken CancellationToken)
 		{
 			ISession session = NHibernateHelper.GetSession();
 
@@ -229,11 +229,14 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 
 					BackupPlanPathNodeCreator pathNodeCreator = new BackupPlanPathNodeCreator(daoBackupPlanPathNode, tx);
 
-					// ...
+					// Report save progress
+					ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount, true);
+
+					// Saving loop
 					foreach (var obj in RemoteObjects)
 					{
 						// Throw if the operation was canceled.
-						//CancellationToken.ThrowIfCancellationRequested();
+						CancellationToken.ThrowIfCancellationRequested();
 
 						Models.EntryType type;
 						string path = string.Empty;
@@ -328,19 +331,19 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 						// Create or update `BackupPlanFile`.
 						daoBackupPlanFile.InsertOrUpdate(tx, entry);
 
+						SyncAgent.Results.Stats.SavedFileCount += 1;
+
 						bool didFlush = batchProcessor.ProcessBatch(session);
-						//if (didFlush)
-						//{
-						//	// Report save progress
-						//	SyncAgent.Results.Stats.SavedFileCount += 1;
-						//
-						//	var message = string.Format("Saved {0} @ {1}", entry.Path, version.VersionName);
-						//	Info(message);
-						//	OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.SavingUpdated, Message = message });
-						//}
+
+						// Report save progress
+						ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount);
 					}
 
 					batchProcessor.ProcessBatch(session, true);
+
+					// Report save progress
+					ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount, true);
+
 					stats.End();
 
 					// ------------------------------------------------------------------------------------
@@ -361,6 +364,19 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				{
 					session.Close();
 				}
+			}
+		}
+
+		private readonly int ReportSaveBatchSize = 5;
+
+		private void ReportSaveProgress(int totalSaved, bool force = false)
+		{
+			if ((totalSaved % ReportSaveBatchSize == 0) || force)
+			{
+				var message = string.Format("Saved {0} more files", totalSaved);
+				//var message = string.Format("Saved {0} @ {1}", entry.Path, version.VersionName);
+				Info(message);
+				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.SavingUpdated, Message = message });
 			}
 		}
 
@@ -416,7 +432,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				Task saveTask = ExecuteOnBackround(() =>
 					{
 						// Save everything.
-						Save();
+						Save(CancellationTokenSource.Token);
 					}, CancellationTokenSource.Token);
 
 				try

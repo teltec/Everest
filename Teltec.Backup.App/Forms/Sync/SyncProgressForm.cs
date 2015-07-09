@@ -1,9 +1,11 @@
 ﻿using NUnit.Framework;
 using System;
+using System.Windows.Forms;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.PlanExecutor.Synchronize;
 using Teltec.Common.Utils;
 using Teltec.Storage;
+using Teltec.Common.Extensions;
 using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms.Sync
@@ -11,15 +13,11 @@ namespace Teltec.Backup.App.Forms.Sync
 	public partial class SyncProgressForm : Teltec.Forms.Wizard.WizardForm
 	{
 		private Models.Synchronization Sync = new Models.Synchronization();
+		private EventDispatcher Dispatcher = new EventDispatcher();
 
 		public SyncProgressForm()
 		{
 			InitializeComponent();
-
-			this.PreviousEnabled = false;
-			this.NextEnabled = false;
-
-			EventDispatcher dispatcher = new EventDispatcher();
 
 			this.ModelChangedEvent += (sender, args) =>
 			{
@@ -37,9 +35,14 @@ namespace Teltec.Backup.App.Forms.Sync
 			};
 		}
 
-		private void btnSynchronize_Click(object sender, System.EventArgs e)
+		protected override void OnShown(EventArgs e)
 		{
+			base.OnShown(e);
 
+			this.btnPrevious.Enabled = false;
+			this.btnNext.Enabled = false;
+			this.btnFinish.Enabled = false;
+			this.btnCancel.Enabled = false;
 		}
 
 		// ----------------------------------------------------------------------------------------
@@ -85,6 +88,10 @@ namespace Teltec.Backup.App.Forms.Sync
 			{
 				this.llblRunNow.Enabled = false;
 
+				this.btnPrevious.Enabled = false;
+				this.btnNext.Enabled = false;
+				this.btnFinish.Enabled = false;
+
 				Models.Synchronization sync = Model as Models.Synchronization;
 				if (sync.Id.HasValue)
 				{
@@ -114,14 +121,15 @@ namespace Teltec.Backup.App.Forms.Sync
 		static string LBL_RUNNOW_STOPPED = "Run now";
 		static string LBL_STATUS_STARTED = "Running";
 		static string LBL_STATUS_STOPPED = "Stopped";
-		static string LBL_STATUS_INTERRUPTED = "Interrupted";
 		static string LBL_STATUS_CANCELED = "Canceled";
 		static string LBL_STATUS_FAILED = "Failed";
 		static string LBL_STATUS_COMPLETED = "Completed";
 		static string LBL_DURATION_STARTED = "Starting...";
 		static string LBL_DURATION_INITIAL = "Not started";
+		static string LBL_TOTALFILES_STOPPED = "Not started";
+		static string LBL_TOTALFILES_STARTED = "Starting...";
 		static string LBL_FILESSYNCED_STOPPED = "Not started";
-		static string LBL_FILESSYNCED_WAITING = "Waiting...";
+		static string LBL_FILESSYNCED_STARTED = "Waiting listing completion...";
 
 		private void UpdateStatsInfo(SyncOperationStatus status, bool runningRemotely = false)
 		{
@@ -136,8 +144,12 @@ namespace Teltec.Backup.App.Forms.Sync
 						this.lblRemoteDirectory.Text = RunningOperation.RemoteRootDirectory;
 						this.lblStatus.Text = LBL_STATUS_STOPPED;
 						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
+						this.lblTotalFiles.Text = LBL_TOTALFILES_STOPPED;
 						this.lblFilesSynced.Text = LBL_FILESSYNCED_STOPPED;
 						this.lblDuration.Text = LBL_DURATION_INITIAL;
+						this.btnPrevious.Enabled = false;
+						this.btnNext.Enabled = false;
+						this.btnFinish.Enabled = false;
 						break;
 					}
 				case SyncOperationStatus.Started:
@@ -148,7 +160,8 @@ namespace Teltec.Backup.App.Forms.Sync
 						this.llblRunNow.Text = LBL_RUNNOW_RUNNING;
 						this.lblStatus.Text = LBL_STATUS_STARTED;
 						this.lblDuration.Text = LBL_DURATION_STARTED;
-						this.lblFilesSynced.Text = LBL_FILESSYNCED_WAITING;
+						this.lblTotalFiles.Text = LBL_TOTALFILES_STARTED;
+						this.lblFilesSynced.Text = LBL_FILESSYNCED_STARTED;
 
 						timer1.Enabled = true;
 						timer1.Start();
@@ -156,16 +169,19 @@ namespace Teltec.Backup.App.Forms.Sync
 					}
 				case SyncOperationStatus.ListingUpdated:
 					{
-						this.lblFilesSynced.Text = string.Format("{0} files ({1})",
+						this.lblTotalFiles.Text = string.Format("{0} files ({1})",
 							 OperationResults.Stats.FileCount,
 							 FileSizeUtils.FileSizeToString(OperationResults.Stats.TotalSize));
 						break;
 					}
 				case SyncOperationStatus.SavingUpdated:
 					{
-						this.lblFilesSynced.Text = string.Format("{0} of {1}",
-							 OperationResults.Stats.SavedFileCount,
-							 OperationResults.Stats.FileCount);
+						Dispatcher.Invoke(() =>
+						{
+							this.lblFilesSynced.Text = string.Format("{0} of {1}",
+								OperationResults.Stats.SavedFileCount,
+								OperationResults.Stats.FileCount);
+						});
 						break;
 					}
 				case SyncOperationStatus.Canceled:
@@ -179,6 +195,10 @@ namespace Teltec.Backup.App.Forms.Sync
 
 						timer1.Stop();
 						timer1.Enabled = false;
+
+						this.btnPrevious.Enabled = true;
+						this.btnNext.Enabled = true;
+						this.btnFinish.Enabled = true;
 
 						if (!runningRemotely)
 						{
@@ -198,6 +218,10 @@ namespace Teltec.Backup.App.Forms.Sync
 
 						timer1.Stop();
 						timer1.Enabled = false;
+
+						this.btnPrevious.Enabled = true;
+						this.btnNext.Enabled = true;
+						this.btnFinish.Enabled = true;
 
 						if (!runningRemotely)
 						{
