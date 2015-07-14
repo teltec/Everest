@@ -228,6 +228,26 @@ namespace Teltec.Backup.PlanExecutor.Backup
 		protected abstract Task<LinkedList<string>> GetFilesToProcess(Models.Backup backup);
 		protected abstract Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess);
 
+		// Update specific `BackupPlanFile`s that exist and are NOT yet associated to a `BackupPlan`.
+		protected void DoUpdateSyncedFiles(Models.Backup backup, LinkedList<string> filesToProcess)
+		{
+			BackupPlanFileRepository dao = new BackupPlanFileRepository();
+
+			int totalUpdates = 0;
+			foreach (var path in filesToProcess)
+			{
+				// There's NO NEED to SELECT and UPDATE if we can UPDATE directly using a WHERE clause.
+				totalUpdates += dao.AssociateSyncedFileToBackupPlan(backup.BackupPlan, path);
+			}
+
+			logger.Info("Associated {0} synced files to Backup Plan {1}", totalUpdates, backup, backup.BackupPlan.Name);
+		}
+
+		protected Task ExecuteOnBackround(Action action)
+		{
+			return AsyncHelper.ExecuteOnBackround(action);
+		}
+
 		protected async void DoBackup(CustomBackupAgent agent, Models.Backup backup, BackupOperationOptions options)
 		{
 			OnStart(agent, backup);
@@ -272,6 +292,33 @@ namespace Teltec.Backup.PlanExecutor.Backup
 					Info(message);
 					//StatusInfo.Update(BackupStatusLevel.INFO, message);
 					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.ScanningFilesFinished, Message = message });
+				}
+			}
+
+			//
+			// Update synced files
+			//
+
+			{
+				Task updateSyncedFilesTask = ExecuteOnBackround(() => { DoUpdateSyncedFiles(backup, filesToProcess); });
+
+				try
+				{
+					await updateSyncedFilesTask;
+				}
+				catch (Exception ex)
+				{
+					logger.ErrorException("Caught Exception", ex);
+
+					if (updateSyncedFilesTask.IsFaulted || updateSyncedFilesTask.IsCanceled)
+					{
+						Versioner.Undo();
+						if (updateSyncedFilesTask.IsCanceled)
+							OnCancelation(agent, backup, ex); // updateSyncedFilesTask.Exception
+						else
+							OnFailure(agent, backup, ex); // updateSyncedFilesTask.Exception
+						return;
+					}
 				}
 			}
 

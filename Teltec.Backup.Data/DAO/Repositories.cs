@@ -159,6 +159,40 @@ namespace Teltec.Backup.Data.DAO
 			crit.Add(expr);
 			return crit.UniqueResult<Models.BackupPlanFile>();
 		}
+
+		public int AssociateSyncedFileToBackupPlan(Models.BackupPlan plan, string path, bool ignoreCase = false)
+		{
+			Assert.IsNotNull(plan);
+			Assert.IsNotNull(plan.Id);
+			Assert.IsNotNullOrEmpty(path);
+
+			string modelName = typeof(Models.BackupPlanFile).Name;
+			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.BackupPlan);
+			string storageAccountPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.StorageAccount);
+			string pathPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.Path);
+
+			string queryString = string.Format(
+				"UPDATE {0}"
+				+ "   SET {1} = :backupPlanId"
+				+ " WHERE"
+				+ "   {1} IS NULL"
+				+ "   AND {2} = :storageAccountId"
+				+ (ignoreCase ? "   AND lower({3}) = lower(:path)" : "   AND {3} = :path")
+				, modelName, backupPlanPropertyName, storageAccountPropertyName, pathPropertyName
+			);
+
+			IQuery query = Session.CreateQuery(queryString)
+				//.SetParameter("modelName", modelName)
+				//.SetParameter("backupPlanPropertyName", backupPlanPropertyName)
+				.SetParameter("backupPlanId", plan.Id)
+				//.SetParameter("storageAccountPropertyName", storageAccountPropertyName)
+				.SetParameter("storageAccountId", plan.StorageAccount.Id)
+				//.SetParameter("pathPropertyName", pathPropertyName)
+				.SetParameter("path", path)
+				;
+
+			return query.ExecuteUpdate();
+		}
 	}
 
 	public class BackupPlanPathNodeRepository : BaseRepository<Models.BackupPlanPathNode, Int64?>
