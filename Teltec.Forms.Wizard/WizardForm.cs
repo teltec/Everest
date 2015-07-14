@@ -20,12 +20,8 @@ namespace Teltec.Forms.Wizard
 				this.GetPropertyName((WizardForm x) => x.NextEnabled)));
 			btnNext.DataBindings.Add(new NegateBinding("Visible",
 				this, this.GetPropertyName((WizardForm x) => x.IsLastForm)));
-			// Also use `NextEnabled` to enable/disable the "Finish" button because
-			// its appearance is mutually exclusive with the "Next" button. In other
-			// words, the "Next" and "Finish" buttons will never appear at the same
-			// time.
 			btnFinish.DataBindings.Add(new Binding("Enabled", this,
-				this.GetPropertyName((WizardForm x) => x.NextEnabled)));
+				this.GetPropertyName((WizardForm x) => x.FinishEnabled)));
 			btnFinish.DataBindings.Add(new Binding("Visible", this,
 				this.GetPropertyName((WizardForm x) => x.IsLastForm)));
 		}
@@ -79,6 +75,19 @@ namespace Teltec.Forms.Wizard
 				SetField(ref _Model, value);
 				OnModelChanged(this, new ModelChangedEventArgs(_Model));
 			}
+		}
+
+		[
+		Bindable(true),
+		Category("Misc"),
+		DefaultValue(false),
+		DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)
+		]
+		protected bool _FinishEnabled;
+		public bool FinishEnabled
+		{
+			get { return _FinishEnabled; }
+			set { SetField(ref _FinishEnabled, value); }
 		}
 
 		[

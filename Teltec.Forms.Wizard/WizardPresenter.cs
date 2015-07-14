@@ -90,9 +90,10 @@ namespace Teltec.Forms.Wizard
 			object instance = Activator.CreateInstance(options.Type);
 			WizardForm form = (WizardForm)instance;
 			form.Owner = owner;
-			form.NextEnabled = index < _RegisteredForms.Count - 1;
-			form.PreviousEnabled = index > 0;
 			form.IsLastForm = index == _RegisteredForms.Count - 1;
+			form.FinishEnabled = form.IsLastForm;
+			form.NextEnabled = !form.IsLastForm;
+			form.PreviousEnabled = index > 0;
 			form.CancelEvent += form_CancelEvent;
 			form.FinishEvent += form_FinishEvent;
 			form.PreviousEvent += form_PreviousEvent;
