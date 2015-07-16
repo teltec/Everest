@@ -1,11 +1,18 @@
-﻿using Amazon.S3;
+﻿using Amazon.Runtime;
+using Amazon.S3;
 using Amazon.S3.Model;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using Teltec.Backup.App.Forms.Account;
 using Teltec.Backup.Data.Models;
 using Teltec.Common.Extensions;
 using Teltec.Common.Types;
+using Teltec.Storage;
+using Teltec.Storage.Agent;
+using Teltec.Storage.Implementations.S3;
 
 namespace Teltec.Backup.App.Forms.S3
 {
@@ -42,7 +49,7 @@ namespace Teltec.Backup.App.Forms.S3
 			this.Close();
 		}
 
-		private void btnSave_Click(object sender, EventArgs e)
+		private async void btnSave_Click(object sender, EventArgs e)
 		{
 			CleanData();
 
@@ -51,6 +58,26 @@ namespace Teltec.Backup.App.Forms.S3
 				MessageBox.Show("Invalid data. Please verify.");
 				return;
 			}
+
+			// Check whether account already has one or more backups.
+			//DisableUI();
+			{
+				Task<List<string>> task = RetrieveAccountConfigurations();
+				await task;
+				if (task.Result.Count > 0)
+				{
+					using (AccountConfigurationSelector form = new AccountConfigurationSelector())
+					{
+						form.AvailableConfigurations = task.Result;
+						form.SelectedConfiguration = _account.Hostname;
+						form.ShowDialog(this);
+
+						if (!string.IsNullOrEmpty(form.SelectedConfiguration))
+							_account.Hostname = form.SelectedConfiguration;
+					}
+				}
+			}
+			//EnableUI();
 
 			if (AccountSaved != null)
 				AccountSaved(this, new AmazonS3AccountSaveEventArgs(_account));
@@ -124,6 +151,57 @@ namespace Teltec.Backup.App.Forms.S3
 			{
 				MessageBox.Show("Show <Create new bucket> window.");
 			}
+		}
+
+		private async Task<List<string>> RetrieveAccountConfigurations()
+		{
+			//
+			// Setup agents.
+			//
+			AWSCredentials awsCredentials = new BasicAWSCredentials(_account.AccessKey, _account.SecretKey);
+			IAsyncTransferAgent transferAgent = new S3AsyncTransferAgent(awsCredentials, _account.BucketName);
+			transferAgent.RemoteRootDir = transferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP");
+
+			List<string> remoteObjects = new List<string>(16); // Avoid small resizes without compromising memory.
+
+			// Register event handlers.
+			transferAgent.ListingProgress += (object sender2, ListingProgressArgs e2) =>
+			{
+				foreach (var obj in e2.Objects)
+				{
+					string[] parts = obj.Key.Split(S3PathBuilder.RemoteDirectorySeparatorChar);
+					int count = parts.Length;
+					if (count > 2)
+					{
+						remoteObjects.Add(parts[count - 2]);
+					}
+				}
+			};
+			transferAgent.ListingFailed += (object sender2, ListingProgressArgs e2, Exception ex) =>
+			{
+				//var message = string.Format("Failed: {0}", ex != null ? ex.Message : "Unknown reason");
+				//logger.Warn(message);
+			};
+
+			try
+			{
+				Task task = transferAgent.List(transferAgent.RemoteRootDir, false);
+
+				await task;
+			}
+			catch (OperationCanceledException)
+			{
+				throw;
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+			finally
+			{
+			}
+
+			return remoteObjects;
 		}
 	}
 

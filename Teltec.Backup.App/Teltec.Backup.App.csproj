@@ -161,6 +161,12 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\EntryTreeNodeData.cs" />
+    <Compile Include="Forms\Account\AccountConfigurationSelector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Account\AccountConfigurationSelector.Designer.cs">
+      <DependentUpon>AccountConfigurationSelector.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\RestorePlan\RestorePlanSelectAccountForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -290,6 +296,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Forms\Account\AccountConfigurationSelector.resx">
+      <DependentUpon>AccountConfigurationSelector.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanListControl.resx">
       <DependentUpon>BackupPlanListControl.cs</DependentUpon>
     </EmbeddedResource>

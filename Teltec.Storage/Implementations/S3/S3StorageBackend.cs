@@ -419,8 +419,6 @@ namespace Teltec.Storage.Implementations.S3
 
 					ListObjectsResponse response = this._s3Client.ListObjects(listRequest);
 
-					IEnumerable<S3Object> resultObjects = response.S3Objects;
-
 					//if (!recursive)
 					//{
 					//	// Get the TOP LEVEL objects - those not inside any folders.
@@ -430,39 +428,83 @@ namespace Teltec.Storage.Implementations.S3
 					//	//var topLevelFolders = resultObjects.Except(objects).Where(o => o.Key.Last() == '/' && o.Key.IndexOf(@"/") == o.Key.LastIndexOf(@"/"));
 					//}
 
-					// Process response.
-					foreach (S3Object entry in resultObjects)
+					if (!recursive)
 					{
-						Console.WriteLine("Key = {0}, Size = {1}, LastModified = {2}", entry.Key, entry.Size, entry.LastModified);
-					}
+						IEnumerable<string> commonPrefixes = response.CommonPrefixes;
 
-					// If response is truncated, set the marker to get the next set of keys.
-					if (response.IsTruncated)
-					{
-						listRequest.Marker = response.NextMarker;
+						// Process response.
+						foreach (string key in commonPrefixes)
+						{
+							Console.WriteLine("Key = {0}", key);
+						}
+
+						// If response is truncated, set the marker to get the next set of keys.
+						if (response.IsTruncated)
+						{
+							listRequest.Marker = response.NextMarker;
+						}
+						else
+						{
+							listRequest = null;
+						}
+
+						// Report progress.
+						if (ListingProgressed != null)
+						{
+							var queryResults =
+								from key in commonPrefixes
+								select new ListingObject
+								{
+									ETag = null,
+									Key = key,
+									LastModified = null,
+									Size = 0,
+								};
+							reusedProgressArgs.Objects.Clear();
+							reusedProgressArgs.Objects.AddRange(queryResults);
+							ListingProgressed(reusedProgressArgs, () =>
+							{
+							});
+						}
 					}
 					else
 					{
-						listRequest = null;
-					}
+						IEnumerable<S3Object> resultObjects = response.S3Objects;
 
-					// Report progress.
-					if (ListingProgressed != null)
-					{
-						var queryResults =
-							from obj in resultObjects
-							select new ListingObject
-							{
-								ETag = obj.ETag,
-								Key = obj.Key,
-								LastModified = obj.LastModified,
-								Size = obj.Size,
-							};
-						reusedProgressArgs.Objects.Clear();
-						reusedProgressArgs.Objects.AddRange(queryResults);
-						ListingProgressed(reusedProgressArgs, () =>
+						// Process response.
+						foreach (S3Object entry in resultObjects)
 						{
-						});
+							Console.WriteLine("Key = {0}, Size = {1}, LastModified = {2}", entry.Key, entry.Size, entry.LastModified);
+						}
+
+						// If response is truncated, set the marker to get the next set of keys.
+						if (response.IsTruncated)
+						{
+							listRequest.Marker = response.NextMarker;
+						}
+						else
+						{
+							listRequest = null;
+						}
+
+						// Report progress.
+						if (ListingProgressed != null)
+						{
+							var queryResults =
+								from obj in resultObjects
+								select new ListingObject
+								{
+									ETag = obj.ETag,
+									Key = obj.Key,
+									LastModified = obj.LastModified,
+									Size = obj.Size,
+								};
+							reusedProgressArgs.Objects.Clear();
+							reusedProgressArgs.Objects.AddRange(queryResults);
+							ListingProgressed(reusedProgressArgs, () =>
+							{
+							});
+						}
 					}
 				} while (listRequest != null);
 

@@ -22,7 +22,7 @@ namespace Teltec.Backup.App.Forms
             this.lvAccounts.Items.Clear();
 
 			var accounts = _s3dao.GetAll();
-	
+
 			foreach (var account in accounts)
 			{
 				ListViewItem item = new ListViewItem(account.DisplayName, 0);
@@ -98,24 +98,30 @@ namespace Teltec.Backup.App.Forms
             LoadAccounts();
         }
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-				if (components != null)
-					components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-
         private void lvAccounts_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             btnEdit_Click(sender, e);
         }
 
+		#region Dispose Pattern Implementation
+
+		bool _shouldDispose = true;
+		bool _isDisposed;
+
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				if (components != null)
+					components.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+
+		#endregion
     }
 }

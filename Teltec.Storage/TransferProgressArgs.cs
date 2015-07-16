@@ -96,10 +96,10 @@ namespace Teltec.Storage
 
 		public string ETag { get; set; }
 		public string Key { get; set; }
-		public DateTime LastModified { get; set; }
-		//public Owner Owner { get; set; }
+		public DateTime? LastModified { get; set; }
+		//public Owner? Owner { get; set; }
 		public long Size { get; set; }
-		//public S3StorageClass StorageClass { get; set; }
+		//public S3StorageClass? StorageClass { get; set; }
 	}
 
 	public class ListingProgressArgs : ObservableEventArgs
