@@ -93,7 +93,7 @@ namespace Teltec.Backup.App.Forms.S3
 		private bool IsValid()
 		{
 			bool hasValidCredentials = HasValidCredentials();
-			bool didSelectBucketName = cbBucketName.SelectedIndex > 0;
+			bool didSelectBucketName = cbBucketName.SelectedIndex > 0 || !string.IsNullOrEmpty(cbBucketName.Text);
 			return hasValidCredentials && didSelectBucketName;
 		}
 
