@@ -37,9 +37,9 @@
 			this.lblTitle = new System.Windows.Forms.Label();
 			this.panelTitle = new System.Windows.Forms.Panel();
 			this.panelActions = new System.Windows.Forms.Panel();
+			this.llblRestore = new System.Windows.Forms.LinkLabel();
 			this.panelContents = new System.Windows.Forms.Panel();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
-			this.llblRestore = new System.Windows.Forms.LinkLabel();
 			this.groupBox1.SuspendLayout();
 			this.panelTitle.SuspendLayout();
 			this.panelActions.SuspendLayout();
@@ -113,14 +113,14 @@
 			this.lblDuration.TabIndex = 23;
 			this.lblDuration.Text = "{{ Duration }}";
 			// 
-			// lblFilesUploaded
+			// lblFilesTransferred
 			// 
 			this.lblFilesTransferred.AutoSize = true;
 			this.lblFilesTransferred.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblFilesTransferred.Location = new System.Drawing.Point(132, 108);
 			this.lblFilesTransferred.Margin = new System.Windows.Forms.Padding(3);
 			this.lblFilesTransferred.Name = "lblFilesTransferred";
-			this.lblFilesTransferred.Size = new System.Drawing.Size(96, 13);
+			this.lblFilesTransferred.Size = new System.Drawing.Size(104, 13);
 			this.lblFilesTransferred.TabIndex = 22;
 			this.lblFilesTransferred.Text = "{{ FilesTransferred }}";
 			// 
@@ -293,6 +293,18 @@
 			this.panelActions.Size = new System.Drawing.Size(398, 28);
 			this.panelActions.TabIndex = 25;
 			// 
+			// llblRestore
+			// 
+			this.llblRestore.AutoSize = true;
+			this.llblRestore.Location = new System.Drawing.Point(292, 8);
+			this.llblRestore.Name = "llblRestore";
+			this.llblRestore.Size = new System.Drawing.Size(44, 13);
+			this.llblRestore.TabIndex = 16;
+			this.llblRestore.TabStop = true;
+			this.llblRestore.Text = "Restore";
+			this.llblRestore.Visible = false;
+			this.llblRestore.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.llblRestore_LinkClicked);
+			// 
 			// panelContents
 			// 
 			this.panelContents.AutoSize = true;
@@ -309,17 +321,6 @@
 			// 
 			this.timer1.Interval = 1000;
 			this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-			// 
-			// llblRestore
-			// 
-			this.llblRestore.AutoSize = true;
-			this.llblRestore.Location = new System.Drawing.Point(292, 8);
-			this.llblRestore.Name = "llblRestore";
-			this.llblRestore.Size = new System.Drawing.Size(44, 13);
-			this.llblRestore.TabIndex = 16;
-			this.llblRestore.TabStop = true;
-			this.llblRestore.Text = "Restore";
-			this.llblRestore.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.llblRestore_LinkClicked);
 			// 
 			// BackupPlanViewControl
 			// 
