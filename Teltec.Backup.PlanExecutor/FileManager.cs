@@ -23,8 +23,25 @@ namespace Teltec.Backup.PlanExecutor
 			}
 			catch (Exception e)
 			{
-				logger.Error("Failed to read file/directory \"{0}\" - {1}", path, e.Message);
+				logger.Error("Failed to get LastWriteTime of file/directory \"{0}\" - {1}", path, e.Message);
 				return null;
+			}
+		}
+
+		public static void UnsafeSetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
+		{
+			File.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
+		}
+
+		public static void SafeSetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
+		{
+			try
+			{
+				UnsafeSetLastWriteTimeUtc(path, lastWriteTimeUtc);
+			}
+			catch (Exception e)
+			{
+				logger.Error("Failed to change LastWriteTime of file/directory \"{0}\" - {1}", path, e.Message);
 			}
 		}
 
@@ -41,7 +58,7 @@ namespace Teltec.Backup.PlanExecutor
 			}
 			catch (Exception e)
 			{
-				logger.Error("Failed to read file/directory \"{0}\" - {1}", path, e.Message);
+				logger.Error("Failed to get file size of file/directory \"{0}\" - {1}", path, e.Message);
 				return null;
 			}
 		}

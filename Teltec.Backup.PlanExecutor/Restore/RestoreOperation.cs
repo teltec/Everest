@@ -188,6 +188,9 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				restoredFile.UpdatedAt = DateTime.UtcNow;
 				daoRestoredFile.Update(restoredFile);
 
+				// Set original LastWriteTime so this file won't be erroneously included in the next Backup.
+				FileManager.SafeSetLastWriteTimeUtc(restoredFile.File.Path, restoredFile.File.VersionedFile.LastWriteTimeUtc);
+
 				var message = string.Format("Completed {0}", args.FilePath);
 				Info(message);
 				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
