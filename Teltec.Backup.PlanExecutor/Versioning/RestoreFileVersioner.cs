@@ -248,7 +248,9 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				}
 				finally
 				{
-					session.Close();
+					//session.Close();
+					if (session.IsConnected)
+						session.Disconnect();
 				}
 			}
 

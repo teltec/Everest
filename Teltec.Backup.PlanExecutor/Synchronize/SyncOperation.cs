@@ -362,7 +362,9 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				}
 				finally
 				{
-					session.Close();
+					//session.Close();
+					if (session.IsConnected)
+						session.Disconnect();
 				}
 			}
 		}

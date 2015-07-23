@@ -50,15 +50,25 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 			await ExecuteOnBackround(() =>
 			{
-				BackupRepository daoBackup = new BackupRepository();
-				Backup = daoBackup.Get(backup.Id);
+				ISession session = NHibernateHelper.GetSession();
+				try
+				{
+					BackupRepository daoBackup = new BackupRepository(session);
+					Backup = daoBackup.Get(backup.Id);
 
-				BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository();
-				AllFilesFromPlan = daoBackupPlanFile.GetAllByBackupPlan(backup.BackupPlan).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
+					BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository(session);
+					AllFilesFromPlan = daoBackupPlanFile.GetAllByBackupPlan(backup.BackupPlan).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
 
-				Execute(backup, filePaths, newVersion);
+					Execute(backup, filePaths, newVersion);
 
-				Save();
+					Save(session);
+				}
+				finally
+				{
+					//session.Close();
+					if (session.IsConnected)
+						session.Disconnect();
+				}
 			}, CancellationToken);
 		}
 
@@ -538,11 +548,9 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		// 6 - Create versioned files and remove files that won't belong to this backup.
 		//
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		private void Save()
+		private void Save(ISession session)
 		{
 			Assert.IsFalse(IsSaved);
-
-			ISession session = NHibernateHelper.GetSession();
 
 			BatchProcessor batchProcessor = new BatchProcessor();
 			BackupRepository daoBackup = new BackupRepository(session);
@@ -711,7 +719,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				}
 				finally
 				{
-					session.Close();
+					// ...
 				}
 			}
 

@@ -30,7 +30,6 @@ namespace Teltec.Backup.Data.DAO.NH
 		private static readonly ThreadLocal<ISession> _sessions = new ThreadLocal<ISession>();
 		private static readonly ThreadLocal<IStatelessSession> _statelessSessions = new ThreadLocal<IStatelessSession>();
 
-
 		public static ISession GetSession()
 		{
 			//
