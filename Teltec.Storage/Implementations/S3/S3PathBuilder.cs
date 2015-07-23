@@ -16,7 +16,10 @@ namespace Teltec.Storage.Implementations.S3
 
 		public override string CombineLocalPath(string localBaseDirectory, params string[] relativePaths)
 		{
-			string path = localBaseDirectory + LocalDirectorySeparatorChar + string.Join(LocalDirectorySeparatorChar.ToString(), relativePaths);
+			string dirSeparator = LocalDirectorySeparatorChar.ToString();
+			string path = localBaseDirectory + dirSeparator + string.Join(dirSeparator, relativePaths);
+			if (!path.EndsWith(dirSeparator))
+				path += dirSeparator;
 			return path;
 		}
 
@@ -117,7 +120,10 @@ namespace Teltec.Storage.Implementations.S3
 
 		public override string CombineRemotePath(string remoteBaseDirectory, params string[] relativePaths)
 		{
-			string path = remoteBaseDirectory + RemoteDirectorySeparatorChar + string.Join(RemoteDirectorySeparatorChar.ToString(), relativePaths);
+			string dirSeparator = RemoteDirectorySeparatorChar.ToString();
+			string path = remoteBaseDirectory + dirSeparator + string.Join(dirSeparator, relativePaths);
+			if (!path.EndsWith(dirSeparator))
+				path += dirSeparator;
 			return path;
 		}
 
