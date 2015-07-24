@@ -138,10 +138,16 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 
 		private void llblEditPlan_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{
-			using (var presenter = new NewRestorePlanPresenter(this.Model as Models.RestorePlan))
+			Models.RestorePlan plan = this.Model as Models.RestorePlan;
+
+			using (var presenter = new NewRestorePlanPresenter(plan))
 			{
 				presenter.ShowDialog(this.ParentForm);
 			}
+
+			// Reload after edit is complete.
+			//plan.InvalidateCachedSelectedSourcesAsDelimitedString();
+			UpdateStatsInfo(RestoreOperationStatus.Unknown);
 		}
 
 		private void llblDeletePlan_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

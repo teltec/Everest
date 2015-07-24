@@ -79,7 +79,7 @@ namespace Teltec.Backup.Data.Models
 			return _CachedSelectedSourcesAsDelimitedString;
 		}
 
-		private void InvalidateCachedSelectedSourcesAsDelimitedString()
+		public virtual void InvalidateCachedSelectedSourcesAsDelimitedString()
 		{
 			_CachedSelectedSourcesAsDelimitedString = null;
 		}

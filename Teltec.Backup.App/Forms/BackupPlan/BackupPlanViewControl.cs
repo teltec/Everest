@@ -138,10 +138,16 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void llblEditPlan_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{
-			using (var presenter = new NewBackupPlanPresenter(this.Model as Models.BackupPlan))
+			Models.BackupPlan plan = this.Model as Models.BackupPlan;
+
+			using (var presenter = new NewBackupPlanPresenter(plan))
 			{
 				presenter.ShowDialog(this.ParentForm);
 			}
+
+			// Reload after edit is complete.
+			plan.InvalidateCachedSelectedSourcesAsDelimitedString();
+			UpdateStatsInfo(BackupOperationStatus.Unknown);
 		}
 
 		private void llblDeletePlan_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
