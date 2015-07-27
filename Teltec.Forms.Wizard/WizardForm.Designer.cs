@@ -204,6 +204,7 @@
 			this.Name = "WizardForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "WizardForm";
+			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.WizardForm_FormClosed);
 			this.panelBottom.ResumeLayout(false);
 			this.panelTop.ResumeLayout(false);
 			this.panelTop.PerformLayout();

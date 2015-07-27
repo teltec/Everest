@@ -32,6 +32,15 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			//RegisterFormClass(typeof(SyncFinishedForm), options);
 		}
 
+		public override void OnFormClosed()
+		{
+			base.OnFormClosed();
+
+			Models.Synchronization sync = Model as Models.Synchronization;
+			if (sync.Id.HasValue)
+				_dao.Refresh(sync);
+		}
+
 		public override void OnCancel()
 		{
 			base.OnCancel();

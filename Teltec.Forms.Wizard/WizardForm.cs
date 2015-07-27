@@ -152,6 +152,7 @@ namespace Teltec.Forms.Wizard
 		public delegate void WizardCancellableActionEventHandler(WizardForm sender, CancelEventArgs e);
 
 		public event ModelChangedEventHandler ModelChangedEvent;
+		public event WizardActionEventHandler FormClosedEvent;
 		public event WizardActionEventHandler CancelEvent;
 		public event WizardActionEventHandler PreviousEvent;
 		public event WizardCancellableActionEventHandler NextEvent;
@@ -162,6 +163,12 @@ namespace Teltec.Forms.Wizard
 		{
 			if (ModelChangedEvent != null)
 				ModelChangedEvent(this, e);
+		}
+
+		protected virtual void OnFormClosed(object sender, EventArgs e)
+		{
+			if (FormClosedEvent != null)
+				FormClosedEvent(this, e);
 		}
 
 		protected virtual void OnCancel(object sender, EventArgs e)
@@ -198,6 +205,11 @@ namespace Teltec.Forms.Wizard
 
 		#region Form events
 
+		private void WizardForm_FormClosed(object sender, FormClosedEventArgs e)
+		{
+			OnFormClosed(sender, e);
+		}
+
 		private void btnCancel_Click(object sender, EventArgs e)
 		{
 			OnCancel(sender, e);
@@ -225,6 +237,5 @@ namespace Teltec.Forms.Wizard
 		}
 
 		#endregion
-
 	}
 }

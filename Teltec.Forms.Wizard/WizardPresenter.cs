@@ -94,6 +94,7 @@ namespace Teltec.Forms.Wizard
 			form.FinishEnabled = form.IsLastForm;
 			form.NextEnabled = !form.IsLastForm;
 			form.PreviousEnabled = index > 0;
+			form.FormClosedEvent += form_FormClosedEvent;
 			form.CancelEvent += form_CancelEvent;
 			form.FinishEvent += form_FinishEvent;
 			form.PreviousEvent += form_PreviousEvent;
@@ -101,6 +102,11 @@ namespace Teltec.Forms.Wizard
 			form.Model = Model;
 			form.DoValidate = options.DoValidate;
 			return form;
+		}
+
+		protected virtual void form_FormClosedEvent(WizardForm sender, EventArgs e)
+		{
+			OnFormClosed();
 		}
 
 		protected virtual void form_CancelEvent(WizardForm sender, EventArgs e)
@@ -164,6 +170,11 @@ namespace Teltec.Forms.Wizard
 				form.Dispose();
 			}
 			_InstantiatedForms.Clear();
+		}
+
+		public virtual void OnFormClosed()
+		{
+			CloseAndDiposeAllForms();
 		}
 
 		public virtual void OnFinish()
