@@ -34,13 +34,14 @@
 			this.amazonS3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.backupPlansToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.restorePlansToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.synchronizeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tpgBackupPlans = new System.Windows.Forms.TabPage();
 			this.backupPlanListControl1 = new Teltec.Backup.App.Forms.BackupPlan.BackupPlanListControl();
 			this.tpgRestorePlans = new System.Windows.Forms.TabPage();
 			this.restorePlanListControl1 = new Teltec.Backup.App.Forms.RestorePlan.RestorePlanListControl();
-			this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.synchronizeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.tabControl1.SuspendLayout();
 			this.tpgBackupPlans.SuspendLayout();
@@ -61,7 +62,8 @@
             this.contasToolStripMenuItem,
             this.backupPlansToolStripMenuItem,
             this.restorePlansToolStripMenuItem,
-            this.optionsToolStripMenuItem});
+            this.optionsToolStripMenuItem,
+            this.aboutToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Size = new System.Drawing.Size(670, 24);
@@ -96,6 +98,21 @@
 			this.restorePlansToolStripMenuItem.Size = new System.Drawing.Size(89, 20);
 			this.restorePlansToolStripMenuItem.Text = "Restore Plans";
 			this.restorePlansToolStripMenuItem.Click += new System.EventHandler(this.restorePlansToolStripMenuItem_Click);
+			// 
+			// optionsToolStripMenuItem
+			// 
+			this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.synchronizeToolStripMenuItem});
+			this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+			this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
+			this.optionsToolStripMenuItem.Text = "Options";
+			// 
+			// synchronizeToolStripMenuItem
+			// 
+			this.synchronizeToolStripMenuItem.Name = "synchronizeToolStripMenuItem";
+			this.synchronizeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.synchronizeToolStripMenuItem.Text = "Synchronize";
+			this.synchronizeToolStripMenuItem.Click += new System.EventHandler(this.synchronizeToolStripMenuItem_Click);
 			// 
 			// tabControl1
 			// 
@@ -149,20 +166,12 @@
 			this.restorePlanListControl1.Size = new System.Drawing.Size(656, 284);
 			this.restorePlanListControl1.TabIndex = 0;
 			// 
-			// optionsToolStripMenuItem
+			// aboutToolStripMenuItem
 			// 
-			this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.synchronizeToolStripMenuItem});
-			this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-			this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
-			this.optionsToolStripMenuItem.Text = "Options";
-			// 
-			// synchronizeToolStripMenuItem
-			// 
-			this.synchronizeToolStripMenuItem.Name = "synchronizeToolStripMenuItem";
-			this.synchronizeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-			this.synchronizeToolStripMenuItem.Text = "Synchronize";
-			this.synchronizeToolStripMenuItem.Click += new System.EventHandler(this.synchronizeToolStripMenuItem_Click);
+			this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+			this.aboutToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
+			this.aboutToolStripMenuItem.Text = "About";
+			this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
 			// 
 			// MainForm
 			// 
@@ -203,6 +212,7 @@
 		private RestorePlan.RestorePlanListControl restorePlanListControl1;
 		private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem synchronizeToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
     }
 }
 

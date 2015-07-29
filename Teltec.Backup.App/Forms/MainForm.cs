@@ -1,6 +1,7 @@
 ﻿using NLog;
 using System;
 using System.Windows.Forms;
+using Teltec.Backup.App.Forms.About;
 using Teltec.Backup.App.Forms.BackupPlan;
 using Teltec.Backup.App.Forms.RestorePlan;
 using Teltec.Backup.Data.DAO;
@@ -73,6 +74,14 @@ namespace Teltec.Backup.App.Forms
 			using (var presenter = new SyncPresenter())
 			{
 				presenter.ShowDialog(this);
+			}
+		}
+
+		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			using (var form = new AboutForm())
+			{
+				form.ShowDialog(this);
 			}
 		}
     }
