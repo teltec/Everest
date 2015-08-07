@@ -12,6 +12,7 @@ namespace PostInstaller
 		DatabaseConfig DatabaseConfig = DatabaseConfig.DefaultConfig.ShallowCopy();
 		bool Verbose = false;
 		bool DoDrop = false;
+		bool DoCreate = false;
 
 		static void Main(string[] args)
 		{
@@ -33,6 +34,10 @@ namespace PostInstaller
 			{
 				switch (args[i])
 				{
+					case "-create":
+					case "-c":
+						DoCreate = true;
+						break;
 					case "-drop":
 					case "-d":
 						DoDrop = true;
@@ -68,7 +73,8 @@ namespace PostInstaller
 					}
 				}
 			}
-			else
+
+			if (DoCreate)
 			{
 				bool ok = DatabaseEngine.CreateDatabase();
 				if (!ok)
