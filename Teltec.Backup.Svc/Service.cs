@@ -450,6 +450,14 @@ namespace Teltec.Backup.Svc
 						ts.RootFolder.DeleteTask(taskName);
 					}
 				}
+				else
+				{
+					if (plan.IsRunManually)
+					{
+						// Do not schedule anything.
+						return;
+					}
+				}
 			}
 
 			Info("Scheduling task {0}", taskName);
