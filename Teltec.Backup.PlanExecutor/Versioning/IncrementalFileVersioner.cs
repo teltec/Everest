@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
 using Teltec.Backup.Data.Versioning;
-using Teltec.FileSystem;
 using Teltec.Stats;
 using Teltec.Storage;
 using Teltec.Storage.Versioning;
@@ -25,7 +24,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		CancellationToken CancellationToken;
+		private CancellationToken CancellationToken;
 
 		public IncrementalFileVersioner(CancellationToken cancellationToken)
 		{
@@ -141,17 +140,17 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			return DateTime.Compare(dt1, dt2) != 0;
 		}
 
-		#endregion
+		#endregion File change detection
 
-		bool IsSaved = false;
-		Models.Backup Backup;
+		private bool IsSaved = false;
+		private Models.Backup Backup;
 
 		// Contains ALL `BackupPlanFile`s that were registered at least once for the plan associated to this backup.
 		// Fact 1: ALL of its items are also contained (distributed) in:
 		//		`ChangeSet.RemovedFiles`
 		//		`ChangeSet.DeletedFiles`
 		//		`SuppliedFiles`
-		Dictionary<string, Models.BackupPlanFile> AllFilesFromPlan;
+		private Dictionary<string, Models.BackupPlanFile> AllFilesFromPlan;
 
 		// Contains ALL `BackupPlanFile`s that were informed to be included in this backup.
 		// Fact 1: ALL of its items are also contained in `AllFilesFromPlan`.
@@ -160,14 +159,14 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		// Fact 4: SOME of its items may also be contained in `ChangeSet.RemovedFiles`.
 		// Fact 5: SOME of its items may also be contained in `ChangeSet.DeletedFiles`.
 		// Fact 5: SOME of its items may also be contained in `ChangeSet.FailedFiles`.
-		LinkedList<Models.BackupPlanFile> SuppliedFiles;
+		private LinkedList<Models.BackupPlanFile> SuppliedFiles;
 
 		// Contains the relation of all `BackupPlanFile`s that will be listed on this backup,
 		// be it an addition, deletion, modification, or removal.
-		ChangeSet<Models.BackupPlanFile> ChangeSet = new ChangeSet<Models.BackupPlanFile>();
+		private ChangeSet<Models.BackupPlanFile> ChangeSet = new ChangeSet<Models.BackupPlanFile>();
 
 		// After `Save()`, contains ALL `CustomVersionedFile`s that are eligible for transfer - those whose status is ADDED or MODIFIED.
-		TransferSet<CustomVersionedFile> TransferSet = new TransferSet<CustomVersionedFile>();
+		private TransferSet<CustomVersionedFile> TransferSet = new TransferSet<CustomVersionedFile>();
 
 		public IEnumerable<CustomVersionedFile> FilesToTransfer
 		{
@@ -292,6 +291,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							if (fileExistsOnFilesystem) // Exists?
 								changeStatusTo = Models.BackupFileStatus.ADDED;
 							break;
+
 						case Models.BackupFileStatus.REMOVED: // File was marked as REMOVED by a previous backup?
 							if (fileExistsOnFilesystem) // Exists?
 								changeStatusTo = Models.BackupFileStatus.ADDED;
@@ -299,6 +299,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 								// QUESTION: Do we really care to transition REMOVED to DELETED?
 								changeStatusTo = Models.BackupFileStatus.DELETED;
 							break;
+
 						default: // ADDED, MODIFIED, UNMODIFIED
 							if (fileExistsOnFilesystem) // Exists?
 							{
@@ -465,6 +466,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					// Skip REMOVED, DELETED, and UNCHANGED files.
 					default:
 						break;
+
 					case Models.BackupFileStatus.ADDED:
 					case Models.BackupFileStatus.MODIFIED:
 						{
@@ -509,11 +511,11 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					// Skip REMOVED, DELETED, and UNCHANGED files.
 					default:
 						break;
+
 					case Models.BackupFileStatus.ADDED:
 					case Models.BackupFileStatus.MODIFIED:
 						{
-							IFileVersion version = new FileVersion
-								{ Version = entry.LastWrittenAt.ToString(Models.BackupedFile.VersionFormat) };
+							IFileVersion version = new FileVersion { Version = entry.LastWrittenAt.ToString(Models.BackupedFile.VersionFormat) };
 							yield return new CustomVersionedFile
 							{
 								Path = entry.Path,
@@ -566,7 +568,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					((f.LastStatus == Models.BackupFileStatus.ADDED || f.LastStatus == Models.BackupFileStatus.MODIFIED))
 					// Keep it if `LastStatus` is different from `PreviousLastStatus`.
 					|| ((f.LastStatus == Models.BackupFileStatus.REMOVED || f.LastStatus == Models.BackupFileStatus.DELETED) && (f.LastStatus != f.PreviousLastStatus))
-					// Skip all UNCHANGED files.
+				// Skip all UNCHANGED files.
 				select f;
 
 			BlockPerfStats stats = new BlockPerfStats();
@@ -642,6 +644,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							default:
 								backupedFile.TransferStatus = default(TransferStatus);
 								break;
+
 							case Models.BackupFileStatus.REMOVED:
 							case Models.BackupFileStatus.DELETED:
 								backupedFile.TransferStatus = TransferStatus.COMPLETED;
@@ -709,11 +712,13 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				}
 				catch (OperationCanceledException)
 				{
+					logger.Warn("Operation cancelled");
 					tx.Rollback(); // Rollback the transaction
 					throw;
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
+					logger.ErrorException("Caught Exception", ex);
 					tx.Rollback(); // Rollback the transaction
 					throw;
 				}
@@ -739,8 +744,8 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		#region Dispose Pattern Implementation
 
-		bool _shouldDispose = true;
-		bool _isDisposed;
+		private bool _shouldDispose = true;
+		private bool _isDisposed;
 
 		/// <summary>
 		/// Implements the Dispose pattern
@@ -768,9 +773,8 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			GC.SuppressFinalize(this);
 		}
 
-		#endregion
+		#endregion Dispose Pattern Implementation
 	}
-
 
 	public sealed class FailedFile<T>
 	{
