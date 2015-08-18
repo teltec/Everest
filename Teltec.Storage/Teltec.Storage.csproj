@@ -66,6 +66,7 @@
     <Compile Include="BackupAgent.cs" />
     <Compile Include="IResults.cs" />
     <Compile Include="RestoreAgent.cs" />
+    <Compile Include="Schedulers\LimitedConcurrencyLevelTaskScheduler.cs" />
     <Compile Include="SynchronizationAgent.cs" />
     <Compile Include="SyncResults.cs" />
     <Compile Include="TransferResults.cs" />

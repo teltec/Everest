@@ -11,9 +11,10 @@ namespace Teltec.Storage
 		{
 			get
 			{
-				int threadCount = Environment.ProcessorCount > 4 ? Environment.ProcessorCount : 4;
+				int threadCount = 4 * (Environment.ProcessorCount > 4 ? Environment.ProcessorCount : 4);
 				if (_TaskSchedulerInstance == null)
-					_TaskSchedulerInstance = new System.Threading.Tasks.Schedulers.QueuedTaskScheduler(threadCount);
+					//_TaskSchedulerInstance = new System.Threading.Tasks.Schedulers.QueuedTaskScheduler(threadCount, "TaskExecutor");
+					_TaskSchedulerInstance = new System.Threading.Tasks.Schedulers.LimitedConcurrencyLevelTaskScheduler(threadCount);
 				return _TaskSchedulerInstance;
 			}
 		}
@@ -34,7 +35,7 @@ namespace Teltec.Storage
 			return Task.Factory.StartNew(action, token, options, scheduler);
 			//return Task.Run(action, token);
 		}
-		
+
 		public static Task<T> ExecuteOnBackround<T>(Func<T> action, CancellationToken token)
 		{
 			TaskCreationOptions options = TaskCreationOptions.DenyChildAttach;
