@@ -2572,20 +2572,6 @@
         }
         "Shortcut"
         {
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_1F8C822DA8DB40EA9A772184D7592D49"
-            {
-            "Name" = "8:Teltec.Backup.PlanExecutor"
-            "Arguments" = "8:"
-            "Description" = "8:"
-            "ShowCmd" = "3:1"
-            "IconIndex" = "3:0"
-            "Transitive" = "11:FALSE"
-            "Target" = "8:_7A79BAC77744428FA7020227BD68CE0E"
-            "Folder" = "8:_BEEE7B6768114635B3C3F3FD961F07B7"
-            "WorkingFolder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
-            "Icon" = "8:"
-            "Feature" = "8:"
-            }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_514E7C0BCAFD45DFB34585EC03C141C8"
             {
             "Name" = "8:Shortcut to Primary output from Teltec.Backup.App (Active)"
@@ -2609,20 +2595,6 @@
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
             "Target" = "8:_9A0607D6E0324516947A532C59E0F52D"
-            "Folder" = "8:_BEEE7B6768114635B3C3F3FD961F07B7"
-            "WorkingFolder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
-            "Icon" = "8:"
-            "Feature" = "8:"
-            }
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_B71D4AE3AA9148BC989652C5749EA476"
-            {
-            "Name" = "8:Teltec.Backup.Svc"
-            "Arguments" = "8:"
-            "Description" = "8:"
-            "ShowCmd" = "3:1"
-            "IconIndex" = "3:0"
-            "Transitive" = "11:FALSE"
-            "Target" = "8:_94B2F88020E44AD4A91689F8078135C6"
             "Folder" = "8:_BEEE7B6768114635B3C3F3FD961F07B7"
             "WorkingFolder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
             "Icon" = "8:"
