@@ -179,6 +179,10 @@
       <Project>{b77226a6-5fdb-4e24-87df-49c64a9b1454}</Project>
       <Name>Teltec.Backup.Logging</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Teltec.Backup.Settings\Teltec.Backup.Settings.csproj">
+      <Project>{6618ceb2-b807-4f56-8867-44572f71f189}</Project>
+      <Name>Teltec.Backup.Settings</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>
       <Name>Teltec.Common</Name>

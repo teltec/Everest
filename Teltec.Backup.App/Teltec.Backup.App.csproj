@@ -210,6 +210,12 @@
     <Compile Include="Forms\Schedule\ScheduleRecurringOptionsForm.Designer.cs">
       <DependentUpon>ScheduleRecurringOptionsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\Settings\SettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Settings\SettingsForm.Designer.cs">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\Sync\SyncProgressForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -353,6 +359,9 @@
     <EmbeddedResource Include="Forms\Schedule\ScheduleRecurringOptionsForm.resx">
       <DependentUpon>ScheduleRecurringOptionsForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Settings\SettingsForm.resx">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\Sync\SyncProgressForm.resx">
       <DependentUpon>SyncProgressForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -391,15 +400,6 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="packages.config" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
@@ -428,6 +428,10 @@
     <ProjectReference Include="..\Teltec.Backup.PlanExecutor\Teltec.Backup.PlanExecutor.csproj">
       <Project>{0d704de4-13fe-4603-a903-6cd9939a2645}</Project>
       <Name>Teltec.Backup.PlanExecutor</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Teltec.Backup.Settings\Teltec.Backup.Settings.csproj">
+      <Project>{6618ceb2-b807-4f56-8867-44572f71f189}</Project>
+      <Name>Teltec.Backup.Settings</Name>
     </ProjectReference>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>

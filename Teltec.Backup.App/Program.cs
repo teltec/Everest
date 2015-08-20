@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using Teltec.Backup.App.Forms;
+using Teltec.Storage;
 namespace Teltec.Backup.App
 {
     static class Program
@@ -14,8 +15,14 @@ namespace Teltec.Backup.App
 			Provider.Setup();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+			LoadSettings();
+			Application.Run(new MainForm());
 			Provider.Cleanup();
         }
+
+		private static void LoadSettings()
+		{
+			AsyncHelper.SettingsMaxThreadCount = Teltec.Backup.Settings.Properties.Current.MaxThreadCount;
+		}
     }
 }

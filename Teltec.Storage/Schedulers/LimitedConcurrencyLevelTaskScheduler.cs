@@ -17,7 +17,7 @@ namespace System.Threading.Tasks.Schedulers
 	// ORIGINAL CODE FROM https://msdn.microsoft.com/en-us/library/ee789351(v=vs.110).aspx
 	// Provides a task scheduler that ensures a maximum concurrency level while
 	// running on top of the thread pool.
-	public class LimitedConcurrencyLevelTaskScheduler : TaskScheduler
+	public class LimitedConcurrencyLevelTaskScheduler : TaskScheduler, IDynamicConcurrencyLevelScheduler
 	{
 		// Indicates whether the current thread is processing work items.
 		[ThreadStatic]

@@ -1,17 +1,40 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Schedulers;
 
 namespace Teltec.Storage
 {
 	public static class AsyncHelper
 	{
+		private static int _SettingsMaxThreadCount;
+		public static int SettingsMaxThreadCount
+		{
+			get
+			{
+				return _SettingsMaxThreadCount;
+			}
+			set
+			{
+				if (value < 1 || value > 256)
+					throw new ArgumentException("value must be within 1-256 range", "SettingsMaxThreadCount");
+
+				_SettingsMaxThreadCount = value;
+
+				if (AsyncHelper.TaskSchedulerInstance is IDynamicConcurrencyLevelScheduler)
+				{
+					IDynamicConcurrencyLevelScheduler scheduler = AsyncHelper.TaskSchedulerInstance as IDynamicConcurrencyLevelScheduler;
+					scheduler.UpdateMaximumConcurrencyLevel(_SettingsMaxThreadCount);
+				}
+			}
+		}
+
 		public static TaskScheduler _TaskSchedulerInstance;
 		public static TaskScheduler TaskSchedulerInstance
 		{
 			get
 			{
-				int threadCount = 4 * (Environment.ProcessorCount > 4 ? Environment.ProcessorCount : 4);
+				int threadCount = SettingsMaxThreadCount;
 				if (_TaskSchedulerInstance == null)
 					//_TaskSchedulerInstance = new System.Threading.Tasks.Schedulers.QueuedTaskScheduler(threadCount, "TaskExecutor");
 					_TaskSchedulerInstance = new System.Threading.Tasks.Schedulers.LimitedConcurrencyLevelTaskScheduler(threadCount);
