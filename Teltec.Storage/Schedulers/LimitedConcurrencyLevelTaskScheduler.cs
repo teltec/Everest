@@ -27,7 +27,7 @@ namespace System.Threading.Tasks.Schedulers
 		private readonly LinkedList<Task> _tasks = new LinkedList<Task>(); // protected by lock(_tasks)
 
 		// The maximum concurrency level allowed by this scheduler.
-		private int _maxDegreeOfParallelism;
+		private long _maxDegreeOfParallelism;
 
 		// Indicates whether the scheduler is currently processing work items.
 		private int _delegatesQueuedOrRunning = 0;
@@ -35,9 +35,7 @@ namespace System.Threading.Tasks.Schedulers
 		// Creates a new instance with the specified degree of parallelism.
 		public LimitedConcurrencyLevelTaskScheduler(int maxDegreeOfParallelism)
 		{
-			if (maxDegreeOfParallelism < 1)
-				throw new ArgumentOutOfRangeException("maxDegreeOfParallelism");
-			_maxDegreeOfParallelism = maxDegreeOfParallelism;
+			UpdateMaximumConcurrencyLevel(maxDegreeOfParallelism);
 		}
 
 		// Queues a task to the scheduler.
@@ -49,11 +47,7 @@ namespace System.Threading.Tasks.Schedulers
 			{
 				_tasks.AddLast(task);
 
-				int tempMaxDegreeOfParallelism;
-				lock (_maxDegreeOfParallelismLock)
-					tempMaxDegreeOfParallelism = _maxDegreeOfParallelism;
-
-				if (_delegatesQueuedOrRunning < tempMaxDegreeOfParallelism)
+				if (_delegatesQueuedOrRunning < MaximumConcurrencyLevel)
 				{
 					++_delegatesQueuedOrRunning;
 					NotifyThreadPoolOfPendingWork();
@@ -132,13 +126,11 @@ namespace System.Threading.Tasks.Schedulers
 		}
 
 		// Gets the maximum concurrency level supported by this scheduler.
-		private object _maxDegreeOfParallelismLock = new object();
 		public sealed override int MaximumConcurrencyLevel
 		{
 			get
 			{
-				lock (_maxDegreeOfParallelismLock)
-					return _maxDegreeOfParallelism;
+				return (int)Interlocked.Read(ref _maxDegreeOfParallelism);
 			}
 		}
 
@@ -146,8 +138,7 @@ namespace System.Threading.Tasks.Schedulers
 		{
 			if (value < 1)
 				throw new ArgumentOutOfRangeException("maxDegreeOfParallelism");
-			lock (_maxDegreeOfParallelismLock)
-				_maxDegreeOfParallelism = value;
+			Interlocked.Exchange(ref _maxDegreeOfParallelism, value);
 		}
 
 		// Gets an enumerable of the tasks currently scheduled on this scheduler.
