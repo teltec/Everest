@@ -365,6 +365,8 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				}
 
 				{
+					agent.Results.Stats.BytesTotal = agent.EstimatedTransferSize;
+
 					var message = string.Format("Estimate backup size: {0} files, {1}",
 						agent.Files.Count(), FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
 					Info(message);

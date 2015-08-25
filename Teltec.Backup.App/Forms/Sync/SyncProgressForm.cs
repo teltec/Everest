@@ -169,9 +169,11 @@ namespace Teltec.Backup.App.Forms.Sync
 					}
 				case SyncOperationStatus.ListingUpdated:
 					{
+						long totalSize = OperationResults.Stats.TotalSize;
+						string totalSizeAsStr = totalSize == 0 ? "Completed" : FileSizeUtils.FileSizeToString(totalSize);
+
 						this.lblTotalFiles.Text = string.Format("{0} files ({1})",
-							 OperationResults.Stats.FileCount,
-							 FileSizeUtils.FileSizeToString(OperationResults.Stats.TotalSize));
+							 OperationResults.Stats.FileCount, totalSizeAsStr);
 						break;
 					}
 				case SyncOperationStatus.SavingUpdated:

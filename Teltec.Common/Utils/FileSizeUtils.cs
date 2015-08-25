@@ -28,7 +28,8 @@ namespace Teltec.Common.Utils
 		static public string FileSizeToString(long size)
 		{
 			if (size == 0)
-				return "Completed";
+				return "0 bytes";
+
 			foreach (UnitDescriptor unit in Units)
 			{
 				if (size >= unit.Value)
@@ -37,6 +38,7 @@ namespace Teltec.Common.Utils
 					return string.Format(unit.Format, remaining, unit.Unit);
 				}
 			}
+
 			return "Unknown";
 		}
 

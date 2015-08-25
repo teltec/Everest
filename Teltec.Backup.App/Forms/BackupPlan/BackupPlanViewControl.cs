@@ -289,8 +289,10 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						this.llblRunNow.Text = LBL_RUNNOW_RUNNING;
 						this.lblStatus.Text = LBL_STATUS_STARTED;
 						this.lblDuration.Text = LBL_DURATION_STARTED;
-						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							OperationResults.Stats.Completed, OperationResults.Stats.Total);
+						this.lblFilesTransferred.Text = string.Format("{0} of {1} ({2} / {3})",
+							OperationResults.Stats.Completed, OperationResults.Stats.Total,
+							FileSizeUtils.FileSizeToString(OperationResults.Stats.BytesCompleted),
+							FileSizeUtils.FileSizeToString(OperationResults.Stats.BytesTotal));
 
 						this.llblEditPlan.Enabled = false;
 						this.llblDeletePlan.Enabled = false;
@@ -317,8 +319,10 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				case BackupOperationStatus.ProcessingFilesFinished:
 					{
 						this.lblSources.Text = RunningOperation.Sources;
-						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							OperationResults.Stats.Completed, OperationResults.Stats.Total);
+						this.lblFilesTransferred.Text = string.Format("{0} of {1} ({2} / {3})",
+							OperationResults.Stats.Completed, OperationResults.Stats.Total,
+							FileSizeUtils.FileSizeToString(OperationResults.Stats.BytesCompleted),
+							FileSizeUtils.FileSizeToString(OperationResults.Stats.BytesTotal));
 						break;
 					}
 				case BackupOperationStatus.Finished:
@@ -345,8 +349,10 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 					}
 				case BackupOperationStatus.Updated:
 					{
-						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							OperationResults.Stats.Completed, OperationResults.Stats.Total);
+						this.lblFilesTransferred.Text = string.Format("{0} of {1} ({2} / {3})",
+							OperationResults.Stats.Completed, OperationResults.Stats.Total,
+							FileSizeUtils.FileSizeToString(OperationResults.Stats.BytesCompleted),
+							FileSizeUtils.FileSizeToString(OperationResults.Stats.BytesTotal));
 						break;
 					}
 				case BackupOperationStatus.Failed:

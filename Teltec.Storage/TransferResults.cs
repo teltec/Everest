@@ -33,6 +33,18 @@ namespace Teltec.Storage
 			public int Canceled { get { return _Canceled; } set { _Canceled = value; } }
 			public int Completed { get { return _Completed; } set { _Completed = value; } }
 
+			private long _BytesTotal = 0;
+			private long _BytesPending = 0;
+			private long _BytesFailed = 0;
+			private long _BytesCanceled = 0;
+			private long _BytesCompleted = 0;
+
+			public long BytesTotal { get { return _BytesTotal; } set { _BytesTotal = value; } }
+			public long BytesPending { get { return BytesTotal - BytesCompleted - BytesFailed - BytesCanceled; } }
+			public long BytesFailed { get { return _BytesFailed; } set { _BytesFailed = value; } }
+			public long BytesCanceled { get { return _BytesCanceled; } set { _BytesCanceled = value; } }
+			public long BytesCompleted { get { return _BytesCompleted; } set { _BytesCompleted = value; } }
+
 			internal void Reset(int pending)
 			{
 				_Total = pending;
@@ -41,6 +53,10 @@ namespace Teltec.Storage
 				_Failed = 0;
 				_Canceled = 0;
 				_Completed = 0;
+				_BytesPending = 0;
+				_BytesFailed = 0;
+				_BytesCanceled = 0;
+				_BytesCompleted = 0;
 			}
 		}
 

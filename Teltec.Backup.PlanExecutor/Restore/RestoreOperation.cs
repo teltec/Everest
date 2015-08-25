@@ -310,6 +310,8 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				}
 
 				{
+					agent.Results.Stats.BytesTotal = agent.EstimatedTransferSize;
+
 					var message = string.Format("Estimate restore size: {0} files, {1}",
 						agent.Files.Count(), FileSizeUtils.FileSizeToString(agent.EstimatedTransferSize));
 					Info(message);
