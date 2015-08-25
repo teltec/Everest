@@ -96,9 +96,9 @@
       <Project>{6618ceb2-b807-4f56-8867-44572f71f189}</Project>
       <Name>Teltec.Backup.Settings</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Teltec.Backup.Svc\Teltec.Backup.Svc.csproj">
+    <ProjectReference Include="..\Teltec.Backup.Scheduler\Teltec.Backup.Scheduler.csproj">
       <Project>{134c9546-ec3f-4c05-87e3-5e11ddeb1bce}</Project>
-      <Name>Teltec.Backup.Svc</Name>
+      <Name>Teltec.Backup.Scheduler</Name>
     </ProjectReference>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>

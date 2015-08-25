@@ -7,8 +7,8 @@
     <ProjectGuid>{134C9546-EC3F-4C05-87E3-5E11DDEB1BCE}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Teltec.Backup.Svc</RootNamespace>
-    <AssemblyName>Teltec.Backup.Svc</AssemblyName>
+    <RootNamespace>Teltec.Backup.Scheduler</RootNamespace>
+    <AssemblyName>Teltec.Backup.Scheduler</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>0df71e6f</NuGetPackageImportStamp>
@@ -61,7 +61,7 @@
     <GenerateManifests>false</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>Teltec.Backup.Svc.Service</StartupObject>
+    <StartupObject>Teltec.Backup.Scheduler.Service</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestCertificateThumbprint>17056BE82C899C2DCAECDED850B4C227676C51B2</ManifestCertificateThumbprint>

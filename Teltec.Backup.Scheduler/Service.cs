@@ -13,7 +13,7 @@ using System.Threading;
 using Teltec.Backup.Data.DAO;
 using Models = Teltec.Backup.Data.Models;
 
-namespace Teltec.Backup.Svc
+namespace Teltec.Backup.Scheduler
 {
 	public partial class Service : ServiceBase
 	{
@@ -153,7 +153,7 @@ namespace Teltec.Backup.Svc
 		{
 			InitializeComponent();
 
-			ServiceName = typeof(Teltec.Backup.Svc.Service).Namespace;
+			ServiceName = typeof(Teltec.Backup.Scheduler.Service).Namespace;
 			CanShutdown = true;
 		}
 
@@ -501,7 +501,7 @@ namespace Teltec.Backup.Svc
 
 				td.RegistrationInfo.Author = string.Format(@"{0}\{1}", Environment.UserDomainName, Environment.UserName);
 
-				string description = string.Format("This task was automatically created by the {0} service", typeof(Teltec.Backup.Svc.Service).Namespace);
+				string description = string.Format("This task was automatically created by the {0} service", typeof(Teltec.Backup.Scheduler.Service).Namespace);
 				td.RegistrationInfo.Description = description;
 
 				// Create triggers to fire the task when planned.

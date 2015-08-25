@@ -1,4 +1,4 @@
-﻿namespace Teltec.Backup.Svc
+﻿namespace Teltec.Backup.Scheduler
 {
 	partial class ProjectInstaller
 	{
@@ -7,7 +7,7 @@
 		/// </summary>
 		private System.ComponentModel.IContainer components = null;
 
-		/// <summary> 
+		/// <summary>
 		/// Clean up any resources being used.
 		/// </summary>
 		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
@@ -30,23 +30,23 @@
 		{
 			this.serviceProcessInstaller1 = new System.ServiceProcess.ServiceProcessInstaller();
 			this.serviceInstaller1 = new System.ServiceProcess.ServiceInstaller();
-			// 
+			//
 			// serviceProcessInstaller1
-			// 
+			//
 			this.serviceProcessInstaller1.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
 			this.serviceProcessInstaller1.Password = null;
 			this.serviceProcessInstaller1.Username = null;
-			// 
+			//
 			// serviceInstaller1
-			// 
+			//
 			this.serviceInstaller1.DisplayName = "Teltec.Backup.Svc";
 			this.serviceInstaller1.ServiceName = "Teltec.Backup.Svc";
 			this.serviceInstaller1.ServicesDependedOn = new string[] {
         "MSSQL$SQLEXPRESS"};
 			this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
-			// 
+			//
 			// ProjectInstaller
-			// 
+			//
 			this.Installers.AddRange(new System.Configuration.Install.Installer[] {
             this.serviceProcessInstaller1,
             this.serviceInstaller1});

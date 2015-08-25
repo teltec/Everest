@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 
-namespace Teltec.Backup.Svc
+namespace Teltec.Backup.Scheduler
 {
 	[StructLayout(LayoutKind.Sequential)]
 	public class ServiceStatus

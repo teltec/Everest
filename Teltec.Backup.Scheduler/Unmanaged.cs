@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace Teltec.Backup.Svc
+namespace Teltec.Backup.Scheduler
 {
 	public static class Unmanaged
 	{

@@ -21,7 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.FileSystem", "Teltec
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.FileSystem.Tests", "Teltec.FileSystem.Tests\Teltec.FileSystem.Tests.csproj", "{FE9FBDAE-343F-4EFF-9428-722AACD1D10E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.Svc", "Teltec.Backup.Svc\Teltec.Backup.Svc.csproj", "{134C9546-EC3F-4C05-87E3-5E11DDEB1BCE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Teltec.Backup.Scheduler", "Teltec.Backup.Scheduler\Teltec.Backup.Scheduler.csproj", "{134C9546-EC3F-4C05-87E3-5E11DDEB1BCE}"
 	ProjectSection(ProjectDependencies) = postProject
 		{B77226A6-5FDB-4E24-87DF-49C64A9B1454} = {B77226A6-5FDB-4E24-87DF-49C64A9B1454}
 		{991059EF-F7D6-4FD8-B462-1F54467F6A33} = {991059EF-F7D6-4FD8-B462-1F54467F6A33}
