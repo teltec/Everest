@@ -4,11 +4,26 @@ namespace Teltec.Common.Utils
 {
 	public static class FileSizeUtils
 	{
+		// ORIGINAK CODE FROM http://stackoverflow.com/a/383596/298054
+		public static long LongPow(long x, ulong pow)
+		{
+			long ret = 1;
+			while (pow != 0)
+			{
+				if ((pow & 1) == 1)
+					ret *= x;
+				x *= x;
+				pow >>= 1;
+			}
+			return ret;
+		}
+
 		private static readonly long Byte = 1;
-		private static readonly long Kilo = 1024 * Byte;
-		private static readonly long Mega = 1024 * Kilo;
-		private static readonly long Giga = 1024 * Mega;
-		private static readonly long Peta = 1024 * Giga;
+		private static readonly long Kilo = LongPow(10, 3);
+		private static readonly long Mega = LongPow(10, 6);
+		private static readonly long Giga = LongPow(10, 9);
+		private static readonly long Peta = LongPow(10, 12);
+		private static readonly long Exa = LongPow(10, 15);
 
 		private class UnitDescriptor
 		{
@@ -18,10 +33,11 @@ namespace Teltec.Common.Utils
 		}
 
 		private static readonly UnitDescriptor[] Units = new UnitDescriptor[] {
+			new UnitDescriptor { Value=Exa, Format="{0:F2} {1}" , Unit="EB" },
 			new UnitDescriptor { Value=Peta, Format="{0:F2} {1}", Unit="PB" },
 			new UnitDescriptor { Value=Giga, Format="{0:F2} {1}", Unit="GB" },
 			new UnitDescriptor { Value=Mega, Format="{0:F2} {1}", Unit="MB" },
-			new UnitDescriptor { Value=Kilo, Format="{0:F2} {1}", Unit="KB" },
+			new UnitDescriptor { Value=Kilo, Format="{0:F2} {1}", Unit="kB" },
 			new UnitDescriptor { Value=Byte, Format="{0} {1}"   , Unit="bytes" },
 		};
 
