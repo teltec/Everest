@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Backup.Data.DAO;
 using Teltec.Common.Extensions;
+using Teltec.Common.Utils;
 using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms.Schedule
@@ -50,7 +51,7 @@ namespace Teltec.Backup.App.Forms.Schedule
 					this.GetPropertyName((RadioButton x) => x.Checked)));
 				llblEditSchedule.DataBindings.Add(new Binding("Enabled", rbtnRecurring,
 					this.GetPropertyName((RadioButton x) => x.Checked)));
-				
+
 				// Binding for `dtpSpecificDate` <=> `this.Plan.Schedule.ProxyOccursSpecificallyAtDate`.
 				// TODO: Write a formatter/parser to convert between UTC <=> local.
 				dtpSpecificDate.DataBindings.Add(new Binding("Value", this.Plan.Schedule,
@@ -119,6 +120,10 @@ namespace Teltec.Backup.App.Forms.Schedule
 			{
 				Plan.ScheduleType = Models.ScheduleTypeEnum.SPECIFIC;
 				Plan.Schedule.ScheduleType = Models.ScheduleTypeEnum.SPECIFIC;
+				if (!Plan.Schedule.OccursSpecificallyAt.HasValue)
+				{
+					Plan.Schedule.OccursSpecificallyAt = DateTimeUtils.RoundUpToQuarterHours(DateTime.UtcNow);
+				}
 			}
 			else if (rbtn == rbtnRecurring && rbtnRecurring.Checked)
 			{

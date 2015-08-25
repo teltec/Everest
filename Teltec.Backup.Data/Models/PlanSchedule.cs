@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Teltec.Common.Extensions;
+using Teltec.Common.Utils;
 
 namespace Teltec.Backup.Data.Models
 {
@@ -107,12 +108,16 @@ namespace Teltec.Backup.Data.Models
 		{
 			get
 			{
-				return OccursSpecificallyAt.HasValue ? OccursSpecificallyAt.Value : DateTime.UtcNow;
+				return OccursSpecificallyAt.HasValue
+					? OccursSpecificallyAt.Value.ToLocalTime()
+					: DateTimeUtils.RoundUpToQuarterHours(DateTime.Now);
 			}
 			set
 			{
-				DateTime v = OccursSpecificallyAt.HasValue ? OccursSpecificallyAt.Value : DateTime.UtcNow;
-				OccursSpecificallyAt = new DateTime(value.Year, value.Month, value.Day, v.Hour, v.Minute, 0);
+				DateTime v = OccursSpecificallyAt.HasValue
+					? OccursSpecificallyAt.Value
+					: DateTimeUtils.RoundUpToQuarterHours(DateTime.Now);
+				OccursSpecificallyAt = new DateTime(value.Year, value.Month, value.Day, v.Hour, v.Minute, 0).ToUniversalTime();
 				//NotifyCallingPropertyChanged();
 			}
 		}
@@ -121,12 +126,16 @@ namespace Teltec.Backup.Data.Models
 		{
 			get
 			{
-				return OccursSpecificallyAt.HasValue ? OccursSpecificallyAt.Value : DateTime.UtcNow;
+				return OccursSpecificallyAt.HasValue
+					? OccursSpecificallyAt.Value.ToLocalTime()
+					: DateTimeUtils.RoundUpToQuarterHours(DateTime.Now);
 			}
 			set
 			{
-				DateTime v = OccursSpecificallyAt.HasValue ? OccursSpecificallyAt.Value : DateTime.UtcNow;
-				OccursSpecificallyAt = new DateTime(v.Year, v.Month, v.Day, value.Hour, value.Minute, 0);
+				DateTime v = OccursSpecificallyAt.HasValue
+					? OccursSpecificallyAt.Value
+					: DateTimeUtils.RoundUpToQuarterHours(DateTime.Now);
+				OccursSpecificallyAt = new DateTime(v.Year, v.Month, v.Day, value.Hour, value.Minute, 0).ToUniversalTime();
 				//NotifyCallingPropertyChanged();
 			}
 		}
@@ -210,7 +219,7 @@ namespace Teltec.Backup.Data.Models
 				SetField(ref _OccursAtDaysOfWeek, value);
 			}
 		}
-		
+
 		#endregion
 
 		#region Monthly frequency
@@ -400,7 +409,7 @@ namespace Teltec.Backup.Data.Models
 						break;
 					}
 			}
-			
+
 			return true;
 		}
 
