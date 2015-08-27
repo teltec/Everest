@@ -65,6 +65,7 @@
     <Compile Include="Backend\PathBuilder.cs" />
     <Compile Include="BackupAgent.cs" />
     <Compile Include="IResults.cs" />
+    <Compile Include="PathScanResults.cs" />
     <Compile Include="RestoreAgent.cs" />
     <Compile Include="Schedulers\IDynamicConcurrencyLevelScheduler.cs" />
     <Compile Include="Schedulers\LimitedConcurrencyLevelTaskScheduler.cs" />

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.Versioning;
 using Teltec.Backup.PlanExecutor.Versioning;
+using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.PlanExecutor.Restore
@@ -29,10 +30,10 @@ namespace Teltec.Backup.PlanExecutor.Restore
 
 		#region Transfer
 
-		private LinkedList<CustomVersionedFile> DoWork(Models.Restore restore, CancellationToken cancellationToken)
+		private PathScanResults<CustomVersionedFile> DoWork(Models.Restore restore, CancellationToken cancellationToken)
 		{
 			// Scan files.
-			DefaultRestoreScanner scanner = new DefaultRestoreScanner(restore.RestorePlan, CancellationTokenSource.Token);
+			DefaultRestoreScanner scanner = new DefaultRestoreScanner(restore.RestorePlan, cancellationToken);
 
 #if DEBUG
 			scanner.FileAdded += (object sender, CustomVersionedFile file) =>
@@ -41,12 +42,12 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			};
 #endif
 
-			LinkedList<CustomVersionedFile> files = scanner.Scan();
+			scanner.Scan();
 
-			return files;
+			return scanner.Results;
 		}
 
-		protected override Task<LinkedList<CustomVersionedFile>> GetFilesToProcess(Models.Restore restore)
+		protected override Task<PathScanResults<CustomVersionedFile>> GetFilesToProcess(Models.Restore restore)
 		{
 			return ExecuteOnBackround(() =>
 			{
@@ -68,7 +69,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			base.OnStart(agent, restore);
 
 			_daoRestore.Insert(restore);
-			
+
 			var message = string.Format("Restore started at {0}", StartedAt);
 			Info(message);
 			//StatusInfo.Update(BackupStatusLevel.OK, message);

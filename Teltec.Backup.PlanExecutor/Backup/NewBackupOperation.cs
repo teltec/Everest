@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.PlanExecutor.Versioning;
+using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.PlanExecutor.Backup
@@ -28,10 +29,10 @@ namespace Teltec.Backup.PlanExecutor.Backup
 
 		#region Transfer
 
-		private LinkedList<string> DoWork(Models.Backup backup, CancellationToken cancellationToken)
+		private PathScanResults<string> DoWork(Models.Backup backup, CancellationToken cancellationToken)
 		{
 			// Scan files.
-			DefaultPathScanner scanner = new DefaultPathScanner(backup.BackupPlan, CancellationTokenSource.Token);
+			DefaultPathScanner scanner = new DefaultPathScanner(backup.BackupPlan, cancellationToken);
 
 #if DEBUG
 			scanner.FileAdded += (object sender, string file) =>
@@ -40,12 +41,12 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			};
 #endif
 
-			LinkedList<string> files = scanner.Scan();
+			scanner.Scan();
 
-			return files;
+			return scanner.Results;
 		}
 
-		protected override Task<LinkedList<string>> GetFilesToProcess(Models.Backup backup)
+		protected override Task<PathScanResults<string>> GetFilesToProcess(Models.Backup backup)
 		{
 			return ExecuteOnBackround(() =>
 			{
@@ -67,7 +68,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			base.OnStart(agent, backup);
 
 			_daoBackup.Insert(backup);
-			
+
 			var message = string.Format("Backup started at {0}", StartedAt);
 			Info(message);
 			//StatusInfo.Update(BackupStatusLevel.OK, message);

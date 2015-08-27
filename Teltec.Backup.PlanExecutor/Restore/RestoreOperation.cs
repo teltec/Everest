@@ -14,6 +14,7 @@ using Teltec.Common.Utils;
 using Teltec.Storage;
 using Teltec.Storage.Implementations.S3;
 using Models = Teltec.Backup.Data.Models;
+using System.Text;
 
 namespace Teltec.Backup.PlanExecutor.Restore
 {
@@ -211,13 +212,13 @@ namespace Teltec.Backup.PlanExecutor.Restore
 #if DEBUG
 				var message = string.Format("Progress {0}% {1} ({2}/{3} bytes)",
 					args.PercentDone, args.FilePath, args.TransferredBytes, args.TotalBytes);
-				Info(message);
+				//Info(message);
 #endif
 				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = null });
 			};
 		}
 
-		protected abstract Task<LinkedList<CustomVersionedFile>> GetFilesToProcess(Models.Restore restore);
+		protected abstract Task<PathScanResults<CustomVersionedFile>> GetFilesToProcess(Models.Restore restore);
 		protected abstract Task DoVersionFiles(Models.Restore restore, LinkedList<CustomVersionedFile> files);
 
 		protected async void DoRestore(CustomRestoreAgent agent, Models.Restore restore, RestoreOperationOptions options)
@@ -230,7 +231,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 
 			LinkedList<CustomVersionedFile> filesToProcess = null;
 			{
-				Task<LinkedList<CustomVersionedFile>> filesToProcessTask = GetFilesToProcess(restore);
+				Task<PathScanResults<CustomVersionedFile>> filesToProcessTask = GetFilesToProcess(restore);
 
 				{
 					var message = string.Format("Scanning files started.");
@@ -257,9 +258,18 @@ namespace Teltec.Backup.PlanExecutor.Restore
 					}
 				}
 
-				filesToProcess = filesToProcessTask.Result;
+				filesToProcess = filesToProcessTask.Result.Files;
 
 				{
+					if (filesToProcessTask.Result.FailedFiles.Count > 0)
+					{
+						StringBuilder sb = new StringBuilder();
+						sb.AppendLine("Scanning failes for the following drives/files/directories:");
+						foreach (var entry in filesToProcessTask.Result.FailedFiles)
+							sb.AppendLine(string.Format("  Path: {0} - Reason: {1}", entry.Key, entry.Value));
+						Warn(sb.ToString());
+					}
+
 					var message = string.Format("Scanning files finished.");
 					Info(message);
 					//StatusInfo.Update(BackupStatusLevel.INFO, message);

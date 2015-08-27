@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
@@ -219,13 +220,13 @@ namespace Teltec.Backup.PlanExecutor.Backup
 #if DEBUG
 				var message = string.Format("Progress {0}% {1} ({2}/{3} bytes)",
 					args.PercentDone, args.FilePath, args.TransferredBytes, args.TotalBytes);
-				Info(message);
+				//Info(message);
 #endif
 				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = null });
 			};
 		}
 
-		protected abstract Task<LinkedList<string>> GetFilesToProcess(Models.Backup backup);
+		protected abstract Task<PathScanResults<string>> GetFilesToProcess(Models.Backup backup);
 		protected abstract Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess);
 
 		// Update specific `BackupPlanFile`s that exist and are NOT yet associated to a `BackupPlan`.
@@ -258,7 +259,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 
 			LinkedList<string> filesToProcess = null;
 			{
-				Task<LinkedList<string>> filesToProcessTask = GetFilesToProcess(backup);
+				Task<PathScanResults<string>> filesToProcessTask = GetFilesToProcess(backup);
 
 				{
 					var message = string.Format("Scanning files started.");
@@ -285,9 +286,18 @@ namespace Teltec.Backup.PlanExecutor.Backup
 					}
 				}
 
-				filesToProcess = filesToProcessTask.Result;
+				filesToProcess = filesToProcessTask.Result.Files;
 
 				{
+					if (filesToProcessTask.Result.FailedFiles.Count > 0)
+					{
+						StringBuilder sb = new StringBuilder();
+						sb.AppendLine("Scanning failes for the following drives/files/directories:");
+						foreach (var entry in filesToProcessTask.Result.FailedFiles)
+							sb.AppendLine(string.Format("  Path: {0} - Reason: {1}", entry.Key, entry.Value));
+						Warn(sb.ToString());
+					}
+
 					var message = string.Format("Scanning files finished.");
 					Info(message);
 					//StatusInfo.Update(BackupStatusLevel.INFO, message);

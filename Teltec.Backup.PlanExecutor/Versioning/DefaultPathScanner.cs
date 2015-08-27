@@ -16,7 +16,6 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		CancellationToken CancellationToken;
 		BackupPlan Plan;
-		LinkedList<string> Result;
 
 		public DefaultPathScanner(BackupPlan plan, CancellationToken cancellationToken)
 		{
@@ -28,12 +27,12 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		// TODO(jweyrich): Should return a HashSet/ISet instead?
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		public override LinkedList<string> Scan()
+		public override void Scan()
 		{
 			BlockPerfStats stats = new BlockPerfStats();
 			stats.Begin();
 
-			Result = new LinkedList<string>();
+			Results = new PathScanResults<string>();
 
 			//
 			// Add sources.
@@ -78,8 +77,6 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			}
 
 			stats.End();
-
-			return Result;
 		}
 
 		#endregion
@@ -102,7 +99,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			{
 				var item = file.FullName;
 
-				Result.AddLast(item);
+				Results.AddedFile(item);
 
 				if (FileAdded != null)
 					FileAdded(this, item);
@@ -124,7 +121,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		private void AddDirectory(DirectoryInfo directory)
 		{
-			
+
 			if (!directory.Exists)
 			{
 				logger.Warn("Directory {0} does not exist", directory.FullName);
@@ -180,6 +177,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			{
 				logger.Error(message, ex);
 				// TODO: Should we register this to show ERRORS/FAILURES in the backup operation?
+				Results.FailedFile(path, message);
 			}
 		}
 	}

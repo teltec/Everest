@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.Versioning;
+using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.PlanExecutor.Restore
@@ -29,11 +30,11 @@ namespace Teltec.Backup.PlanExecutor.Restore
 
 		#region Transfer
 
-		protected override Task<LinkedList<CustomVersionedFile>> GetFilesToProcess(Models.Restore restore)
+		protected override Task<PathScanResults<CustomVersionedFile>> GetFilesToProcess(Models.Restore restore)
 		{
 			return null;
 		}
-		
+
 		protected override Task DoVersionFiles(Models.Restore restore, LinkedList<CustomVersionedFile> files)
 		{
 			return null;

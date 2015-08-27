@@ -1,6 +1,7 @@
 ﻿using NLog;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.PlanExecutor.Backup
@@ -28,7 +29,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 
 		#region Transfer
 
-		protected override Task<LinkedList<string>> GetFilesToProcess(Models.Backup backup)
+		protected override Task<PathScanResults<string>> GetFilesToProcess(Models.Backup backup)
 		{
 			return null;
 		}

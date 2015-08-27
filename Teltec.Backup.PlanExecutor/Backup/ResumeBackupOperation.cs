@@ -14,7 +14,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 	public sealed class ResumeBackupOperation : BackupOperation
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-		
+
 		#region Constructors
 
 		public ResumeBackupOperation(Models.Backup backup)
@@ -35,8 +35,10 @@ namespace Teltec.Backup.PlanExecutor.Backup
 
 		#region Transfer
 
-		private LinkedList<string> DoWork(Models.Backup backup, CancellationToken cancellationToken)
+		private PathScanResults<string> DoWork(Models.Backup backup, CancellationToken cancellationToken)
 		{
+			PathScanResults<string> results = new PathScanResults<string>();
+
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
 
 			// Load pending `BackupedFiles` from `Backup`.
@@ -46,12 +48,12 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			cancellationToken.ThrowIfCancellationRequested();
 
 			// Convert them to a list of paths.
-			LinkedList<string> files = pendingFiles.ToLinkedList<string, Models.BackupedFile>(p => p.File.Path);
+			results.Files = pendingFiles.ToLinkedList<string, Models.BackupedFile>(p => p.File.Path);
 
-			return files;
+			return results;
 		}
 
-		protected override Task<LinkedList<string>> GetFilesToProcess(Models.Backup backup)
+		protected override Task<PathScanResults<string>> GetFilesToProcess(Models.Backup backup)
 		{
 			return ExecuteOnBackround(() =>
 			{
@@ -73,7 +75,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			base.OnStart(agent, backup);
 
 			_daoBackup.Update(backup);
-			
+
 			var message = string.Format("Backup resumed at {0}", StartedAt);
 			Info(message);
 			//StatusInfo.Update(BackupStatusLevel.OK, message);

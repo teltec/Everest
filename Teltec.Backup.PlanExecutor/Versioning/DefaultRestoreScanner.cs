@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using Teltec.Backup.Data.Models;
 using Teltec.Backup.Data.Versioning;
+using Teltec.Stats;
 using Teltec.Storage;
 using Teltec.Storage.Versioning;
 
@@ -16,7 +17,6 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		CancellationToken CancellationToken;
 		RestorePlan Plan;
-		LinkedList<CustomVersionedFile> Result;
 
 		public DefaultRestoreScanner(RestorePlan plan, CancellationToken cancellationToken)
 		{
@@ -27,9 +27,12 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		#region PathScanner
 
 		// TODO(jweyrich): Should return a HashSet/ISet instead?
-		public override LinkedList<CustomVersionedFile> Scan()
+		public override void Scan()
 		{
-			Result = new LinkedList<CustomVersionedFile>();
+			BlockPerfStats stats = new BlockPerfStats();
+			stats.Begin();
+
+			Results = new PathScanResults<CustomVersionedFile>();
 
 			//
 			// Add sources.
@@ -75,7 +78,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				}
 			}
 
-			return Result;
+			stats.End();
 		}
 
 		#endregion
@@ -128,7 +131,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 			var item = new CustomVersionedFile { Path = node.Path, Version = version, Size = size };
 
-			Result.AddLast(item);
+			Results.Files.AddLast(item);
 
 			if (FileAdded != null)
 				FileAdded(this, item);
