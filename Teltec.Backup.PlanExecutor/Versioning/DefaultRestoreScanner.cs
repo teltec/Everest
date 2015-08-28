@@ -110,26 +110,31 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		{
 			CancellationToken.ThrowIfCancellationRequested();
 
-			long size = 0;
+			BackupedFile f = null;
 
 			// If `version` is not not informed, then find the file's latest version.
 			if (version == null)
 			{
-				BackupedFile f = node.PlanFile.Versions.Last();
+				f = node.PlanFile.Versions.Last();
 				IFileVersion latestFileVersion = f != null
 					? new FileVersion { Name = f.VersionName, Version = f.Version }
 					: null;
 				version = latestFileVersion;
-				size = f.FileSize;
 			}
 			else
 			{
-				BackupedFile f = node.PlanFile.Versions.First(
+				f = node.PlanFile.Versions.First(
 					p => p.Version.Equals(version.Version, StringComparison.InvariantCulture));
-				size = f.FileSize;
 			}
 
-			var item = new CustomVersionedFile { Path = node.Path, Version = version, Size = size };
+			var item = new CustomVersionedFile
+			{
+				Path = node.Path,
+				Size = f.FileSize,
+				LastWriteTimeUtc = f.FileLastWrittenAt,
+				UserData = f, // Reference the original `BackupedFile`.
+				Version = version,
+			};
 
 			Results.Files.AddLast(item);
 

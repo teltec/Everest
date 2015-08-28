@@ -205,7 +205,8 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						if (restoredFile == null) // If we're resuming, this should already exist.
 						{
 							// Create `RestoredFile`.
-							restoredFile = new Models.RestoredFile(Restore, entry);
+							Models.BackupedFile backupedFile = entry.VersionedFile.UserData as Models.BackupedFile;
+							restoredFile = new Models.RestoredFile(Restore, entry, backupedFile);
 						}
 						restoredFile.UpdatedAt = DateTime.UtcNow;
 						daoRestoredFile.InsertOrUpdate(tx, restoredFile);

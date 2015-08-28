@@ -805,6 +805,14 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Index(INDEX_RESTORE_XFERSTATUS_FILE)
 				;
 
+			References(fk => fk.BackupedFile)
+				.Column("backuped_file_id")
+				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
+				// seems to set it to `NULL` before deleting the object/row.
+				//.Not.Nullable()
+				.Cascade.None()
+				;
+
 			Map(p => p.TransferStatus)
 				.Column("transfer_status")
 				.Not.Nullable()
