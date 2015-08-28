@@ -112,11 +112,13 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 			BackupedFile f = null;
 
-			// If `version` is not not informed, then find the file's latest version.
+			// If `version` is not not informed, then find the file's latest version
+			// that has completed transfer.
 			if (version == null)
 			{
-				f = node.PlanFile.Versions.Last();
-				IFileVersion latestFileVersion = f != null
+				f = node.PlanFile.Versions.LastOrDefault(v => v.TransferStatus == TransferStatus.COMPLETED);
+
+				IFileVersion latestFileVersion = f != null && f.Id.HasValue
 					? new FileVersion { Name = f.VersionName, Version = f.Version }
 					: null;
 				version = latestFileVersion;
@@ -126,6 +128,9 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				f = node.PlanFile.Versions.First(
 					p => p.Version.Equals(version.Version, StringComparison.InvariantCulture));
 			}
+
+			if (f == null || !f.Id.HasValue)
+				return;
 
 			var item = new CustomVersionedFile
 			{
