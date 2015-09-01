@@ -58,6 +58,7 @@ namespace Teltec.Backup.PlanExecutor
 
 			try
 			{
+				LoadSettings();
 				var executor = new PlanExecutor();
 				executor.Run();
 				LetMeDebugThisBeforeExiting();
@@ -553,6 +554,11 @@ namespace Teltec.Backup.PlanExecutor
 			}
 
 			//Reporter.Publish(message);
+		}
+
+		private static void LoadSettings()
+		{
+			AsyncHelper.SettingsMaxThreadCount = Teltec.Backup.Settings.Properties.Current.MaxThreadCount;
 		}
 
 		#region Dispose Pattern Implementation

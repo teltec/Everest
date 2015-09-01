@@ -19,7 +19,7 @@ namespace Teltec.Backup.Scheduler
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		private static readonly int RefreshCommand = 205;
+		private const int RefreshCommand = 205;
 
 		#region Trap application termination
 
@@ -81,7 +81,7 @@ namespace Teltec.Backup.Scheduler
 
 			//string servicePath = Assembly.GetExecutingAssembly().Location;
 			//string serviceName = Assembly.GetExecutingAssembly().GetName().Name;
-
+			//
 			//ServiceInstaller installer = new ServiceInstaller(serviceName);
 			//installer.DesiredAccess = ServiceAccessRights.AllAccess;
 			//installer.BinaryPath = servicePath;
@@ -89,7 +89,7 @@ namespace Teltec.Backup.Scheduler
 			//	"MSSQL$SQLEXPRESS"
 			//	//"MSSQLSERVER"
 			//};
-
+			//
 			//installer.InstallAndStart();
 		}
 
@@ -180,10 +180,10 @@ namespace Teltec.Backup.Scheduler
 
 						DateTime whenToStart = optional.Value;
 
-						Trigger tr = Trigger.CreateTrigger(TaskTriggerType.Custom);
+						Trigger tr = Trigger.CreateTrigger(TaskTriggerType.Time);
 
 						// When to start?
-						tr.StartBoundary = whenToStart;
+						tr.StartBoundary = whenToStart.ToLocalTime();
 
 						triggers.Add(tr);
 						break;
@@ -425,7 +425,7 @@ namespace Teltec.Backup.Scheduler
 			using (TaskService ts = new TaskService())
 			{
 				// Find if there's already a task for the informed plan.
-				Task existingTask = ts.FindTask(taskName);
+				Task existingTask = ts.FindTask(taskName, false);
 
 				if (existingTask != null)
 				{
@@ -446,8 +446,8 @@ namespace Teltec.Backup.Scheduler
 						if (!reschedule)
 							return;
 
-						// Remove the task we found.
-						ts.RootFolder.DeleteTask(taskName);
+						// Do NOT delete the task we found - it will be updated by `RegisterTaskDefinition`.
+						//ts.RootFolder.DeleteTask(taskName);
 					}
 				}
 				else
@@ -526,7 +526,7 @@ namespace Teltec.Backup.Scheduler
 
 		List<Models.ISchedulablePlan> AllSchedulablePlans = new List<Models.ISchedulablePlan>();
 
-		private void ReloadPlansAndRescheduler()
+		private void ReloadPlansAndReschedule()
 		{
 			AllSchedulablePlans.Clear();
 
@@ -536,6 +536,8 @@ namespace Teltec.Backup.Scheduler
 			AllSchedulablePlans.AddRange(daoBackupPlans.GetAll());
 			AllSchedulablePlans.AddRange(daoRestorePlans.GetAll());
 
+			// TODO(jweyrich): Currently does not DELETE existing tasks for plans that no longer exist.
+			// TODO(jweyrich): Currently does not CHECK if an existing plan schedule has been changed.
 			foreach (var plan in AllSchedulablePlans)
 			{
 				SchedulePlanExecution(plan, true);
@@ -557,7 +559,7 @@ namespace Teltec.Backup.Scheduler
 
 			Info("Time to check for changes...");
 
-			ReloadPlansAndRescheduler();
+			ReloadPlansAndReschedule();
 		}
 
 		protected override void OnStart(string[] args)
@@ -578,13 +580,17 @@ namespace Teltec.Backup.Scheduler
 			timer = new System.Timers.Timer();
 			timer.Interval = 1000 * 60 * 5; // Set interval to 5 minutes
 			timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Elapsed);
-			start_timer();
 
 			// Update the service state to Running.
 			//serviceStatus.dwCurrentState = ServiceState.Running;
 			//ServiceInstaller.SetServiceStatus(this.ServiceHandle, ref serviceStatus);
 
 			Info("Service was started.");
+
+			ReloadPlansAndReschedule();
+
+			// Start timer only after the plans were already loaded and rescheduled.
+			start_timer();
 		}
 
 		protected override void OnStop()
@@ -608,7 +614,7 @@ namespace Teltec.Backup.Scheduler
 		private void OnRefresh()
 		{
 			Info("Service is refreshing...");
-			ReloadPlansAndRescheduler();
+			ReloadPlansAndReschedule();
 			Info("Service was refreshed.");
 		}
 
@@ -618,7 +624,7 @@ namespace Teltec.Backup.Scheduler
 
 			switch (command)
 			{
-				case 205:
+				case RefreshCommand:
 					OnRefresh();
 					break;
 			}

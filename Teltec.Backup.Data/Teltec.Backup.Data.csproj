@@ -110,7 +110,7 @@
     <Compile Include="Models\BaseEntity.cs" />
     <Compile Include="Models\EntryType.cs" />
     <Compile Include="Models\EStorageAccountType.cs" />
-    <Compile Include="Models\ISchedulablePlan.cs" />
+    <Compile Include="Models\SchedulablePlan.cs" />
     <Compile Include="Models\PlanSchedule.cs" />
     <Compile Include="Models\Restore.cs" />
     <Compile Include="Models\RestoredFile.cs" />
