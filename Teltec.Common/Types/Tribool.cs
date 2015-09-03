@@ -7,7 +7,12 @@ using System.Threading.Tasks;
 namespace Teltec.Common.Types
 {
 	//
-	// ORIGINAL CODE FROM http://stackoverflow.com/a/2175001/298054
+	// "Tribool implementation in C#" by "Marc Gravell" is licensed under CC BY-SA 3.0
+	//
+	// Title?   Tribool implementation in C#
+	// Author?  Marc Gravell - http://stackoverflow.com/users/23354/marc-gravell
+	// Source?  http://stackoverflow.com/a/2175001/298054
+	// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
 	//
 	public struct Tribool : IEquatable<Tribool>
 	{

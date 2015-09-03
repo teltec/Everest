@@ -4,9 +4,12 @@ using System.Windows.Forms;
 namespace Teltec.Common.Controls
 {
 	//
-	// REFERENCES:
-	//	http://stackoverflow.com/a/3724365/298054
-	//	http://stackoverflow.com/a/9359642/298054
+	// "Winforms: Making a control transparent" by "Amen Ayach" is licensed under CC BY-SA 3.0
+	//
+	// Title?   Winforms: Making a control transparent
+	// Author?  Amen Ayach - http://stackoverflow.com/users/1209153/amen-ayach
+	// Source?  http://stackoverflow.com/a/9359642/298054
+	// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
 	//
 	public partial class SemiTransparentPanel : Panel
 	{

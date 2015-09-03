@@ -53,7 +53,7 @@ namespace Teltec.FileSystem
 				+ string.Join(Path.DirectorySeparatorChar.ToString(), comps.Directories.Take(amount))
 				+ Path.DirectorySeparatorChar.ToString();
 		}
-		
+
 		protected string FormattedDriveName(PathComponents comps)
 		{
 			return comps.HasDrive ? comps.Drive + Path.VolumeSeparatorChar : string.Empty;
@@ -74,7 +74,7 @@ namespace Teltec.FileSystem
 			string nodePath = null;
 
 			if (comps.HasDrive)
-			{ 
+			{
 				nodeName = FormattedDriveName(comps);
 				nodePath = FormattedDrivePath(comps);
 				currentNode = new PathNode(PathNode.TypeEnum.DRIVE, nodeName, nodePath, previousNode);

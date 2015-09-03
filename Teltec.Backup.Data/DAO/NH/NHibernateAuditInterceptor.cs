@@ -5,7 +5,11 @@ using System;
 
 namespace Teltec.Backup.Data.DAO.NH
 {
-	// REFERENCE: http://nhibernate.info/doc/nh/en/index.html
+	//
+	// Title?  Chapter 12. Interceptors and events
+	// Source?  http://nhibernate.info/doc/nhibernate-reference/events.html
+	// License? LGPL 2.1 - http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
+	//
 	[Serializable]
 	public class NHibernateAuditInterceptor : EmptyInterceptor
 	{

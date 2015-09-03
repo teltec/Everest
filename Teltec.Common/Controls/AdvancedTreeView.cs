@@ -188,16 +188,19 @@ namespace Teltec.Common.Controls
 
 		protected override void WndProc(ref Message m)
 		{
-			//
-			// REFERENCES:
-			//	http://stackoverflow.com/a/3174824/298054
-			//	https://social.msdn.microsoft.com/Forums/windows/en-US/9d717ce0-ec6b-4758-a357-6bb55591f956/possible-bug-in-net-treeview-treenode-checked-state-inconsistent?forum=winforms
-			//
-
 			switch (m.Msg)
 			{
 				case NativeMethods.WM_LBUTTONDBLCLK:
 					{
+						//
+						// "Winforms treeview, recursively check child nodes problem" by "Hans Passant" is licensed under CC BY-SA 3.0
+						//
+						// Title?   Winforms treeview, recursively check child nodes problem
+						// Author?  Hans Passant - http://stackoverflow.com/users/17034/hans-passant
+						// Source?  http://stackoverflow.com/a/3174824/298054
+						// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
+						//
+
 						//
 						// Disable double-click on checkbox to fix Windows Vista/7/8/8.1 bug.
 						//
@@ -211,6 +214,11 @@ namespace Teltec.Common.Controls
 					}
 				case NativeMethods.WM_RBUTTONDOWN:
 					{
+						//
+						// ORIGINAL CODE FROM:
+						//	https://social.msdn.microsoft.com/Forums/windows/en-US/9d717ce0-ec6b-4758-a357-6bb55591f956/possible-bug-in-net-treeview-treenode-checked-state-inconsistent?forum=winforms
+						//
+
 						//
 						// Fix for another Microsoft bug.
 						// Right-clicking a node doesn't make it the selected node.

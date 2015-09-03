@@ -15,7 +15,14 @@ namespace Teltec.Storage.Monitor
 		CustomText
 	}
 
-	// REFERENCE: http://stackoverflow.com/a/3529945/298054
+	//
+	// "How do I put text on ProgressBar?" by "Barry" is licensed under CC BY-SA 3.0
+	//
+	// Title?   How do I put text on ProgressBar?
+	// Author?  Barry - http://stackoverflow.com/users/300863/barry
+	// Source?  http://stackoverflow.com/a/3529945/298054
+	// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
+	//
 	public class ExtendedProgressBar: ProgressBar
 	{
 		//Property to set to decide whether to print a % or Text
@@ -42,7 +49,7 @@ namespace Teltec.Storage.Monitor
 
 			ProgressBarRenderer.DrawHorizontalBar(g, rect);
 			rect.Inflate(-1, -1); // Padding
-			
+
 			if (Value > 0)
 			{
 				// As we doing this ourselves we need to draw the chunks on the progress bar

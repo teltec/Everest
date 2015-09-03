@@ -6,11 +6,18 @@ namespace Teltec.Common.Utils
 {
 	public class TimeSpanUtils
 	{
-		// REFERENCE: http://stackoverflow.com/a/21649465/298054
+		//
+		// "How to produce “human readable” strings to represent a TimeSpan" by "rene" is licensed under CC BY-SA 3.0
+		//
+		// Title?   How to produce “human readable” strings to represent a TimeSpan
+		// Author?  rene - http://stackoverflow.com/users/578411/rene
+		// Source?  http://stackoverflow.com/a/21649465/298054
+		// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
+		//
 		public static string GetReadableTimespan(TimeSpan ts)
 		{
 			// Formats and its cutoffs based on totalseconds
-			var cutoff = new SortedList<long, string> { 
+			var cutoff = new SortedList<long, string> {
 				{ 60,				"{3:S}"			},
 				{ 60 * 60,			"{2:M}, {3:S}"	},
 				{ 24 * 60 * 60,		"{1:H}, {2:M}"	},
@@ -19,10 +26,10 @@ namespace Teltec.Common.Utils
 
 			// Find nearest best match
 			var find = cutoff.Keys.ToList().BinarySearch((long)ts.TotalSeconds);
-			
+
 			// Negative values indicate a nearest match
 			var near = find < 0 ? Math.Abs(find) - 1 : find;
-			
+
 			// Use custom formatter to get the string
 			return String.Format(
 				new HMSFormatter(),
@@ -34,9 +41,15 @@ namespace Teltec.Common.Utils
 		}
 	}
 
-	// REFERENCE: http://stackoverflow.com/a/21649465/298054
-	// formatter for plural/singular forms of
-	// seconds/hours/days
+	//
+	// "How to produce “human readable” strings to represent a TimeSpan" by "rene" is licensed under CC BY-SA 3.0
+	//
+	// Title?   How to produce “human readable” strings to represent a TimeSpan
+	// Author?  rene - http://stackoverflow.com/users/578411/rene
+	// Source?  http://stackoverflow.com/a/21649465/298054
+	// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
+	//
+	// Formatter for plural/singular forms of seconds/hours/days.
 	public class HMSFormatter : ICustomFormatter, IFormatProvider
 	{
 		string _plural, _singular;
@@ -74,7 +87,7 @@ namespace Teltec.Common.Utils
 						fmt = String.Format(new HMSFormatter("{0} days", "{0} day"), "{0}", arg);
 						break;
 					default:
-						// plural/ singular             
+						// plural/ singular
 						fmt = String.Format((int)arg > 1 ? _plural : _singular, arg);  // watch the cast to int here...
 						break;
 				}

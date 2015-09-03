@@ -6,7 +6,12 @@ using System.Dynamic;
 namespace Teltec.Backup.Data.DAO.NH
 {
 	//
-	// REFERENCE: http://stackoverflow.com/a/8387156/298054
+	// "How to make a simple dynamic proxy in C#" by "albertjan" is licensed under CC BY-SA 3.0
+	//
+	// Title?   How to make a simple dynamic proxy in C#
+	// Author?  albertjan - http://stackoverflow.com/users/117242/albertjan
+	// Source?  http://stackoverflow.com/a/8387156/298054
+	// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
 	//
 	public class NHibernateTransactionProxy<T> : DynamicObject
 	{

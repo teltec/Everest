@@ -4,7 +4,14 @@ using System.ComponentModel;
 
 namespace Teltec.Storage.Monitor
 {
-	// REFERENCE: http://stackoverflow.com/a/9583248/298054
+	//
+	// "Locating objects in BindingList" by "Steven P" is licensed under CC BY-SA 3.0
+	//
+	// Title?   Locating objects in BindingList
+	// Author?  Steven P - http://stackoverflow.com/users/1056812/steven-p
+	// Source?  http://stackoverflow.com/a/9583248/298054
+	// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
+	//
 	public class FastLookupBindingList<TKey, TVal> : BindingList<TVal>
 	{
 		private readonly IDictionary<TKey, TVal> _dict = new Dictionary<TKey, TVal>();
