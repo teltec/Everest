@@ -51,6 +51,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_1DBD1F6E6FC7447ABBFC0F3ED56405A6"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_1E677DF6F81CA664FD22C2EB4233D39D"
         "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
         "MsmSig" = "8:_UNDEFINED"
@@ -341,6 +347,24 @@
         {
         "MsmKey" = "8:_8DE48061A510224416B87D6F5A5A5640"
         "OwnerKey" = "8:_9A0607D6E0324516947A532C59E0F52D"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_90A81B28136CA1CD96218ABCD92D24A4"
+        "OwnerKey" = "8:_7A79BAC77744428FA7020227BD68CE0E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_90A81B28136CA1CD96218ABCD92D24A4"
+        "OwnerKey" = "8:_9A0607D6E0324516947A532C59E0F52D"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_90A81B28136CA1CD96218ABCD92D24A4"
+        "OwnerKey" = "8:_94FD25D4E067D41E4BD0CAACBA685F22"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -952,6 +976,12 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_90A81B28136CA1CD96218ABCD92D24A4"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_56E5F7AC6C382BE00F9EA3AB9A5C6849"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -1310,6 +1340,26 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_1DBD1F6E6FC7447ABBFC0F3ED56405A6"
+            {
+            "SourcePath" = "8:..\\LICENSES.xml"
+            "TargetName" = "8:LICENSES.xml"
+            "Tag" = "8:"
+            "Folder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_1E677DF6F81CA664FD22C2EB4233D39D"
@@ -1758,6 +1808,37 @@
                     }
                 }
             "SourcePath" = "8:Teltec.System.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_90A81B28136CA1CD96218ABCD92D24A4"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:Teltec.Backup.Settings, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_90A81B28136CA1CD96218ABCD92D24A4"
+                    {
+                    "Name" = "8:Teltec.Backup.Settings.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:Teltec.Backup.Settings.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
@@ -3113,7 +3194,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_94B2F88020E44AD4A91689F8078135C6"
             {
-            "SourcePath" = "8:..\\Teltec.Backup.Svc\\obj\\Debug\\Teltec.Backup.Svc.exe"
+            "SourcePath" = "8:..\\Teltec.Backup.Scheduler\\obj\\Debug\\Teltec.Backup.Scheduler.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_C3292BB4973F4233B0CF63E275FB2E70"
