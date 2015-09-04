@@ -105,6 +105,26 @@ namespace Teltec.Backup.Scheduler
 
 		static void Main(string[] args)
 		{
+			try
+			{
+				UnsafeMain(args);
+			}
+			catch (Exception ex)
+			{
+				if (Environment.UserInteractive)
+				{
+					string message = string.Format(
+						"Caught a fatal exception ({0}). Check the log file for more details.",
+						ex.Message);
+					//if (Process.GetCurrentProcess().MainWindowHandle != IntPtr.Zero)
+					//	MessageBox.Show(message);
+				}
+				logger.FatalException("Caught a fatal exception", ex);
+			}
+		}
+
+		static void UnsafeMain(string[] args)
+		{
 			if (System.Environment.UserInteractive)
 			{
 				if (args.Length > 0)
