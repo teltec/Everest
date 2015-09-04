@@ -1,6 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<?xml-stylesheet href="LICENSES.xsl" type="text/xsl" ?>
 <global>
 	<dependencies>
-		<dependency title="AWS SDK for .NET" name="AWSSDK" version="2.3.38.0" license-ref="Apache License 2.0" project-url="https://github.com/aws/aws-sdk-net">
+		<dependency title="AWS SDK for .NET" name="AWSSDK" version="2.3.38.0" license="Apache License 2.0" project-url="https://github.com/aws/aws-sdk-net">
 			Copyright 2008-2013 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 			Licensed under the Apache License, Version 2.0 (the "License"). You may not use
 			this file except in compliance with the License. A copy of the License is located at
@@ -13,7 +15,7 @@
 			specific language governing permissions and limitations under the License.
 		</dependency>
 		<dependency title="Command Line Parser Library" name="CommandLineParser" version="1.9.71" license="MIT" project-url="https://github.com/gsscoder/commandline">
-			Copyright (c) 2005 - 2015 Giacomo Stelluti Scala & Contributors
+			Copyright (c) 2005 - 2015 Giacomo Stelluti Scala &amp; Contributors
 
 			Permission is hereby granted, free of charge, to any person obtaining a copy
 			of this software and associated documentation files (the "Software"), to deal
@@ -60,11 +62,11 @@
 			THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		</dependency>
 		<dependency title="IESI Collections" name="Iesi.Collections" version="4.0.1.4000" license="Custom License" project-url="https://github.com/nhibernate/iesi.collections">
-			Copyright � 2002-2004 by Aidant Systems, Inc., and by Jason Smith.
+			Copyright (c) 2002-2004 by Aidant Systems, Inc., and by Jason Smith.
 
 			Copied from http://www.codeproject.com/csharp/sets.asp#xx703510xx that was posted by JasonSmith 12:13 2 Jan '04
 		</dependency>
-		<dependency title="ImpromptuInterface" name="ImpromptuInterface" version="6.2.2" license="" project-url="https://github.com/ekonbenefits/impromptu-interface">
+		<dependency title="ImpromptuInterface" name="ImpromptuInterface" version="6.2.2" license="Apache License 2.0" project-url="https://github.com/ekonbenefits/impromptu-interface">
 			Copyright 2010  Ekon Benefits
 
 			Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,7 +86,7 @@
 		<dependency title="Microsoft HTTP Client Libraries" name="Microsoft.Net.Http" version="2.1.10" license="" project-url="http://blogs.msdn.com/b/bclteam/p/httpclient.aspx" />
 		<dependency title="NHibernate" name="NHibernate" version="4.0.3.4000" license-ref="lgpl-2.1" project-url="https://github.com/nhibernate/nhibernate-core" />
 		<dependency title="NLog - Advanced .NET and Silverlight Logging" name="NLog" version="3.2.1" license="New BSD License" project-url="https://github.com/NLog/NLog">
-			Copyright (c) 2004-2011 Jaroslaw Kowalski <jaak@jkowalski.net>
+			Copyright (c) 2004-2011 Jaroslaw Kowalski &lt;jaak@jkowalski.net&gt;
 
 			All rights reserved.
 
@@ -200,7 +202,7 @@
 			CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 			DEALINGS IN THE SOFTWARE.
 		</dependency>
-		<dependency title="System.Data.SQLite" name="System.Data.SQLite" version="1.0.96.0" license-ref="Public Domain" project-url="https://system.data.sqlite.org" alt-project-url="https://www.nuget.org/packages/System.Data.SQLite" />
+		<dependency title="System.Data.SQLite" name="System.Data.SQLite" version="1.0.96.0" license-ref="public-domain" project-url="https://system.data.sqlite.org" alt-project-url="https://www.nuget.org/packages/System.Data.SQLite" />
 		<dependency title="Task Scheduler Managed Wrapper" name="TaskScheduler" version="2.3.2" license="MIT" project-url="http://taskscheduler.codeplex.com">
 			Copyright (c) 2003-2010 David Hall
 
@@ -241,8 +243,11 @@
 	</assets>
 
 	<licenses>
+		<license title="Public Domain" name="public-domain" official-url="">
+			Public Domain
+		</license>
+		<!-- Converted from HTML to TEXT using https://www.w3.org/services/html2txt -->
 		<license title="Code Project Open License 1.02" name="cpol_1_02" official-url="http://www.codeproject.com/info/cpol10.aspx">
-			<!-- Converted from HTML to TEXT using https://www.w3.org/services/html2txt -->
 			THE WORK (AS DEFINED BELOW) IS PROVIDED UNDER THE TERMS OF THIS
 			CODE PROJECT OPEN LICENSE ("LICENSE"). THE WORK IS PROTECTED BY
 			COPYRIGHT AND/OR OTHER APPLICABLE LAW. ANY USE OF THE WORK
@@ -456,8 +461,8 @@
 			        modified without the mutual written agreement of the
 			        Author and You.
 		</license>
+		<!-- Converted from HTML to TEXT using https://www.w3.org/services/html2txt -->
 		<license title="MICROSOFT SOFTWARE LICENSE TERMS" name="MSLT_dotnet_library_license" official-url="https://www.microsoft.com/web/webpi/eula/aspnetcomponent_rtw_enu.htm">
-			<!-- Converted from HTML to TEXT using https://www.w3.org/services/html2txt -->
 			   MICROSOFT SOFTWARE LICENSE TERMS
 
 			   MICROSOFT .NET LIBRARY
@@ -1201,12 +1206,12 @@
 			(D) If you distribute any portion of the software in source code form, you may do so only under this license by including a complete copy of this license with your distribution. If you distribute any portion of the software in compiled or object code form, you may only do so under a license that complies with this license. 
 			(E) The software is licensed "as-is." You bear the risk of using it. The contributors give no express warranties, guarantees, or conditions. You may have additional consumer rights under your local laws which this license cannot change. To the extent permitted under your local laws, the contributors exclude the implied warranties of merchantability, fitness for a particular purpose and non-infringement. 
 
-			4. (F) Platform Limitation- The licenses granted in sections 2(A) & 2(B) extend only to the software or derivative works that you create that run on a Microsoft Windows operating system product.
+			4. (F) Platform Limitation- The licenses granted in sections 2(A) &amp; 2(B) extend only to the software or derivative works that you create that run on a Microsoft Windows operating system product.
 
 			Read more about this license at http://www.codeplex.com/clrinterop/license
 		</license>
+		<!-- Converted from HTML to TEXT using https://www.w3.org/services/html2txt -->
 		<license  title="Creative Commons Attribution-ShareAlike 3.0 Unported License" name="CC-BY-SA-3.0" official-url="https://creativecommons.org/licenses/by-sa/3.0/legalcode">
-			<!-- Converted from HTML to TEXT using https://www.w3.org/services/html2txt -->
 			Creative Commons Legal Code
 
 			Attribution-ShareAlike 3.0 Unported
