@@ -298,7 +298,14 @@ namespace Teltec.Backup.Scheduler
 			return errorMessage;
 		}
 
-		// REFERENCE: https://msdn.microsoft.com/en-us/library/windows/desktop/ms686315%28v=vs.85%29.aspx
+		//
+		// "Starting a Service" by "Microsoft Corporation" is licensed under MS-PL
+		//
+		// Title?   Starting a Service
+		// Author?  Microsoft Corporation
+		// Source?  https://msdn.microsoft.com/en-us/library/windows/desktop/ms686315%28v=vs.85%29.aspx
+		// License? MS-PL - https://opensource.org/licenses/MS-PL
+		//
 		private bool WaitForServiceStatus(IntPtr service, ServiceState waitStatus, ServiceState desiredStatus)
 		{
 			ServiceStatus status = new ServiceStatus();

@@ -215,8 +215,8 @@ namespace Teltec.Common.Controls
 				case NativeMethods.WM_RBUTTONDOWN:
 					{
 						//
-						// ORIGINAL CODE FROM:
-						//	https://social.msdn.microsoft.com/Forums/windows/en-US/9d717ce0-ec6b-4758-a357-6bb55591f956/possible-bug-in-net-treeview-treenode-checked-state-inconsistent?forum=winforms
+						// REFERENCE:
+						//	https://social.msdn.microsoft.com/Forums/windows/en-US/9d717ce0-ec6b-4758-a357-6bb55591f956/possible-bug-in-net-treeview-treenode-checked-state-inconsistent?forum=winforms&prof=required#b79ed197-ed03-4c2b-8d91-de19a6870edb
 						//
 
 						//

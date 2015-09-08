@@ -31,7 +31,12 @@ namespace Teltec.Storage
 		#region Code from MSDN
 
 		//
-		// Originally from https://msdn.microsoft.com/en-us/library/system.windows.threading.dispatcherframe.aspx
+		// "DispatcherFrame Class" by "Microsoft Corporation" is licensed under MS-PL
+		//
+		// Title?   DispatcherFrame Class
+		// Author?  Microsoft Corporation
+		// Source?  https://msdn.microsoft.com/en-us/library/system.windows.threading.dispatcherframe.aspx
+		// License?  MS-PL - https://opensource.org/licenses/MS-PL
 		//
 
 		[SecurityPermissionAttribute(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
