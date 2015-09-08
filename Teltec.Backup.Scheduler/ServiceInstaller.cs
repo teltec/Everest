@@ -358,11 +358,13 @@ namespace Teltec.Backup.Scheduler
 
 			if (status.dwCurrentState != desiredStatus)
 			{
-				logger.Warn("Service not {0}", desiredStatus.ToString());
-				logger.Warn("  Current State: {0}", status.dwCurrentState);
-				logger.Warn("  Exit Code    : {0}", status.dwWin32ExitCode);
-				logger.Warn("  Check Point  : {0}", status.dwCheckPoint);
-				logger.Warn("  Wait Hint    : {0}", status.dwWaitHint);
+				StringBuilder sb = new StringBuilder();
+				sb.AppendFormat("Service not {0}\n", desiredStatus.ToString());
+				sb.AppendFormat("  Current State: {0}\n", status.dwCurrentState);
+				sb.AppendFormat("  Exit Code    : {0}\n", status.dwWin32ExitCode);
+				sb.AppendFormat("  Check Point  : {0}\n", status.dwCheckPoint);
+				sb.AppendFormat("  Wait Hint    : {0}\n", status.dwWaitHint);
+				logger.Warn(sb.ToString());
 			}
 
 			return status.dwCurrentState == desiredStatus;
