@@ -119,7 +119,7 @@ namespace Teltec.Backup.Scheduler
 					//if (Process.GetCurrentProcess().MainWindowHandle != IntPtr.Zero)
 					//	MessageBox.Show(message);
 				}
-				logger.FatalException("Caught a fatal exception", ex);
+				logger.Log(LogLevel.Fatal, ex, "Caught a fatal exception");
 			}
 		}
 

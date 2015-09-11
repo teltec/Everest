@@ -294,7 +294,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							}
 							catch (FormatException ex)
 							{
-								logger.ErrorException("Invalid date format?", ex);
+								logger.Log(LogLevel.Error, ex, "Invalid date format?");
 								continue; // TODO(jweyrich): Should we abort?
 							}
 
@@ -406,7 +406,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				}
 				catch (Exception ex)
 				{
-					logger.ErrorException("Caught Exception", ex);
+					logger.Log(LogLevel.Error, ex, "Caught exception");
 
 					if (syncTask.IsFaulted || syncTask.IsCanceled)
 					{
@@ -443,7 +443,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				}
 				catch (Exception ex)
 				{
-					logger.ErrorException("Caught Exception", ex);
+					logger.Log(LogLevel.Error, ex, "Caught exception");
 
 					if (saveTask.IsFaulted || saveTask.IsCanceled)
 					{

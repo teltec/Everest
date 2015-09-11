@@ -25,13 +25,13 @@ namespace PostInstaller
 			{
 				if (Environment.UserInteractive)
 				{
-					string message = string.Format(
-						"Caught a fatal exception ({0}). Check the log file for more details.",
-						ex.Message);
+					//string message = string.Format(
+					//	"Caught a fatal exception ({0}). Check the log file for more details.",
+					//	ex.Message);
 					//if (Process.GetCurrentProcess().MainWindowHandle != IntPtr.Zero)
 					//	MessageBox.Show(message);
 				}
-				logger.FatalException("Caught a fatal exception", ex);
+				logger.Log(LogLevel.Fatal, ex, "Caught a fatal exception");
 			}
 		}
 

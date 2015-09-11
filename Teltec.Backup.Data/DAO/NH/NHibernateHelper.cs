@@ -230,7 +230,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			}
 			catch (Exception ex)
 			{
-				logger.Fatal("SCHEMA VALIDATION ERROR", ex);
+				logger.Log(LogLevel.Fatal, ex, "SCHEMA VALIDATION ERROR");
 				throw ex;
 			}
 			finally
@@ -253,7 +253,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			{
 				foreach (var ex in schema.Exceptions)
 				{
-					logger.Fatal("SCHEMA UPDATE ERROR", ex);
+					logger.Log(LogLevel.Fatal, ex, "SCHEMA UPDATE ERROR");
 					throw ex;
 				}
 			}

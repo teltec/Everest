@@ -90,7 +90,7 @@ namespace PostInstaller.Databases
 			catch (System.Exception ex)
 			{
 				logger.Error("Caught an exception: {0}", ex.Message);
-				logger.Error("Exception:\n---\n", ex);
+				logger.Log(LogLevel.Error, ex, "Exception:\n---\n");
 				return false;
 			}
 			finally

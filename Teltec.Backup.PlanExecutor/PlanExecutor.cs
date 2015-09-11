@@ -61,13 +61,13 @@ namespace Teltec.Backup.PlanExecutor
 			{
 				if (Environment.UserInteractive)
 				{
-					string message = string.Format(
-						"Caught a fatal exception ({0}). Check the log file for more details.",
-						ex.Message);
+					//string message = string.Format(
+					//	"Caught a fatal exception ({0}). Check the log file for more details.",
+					//	ex.Message);
 					//if (Process.GetCurrentProcess().MainWindowHandle != IntPtr.Zero)
 					//	MessageBox.Show(message);
 				}
-				logger.FatalException("Caught a fatal exception", ex);
+				logger.Log(LogLevel.Fatal, ex, "Caught a fatal exception");
 			}
 		}
 
@@ -86,7 +86,7 @@ namespace Teltec.Backup.PlanExecutor
 			catch (Exception ex)
 			{
 				if (options.Verbose)
-					logger.FatalException("Oops! An unexpected problem happened", ex);
+					logger.Log(LogLevel.Fatal, ex, "Oops! An unexpected problem happened");
 				else
 					logger.Fatal("Oops! An unexpected problem happened: {0}", ex.Message);
 

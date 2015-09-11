@@ -718,7 +718,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				}
 				catch (Exception ex)
 				{
-					logger.ErrorException("Caught Exception", ex);
+					logger.Log(LogLevel.Error, ex, "Caught Exception");
 					tx.Rollback(); // Rollback the transaction
 					throw;
 				}

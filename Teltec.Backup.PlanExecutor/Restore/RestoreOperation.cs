@@ -246,7 +246,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				}
 				catch (Exception ex)
 				{
-					logger.ErrorException("Caught Exception", ex);
+					logger.Log(LogLevel.Error, ex, "Caught exception");
 
 					if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
 					{
@@ -297,7 +297,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				}
 				catch (Exception ex)
 				{
-					logger.ErrorException("Caught Exception", ex);
+					logger.Log(LogLevel.Error, ex, "Caught exception");
 
 					if (versionerTask.IsFaulted || versionerTask.IsCanceled)
 					{

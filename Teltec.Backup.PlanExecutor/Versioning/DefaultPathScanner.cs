@@ -72,7 +72,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				catch (Exception ex)
 				{
 					string message = string.Format("Failed to scan entry \"{0}\" - {1}", entry.Path, ex.Message);
-					logger.Error(message, ex);
+					logger.Log(LogLevel.Error, ex, message);
 				}
 			}
 
@@ -175,7 +175,8 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 			if (!string.IsNullOrEmpty(message))
 			{
-				logger.Error(message, ex);
+				logger.Log(LogLevel.Error, ex, message);
+
 				// TODO: Should we register this to show ERRORS/FAILURES in the backup operation?
 				Results.FailedFile(path, message);
 			}
