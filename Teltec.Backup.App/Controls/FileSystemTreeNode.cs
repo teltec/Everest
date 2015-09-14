@@ -131,13 +131,13 @@ namespace Teltec.Backup.App.Controls
 			if (info.Type != TypeEnum.DRIVE && info.Type != TypeEnum.FOLDER)
 				throw new ArgumentException("Unexpected TypeEnum", "info.Type");
 
-			DirectoryInfo dir = info.Type == TypeEnum.DRIVE
-				? new DriveInfo(info.Path).RootDirectory
-				: new DirectoryInfo(info.Path);
-				
-			DirectoryInfo[] subDirs = dir.GetDirectories();
-			FileInfo[] subFiles = dir.GetFiles();
-			foreach (DirectoryInfo subDir in subDirs)
+			ZetaLongPaths.ZlpDirectoryInfo dir = info.Type == TypeEnum.DRIVE
+				? new ZetaLongPaths.ZlpDirectoryInfo(new DriveInfo(info.Path).RootDirectory.FullName)
+				: new ZetaLongPaths.ZlpDirectoryInfo(info.Path);
+
+			ZetaLongPaths.ZlpDirectoryInfo[] subDirs = dir.GetDirectories();
+			ZetaLongPaths.ZlpFileInfo[] subFiles = dir.GetFiles();
+			foreach (ZetaLongPaths.ZlpDirectoryInfo subDir in subDirs)
 			{
 				EntryInfo subInfo = new EntryInfo(TypeEnum.FOLDER, subDir.Name, subDir.FullName + System.IO.Path.DirectorySeparatorChar);
 				FileSystemTreeNode subFolderNode = AddFolderNode(subInfo);

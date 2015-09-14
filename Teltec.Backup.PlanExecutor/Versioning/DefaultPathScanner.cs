@@ -47,19 +47,19 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							throw new InvalidOperationException("Unhandled EntryType");
 						case EntryType.DRIVE:
 							{
-								DirectoryInfo dir = new DriveInfo(entry.Path).RootDirectory;
+								var dir = new ZetaLongPaths.ZlpDirectoryInfo(new DriveInfo(entry.Path).RootDirectory.FullName);
 								AddDirectory(dir);
 								break;
 							}
 						case EntryType.FOLDER:
 							{
-								DirectoryInfo dir = new DirectoryInfo(entry.Path);
+								var dir = new ZetaLongPaths.ZlpDirectoryInfo(entry.Path);
 								AddDirectory(dir);
 								break;
 							}
 						case EntryType.FILE:
 							{
-								FileInfo file = new FileInfo(entry.Path);
+								var file = new ZetaLongPaths.ZlpFileInfo(entry.Path);
 								AddFile(file);
 								break;
 							}
@@ -81,24 +81,25 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		#endregion
 
-		private void AddFile(FileInfo file)
+		private void AddFile(ZetaLongPaths.ZlpFileInfo file)
 		{
-			if (!file.Exists)
-			{
-				logger.Warn("File {0} does not exist", file.FullName);
-				return;
-			}
-
-			// IMPORTANT: The condition above, `if (!file.Exists)`, doesn't guarantee the
-			// file will exist at this point! We probably shouldn't try to detect this but
-			// handle any exceptions that may be raised.
-
 			CancellationToken.ThrowIfCancellationRequested();
 
 			try
 			{
-				var item = file.FullName;
+				// IMPORTANT: The condition below, `if (!file.Exists)`, doesn't guarantee the
+				// file will exist after this statement! We probably shouldn't try to detect this but
+				// handle any exceptions that may be raised.
+				if (!file.Exists)
+				{
+					// FileInfo.FullName may throw:
+					//    System.IO.PathTooLongException
+					//    System.Security.SecurityException
+					logger.Warn("File {0} does not exist", file.FullName);
+					return;
+				}
 
+				var item = file.FullName;
 				Results.AddedFile(item);
 
 				if (FileAdded != null)
@@ -116,34 +117,35 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		private void AddDirectory(string path)
 		{
-			AddDirectory(new DirectoryInfo(path));
+			AddDirectory(new ZetaLongPaths.ZlpDirectoryInfo(path));
 		}
 
-		private void AddDirectory(DirectoryInfo directory)
+		private void AddDirectory(ZetaLongPaths.ZlpDirectoryInfo directory)
 		{
-
-			if (!directory.Exists)
-			{
-				logger.Warn("Directory {0} does not exist", directory.FullName);
-				return;
-			}
-
-			// IMPORTANT: The condition above, `if (!directory.Exists)`, doesn't guarantee the
-			// directory will exist at this point! We probably shouldn't try to detect this but
-			// handle any exceptions that may be raised.
-
 			CancellationToken.ThrowIfCancellationRequested();
 
 			try
 			{
-				FileInfo[] files = directory.GetFiles(); // System.IO.DirectoryNotFoundException
+				// IMPORTANT: The condition below, `if (!directory.Exists)`, doesn't guarantee the
+				// directory will exist after this statement! We probably shouldn't try to detect this but
+				// handle any exceptions that may be raised.
+				if (!directory.Exists)
+				{
+					// DirectoryInfo.FullName may throw:
+					//    System.IO.PathTooLongException
+					//    System.Security.SecurityException
+					logger.Warn("Directory {0} does not exist", directory.FullName);
+					return;
+				}
+
+				ZetaLongPaths.ZlpFileInfo[] files = directory.GetFiles(); // System.IO.DirectoryNotFoundException
 				// Add all files from this directory.
-				foreach (FileInfo file in files)
+				foreach (var file in files)
 					AddFile(file);
 
-				DirectoryInfo[] directories = directory.GetDirectories();
+				ZetaLongPaths.ZlpDirectoryInfo[] directories = directory.GetDirectories();
 				// Add all sub-directories recursively.
-				foreach (DirectoryInfo subdir in directories)
+				foreach (var subdir in directories)
 					AddDirectory(subdir);
 			}
 			catch (OperationCanceledException ex)

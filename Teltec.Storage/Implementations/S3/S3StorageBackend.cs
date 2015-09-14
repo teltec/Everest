@@ -67,7 +67,7 @@ namespace Teltec.Storage.Implementations.S3
 			try
 			{
 				// Attempt to read the file before anything else.
-				FileInfo fileInfo = new FileInfo(filePath);
+				ZetaLongPaths.ZlpFileInfo fileInfo = new ZetaLongPaths.ZlpFileInfo(filePath);
 				long contentLength = reusedProgressArgs.TotalBytes = fileInfo.Length;
 
 				// Report start - before any possible failures.
@@ -256,8 +256,8 @@ namespace Teltec.Storage.Implementations.S3
 			try
 			{
 				// Attempt to create any intermediary directories before anything else.
-				FileInfo file = new FileInfo(filePath);
-				Directory.CreateDirectory(file.DirectoryName);
+				ZetaLongPaths.ZlpFileInfo file = new ZetaLongPaths.ZlpFileInfo(filePath);
+				ZetaLongPaths.ZlpIOHelper.CreateDirectory(file.DirectoryName);
 
 				// Report start - before any possible failures.
 				if (DownloadStarted != null)

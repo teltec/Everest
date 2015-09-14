@@ -66,11 +66,11 @@ namespace Teltec.FileSystem
 
 			// Full path
 			string fullpath = resolve
-				? Path.GetFullPath(path) // Will throw an exception for an invalid path string.
+				? ZetaLongPaths.ZlpPathHelper.GetFullPath(path) // Will throw an exception for an invalid path string.
 				: path;
 
 			// Drive
-			string driveUnmodified = Path.GetPathRoot(fullpath);
+			string driveUnmodified = ZetaLongPaths.ZlpPathHelper.GetPathRoot(fullpath);
 			string drive = driveUnmodified;
 			// Remove root from Windows path.
 			if (drive != null && (drive.EndsWith(":") || drive.EndsWith(@":\"))) // ?? Path.VolumeSeparatorChar.ToString() + Path.DirectorySeparatorChar
@@ -110,7 +110,7 @@ namespace Teltec.FileSystem
 			//Console.WriteLine("directories = {0}", directories);
 
 			// File name, with and without extension
-			string filename = Path.GetFileName(fullpath);
+			string filename = ZetaLongPaths.ZlpPathHelper.GetFileNameFromFilePath(fullpath);
 			string filenameWithoutExtension = string.Empty;
 			if (!string.IsNullOrEmpty(filename))
 			{
@@ -120,7 +120,7 @@ namespace Teltec.FileSystem
 			}
 
 			// File extension
-			string extension = Path.GetExtension(fullpath);
+			string extension = ZetaLongPaths.ZlpPathHelper.GetExtension(fullpath);
 			if (!string.IsNullOrEmpty(extension))
 			{
 				extension = extension.Substring(1); // Remove the leading period '.'

@@ -10,7 +10,11 @@ namespace Teltec.Storage.Implementations
 		private CancellationToken _CancellationToken;
 
 		public CancelableFileStream(string path, FileMode mode, FileAccess access, CancellationToken cancellationToken)
-			: base(path, mode, access)
+			: base(ZetaLongPaths.ZlpIOHelper.CreateFileHandle(
+				path,
+				(ZetaLongPaths.Native.CreationDisposition)mode,
+				(ZetaLongPaths.Native.FileAccess)access,
+				ZetaLongPaths.Native.FileShare.Read), access)
 		{
 			_CancellationToken = cancellationToken;
 		}

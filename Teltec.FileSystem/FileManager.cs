@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Teltec.Backup.PlanExecutor
+namespace Teltec.FileSystem
 {
 	public class FileManager
 	{
@@ -12,7 +12,8 @@ namespace Teltec.Backup.PlanExecutor
 
 		public static DateTime UnsafeGetLastWriteTimeUtc(string path)
 		{
-			return File.GetLastWriteTimeUtc(path);
+			//return File.GetLastWriteTimeUtc(path);
+			return ZetaLongPaths.ZlpIOHelper.GetFileLastWriteTime(path).ToUniversalTime();
 		}
 
 		public static DateTime? SafeGetLastWriteTimeUtc(string path)
@@ -30,7 +31,8 @@ namespace Teltec.Backup.PlanExecutor
 
 		public static void UnsafeSetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
 		{
-			File.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
+			//File.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
+			ZetaLongPaths.ZlpIOHelper.SetFileLastWriteTime(path, lastWriteTimeUtc.ToLocalTime());
 		}
 
 		public static void SafeSetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
@@ -47,7 +49,8 @@ namespace Teltec.Backup.PlanExecutor
 
 		public static long UnsafeGetFileSize(string path)
 		{
-			return new FileInfo(path).Length;
+			//return new FileInfo(path).Length;
+			return ZetaLongPaths.ZlpIOHelper.GetFileLength(path);
 		}
 
 		public static long? SafeGetFileSize(string path)
@@ -65,7 +68,8 @@ namespace Teltec.Backup.PlanExecutor
 
 		public static bool DeleteDirectory(string path, bool recursive = false)
 		{
-			if (!Directory.Exists(path))
+			//if (!Directory.Exists(path))
+			if (!ZetaLongPaths.ZlpIOHelper.DirectoryExists(path))
 			{
 				logger.Warn("Directory does not exist \"{0}\"", path);
 				return false;
@@ -73,7 +77,8 @@ namespace Teltec.Backup.PlanExecutor
 
 			try
 			{
-				Directory.Delete(path, recursive);
+				//Directory.Delete(path, recursive);
+				ZetaLongPaths.ZlpIOHelper.DeleteDirectory(path, recursive);
 				return true;
 			}
 			catch (Exception e)
@@ -85,7 +90,8 @@ namespace Teltec.Backup.PlanExecutor
 
 		public static bool DeleteFile(string path)
 		{
-			if (!File.Exists(path))
+			//if (!File.Exists(path))
+			if (!ZetaLongPaths.ZlpIOHelper.FileExists(path))
 			{
 				logger.Warn("File does not exist \"{0}\"", path);
 				return false;
@@ -93,7 +99,8 @@ namespace Teltec.Backup.PlanExecutor
 
 			try
 			{
-				File.Delete(path);
+				//File.Delete(path);
+				ZetaLongPaths.ZlpIOHelper.DeleteFile(path);
 				return true;
 			}
 			catch (Exception e)
@@ -105,7 +112,8 @@ namespace Teltec.Backup.PlanExecutor
 
 		public static bool CopyFile(string sourcePath, string targetPath, bool overwrite = false)
 		{
-			if (!File.Exists(sourcePath))
+			//if (!File.Exists(sourcePath))
+			if (!ZetaLongPaths.ZlpIOHelper.FileExists(sourcePath))
 			{
 				logger.Warn("Source file does not exist \"{0}\"", sourcePath);
 				return false;
@@ -113,7 +121,8 @@ namespace Teltec.Backup.PlanExecutor
 
 			try
 			{
-				File.Copy(sourcePath, targetPath, overwrite);
+				//File.Copy(sourcePath, targetPath, overwrite);
+				ZetaLongPaths.ZlpIOHelper.CopyFileExact(sourcePath, targetPath, overwrite);
 				return true;
 			}
 			catch (Exception e)
@@ -127,7 +136,8 @@ namespace Teltec.Backup.PlanExecutor
 		{
 			try
 			{
-				DirectoryInfo info = Directory.CreateDirectory(path);
+				//DirectoryInfo info = Directory.CreateDirectory(path);
+				ZetaLongPaths.ZlpIOHelper.CreateDirectory(path);
 				return true;
 			}
 			catch (Exception e)

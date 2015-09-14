@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
 using Teltec.Backup.Data.Versioning;
+using Teltec.FileSystem;
 using Teltec.Stats;
 using Teltec.Storage;
 using Teltec.Storage.Versioning;
@@ -90,7 +91,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				if (!byDate)
 					return false;
 
-				FileInfo info = new FileInfo(file.Path);
+				ZetaLongPaths.ZlpFileInfo info = new ZetaLongPaths.ZlpFileInfo(file.Path);
 
 				// Skip files larger than `MAX_FILESIZE_TO_HASH`.
 				int result = BigInteger.Compare(info.Length, MAX_FILESIZE_TO_HASH);
@@ -112,7 +113,13 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		private byte[] CalculateHashForFile(string filePath)
 		{
-			using (Stream inputStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+			Microsoft.Win32.SafeHandles.SafeFileHandle handle = ZetaLongPaths.ZlpIOHelper.CreateFileHandle(
+				filePath,
+				ZetaLongPaths.Native.CreationDisposition.OpenExisting,
+				ZetaLongPaths.Native.FileAccess.GenericRead,
+				ZetaLongPaths.Native.FileShare.Read);
+
+			using (Stream inputStream = new FileStream(handle, FileAccess.Read))
 			{
 				return HashAlgo.ComputeHash(inputStream);
 			}
@@ -280,7 +287,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				// Check what happened to the file.
 				//
 
-				bool fileExistsOnFilesystem = File.Exists(entry.Path);
+				bool fileExistsOnFilesystem = ZetaLongPaths.ZlpIOHelper.FileExists(entry.Path);
 				Models.BackupFileStatus? changeStatusTo = null;
 
 				if (entry.Id.HasValue) // File was backed up at least once in the past?
