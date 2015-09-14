@@ -58,6 +58,7 @@ namespace Teltec.FileSystem
 			Extension = null;
 		}
 
+		// TODO(jweyrich): Does NOT support paths that start with @"\\".
 		public ComponentFlags Parse(string path, bool resolve = false)
 		{
 			Reset();
@@ -70,14 +71,24 @@ namespace Teltec.FileSystem
 				: path;
 
 			// Drive
-			string driveUnmodified = ZetaLongPaths.ZlpPathHelper.GetPathRoot(fullpath);
-			string drive = driveUnmodified;
-			// Remove root from Windows path.
-			if (drive != null && (drive.EndsWith(":") || drive.EndsWith(@":\"))) // ?? Path.VolumeSeparatorChar.ToString() + Path.DirectorySeparatorChar
-				drive = drive[0].ToString();
-			//// Remove root from Linux/Unix path, if any.
-			//if (drive != null && drive.StartsWith("/", StringComparison.Ordinal))
-			//	drive = drive.Substring(1);
+			string drive = ZetaLongPaths.ZlpPathHelper.GetPathRoot(fullpath);
+
+			if (drive != null)
+			{
+				if (Native.IsRunningOnWindows)
+				{
+					// Get root from Windows path.
+					if (drive.EndsWith(":") || drive.EndsWith(@":\")) // ?? Path.VolumeSeparatorChar.ToString() + Path.DirectorySeparatorChar
+						drive = drive[0].ToString();
+				}
+				else
+				{
+					// Get root from Linux/Unix/Mac path.
+					if (drive.EndsWith("/", StringComparison.Ordinal))
+						drive = drive.Substring(0, drive.Length - 1);
+				}
+			}
+
 			if (!string.IsNullOrEmpty(drive))
 			{
 				comps |= ComponentFlags.DRIVE;
@@ -87,20 +98,38 @@ namespace Teltec.FileSystem
 			// Directories
 			string[] directories = null;
 			string parsing = fullpath;
-			int whereItBegins = driveUnmodified.Length;
-			if (whereItBegins != -1)
-				parsing = parsing.Substring(whereItBegins);
-			int whereItEnds = parsing.LastIndexOf(Path.DirectorySeparatorChar);
-			if (whereItEnds != -1)
+			int whereItBegins = drive != null ? drive.Length : 0;
+
+			if (comps.HasFlag(ComponentFlags.DRIVE))
 			{
-				parsing = parsing.Remove(whereItEnds);
-				if (parsing.Length > 0)
+				if (Native.IsRunningOnWindows)
 				{
-					directories = parsing.Split(Path.DirectorySeparatorChar);
-					if (directories.Length > 0)
+					whereItBegins++; // Skip the ":" in "C:\Foo\Bar\..." => Path.VolumeSeparatorChar
+					whereItBegins++; // Skip the 1st "\" in "C:\Foo\Bar\..." => Path.DirectorySeparatorChar
+				}
+				else
+				{
+					whereItBegins += drive.Length;
+					whereItBegins++; // Skip the 2nd @"/" in "/home/jweyrich/foo/bar/..."
+				}
+			}
+
+			if (whereItBegins < parsing.Length)
+			{
+				if (whereItBegins != -1)
+					parsing = parsing.Substring(whereItBegins);
+				int whereItEnds = parsing.LastIndexOf(Path.DirectorySeparatorChar);
+				if (whereItEnds != -1)
+				{
+					parsing = parsing.Remove(whereItEnds);
+					if (parsing.Length > 0)
 					{
-						comps |= ComponentFlags.DIRECTORY;
-						Mode = ModeEnum.DIRECTORY;
+						directories = parsing.Split(Path.DirectorySeparatorChar);
+						if (directories.Length > 0)
+						{
+							comps |= ComponentFlags.DIRECTORY;
+							Mode = ModeEnum.DIRECTORY;
+						}
 					}
 				}
 			}

@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FileManager.cs" />
+    <Compile Include="Native.cs" />
     <Compile Include="PathComponents.cs" />
     <Compile Include="PathNode.cs" />
     <Compile Include="PathNodes.cs" />
