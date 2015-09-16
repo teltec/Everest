@@ -153,9 +153,19 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 		private void llblDeletePlan_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{
 			Models.RestorePlan plan = Model as Models.RestorePlan;
-			_daoRestorePlan.Delete(plan);
-			Model = null;
-			OnDelete(this, e);
+
+			DialogResult result = MessageBox.Show(
+				"Are you sure you want to delete this plan?",
+				string.Format("Deleting {0}", plan.Name),
+				MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+				MessageBoxDefaultButton.Button1);
+
+			if (result == DialogResult.Yes)
+			{
+				_daoRestorePlan.Delete(plan);
+				Model = null;
+				OnDelete(this, e);
+			}
 		}
 
 		private void llblRunNow_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
