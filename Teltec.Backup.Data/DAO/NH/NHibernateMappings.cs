@@ -1,4 +1,4 @@
-﻿using FluentNHibernate.Mapping;
+using FluentNHibernate.Mapping;
 using NHibernate.Type;
 using System;
 using Teltec.Backup.Data.Models;
@@ -363,7 +363,7 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupedFileMap()
 		{
-			string UNIQUE_KEY = "uk_backuped_file"; // (storage_account_id, backup_plan_file_id, file_last_written_at)
+			string UNIQUE_KEY = "uk_backuped_file"; // (storage_account_id, backup_plan_file_id, backup_id)
 			string INDEX_BACKUP_PATH_XFERSTATUS = "idx_backup_path_xferstatus"; // (backup_id, backup_plan_file_id, transfer_status)
 			string INDEX_BACKUP_XFERSTATUS = "idx_backup_xferstatus"; // (backup_id, transfer_status)
 
@@ -377,6 +377,7 @@ namespace Teltec.Backup.Data.DAO.NH
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY)
 				.Index(INDEX_BACKUP_PATH_XFERSTATUS)
 				.Index(INDEX_BACKUP_XFERSTATUS)
 				;
@@ -424,7 +425,6 @@ namespace Teltec.Backup.Data.DAO.NH
 			Map(p => p.FileLastWrittenAt)
 				.Column("file_last_written_at")
 				.Nullable()
-				.UniqueKey(UNIQUE_KEY)
 				//.CustomType<TimestampType>()
 				;
 
