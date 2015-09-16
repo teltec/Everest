@@ -1,4 +1,4 @@
-﻿using NHibernate;
+using NHibernate;
 using NLog;
 using NUnit.Framework;
 using System;
