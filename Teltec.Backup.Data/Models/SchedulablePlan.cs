@@ -141,5 +141,12 @@ namespace Teltec.Backup.Data.Models
 			get { return _LastSuccessfulRunAt; }
 			set { SetField(ref _LastSuccessfulRunAt, value); }
 		}
+
+		private bool _IsDeleted = false;
+		public virtual bool IsDeleted
+		{
+			get { return _IsDeleted; }
+			set { SetField(ref _IsDeleted, value); }
+		}
 	}
 }

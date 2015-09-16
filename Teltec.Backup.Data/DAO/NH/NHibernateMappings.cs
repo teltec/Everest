@@ -274,6 +274,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Nullable()
 				//.CustomType<TimestampType>()
 				;
+
+			Map(p => p.IsDeleted)
+				.Column("is_deleted")
+				.Not.Nullable()
+				.Default("0") // "0" means false
+				;
 		}
 	}
 
@@ -683,6 +689,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Column("last_successful_run_at")
 				.Nullable()
 				//.CustomType<TimestampType>()
+				;
+
+			Map(p => p.IsDeleted)
+				.Column("is_deleted")
+				.Not.Nullable()
+				.Default("0") // "0" means false
 				;
 		}
 	}

@@ -63,7 +63,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 		{
 			RemoveAllExceptRunning();
 
-			var plans = dao.GetAll();
+			var plans = dao.GetAllActive();
 
 			foreach (var plan in plans)
 			{

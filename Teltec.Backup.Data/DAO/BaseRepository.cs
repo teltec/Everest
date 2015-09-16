@@ -93,7 +93,7 @@ namespace Teltec.Backup.Data.DAO
 			if (BeforeInsert != null)
 				BeforeInsert(tx, instance);
 
-			Session.Save(instance);
+			InsertImpl(tx, instance);
 
 			if (AfterInsert != null)
 				AfterInsert(tx, instance);
@@ -103,7 +103,7 @@ namespace Teltec.Backup.Data.DAO
 		{
 			using (ITransaction tx = Session.BeginTransaction())
 			{
-				InsertOrUpdate(tx, items);
+				Insert(tx, items);
 				tx.Commit();
 			}
 		}
@@ -115,11 +115,16 @@ namespace Teltec.Backup.Data.DAO
 				if (BeforeInsert != null)
 					BeforeInsert(tx, item);
 
-				Session.Save(item);
+				InsertImpl(tx, item);
 
 				if (AfterInsert != null)
 					AfterInsert(tx, item);
 			}
+		}
+
+		public virtual void InsertImpl(ITransaction tx, T instance)
+		{
+			Session.Save(instance);
 		}
 
 		public void InsertOrUpdate(T instance)
@@ -136,7 +141,7 @@ namespace Teltec.Backup.Data.DAO
 			if (BeforeInsertOrUpdate != null)
 				BeforeInsertOrUpdate(tx, instance);
 
-			Session.SaveOrUpdate(instance);
+			InsertOrUpdateImpl(tx, instance);
 
 			if (AfterInsertOrUpdate != null)
 				AfterInsertOrUpdate(tx, instance);
@@ -158,11 +163,16 @@ namespace Teltec.Backup.Data.DAO
 				if (BeforeInsertOrUpdate != null)
 					BeforeInsertOrUpdate(tx, item);
 
-				Session.SaveOrUpdate(item);
+				InsertOrUpdateImpl(tx, item);
 
 				if (AfterInsertOrUpdate != null)
 					AfterInsertOrUpdate(tx, item);
 			}
+		}
+
+		public virtual void InsertOrUpdateImpl(ITransaction tx, T instance)
+		{
+			Session.SaveOrUpdate(instance);
 		}
 
 		public void Update(T instance)
@@ -179,10 +189,7 @@ namespace Teltec.Backup.Data.DAO
 			if (BeforeUpdate != null)
 				BeforeUpdate(tx, instance);
 
-			// Remove `instance` from the cache - detach it.
-			//Session.Evict(instance);
-			// Make the detached entity persistent (with the non-flushed changes) .
-			Session.Update(instance);
+			UpdateImpl(tx, instance);
 
 			if (AfterUpdate != null)
 				AfterUpdate(tx, instance);
@@ -204,11 +211,19 @@ namespace Teltec.Backup.Data.DAO
 				if (BeforeUpdate != null)
 					BeforeUpdate(tx, item);
 
-				Session.Update(item);
+				UpdateImpl(tx, item);
 
 				if (AfterUpdate != null)
 					AfterUpdate(tx, item);
 			}
+		}
+
+		public virtual void UpdateImpl(ITransaction tx, T instance)
+		{
+			// Remove `instance` from the cache - detach it.
+			//Session.Evict(instance);
+			// Make the detached entity persistent (with the non-flushed changes) .
+			Session.Update(instance);
 		}
 
 		public void Delete(T instance)
@@ -225,7 +240,7 @@ namespace Teltec.Backup.Data.DAO
 			if (BeforeDelete != null)
 				BeforeDelete(tx, instance);
 
-			Session.Delete(instance);
+			DeleteImpl(tx, instance);
 
 			if (AfterDelete != null)
 				AfterDelete(tx, instance);
@@ -249,7 +264,7 @@ namespace Teltec.Backup.Data.DAO
 			if (BeforeDelete != null)
 				BeforeDelete(tx, instance);
 
-			Session.Delete(instance);
+			DeleteImpl(tx, instance);
 
 			if (AfterDelete != null)
 				AfterDelete(tx, instance);
@@ -271,11 +286,16 @@ namespace Teltec.Backup.Data.DAO
 				if (BeforeDelete != null)
 					BeforeDelete(tx, item);
 
-				Session.Delete(item);
+				DeleteImpl(tx, item);
 
 				if (AfterDelete != null)
 					AfterDelete(tx, item);
 			}
+		}
+
+		public virtual void DeleteImpl(ITransaction tx, T instance)
+		{
+			Session.Delete(instance);
 		}
 
 		public List<T> GetAll()

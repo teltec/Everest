@@ -65,6 +65,28 @@ namespace Teltec.Backup.Data.DAO
 			: base(session)
 		{
 		}
+
+		public IList<Models.BackupPlan> GetAllActive()
+		{
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string isDeletedPropertyName = this.GetPropertyName((Models.BackupPlan x) => x.IsDeleted);
+			crit.Add(Restrictions.Eq(isDeletedPropertyName, false));
+			string lastRunAtPropertyName = this.GetPropertyName((Models.BackupPlan x) => x.LastRunAt);
+			return crit.List<Models.BackupPlan>();
+		}
+
+		[ThreadStatic]
+		private static Random _Random = new Random(Environment.TickCount);
+
+		public override void DeleteImpl(ITransaction tx, Models.BackupPlan instance)
+		{
+			// Update an instance property instead of actually deleting it.
+			instance.IsDeleted = true;
+			// Avoid Unique Key exceptions - The user might want to create another
+			// plan using the same name of a deleted plan, so we append a randomized
+			// string to the deleted one.
+			instance.Name += "_DELETED_" + _Random.GenerateRandomHexaString(10);
+		}
 	}
 
 	public class BackupPlanSourceEntryRepository : BaseRepository<Models.BackupPlanSourceEntry, Int64?>
@@ -329,6 +351,28 @@ namespace Teltec.Backup.Data.DAO
 		public RestorePlanRepository(ISession session)
 			: base(session)
 		{
+		}
+
+		public IList<Models.RestorePlan> GetAllActive()
+		{
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string isDeletedPropertyName = this.GetPropertyName((Models.RestorePlan x) => x.IsDeleted);
+			crit.Add(Restrictions.Eq(isDeletedPropertyName, false));
+			string lastRunAtPropertyName = this.GetPropertyName((Models.RestorePlan x) => x.LastRunAt);
+			return crit.List<Models.RestorePlan>();
+		}
+
+		[ThreadStatic]
+		private static Random _Random = new Random(Environment.TickCount);
+
+		public override void DeleteImpl(ITransaction tx, Models.RestorePlan instance)
+		{
+			// Update an instance property instead of actually deleting it.
+			instance.IsDeleted = true;
+			// Avoid Unique Key exceptions - The user might want to create another
+			// plan using the same name of a deleted plan, so we append a randomized
+			// string to the deleted one.
+			instance.Name += "_DELETED_" + _Random.GenerateRandomHexaString(10);
 		}
 	}
 
