@@ -10,6 +10,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Teltec.FileSystem;
 using Teltec.Storage.Backend;
 
 namespace Teltec.Storage.Implementations.S3
@@ -91,7 +92,7 @@ namespace Teltec.Storage.Implementations.S3
 			try
 			{
 				// Attempt to read the file before anything else.
-				long contentLength = ZetaLongPaths.ZlpIOHelper.GetFileLength(filePath);
+				long contentLength = FileManager.UnsafeGetFileSize(filePath);
 				reusedProgressArgs.TotalBytes = contentLength;
 
 				// Report start - before any possible failures.
@@ -301,8 +302,8 @@ namespace Teltec.Storage.Implementations.S3
 			try
 			{
 				// Attempt to create any intermediary directories before anything else.
-				ZetaLongPaths.ZlpFileInfo file = new ZetaLongPaths.ZlpFileInfo(filePath);
-				ZetaLongPaths.ZlpIOHelper.CreateDirectory(file.DirectoryName);
+				string fileDirectoryName = FileManager.UnsafeGetDirectoryName(filePath);
+				FileManager.UnsafeCreateDirectory(fileDirectoryName);
 
 				// Report start - before any possible failures.
 				if (DownloadStarted != null)

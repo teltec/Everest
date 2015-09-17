@@ -1,4 +1,4 @@
-﻿using Amazon.Runtime;
+using Amazon.Runtime;
 using NLog;
 using NUnit.Framework;
 using System;
@@ -191,7 +191,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				daoRestoredFile.Update(restoredFile);
 
 				// Set original LastWriteTime so this file won't be erroneously included in the next Backup.
-				FileManager.SafeSetLastWriteTimeUtc(restoredFile.File.Path, restoredFile.BackupedFile.FileLastWrittenAt);
+				FileManager.SafeSetFileLastWriteTimeUtc(restoredFile.File.Path, restoredFile.BackupedFile.FileLastWrittenAt);
 
 				var message = string.Format("Completed {0}", args.FilePath);
 				Info(message);

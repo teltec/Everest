@@ -93,10 +93,10 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				if (!byDate)
 					return false;
 
-				ZetaLongPaths.ZlpFileInfo info = new ZetaLongPaths.ZlpFileInfo(file.Path);
+				long fileLength = FileManager.UnsafeGetFileSize(file.Path);
 
 				// Skip files larger than `MAX_FILESIZE_TO_HASH`.
-				int result = BigInteger.Compare(info.Length, MAX_FILESIZE_TO_HASH);
+				int result = BigInteger.Compare(fileLength, MAX_FILESIZE_TO_HASH);
 				if (result > 0)
 					return byDate;
 
@@ -109,7 +109,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			catch (Exception ex)
 			{
 				logger.Warn("Caught an exception while checking file modification status \"{0}\": {1}", file.Path, ex.Message);
-				return false;
+				throw ex;
 			}
 		}
 
@@ -140,7 +140,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			Assert.IsNotNull(file);
 
 			DateTime dt1 = file.LastWrittenAt;
-			DateTime dt2 = FileManager.UnsafeGetLastWriteTimeUtc(file.Path);
+			DateTime dt2 = FileManager.UnsafeGetFileLastWriteTimeUtc(file.Path);
 
 			// Strip milliseconds off from both dates because we don't care - currently.
 			dt1 = dt1.AddTicks(-(dt1.Ticks % TimeSpan.TicksPerSecond));
@@ -286,8 +286,12 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			stats.Begin();
 
 			// Check all files.
-			foreach (Models.BackupPlanFile entry in files)
+			LinkedListNode<Models.BackupPlanFile> node = files.First;
+			while (node != null)
 			{
+				var next = node.Next;
+				Models.BackupPlanFile entry = node.Value;
+
 				// Throw if the operation was canceled.
 				CancellationToken.ThrowIfCancellationRequested();
 
@@ -295,7 +299,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				// Check what happened to the file.
 				//
 
-				bool fileExistsOnFilesystem = ZetaLongPaths.ZlpIOHelper.FileExists(entry.Path);
+				bool fileExistsOnFilesystem = FileManager.FileExists(entry.Path);
 				Models.BackupFileStatus? changeStatusTo = null;
 
 				if (entry.Id.HasValue) // File was backed up at least once in the past?
@@ -322,17 +326,28 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 								// only for `NewBackupOperation`.
 								if (isNewVersion)
 								{
-									if (IsFileModified(entry)) // Modified?
+									try
 									{
-										changeStatusTo = Models.BackupFileStatus.MODIFIED;
+										if (IsFileModified(entry)) // Modified?
+										{
+											changeStatusTo = Models.BackupFileStatus.MODIFIED;
+										}
+										else if (FailedInTheLastBackup(entry)) // Failed in the last backup?
+										{
+											changeStatusTo = Models.BackupFileStatus.MODIFIED;
+										}
+										else // Not modified?
+										{
+											changeStatusTo = Models.BackupFileStatus.UNCHANGED;
+										}
 									}
-									else if (FailedInTheLastBackup(entry)) // Failed in the last backup?
+									catch (Exception ex)
 									{
-										changeStatusTo = Models.BackupFileStatus.MODIFIED;
-									}
-									else // Not modified?
-									{
-										changeStatusTo = Models.BackupFileStatus.UNCHANGED;
+										FailedFile<Models.BackupPlanFile> failedEntry = new FailedFile<Models.BackupPlanFile>(entry, ex.Message, ex);
+										ChangeSet.FailedFiles.AddLast(failedEntry);
+
+										// Remove this entry from `files` as it clearly failed.
+										files.Remove(node); // Complexity is O(1)
 									}
 								}
 							}
@@ -360,6 +375,8 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					entry.LastStatus = changeStatusTo.Value;
 					entry.UpdatedAt = DateTime.UtcNow;
 				}
+
+				node = next;
 			}
 
 			stats.End();
@@ -473,8 +490,12 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		{
 			BatchProcessor batchProcessor = new BatchProcessor();
 
-			foreach (Models.BackupPlanFile entry in files)
+			LinkedListNode<Models.BackupPlanFile> node = files.First;
+			while (node != null)
 			{
+				var next = node.Next;
+				Models.BackupPlanFile entry = node.Value;
+
 				batchProcessor.ProcessBatch(null);
 
 				// Throw if the operation was canceled.
@@ -494,7 +515,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							try
 							{
 								long lastSize = FileManager.UnsafeGetFileSize(path);
-								DateTime lastWrittenAt = FileManager.UnsafeGetLastWriteTimeUtc(path);
+								DateTime lastWrittenAt = FileManager.UnsafeGetFileLastWriteTimeUtc(path);
 
 								entry.LastSize = lastSize;
 								entry.LastWrittenAt = lastWrittenAt;
@@ -506,10 +527,15 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							{
 								FailedFile<Models.BackupPlanFile> failedEntry = new FailedFile<Models.BackupPlanFile>(entry, ex.Message, ex);
 								ChangeSet.FailedFiles.AddLast(failedEntry);
+
+								// Remove this entry from `files` as it clearly failed.
+								files.Remove(node); // Complexity is O(1)
 							}
 							break;
 						}
 				}
+
+				node = next;
 			}
 		}
 

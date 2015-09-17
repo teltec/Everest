@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using System;
 using System.Windows.Forms;
 using Teltec.Backup.App.Forms.About;
