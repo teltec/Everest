@@ -1,4 +1,4 @@
-﻿using Amazon.Runtime;
+using Amazon.Runtime;
 using NLog;
 using NUnit.Framework;
 using System;
@@ -241,7 +241,10 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				totalUpdates += dao.AssociateSyncedFileToBackupPlan(backup.BackupPlan, path);
 			}
 
-			logger.Info("Associated {0} synced files to Backup Plan {1}", totalUpdates, backup, backup.BackupPlan.Name);
+			if (totalUpdates > 0)
+				logger.Info("Associated {0} synced files to Backup Plan {1}", totalUpdates, backup.BackupPlan.Name);
+			else
+				logger.Info("There are no synced files to associate to Backup Plan {0}", backup.BackupPlan.Name);
 		}
 
 		protected Task ExecuteOnBackround(Action action)
