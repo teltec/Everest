@@ -1,4 +1,4 @@
-﻿using Amazon;
+using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -46,6 +46,30 @@ namespace Teltec.Storage.Implementations.S3
 
 		#region Upload
 
+		//
+		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadUploadPart.html
+		// > Part numbers can be any number from 1 to 10,000, inclusive.
+		// > A part number uniquely identifies a part and also defines its
+		// > position within the object being created. If you upload a new
+		// > part using the same part number that was used with a previous
+		// > part, the previously uploaded part is overwritten. Each part
+		// > must be at least 5 MB in size, except the last part. There is
+		// > no size limit on the last part of your multipart upload.
+		//
+		private static long MaxNumberOfParts = 10000;
+		private static long MinPartSize = 5 * 1024 * 1024; // 1 MB = 2^20
+
+		private static long CalculatePartSize(long fileSize)
+		{
+			double partSize = Math.Ceiling((double)fileSize / MaxNumberOfParts);
+			if (partSize < MinPartSize)
+			{
+				partSize = MinPartSize;
+			}
+
+			return (long)partSize;
+		}
+
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/LLuploadFileDotNet.html
 		public override void UploadFile(string filePath, string keyName, CancellationToken cancellationToken)
 		{
@@ -62,13 +86,13 @@ namespace Teltec.Storage.Implementations.S3
             // List to store upload part responses.
             List<UploadPartResponse> uploadResponses = new List<UploadPartResponse>();
 
-			InitiateMultipartUploadResponse initResponse = null;
+			InitiateMultipartUploadResponse initMultiPartResponse = null;
 
 			try
 			{
 				// Attempt to read the file before anything else.
-				ZetaLongPaths.ZlpFileInfo fileInfo = new ZetaLongPaths.ZlpFileInfo(filePath);
-				long contentLength = reusedProgressArgs.TotalBytes = fileInfo.Length;
+				long contentLength = ZetaLongPaths.ZlpIOHelper.GetFileLength(filePath);
+				reusedProgressArgs.TotalBytes = contentLength;
 
 				// Report start - before any possible failures.
 				if (UploadStarted != null)
@@ -80,54 +104,60 @@ namespace Teltec.Storage.Implementations.S3
 				// Create the input stream to actually read the file.
 				inputStream = new CancelableFileStream(filePath, FileMode.Open, FileAccess.Read, cancellationToken);
 
-				// Step 1: Initialize.
-				InitiateMultipartUploadRequest initiateRequest = new InitiateMultipartUploadRequest
+				bool isMultiPart = contentLength >= MinPartSize;
+				if (isMultiPart)
 				{
-					BucketName = this._awsBuckeName,
-					Key = keyName,
-					CannedACL = S3CannedACL.Private,
-					StorageClass = S3StorageClass.ReducedRedundancy,
-				};
+					// Multipart upload.
 
-				initResponse = this._s3Client.InitiateMultipartUpload(initiateRequest);
-
-				// Report 0% progress.
-				if (UploadProgressed != null)
-					UploadProgressed(reusedProgressArgs, () =>
-					{
-						reusedProgressArgs.State = TransferState.TRANSFERRING;
-					});
-
-				// Step 2: Upload Parts.
-				// Each part must be at least 5 MB in size, except the last part.
-				// There is no size limit on the last part of your multipart upload.
-				// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadUploadPart.html
-				const long PART_SIZE = 5 * 1024 * 1024; // 5 MB = 2^20
-
-				long filePosition = 0;
-
-				long partTotal = (long)Math.Ceiling((decimal)contentLength / PART_SIZE);
-
-				for (int partNumber = 1; partNumber <= partTotal; partNumber++)
-				{
-					if (cancellationToken != null)
-						cancellationToken.ThrowIfCancellationRequested();
-
-					UploadPartRequest uploadRequest = new UploadPartRequest
+					// Step 1: Initialize.
+					InitiateMultipartUploadRequest initiateRequest = new InitiateMultipartUploadRequest
 					{
 						BucketName = this._awsBuckeName,
 						Key = keyName,
-						UploadId = initResponse.UploadId,
-						PartNumber = partNumber,
-						PartSize = PART_SIZE,//Math.Min(contentLength - filePosition, PART_SIZE),
-						//FilePosition = filePosition,
-						//FilePath = filePath,
-						//IsLastPart = contentLength - filePosition <= PART_SIZE,
-						InputStream = inputStream,
+						CannedACL = S3CannedACL.Private,
+						StorageClass = S3StorageClass.ReducedRedundancy,
 					};
 
-					// Progress handler.
-					uploadRequest.StreamTransferProgress = (object sender, StreamTransferProgressArgs args) =>
+					initMultiPartResponse = this._s3Client.InitiateMultipartUpload(initiateRequest);
+
+					// Report 0% progress.
+					if (UploadProgressed != null)
+						UploadProgressed(reusedProgressArgs, () =>
+						{
+							reusedProgressArgs.State = TransferState.TRANSFERRING;
+						});
+
+					// Step 2: Upload Parts.
+					long filePosition = 0;
+
+					//long partTotal = (long)Math.Ceiling((decimal)contentLength / MinPartSize);
+					long partTotal = CalculatePartSize(contentLength);
+
+					for (int partNumber = 1; partNumber <= partTotal; partNumber++)
+					{
+						if (cancellationToken != null)
+							cancellationToken.ThrowIfCancellationRequested();
+
+						UploadPartRequest uploadRequest = new UploadPartRequest
+						{
+							BucketName = this._awsBuckeName,
+							Key = keyName,
+							UploadId = initMultiPartResponse.UploadId,
+							PartNumber = partNumber,
+							PartSize = MinPartSize, //Math.Min(contentLength - filePosition, MinPartSize),
+							//FilePosition = filePosition,
+							//FilePath = filePath,
+							InputStream = inputStream,
+						};
+
+						if (filePosition + MinPartSize >= contentLength)
+						{
+							uploadRequest.IsLastPart = true;
+							uploadRequest.PartSize = 0;
+						}
+
+						// Progress handler.
+						uploadRequest.StreamTransferProgress = (object sender, StreamTransferProgressArgs args) =>
 						{
 							filePosition = args.TransferredBytes;
 
@@ -139,22 +169,37 @@ namespace Teltec.Storage.Implementations.S3
 								});
 						};
 
-					// Upload part and add response to our list.
-					uploadResponses.Add(this._s3Client.UploadPart(uploadRequest));
+						// Upload part and add response to our list.
+						uploadResponses.Add(this._s3Client.UploadPart(uploadRequest));
+					}
+
+					// Step 3: complete.
+					CompleteMultipartUploadRequest completeRequest = new CompleteMultipartUploadRequest
+					{
+						BucketName = this._awsBuckeName,
+						Key = keyName,
+						UploadId = initMultiPartResponse.UploadId,
+						//PartETags = new List<PartETag>(uploadResponses)
+					};
+					completeRequest.AddPartETags(uploadResponses);
+
+					CompleteMultipartUploadResponse completeUploadResponse =
+						this._s3Client.CompleteMultipartUpload(completeRequest);
 				}
-
-				// Step 3: complete.
-				CompleteMultipartUploadRequest completeRequest = new CompleteMultipartUploadRequest
+				else
 				{
-					BucketName = this._awsBuckeName,
-					Key = keyName,
-					UploadId = initResponse.UploadId,
-					//PartETags = new List<PartETag>(uploadResponses)
-				};
-				completeRequest.AddPartETags(uploadResponses);
+					// Simple upload.
+					PutObjectRequest putRequest = new PutObjectRequest()
+					{
+						BucketName = this._awsBuckeName,
+						Key = keyName,
+						CannedACL = S3CannedACL.Private,
+						StorageClass = S3StorageClass.ReducedRedundancy,
+						InputStream = inputStream,
+					};
 
-				CompleteMultipartUploadResponse completeUploadResponse =
-					this._s3Client.CompleteMultipartUpload(completeRequest);
+					PutObjectResponse putResponse = this._s3Client.PutObject(putRequest);
+				}
 
 				// Report completion.
 				if (UploadCompleted != null)
@@ -166,13 +211,13 @@ namespace Teltec.Storage.Implementations.S3
 			catch (OperationCanceledException exception)
 			{
 				logger.Info("Upload canceled.");
-				if (initResponse != null)
+				if (initMultiPartResponse != null)
 				{
 					AbortMultipartUploadRequest abortRequest = new AbortMultipartUploadRequest
 					{
 						BucketName = this._awsBuckeName,
 						Key = keyName,
-						UploadId = initResponse.UploadId
+						UploadId = initMultiPartResponse.UploadId
 					};
 					this._s3Client.AbortMultipartUpload(abortRequest);
 				}
@@ -203,13 +248,13 @@ namespace Teltec.Storage.Implementations.S3
 					logger.Warn("Exception occurred: {0}", exception.Message);
 				}
 
-				if (initResponse != null)
+				if (initMultiPartResponse != null)
 				{
 					AbortMultipartUploadRequest abortRequest = new AbortMultipartUploadRequest
 					{
 						BucketName = this._awsBuckeName,
 						Key = keyName,
-						UploadId = initResponse.UploadId
+						UploadId = initMultiPartResponse.UploadId
 					};
 					this._s3Client.AbortMultipartUpload(abortRequest);
 				}
