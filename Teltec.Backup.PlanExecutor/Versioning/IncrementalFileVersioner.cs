@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using NHibernate;
 using NLog;
 using NUnit.Framework;
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
 using Teltec.Backup.Data.Versioning;
+using Teltec.Backup.PlanExecutor.Serialization;
 using Teltec.FileSystem;
 using Teltec.Stats;
 using Teltec.Storage;
@@ -606,7 +608,17 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						// Throw if the operation was canceled.
 						CancellationToken.ThrowIfCancellationRequested();
 
-						entry.PathNode = pathNodeCreator.CreateOrUpdatePathNodes(Backup.BackupPlan.StorageAccount, entry);
+						try
+						{
+							entry.PathNode = pathNodeCreator.CreateOrUpdatePathNodes(Backup.BackupPlan.StorageAccount, entry);
+						}
+						catch (Exception ex)
+						{
+							logger.Log(LogLevel.Error, ex, "BUG: Failed to create/update {0} => {1}",
+								typeof(Models.BackupPlanPathNode).Name,
+								CustomJsonSerializer.SerializeObject(entry, 1));
+							throw ex;
+						}
 
 						batchProcessor.ProcessBatch(session);
 					}
@@ -627,7 +639,17 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						// IMPORTANT: It's important that we guarantee the referenced `BackupPlanFile` has a valid `Id`
 						// before we reference it elsewhere, otherwise NHibernate won't have a valid value to put on
 						// the `backup_plan_file_id` column.
-						daoBackupPlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved
+						try
+						{
+							daoBackupPlanFile.InsertOrUpdate(tx, entry); // Guarantee it's saved
+						}
+						catch (Exception ex)
+						{
+							logger.Log(LogLevel.Error, ex, "BUG: Failed to insert/update {0} => {1}",
+								typeof(Models.BackupPlanFile).Name,
+								CustomJsonSerializer.SerializeObject(entry, 1));
+							throw ex;
+						}
 
 						batchProcessor.ProcessBatch(session);
 					}
@@ -668,7 +690,18 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 								break;
 						}
 						backupedFile.UpdatedAt = DateTime.UtcNow;
-						daoBackupedFile.InsertOrUpdate(tx, backupedFile);
+
+						try
+						{
+							daoBackupedFile.InsertOrUpdate(tx, backupedFile);
+						}
+						catch (Exception ex)
+						{
+							logger.Log(LogLevel.Error, ex, "BUG: Failed to insert/update {0} => {1}",
+								typeof(Models.BackupedFile).Name,
+								CustomJsonSerializer.SerializeObject(backupedFile, 1));
+							throw ex;
+						}
 
 						//backupedFiles.Add(backupedFile);
 
@@ -691,7 +724,17 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							CancellationToken.ThrowIfCancellationRequested();
 
 							//Console.WriteLine("2: {0}", file.Path);
-							daoBackupPlanFile.Update(tx, file);
+							try
+							{
+								daoBackupPlanFile.Update(tx, file);
+							}
+							catch (Exception ex)
+							{
+								logger.Log(LogLevel.Error, ex, "BUG: Failed to update {0} => {1} ",
+									typeof(Models.BackupPlanFile).Name,
+									CustomJsonSerializer.SerializeObject(file, 1));
+								throw ex;
+							}
 
 							batchProcessor.ProcessBatch(session);
 						}
@@ -717,7 +760,17 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						//	ProcessBatch(session);
 						//}
 
-						daoBackup.Update(tx, Backup);
+						try
+						{
+							daoBackup.Update(tx, Backup);
+						}
+						catch (Exception ex)
+						{
+							logger.Log(LogLevel.Error, ex, "BUG: Failed to update {0} => {1}",
+								typeof(Models.Backup).Name,
+								CustomJsonSerializer.SerializeObject(Backup, 1));
+							throw ex;
+						}
 					}
 
 					batchProcessor.ProcessBatch(session, true);
