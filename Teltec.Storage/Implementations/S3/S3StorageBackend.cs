@@ -57,10 +57,10 @@ namespace Teltec.Storage.Implementations.S3
 		// > must be at least 5 MB in size, except the last part. There is
 		// > no size limit on the last part of your multipart upload.
 		//
-		private static long MaxNumberOfParts = 10000;
-		private static long MinPartSize = 5 * 1024 * 1024; // 1 MB = 2^20
+		public static readonly long MaxNumberOfParts = 10000;
+		public static readonly long MinPartSize = 5 * 1024 * 1024; // 1 MB = 2^20
 
-		private static long CalculatePartSize(long fileSize)
+		public static long CalculatePartSize(long fileSize)
 		{
 			double partSize = Math.Ceiling((double)fileSize / MaxNumberOfParts);
 			if (partSize < MinPartSize)
@@ -131,10 +131,10 @@ namespace Teltec.Storage.Implementations.S3
 					// Step 2: Upload Parts.
 					long filePosition = 0;
 
-					//long partTotal = (long)Math.Ceiling((decimal)contentLength / MinPartSize);
-					long partTotal = CalculatePartSize(contentLength);
+					long partSize = CalculatePartSize(contentLength);
+					long partsTotal = (long)Math.Ceiling((decimal)contentLength / partSize);
 
-					for (int partNumber = 1; partNumber <= partTotal; partNumber++)
+					for (int partNumber = 1; partNumber <= partsTotal; partNumber++)
 					{
 						if (cancellationToken != null)
 							cancellationToken.ThrowIfCancellationRequested();
@@ -145,7 +145,7 @@ namespace Teltec.Storage.Implementations.S3
 							Key = keyName,
 							UploadId = initMultiPartResponse.UploadId,
 							PartNumber = partNumber,
-							PartSize = MinPartSize, //Math.Min(contentLength - filePosition, MinPartSize),
+							PartSize = partSize, //Math.Min(contentLength - filePosition, MinPartSize),
 							//FilePosition = filePosition,
 							//FilePath = filePath,
 							InputStream = inputStream,
