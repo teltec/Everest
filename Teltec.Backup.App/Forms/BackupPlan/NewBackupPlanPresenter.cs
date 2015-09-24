@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using System;
 using System.Text.RegularExpressions;
 using Teltec.Backup.App.Forms.Schedule;
@@ -34,6 +34,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			RegisterFormClass(typeof(BackupPlanGiveNameForm), options);
 			RegisterFormClass(typeof(BackupPlanSelectSourceForm), options);
 			RegisterFormClass(typeof(SchedulablePlanForm<Models.BackupPlan>), options);
+			RegisterFormClass(typeof(BackupPlanPurgeOptionsForm), options);
 		}
 
 		public override void OnFormClosed()
@@ -58,12 +59,12 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 			Models.BackupPlan plan = Model as Models.BackupPlan;
 
-			Console.WriteLine("Name = {0}", plan.Name);
-			Console.WriteLine("StorageAccount = {0}", plan.StorageAccount.DisplayName);
-			Console.WriteLine("StorageAccountType = {0}", plan.StorageAccountType.ToString());
+			Console.WriteLine("Name                  = {0}", plan.Name);
+			Console.WriteLine("StorageAccount        = {0}", plan.StorageAccount.DisplayName);
+			Console.WriteLine("StorageAccountType    = {0}", plan.StorageAccountType.ToString());
 			foreach (Models.BackupPlanSourceEntry entry in plan.SelectedSources)
 				Console.WriteLine("SelectedSource => #{0}, {1}, {2}", entry.Id, entry.Type.ToString(), entry.Path);
-			Console.WriteLine("ScheduleType = {0}", plan.ScheduleType.ToString());
+			Console.WriteLine("ScheduleType          = {0}", plan.ScheduleType.ToString());
 			Console.WriteLine("Schedule.ScheduleType = {0}", plan.Schedule.ScheduleType.ToString());
 
 			Models.PlanSchedule schedule = plan.Schedule;
@@ -72,7 +73,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				case Models.ScheduleTypeEnum.RUN_MANUALLY:
 					break;
 				case Models.ScheduleTypeEnum.SPECIFIC:
-					Console.WriteLine("OccursSpecificallyAt = {0}", schedule.OccursSpecificallyAt.HasValue ? schedule.OccursSpecificallyAt.Value.ToString() : "null");
+					Console.WriteLine("OccursSpecificallyAt  = {0}", schedule.OccursSpecificallyAt.HasValue ? schedule.OccursSpecificallyAt.Value.ToString() : "null");
 					break;
 				case Models.ScheduleTypeEnum.RECURRING:
 					Console.WriteLine("RecurrencyFrequencyType      = {0}",
@@ -112,6 +113,17 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						schedule.RecurrencyWindowStartsAtTime.HasValue ? schedule.RecurrencyWindowStartsAtTime.Value.ToString() : "null");
 					Console.WriteLine("RecurrencyWindowEndsAtTime   = {0}",
 						schedule.RecurrencyWindowEndsAtTime.HasValue ? schedule.RecurrencyWindowEndsAtTime.Value.ToString() : "null");
+
+					Console.WriteLine("PurgeOptions.PurgeType       = {0}", plan.PurgeOptions.PurgeType.ToString());
+					switch (plan.PurgeOptions.PurgeType)
+					{
+						case Models.BackupPlanPurgeTypeEnum.DEFAULT:
+							break;
+						case Models.BackupPlanPurgeTypeEnum.CUSTOM:
+							Console.WriteLine("EnabledKeepNumberOfVersions  = {0}", plan.PurgeOptions.EnabledKeepNumberOfVersions);
+							Console.WriteLine("NumberOfVersionsToKeep       = {0}", plan.PurgeOptions.NumberOfVersionsToKeep);
+							break;
+					}
 					break;
 			}
 

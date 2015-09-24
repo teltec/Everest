@@ -13,6 +13,7 @@ using Teltec.Backup.PlanExecutor.Versioning;
 using Teltec.Common.Utils;
 using Teltec.Storage;
 using Teltec.Storage.Implementations.S3;
+using Teltec.Storage.Versioning;
 using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.PlanExecutor.Backup
@@ -166,9 +167,27 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			DoBackup(BackupAgent, Backup, Options);
 		}
 
+		public Task DeleteVersionedFile(string sourcePath, IFileVersion version, object identifier)
+		{
+			return TransferAgent.DeleteVersionedFile(sourcePath, version, identifier);
+		}
+
 		protected void RegisterResultsEventHandlers(Models.Backup backup, TransferResults results)
 		{
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
+			results.DeleteCompleted += (object sender, DeletionArgs e) =>
+			{
+				Int64? backupedFileId = (Int64?)e.UserData;
+				// TODO(jweyrich): We could get rid of the SELECT and perform just the UPDATE.
+				Models.BackupedFile backupedFile = daoBackupedFile.Get(backupedFileId.Value);
+				backupedFile.TransferStatus = TransferStatus.PURGED;
+				backupedFile.UpdatedAt = DateTime.UtcNow;
+				daoBackupedFile.Update(backupedFile);
+
+				//var message = string.Format("Purged {0}", e.FilePath);
+				//Info(message);
+				//OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
+			};
 			results.Failed += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
 				Models.BackupedFile backupedFile = daoBackupedFile.GetByBackupAndPath(backup, args.FilePath);
@@ -203,6 +222,26 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				var message = string.Format("Completed {0}", args.FilePath);
 				Info(message);
 				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
+
+				Models.BackupPlan plan = Backup.BackupPlan; //backupedFile.Backup.BackupPlan;
+
+				if (plan.PurgeOptions.IsTypeCustom && plan.PurgeOptions.EnabledKeepNumberOfVersions)
+				{
+					// Purge the oldest versioned files if the count of versions exceeds the maximum specified for the Backup Plan.
+					IList<Models.BackupedFile> previousVersions = daoBackupedFile.GetCompleteByPlanAndPath(plan, args.FilePath);
+					int found = previousVersions.Count;
+					int keep = plan.PurgeOptions.NumberOfVersionsToKeep;
+					int diff = found - keep;
+					if (diff > 0)
+					{
+						// Delete the oldest Count-N versions.
+						List<Models.BackupedFile> versionsToPurge = previousVersions.Skip(keep).ToList();
+						foreach (var vp in versionsToPurge)
+						{
+							DeleteVersionedFile(vp.File.Path, new FileVersion { Version = vp.Version }, vp.Id);
+						}
+					}
+				}
 			};
 			results.Started += (object sender, TransferFileProgressArgs args) =>
 			{

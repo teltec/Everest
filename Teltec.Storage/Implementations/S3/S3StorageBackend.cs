@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using Teltec.FileSystem;
 using Teltec.Storage.Backend;
@@ -72,12 +73,13 @@ namespace Teltec.Storage.Implementations.S3
 		}
 
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/LLuploadFileDotNet.html
-		public override void UploadFile(string filePath, string keyName, CancellationToken cancellationToken)
+		public override void UploadFile(string filePath, string keyName, object userData, CancellationToken cancellationToken)
 		{
 			CancelableFileStream inputStream = null;
 
 			TransferFileProgressArgs reusedProgressArgs = new TransferFileProgressArgs
 			{
+				UserData = userData,
 				State = TransferState.PENDING,
 				TotalBytes = 0,
 				TransferredBytes = 0,
@@ -282,10 +284,11 @@ namespace Teltec.Storage.Implementations.S3
 		#region Download
 
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/RetrievingObjectUsingNetSDK.html
-		public override void DownloadFile(string filePath, string keyName, CancellationToken cancellationToken)
+		public override void DownloadFile(string filePath, string keyName, object userData, CancellationToken cancellationToken)
 		{
 			TransferFileProgressArgs reusedProgressArgs = new TransferFileProgressArgs
 			{
+				UserData = userData,
 				State = TransferState.PENDING,
 				TotalBytes = 0,
 				TransferredBytes = 0,
@@ -312,7 +315,7 @@ namespace Teltec.Storage.Implementations.S3
 						reusedProgressArgs.State = TransferState.STARTED;
 					});
 
-				const int DefaultBufferSize = 8192;
+				const int DefaultBufferSize = 8192; // S3Constants.DefaultBufferSize
 
 				// REFERENCE: https://github.com/aws/aws-sdk-net/blob/5f19301ee9fa1ec29b11b3dfdee82071a04ed5ae/AWSSDK_DotNet35/Amazon.S3/Model/GetObjectResponse.cs
 				// Download.
@@ -418,10 +421,11 @@ namespace Teltec.Storage.Implementations.S3
 		#region Listing
 
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/ListingObjectKeysUsingNetSDK.html
-		public override void List(string prefix, bool recursive, CancellationToken cancellationToken)
+		public override void List(string prefix, bool recursive, object userData, CancellationToken cancellationToken)
 		{
 			ListingProgressArgs reusedProgressArgs = new ListingProgressArgs
 			{
+				UserData = userData,
 				State = TransferState.PENDING,
 				Objects = new List<ListingObject>(),
 			};
@@ -596,6 +600,177 @@ namespace Teltec.Storage.Implementations.S3
 					ListingFailed(reusedProgressArgs, exception, () =>
 					{
 						reusedProgressArgs.State = TransferState.FAILED;
+					});
+			}
+		}
+
+		#endregion
+
+		#region Deletion
+
+		public override void DeleteFile(string keyName, object userData, CancellationToken cancellationToken)
+		{
+			DeletionArgs reusedArgs = new DeletionArgs
+			{
+				UserData = userData,
+				FilePath = keyName,
+			};
+
+			DeleteObjectRequest request = new DeleteObjectRequest
+			{
+				BucketName = this._awsBuckeName,
+				Key = keyName
+			};
+
+			try
+			{
+				// Report start - before any possible failures.
+				if (DeletionStarted != null)
+					DeletionStarted(reusedArgs, () =>
+					{
+						// ...
+					});
+
+				this._s3Client.DeleteObject(request);
+
+				// Report completion.
+				if (DeletionCompleted != null)
+					DeletionCompleted(reusedArgs, () =>
+					{
+						// ...
+					});
+			}
+			catch (OperationCanceledException exception)
+			{
+				logger.Info("Deletion canceled.");
+
+				// Report cancelation.
+				if (DeletionCanceled != null)
+					DeletionCanceled(reusedArgs, exception, () =>
+					{
+						// ...
+					});
+			}
+			catch (Exception exception)
+			{
+				if (exception is AmazonS3Exception)
+				{
+					AmazonS3Exception amznException = exception as AmazonS3Exception;
+					if (amznException.ErrorCode != null && (amznException.ErrorCode.Equals("InvalidAccessKeyId") || amznException.ErrorCode.Equals("InvalidSecurity")))
+					{
+						logger.Warn("Check the provided AWS Credentials.");
+					}
+					else
+					{
+						logger.Warn("Error occurred. Message:'{0}' when deleting object", amznException.Message);
+					}
+				}
+				else
+				{
+					logger.Warn("Exception occurred: {0}", exception.Message);
+				}
+
+				// Report failure.
+				if (DeletionFailed != null)
+					DeletionFailed(reusedArgs, exception, () =>
+					{
+						// ...
+					});
+			}
+		}
+
+		public override void DeleteMultipleFiles(List<Tuple<string, object>> keyNamesAndIdentifiers, CancellationToken cancellationToken)
+		{
+			DeletionArgs reusedArgs = new DeletionArgs
+			{
+			};
+
+			DeleteObjectsRequest request = new DeleteObjectsRequest
+			{
+				BucketName = this._awsBuckeName,
+				Objects = (from k in keyNamesAndIdentifiers select new KeyVersion() { Key = k.Item1 }).ToList()
+				//Quiet = true
+			};
+
+			try
+			{
+				// Report start - before any possible failures.
+				if (DeletionStarted != null)
+					DeletionStarted(reusedArgs, () =>
+					{
+						// ...
+					});
+
+				this._s3Client.DeleteObjects(request);
+
+				// Report completion.
+				if (DeletionCompleted != null)
+					DeletionCompleted(reusedArgs, () =>
+					{
+						// ...
+					});
+			}
+			catch (OperationCanceledException exception)
+			{
+				logger.Info("Deletion canceled.");
+
+				// Report cancelation.
+				if (DeletionCanceled != null)
+					DeletionCanceled(reusedArgs, exception, () =>
+					{
+						// ...
+					});
+			}
+			catch (DeleteObjectsException exception)
+			{
+				// Get error details from response.
+				DeleteObjectsResponse errorResponse = exception.Response;
+
+				//foreach (DeletedObject deletedObject in errorResponse.DeletedObjects)
+				//{
+				//	logger.Debug("Deleted object {0}" + deletedObject.Key);
+				//}
+				foreach (DeleteError deleteError in errorResponse.DeleteErrors)
+				{
+					StringBuilder sb = new StringBuilder();
+					sb.AppendLine("Error deleting item " + deleteError.Key);
+					sb.AppendLine("  Code   : " + deleteError.Code);
+					sb.AppendLine("  Message: " + deleteError.Message);
+
+					logger.Log(LogLevel.Warn, sb.ToString());
+				}
+
+				// Report failure.
+				if (DeletionFailed != null)
+					DeletionFailed(reusedArgs, exception, () =>
+					{
+						// ...
+					});
+			}
+			catch (Exception exception)
+			{
+				if (exception is AmazonS3Exception)
+				{
+					AmazonS3Exception amznException = exception as AmazonS3Exception;
+					if (amznException.ErrorCode != null && (amznException.ErrorCode.Equals("InvalidAccessKeyId") || amznException.ErrorCode.Equals("InvalidSecurity")))
+					{
+						logger.Warn("Check the provided AWS Credentials.");
+					}
+					else
+					{
+						logger.Warn("Error occurred. Message:'{0}' when deleting object", amznException.Message);
+					}
+				}
+				else
+				{
+					logger.Warn("Exception occurred: {0}", exception.Message);
+				}
+
+				// Report failure.
+				if (DeletionFailed != null)
+					DeletionFailed(reusedArgs, exception, () =>
+					{
+						// ...
 					});
 			}
 		}

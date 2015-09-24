@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -124,6 +124,26 @@ namespace Teltec.Storage
 			};
 		}
 
+		protected void RegisterDeleteEventHandlers()
+		{
+			TransferAgent.DeleteFileStarted += (object sender, DeletionArgs e) =>
+			{
+				Results.OnDeleteStarted(this, e);
+			};
+			TransferAgent.DeleteFileCanceled += (object sender, DeletionArgs e, Exception ex) =>
+			{
+				Results.OnDeleteCanceled(this, e, ex);
+			};
+			TransferAgent.DeleteFileFailed += (object sender, DeletionArgs e, Exception ex) =>
+			{
+				Results.OnDeleteFailed(this, e, ex);
+			};
+			TransferAgent.DeleteFileCompleted += (object sender, DeletionArgs e) =>
+			{
+				Results.OnDeleteCompleted(this, e);
+			};
+		}
+
 		public void RemoveAllFiles()
 		{
 			Files = new List<TFile>();
@@ -147,7 +167,7 @@ namespace Teltec.Storage
 				Results.Stats.Pending -= 1;
 				Results.Stats.Running += 1;
 
-				Task task = DoImplementation(file);
+				Task task = DoImplementation(file, /*userData*/ null);
 				//	.ContinueWith((Task t) =>
 				//{
 				//	switch (t.Status)
@@ -167,6 +187,6 @@ namespace Teltec.Storage
 			await Task.WhenAll(activeTasks.ToArray());
 		}
 
-		public abstract Task DoImplementation(IVersionedFile file);
+		public abstract Task DoImplementation(IVersionedFile file, object userData);
 	}
 }

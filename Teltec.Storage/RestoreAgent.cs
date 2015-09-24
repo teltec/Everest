@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Teltec.Storage.Agent;
 using Teltec.Storage.Versioning;
 
@@ -12,9 +12,9 @@ namespace Teltec.Storage
 			RegisterDownloadEventHandlers();
 		}
 
-		public override async Task DoImplementation(IVersionedFile file)
+		public override async Task DoImplementation(IVersionedFile file, object userData)
 		{
-			await TransferAgent.DownloadVersionedFile(file.Path, file.Version);
+			await TransferAgent.DownloadVersionedFile(file.Path, file.Version, userData);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Teltec.Common.Extensions;
 
@@ -54,6 +54,17 @@ namespace Teltec.Backup.Data.Models
 		{
 			get { return _Backups; }
 			protected set { SetField(ref _Backups, value); }
+		}
+
+		#endregion
+
+		#region Purging
+
+		private BackupPlanPurgeOptions _PurgeOptions = new BackupPlanPurgeOptions();
+		public virtual BackupPlanPurgeOptions PurgeOptions
+		{
+			get { return _PurgeOptions; }
+			set { SetField(ref _PurgeOptions, value); }
 		}
 
 		#endregion

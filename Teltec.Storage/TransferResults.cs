@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Teltec.Common.Collections;
 using Teltec.Storage.Agent;
@@ -13,6 +13,7 @@ namespace Teltec.Storage
 		STOPPED = 0,
 		RUNNING = 1,
 		COMPLETED = 2,
+		PURGED = 3,
 	}
 
 	public class TransferResults : IResults
@@ -86,22 +87,25 @@ namespace Teltec.Storage
 
 		public Statistics Stats { get; private set; }
 
-		public ObservableDictionary<string, TransferFileProgressArgs> ActiveTransfers { get; private set; }
-
 		public List<string> ErrorMessages { get; private set; }
+
+		public TransferResults()
+		{
+			Stats = new Statistics();
+			ActiveTransfers = new ObservableDictionary<string, TransferFileProgressArgs>();
+			ActiveDeletions = new ObservableDictionary<string, DeletionArgs>();
+			ErrorMessages = new List<string>();
+		}
+
+		#region Transfers
+
+		public ObservableDictionary<string, TransferFileProgressArgs> ActiveTransfers { get; private set; }
 
 		public event TransferFileExceptionHandler Failed;
 		public event TransferFileExceptionHandler Canceled;
 		public event TransferFileProgressHandler Completed;
 		public event TransferFileProgressHandler Progress;
 		public event TransferFileProgressHandler Started;
-
-		public TransferResults()
-		{
-			Stats = new Statistics();
-			ActiveTransfers = new ObservableDictionary<string, TransferFileProgressArgs>();
-			ErrorMessages = new List<string>();
-		}
 
 		internal void OnStarted(object sender, TransferFileProgressArgs args)
 		{
@@ -170,5 +174,66 @@ namespace Teltec.Storage
 			if (contains)
 				ActiveTransfers[key] = value;
 		}
+
+		#endregion
+
+		#region Deletion
+
+		public ObservableDictionary<string, DeletionArgs> ActiveDeletions { get; private set; }
+
+		public event DeleteFileExceptionHandler DeleteFailed;
+		public event DeleteFileExceptionHandler DeleteCanceled;
+		public event DeleteFileProgressHandler DeleteCompleted;
+		public event DeleteFileProgressHandler DeleteStarted;
+
+		internal void OnDeleteStarted(object sender, DeletionArgs args)
+		{
+			AddActiveDeletion(args.FilePath, args);
+			if (DeleteStarted != null)
+				DeleteStarted.Invoke(sender, args);
+			//if (Monitor != null)
+			//	Monitor.DeleteAdded(this, args);
+		}
+
+		internal void OnDeleteCompleted(object sender, DeletionArgs args)
+		{
+			RemoveActiveDeletion(args.FilePath);
+			if (DeleteCompleted != null)
+				DeleteCompleted.Invoke(sender, args);
+			//if (Monitor != null)
+			//	Monitor.DeleteCompleted(this, args);
+		}
+
+		internal void OnDeleteCanceled(object sender, DeletionArgs args, Exception exception)
+		{
+			RemoveActiveDeletion(args.FilePath);
+			ErrorMessages.Add(string.Format("Deleting {0} canceled: {1}", args.FilePath, exception.Message));
+			if (DeleteCanceled != null)
+				DeleteCanceled.Invoke(sender, args, exception);
+			//if (Monitor != null)
+			//	Monitor.DeleteCanceled(this, args, exception);
+		}
+
+		internal void OnDeleteFailed(object sender, DeletionArgs args, Exception exception)
+		{
+			RemoveActiveDeletion(args.FilePath);
+			ErrorMessages.Add(string.Format("Deleting {0} failed: {1}", args.FilePath, exception.Message));
+			if (DeleteFailed != null)
+				DeleteFailed.Invoke(sender, args, exception);
+			//if (Monitor != null)
+			//	Monitor.DeleteFailed(this, args, exception);
+		}
+
+		private void AddActiveDeletion(string key, DeletionArgs value)
+		{
+			// TODO(jweyrich): Do we want to track this visually?
+		}
+
+		private void RemoveActiveDeletion(string key)
+		{
+			// TODO(jweyrich): Do we want to track this visually?
+		}
+
+		#endregion
 	}
 }

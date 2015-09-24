@@ -1,9 +1,9 @@
 using FluentNHibernate.Mapping;
 using NHibernate.Type;
 using System;
-using Teltec.Backup.Data.Models;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.Data.DAO.NH
 {
@@ -194,6 +194,33 @@ namespace Teltec.Backup.Data.DAO.NH
 
 	#endregion
 
+	#region Backup Plan Purge Options
+
+	class BackupPlanPurgeOptionsMap : ClassMap<Models.BackupPlanPurgeOptions>
+	{
+		public BackupPlanPurgeOptionsMap()
+		{
+			Table("backup_plan_purge_options");
+
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_backup_plan_purge_options");
+
+			Map(p => p.PurgeType)
+				.Column("purge_type")
+				.CustomType<GenericEnumMapper<Models.BackupPlanPurgeTypeEnum>>()
+				;
+
+			Map(p => p.EnabledKeepNumberOfVersions)
+				.Column("enabled_keep_number_of_versions")
+				;
+
+			Map(p => p.NumberOfVersionsToKeep)
+				.Column("number_of_versions_to_keep")
+				;
+		}
+	}
+
+	#endregion
+
 	#region Backup
 
 	class BackupPlanMap : ClassMap<Models.BackupPlan>
@@ -261,6 +288,14 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Nullable()
 				//.LazyLoad(Laziness.Proxy)
 				.Cascade.All()
+				;
+
+			References(fk => fk.PurgeOptions)
+				.Column("purge_options_id")
+				.Not.LazyLoad() // Load immediately
+				.Fetch.Join() // Tell it use to use a JOIN clause.
+				.Cascade.All()
+				.Nullable()
 				;
 
 			Map(p => p.LastRunAt)
@@ -961,7 +996,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			Map(p => p.Status)
 				.Column("status")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<SynchronizationStatus>>()
+				.CustomType<GenericEnumMapper<Models.SynchronizationStatus>>()
 				;
 
 			HasMany(p => p.Files)

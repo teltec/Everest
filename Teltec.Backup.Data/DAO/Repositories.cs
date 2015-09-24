@@ -1,4 +1,4 @@
-﻿using NHibernate;
+using NHibernate;
 using NHibernate.Criterion;
 using NUnit.Framework;
 using System;
@@ -334,6 +334,38 @@ namespace Teltec.Backup.Data.DAO
 			if (ignoreCase)
 				expr = expr.IgnoreCase();
 			crit.Add(expr);
+			return crit.List<Models.BackupedFile>();
+		}
+
+		public IList<Models.BackupedFile> GetCompleteByPlanAndPath(Models.BackupPlan plan, string path, bool ignoreCase = false)
+		{
+			Assert.IsNotNull(plan);
+			Assert.IsNotNullOrEmpty(path);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+
+			// By status
+			string transferStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
+			crit.Add(Restrictions.Eq(transferStatusPropertyName, TransferStatus.COMPLETED));
+
+			// By plan
+			string backupPlanPropertyName = this.GetPropertyName((Models.Backup x) => x.BackupPlan);
+			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
+			crit.CreateAlias(backupPropertyName, "bp");
+			crit.Add(Restrictions.Eq("bp." + backupPlanPropertyName, plan));
+
+			// By path
+			string filePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
+			string filePathPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.Path);
+			crit.CreateAlias(filePropertyName, "f");
+			SimpleExpression expr = Restrictions.Eq("f." + filePathPropertyName, path);
+			if (ignoreCase)
+				expr = expr.IgnoreCase();
+			crit.Add(expr);
+
+			// Order
+			string idPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Id);
+			crit.AddOrder(Order.Desc(idPropertyName));
+
 			return crit.List<Models.BackupedFile>();
 		}
 	}
