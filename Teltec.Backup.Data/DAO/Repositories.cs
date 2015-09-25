@@ -570,39 +570,5 @@ namespace Teltec.Backup.Data.DAO
 		}
 	}
 
-	public class SynchronizationFileRepository : BaseRepository<Models.SynchronizationFile, Int64?>
-	{
-		public SynchronizationFileRepository()
-		{
-		}
-
-		public SynchronizationFileRepository(ISession session)
-			: base(session)
-		{
-		}
-
-		public Models.SynchronizationFile GetByURL(string url)
-		{
-			Assert.IsNotNullOrEmpty(url);
-			ICriteria crit = Session.CreateCriteria(PersistentType);
-			string pathPropertyName = this.GetPropertyName((Models.SynchronizationFile x) => x.Path);
-			crit.Add(Restrictions.Eq(pathPropertyName, url));
-			crit.SetMaxResults(1);
-			return crit.UniqueResult<Models.SynchronizationFile>();
-		}
-	}
-
-	public class SynchronizationPathNodeRepository : BaseRepository<Models.SynchronizationPathNode, Int64?>
-	{
-		public SynchronizationPathNodeRepository()
-		{
-		}
-
-		public SynchronizationPathNodeRepository(ISession session)
-			: base(session)
-		{
-		}
-	}
-
 	#endregion
 }
