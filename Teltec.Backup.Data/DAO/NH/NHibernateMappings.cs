@@ -3,7 +3,6 @@ using NHibernate.Type;
 using System;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
-using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.Data.DAO.NH
 {

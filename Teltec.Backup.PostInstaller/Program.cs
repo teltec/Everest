@@ -1,7 +1,6 @@
-﻿using NLog;
+using NLog;
 using PostInstaller.Databases;
 using System;
-using System.Diagnostics;
 using Teltec.Backup.Data.DAO.NH;
 
 namespace PostInstaller

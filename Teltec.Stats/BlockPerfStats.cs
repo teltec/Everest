@@ -32,7 +32,7 @@ namespace Teltec.Stats
 		public void Begin([CallerLineNumber] int sourceLineNumber = 0)
 		{
 			SourceLineNumberStarted = sourceLineNumber;
-			
+
 			Timer.Start();
 			LogBegin();
 		}

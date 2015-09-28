@@ -3,11 +3,11 @@
 //and to conform to the PCL declaration of NotifyCollectionChangedEventArgs
 
 using System;
-using System.Linq;
-using System.ComponentModel;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Collections;
+using System.ComponentModel;
+using System.Linq;
 
 namespace Teltec.Common.Collections
 {

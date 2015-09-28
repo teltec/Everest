@@ -1,4 +1,3 @@
-﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Teltec.Common.Utils

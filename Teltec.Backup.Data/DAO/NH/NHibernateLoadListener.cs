@@ -1,4 +1,4 @@
-﻿using NHibernate.Event;
+using NHibernate.Event;
 
 namespace Teltec.Backup.Data.DAO.NH
 {

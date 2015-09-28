@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using NHibernate;
 using NLog;
 using NUnit.Framework;

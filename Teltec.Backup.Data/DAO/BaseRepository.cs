@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Teltec.Backup.Data.DAO.NH;
 using Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.Data.DAO

@@ -1,4 +1,4 @@
-﻿
+
 namespace PostInstaller
 {
 	public class DatabaseConfig
