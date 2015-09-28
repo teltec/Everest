@@ -4,7 +4,14 @@ namespace Teltec.Common.Utils
 {
 	public static class FileSizeUtils
 	{
-		// ORIGINAK CODE FROM http://stackoverflow.com/a/383596/298054
+		//
+		// "How do you do *integer* exponentiation in C#?" by "Vilx-" is licensed under CC BY-SA 3.0
+		//
+		// Title?   How do you do *integer* exponentiation in C#?
+		// Author?  Vilx- - http://stackoverflow.com/users/41360/vilx
+		// Source?  http://stackoverflow.com/a/383596/298054
+		// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
+		//
 		public static long LongPow(long x, ulong pow)
 		{
 			long ret = 1;

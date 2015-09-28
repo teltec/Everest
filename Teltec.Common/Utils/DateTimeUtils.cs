@@ -4,7 +4,14 @@ namespace Teltec.Common.Utils
 {
 	public static class DateTimeUtils
 	{
-		// ORIGINAL CODE FROM http://stackoverflow.com/a/2906684/298054
+		//
+		// "How to round-off hours based on Minutes(hours+0 if min<30, hours+1 otherwise)?" by "CrimsonX" is licensed under CC BY-SA 3.0
+		//
+		// Title?   How to round-off hours based on Minutes(hours+0 if min<30, hours+1 otherwise)?
+		// Author?  CrimsonX - http://stackoverflow.com/users/181211/crimsonx
+		// Source?  http://stackoverflow.com/a/2906684/298054
+		// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
+		//
 		/// <summary>
 		/// Rounds (up or down) a DateTime to the nearest hour.
 		/// </summary>

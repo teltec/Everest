@@ -11,7 +11,7 @@ using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.PlanExecutor
 {
-	// https://github.com/gsscoder/commandline
+	// Documentation at https://github.com/gsscoder/commandline
 	class Options
 	{
 		[CommandLine.Option('t', "type", Required = true, HelpText = "Inform the type of the plan to be executed: (backup | restore)")]
