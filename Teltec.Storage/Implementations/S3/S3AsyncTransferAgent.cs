@@ -20,6 +20,7 @@ namespace Teltec.Storage.Implementations.S3
 		public S3AsyncTransferAgent(AWSCredentials awsCredentials, string awsBucketName)
 			: base(new S3StorageBackend(awsCredentials, awsBucketName, RegionEndpoint.USEast1))
 		{
+			// This is `true` because it should dispose the `StorageBackend` implementation passed to the base class.
 			_shouldDispose = true;
 			PathBuilder = new S3PathBuilder();
 		}

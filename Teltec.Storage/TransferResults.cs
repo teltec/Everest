@@ -35,7 +35,6 @@ namespace Teltec.Storage
 			public int Completed { get { return _Completed; } set { _Completed = value; } }
 
 			private long _BytesTotal = 0;
-			private long _BytesPending = 0;
 			private long _BytesFailed = 0;
 			private long _BytesCanceled = 0;
 			private long _BytesCompleted = 0;
@@ -54,7 +53,6 @@ namespace Teltec.Storage
 				_Failed = 0;
 				_Canceled = 0;
 				_Completed = 0;
-				_BytesPending = 0;
 				_BytesFailed = 0;
 				_BytesCanceled = 0;
 				_BytesCompleted = 0;

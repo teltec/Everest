@@ -11,9 +11,10 @@ namespace Teltec.Storage.Agent
 	{
 		protected AsyncTransferAgent(StorageBackend impl)
 		{
-			RenewCancellationToken();
+			_shouldDispose = true;
+			RenewCancellationToken(); // The `CancellationTokenSource` created here should be diposed by this class.
 
-			Implementation = impl;
+			Implementation = impl; // This should be disposed by classe that inherit this class.
 
 			// Forward-proxy all events.
 			EventDispatcher = new EventDispatcher();
