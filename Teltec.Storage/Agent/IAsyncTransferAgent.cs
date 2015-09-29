@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Teltec.Storage.Backend;
 using Teltec.Storage.Versioning;
@@ -9,6 +10,8 @@ namespace Teltec.Storage.Agent
 	public delegate void TransferFileExceptionHandler(object sender, TransferFileProgressArgs e, Exception ex);
 	public delegate void ListingProgressHandler(object sender, ListingProgressArgs e);
 	public delegate void ListingExceptionHandler(object sender, ListingProgressArgs e, Exception ex);
+	public delegate void DeleteFileProgressHandler(object sender, DeletionArgs e);
+	public delegate void DeleteFileExceptionHandler(object sender, DeletionArgs e, Exception ex);
 
 	public interface IAsyncTransferAgent : IDisposable
 	{
@@ -33,8 +36,8 @@ namespace Teltec.Storage.Agent
 		event TransferFileExceptionHandler UploadFileFailed;
 		event TransferFileProgressHandler UploadFileCompleted;
 
-		Task UploadVersionedFile(string sourcePath, IFileVersion version);
-		Task UploadFile(string sourcePath, string targetPath);
+		Task UploadVersionedFile(string sourcePath, IFileVersion version, object userData);
+		Task UploadFile(string sourcePath, string targetPath, object userData);
 
 		#endregion
 
@@ -46,8 +49,8 @@ namespace Teltec.Storage.Agent
 		event TransferFileExceptionHandler DownloadFileFailed;
 		event TransferFileProgressHandler DownloadFileCompleted;
 
-		Task DownloadVersionedFile(string sourcePath, IFileVersion version);
-		Task DownloadFile(string sourcePath, string targetPath);
+		Task DownloadVersionedFile(string sourcePath, IFileVersion version, object userData);
+		Task DownloadFile(string sourcePath, string targetPath, object userData);
 
 		#endregion
 
@@ -59,7 +62,19 @@ namespace Teltec.Storage.Agent
 		event ListingExceptionHandler ListingFailed;
 		event ListingProgressHandler ListingCompleted;
 
-		Task List(string prefix, bool recursive);
+		Task List(string prefix, bool recursive, object userData);
+
+		#endregion
+
+		#region Deletion
+
+		event DeleteFileProgressHandler DeleteFileStarted;
+		event DeleteFileExceptionHandler DeleteFileCanceled;
+		event DeleteFileExceptionHandler DeleteFileFailed;
+		event DeleteFileProgressHandler DeleteFileCompleted;
+
+		Task DeleteVersionedFile(string sourcePath, IFileVersion version, object userData);
+		Task DeleteMultipleVersionedFile(List<Tuple<string /*sourcePath*/, IFileVersion /*version*/, object /*userData*/>> files);
 
 		#endregion
 

@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using Teltec.Storage;
+using System;
 using Teltec.Storage.Versioning;
 
 namespace Teltec.Backup.Data.Versioning

@@ -1,4 +1,4 @@
-﻿using NHibernate;
+using NHibernate;
 using NHibernate.Criterion;
 using NUnit.Framework;
 using System;
@@ -336,6 +336,38 @@ namespace Teltec.Backup.Data.DAO
 			crit.Add(expr);
 			return crit.List<Models.BackupedFile>();
 		}
+
+		public IList<Models.BackupedFile> GetCompleteByPlanAndPath(Models.BackupPlan plan, string path, bool ignoreCase = false)
+		{
+			Assert.IsNotNull(plan);
+			Assert.IsNotNullOrEmpty(path);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+
+			// By status
+			string transferStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
+			crit.Add(Restrictions.Eq(transferStatusPropertyName, TransferStatus.COMPLETED));
+
+			// By plan
+			string backupPlanPropertyName = this.GetPropertyName((Models.Backup x) => x.BackupPlan);
+			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
+			crit.CreateAlias(backupPropertyName, "bp");
+			crit.Add(Restrictions.Eq("bp." + backupPlanPropertyName, plan));
+
+			// By path
+			string filePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
+			string filePathPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.Path);
+			crit.CreateAlias(filePropertyName, "f");
+			SimpleExpression expr = Restrictions.Eq("f." + filePathPropertyName, path);
+			if (ignoreCase)
+				expr = expr.IgnoreCase();
+			crit.Add(expr);
+
+			// Order
+			string idPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Id);
+			crit.AddOrder(Order.Desc(idPropertyName));
+
+			return crit.List<Models.BackupedFile>();
+		}
 	}
 
 	#endregion
@@ -535,40 +567,6 @@ namespace Teltec.Backup.Data.DAO
 			crit.AddOrder(Order.Desc(idPropertyName));
 			crit.SetMaxResults(1);
 			return crit.UniqueResult<Models.Synchronization>();
-		}
-	}
-
-	public class SynchronizationFileRepository : BaseRepository<Models.SynchronizationFile, Int64?>
-	{
-		public SynchronizationFileRepository()
-		{
-		}
-
-		public SynchronizationFileRepository(ISession session)
-			: base(session)
-		{
-		}
-
-		public Models.SynchronizationFile GetByURL(string url)
-		{
-			Assert.IsNotNullOrEmpty(url);
-			ICriteria crit = Session.CreateCriteria(PersistentType);
-			string pathPropertyName = this.GetPropertyName((Models.SynchronizationFile x) => x.Path);
-			crit.Add(Restrictions.Eq(pathPropertyName, url));
-			crit.SetMaxResults(1);
-			return crit.UniqueResult<Models.SynchronizationFile>();
-		}
-	}
-
-	public class SynchronizationPathNodeRepository : BaseRepository<Models.SynchronizationPathNode, Int64?>
-	{
-		public SynchronizationPathNodeRepository()
-		{
-		}
-
-		public SynchronizationPathNodeRepository(ISession session)
-			: base(session)
-		{
 		}
 	}
 

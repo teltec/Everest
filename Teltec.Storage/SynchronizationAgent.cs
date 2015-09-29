@@ -12,9 +12,9 @@ namespace Teltec.Storage
 			RegisterListingEventHandlers();
 		}
 
-		public override async Task DoImplementation(string prefix, bool recursive)
+		public override async Task DoImplementation(string prefix, bool recursive, object userData)
 		{
-			await TransferAgent.List(prefix, recursive);
+			await TransferAgent.List(prefix, recursive, userData);
 		}
 	}
 }

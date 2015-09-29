@@ -1,9 +1,8 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Teltec.Common.Extensions
 {
@@ -81,13 +80,13 @@ namespace Teltec.Common.Extensions
 
 		/// <summary>
 		/// Concatenates all the elements of an array using the specified delimiter between each element.
-		/// 
+		///
 		/// Arguments:
 		/// enumerable: The enumerable itself.
 		/// property  : Function to resolve the string property to be used as element.
 		/// emptyStr  : String to be returned in case the collection is empty.
 		/// delimiter : Separator string to be appended between the elements.
-		/// maxLength : Negative value indicates no limit. A positive value limits 
+		/// maxLength : Negative value indicates no limit. A positive value limits
 		/// trail     : String to be appended after maxLength truncation.
 		/// </summary>
 		public static string AsDelimitedString<T>(

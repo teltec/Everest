@@ -1,5 +1,4 @@
-﻿using GlacialComponents.Controls;
-using System;
+using GlacialComponents.Controls;
 using System.Collections;
 using System.ComponentModel;
 using System.Drawing;
@@ -306,13 +305,13 @@ namespace Teltec.Storage.Monitor
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] // ADDED
 		public new bool Selectable
 		{ get { return base.Selectable; } set { base.Selectable = value; } }
-		
+
 		[Browsable(false)]
 		[Description("Selected Items Array Of Indicies")]
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public new ArrayList SelectedIndicies
 		{ get { return base.SelectedIndicies; } }
-		
+
 		[Browsable(false)]
 		[Description("Selected Items Array")]
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]

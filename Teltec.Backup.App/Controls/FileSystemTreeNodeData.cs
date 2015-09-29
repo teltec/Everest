@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.FileSystem;

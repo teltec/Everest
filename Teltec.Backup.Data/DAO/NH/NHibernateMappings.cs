@@ -1,7 +1,6 @@
-﻿using FluentNHibernate.Mapping;
+using FluentNHibernate.Mapping;
 using NHibernate.Type;
 using System;
-using Teltec.Backup.Data.Models;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
 
@@ -194,6 +193,33 @@ namespace Teltec.Backup.Data.DAO.NH
 
 	#endregion
 
+	#region Backup Plan Purge Options
+
+	class BackupPlanPurgeOptionsMap : ClassMap<Models.BackupPlanPurgeOptions>
+	{
+		public BackupPlanPurgeOptionsMap()
+		{
+			Table("backup_plan_purge_options");
+
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_backup_plan_purge_options");
+
+			Map(p => p.PurgeType)
+				.Column("purge_type")
+				.CustomType<GenericEnumMapper<Models.BackupPlanPurgeTypeEnum>>()
+				;
+
+			Map(p => p.EnabledKeepNumberOfVersions)
+				.Column("enabled_keep_number_of_versions")
+				;
+
+			Map(p => p.NumberOfVersionsToKeep)
+				.Column("number_of_versions_to_keep")
+				;
+		}
+	}
+
+	#endregion
+
 	#region Backup
 
 	class BackupPlanMap : ClassMap<Models.BackupPlan>
@@ -261,6 +287,14 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Nullable()
 				//.LazyLoad(Laziness.Proxy)
 				.Cascade.All()
+				;
+
+			References(fk => fk.PurgeOptions)
+				.Column("purge_options_id")
+				.Not.LazyLoad() // Load immediately
+				.Fetch.Join() // Tell it use to use a JOIN clause.
+				.Cascade.All()
+				.Nullable()
 				;
 
 			Map(p => p.LastRunAt)
@@ -363,7 +397,7 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupedFileMap()
 		{
-			string UNIQUE_KEY = "uk_backuped_file"; // (storage_account_id, backup_plan_file_id, file_last_written_at)
+			string UNIQUE_KEY = "uk_backuped_file"; // (storage_account_id, backup_plan_file_id, backup_id)
 			string INDEX_BACKUP_PATH_XFERSTATUS = "idx_backup_path_xferstatus"; // (backup_id, backup_plan_file_id, transfer_status)
 			string INDEX_BACKUP_XFERSTATUS = "idx_backup_xferstatus"; // (backup_id, transfer_status)
 
@@ -377,6 +411,7 @@ namespace Teltec.Backup.Data.DAO.NH
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY)
 				.Index(INDEX_BACKUP_PATH_XFERSTATUS)
 				.Index(INDEX_BACKUP_XFERSTATUS)
 				;
@@ -424,7 +459,6 @@ namespace Teltec.Backup.Data.DAO.NH
 			Map(p => p.FileLastWrittenAt)
 				.Column("file_last_written_at")
 				.Nullable()
-				.UniqueKey(UNIQUE_KEY)
 				//.CustomType<TimestampType>()
 				;
 
@@ -961,154 +995,13 @@ namespace Teltec.Backup.Data.DAO.NH
 			Map(p => p.Status)
 				.Column("status")
 				.Not.Nullable()
-				.CustomType<GenericEnumMapper<SynchronizationStatus>>()
+				.CustomType<GenericEnumMapper<Models.SynchronizationStatus>>()
 				;
 
 			HasMany(p => p.Files)
 				.KeyColumn("synchronization_id")
 				.Cascade.AllDeleteOrphan()
 				.AsBag()
-				;
-		}
-	}
-
-	class SynchronizationFileMap : ClassMap<Models.SynchronizationFile>
-	{
-		public SynchronizationFileMap()
-		{
-			string UNIQUE_KEY_SYNC_FILEPATH = "uk_synchronization_file_path";
-			string UNIQUE_KEY_SYNC_PATHNODE = "uk_synchronization_path_node";
-			string INDEX_PATHNODE = "idx_path_node";
-
-			Table("synchronization_files");
-
-			Id(p => p.Id, "id").CustomGeneratedBy("seq_synchronization_files");
-
-			References(fk => fk.Synchronization)
-				.Column("synchronization_id")
-				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
-				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable()
-				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_SYNC_FILEPATH)
-				.UniqueKey(UNIQUE_KEY_SYNC_PATHNODE)
-				;
-
-			Map(p => p.Path)
-				.Column("path")
-				.Not.Nullable()
-				.Length(Models.SynchronizationFile.PathMaxLen)
-				.UniqueKey(UNIQUE_KEY_SYNC_FILEPATH)
-				;
-
-			Map(p => p.FileSize)
-				.Column("file_size")
-				.Nullable()
-				;
-
-			Map(p => p.LastWrittenAt)
-				.Column("last_written_at")
-				.Nullable()
-				//.CustomType<TimestampType>()
-				;
-
-			//Map(p => p.LastChecksum)
-			//	.Column("last_checksum")
-			//	.Nullable()
-			//	.Length(20) // SHA-1 is 160 bits long (20 bytes)
-			//	;
-
-			//Map(p => p.LastStatus)
-			//	.Column("last_status")
-			//	.Not.Nullable()
-			//	.CustomType<GenericEnumMapper<Models.SynchronizationFileStatus>>()
-			//	;
-
-			Map(p => p.CreatedAt)
-				.Column("created_at")
-				.Not.Nullable()
-				.Not.Update()
-				//.CustomType<TimestampType>()
-				;
-
-			Map(p => p.UpdatedAt)
-				.Column("updated_at")
-				.Nullable()
-				.Not.Insert()
-				//.CustomType<TimestampType>()
-				;
-
-			References(fk => fk.PathNode)
-				.Column("path_node_id")
-				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
-				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable()
-				.Cascade.All()
-				.UniqueKey(UNIQUE_KEY_SYNC_PATHNODE)
-				.Index(INDEX_PATHNODE)
-				;
-		}
-	}
-
-	class SynchronizationPathNodeMap : ClassMap<Models.SynchronizationPathNode>
-	{
-		public SynchronizationPathNodeMap()
-		{
-			string UNIQUE_KEY_SYNC_PARENT_NAME = "uk_synchronization_path_node"; // (synchronization_id, parent_id, name)
-			string UNIQUE_KEY_SYNC_PATH = "uk_synchronization_path_node_path"; // (synchronization_id, path)
-			string INDEX_SYNC_TYPE_NAME = "idx_synchronization_type_name"; // (synchronization_id, type, name)
-
-			Table("synchronization_path_nodes");
-
-			Id(p => p.Id, "id").CustomGeneratedBy("seq_synchronization_path_nodes");
-
-			References(fk => fk.Synchronization)
-				.Column("synchronization_id")
-				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
-				// seems to set it to `NULL` before deleting the object/row.
-				//.Not.Nullable()
-				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_SYNC_PARENT_NAME)
-				.Index(INDEX_SYNC_TYPE_NAME)
-				;
-
-			References(fk => fk.Parent)
-				.Column("parent_id")
-				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_SYNC_PARENT_NAME)
-				;
-
-			Map(p => p.Type)
-				.Column("type")
-				.Not.Nullable()
-				.CustomType<GenericEnumMapper<Models.EntryType>>()
-				.Index(INDEX_SYNC_TYPE_NAME)
-				;
-
-			Map(p => p.Name)
-				.Column("name")
-				.Not.Nullable()
-				.Length(Models.SynchronizationPathNode.NameMaxLen)
-				.UniqueKey(UNIQUE_KEY_SYNC_PARENT_NAME)
-				.Index(INDEX_SYNC_TYPE_NAME)
-				;
-
-			Map(p => p.Path)
-				.Column("path")
-				.Not.Nullable()
-				.Length(Models.SynchronizationPathNode.PathMaxLen)
-				.UniqueKey(UNIQUE_KEY_SYNC_PATH)
-				;
-
-			HasMany(p => p.SubNodes)
-				.KeyColumn("parent_id")
-				.Cascade.AllDeleteOrphan()
-				.AsBag()
-				;
-
-			HasOne(fk => fk.SyncFile)
-				.PropertyRef(this.GetPropertyName((Models.SynchronizationFile x) => x.PathNode))
-				.Cascade.None()
 				;
 		}
 	}

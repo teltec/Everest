@@ -189,6 +189,12 @@
     <Compile Include="Forms\Actions\ExecuteCommandsForm.Designer.cs">
       <DependentUpon>ExecuteCommandsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\BackupPlan\BackupPlanPurgeOptionsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\BackupPlan\BackupPlanPurgeOptionsForm.Designer.cs">
+      <DependentUpon>BackupPlanPurgeOptionsForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\RestorePlan\RestorePlanSelectAccountForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -335,6 +341,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\Actions\ExecuteCommandsForm.resx">
       <DependentUpon>ExecuteCommandsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\BackupPlan\BackupPlanPurgeOptionsForm.resx">
+      <DependentUpon>BackupPlanPurgeOptionsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanListControl.resx">
       <DependentUpon>BackupPlanListControl.cs</DependentUpon>

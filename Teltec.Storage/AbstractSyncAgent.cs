@@ -103,7 +103,7 @@ namespace Teltec.Storage
 			TransferAgent.RenewCancellationToken();
 			List<Task> activeTasks = new List<Task>();
 
-			Task task = DoImplementation(prefix, recursive);
+			Task task = DoImplementation(prefix, recursive, /*userData*/ null);
 			//	.ContinueWith((Task t) =>
 			//{
 			//	switch (t.Status)
@@ -122,6 +122,6 @@ namespace Teltec.Storage
 			await Task.WhenAll(activeTasks.ToArray());
 		}
 
-		public abstract Task DoImplementation(string prefix, bool recursive);
+		public abstract Task DoImplementation(string prefix, bool recursive, object userData);
 	}
 }

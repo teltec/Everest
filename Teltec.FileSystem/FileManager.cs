@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,17 +10,17 @@ namespace Teltec.FileSystem
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		public static DateTime UnsafeGetLastWriteTimeUtc(string path)
+		public static DateTime UnsafeGetFileLastWriteTimeUtc(string path)
 		{
 			//return File.GetLastWriteTimeUtc(path);
 			return ZetaLongPaths.ZlpIOHelper.GetFileLastWriteTime(path).ToUniversalTime();
 		}
 
-		public static DateTime? SafeGetLastWriteTimeUtc(string path)
+		public static DateTime? SafeGetFileLastWriteTimeUtc(string path)
 		{
 			try
 			{
-				return UnsafeGetLastWriteTimeUtc(path);
+				return UnsafeGetFileLastWriteTimeUtc(path);
 			}
 			catch (Exception e)
 			{
@@ -29,17 +29,17 @@ namespace Teltec.FileSystem
 			}
 		}
 
-		public static void UnsafeSetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
+		public static void UnsafeSetFileLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
 		{
 			//File.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
 			ZetaLongPaths.ZlpIOHelper.SetFileLastWriteTime(path, lastWriteTimeUtc.ToLocalTime());
 		}
 
-		public static void SafeSetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
+		public static void SafeSetFileLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
 		{
 			try
 			{
-				UnsafeSetLastWriteTimeUtc(path, lastWriteTimeUtc);
+				UnsafeSetFileLastWriteTimeUtc(path, lastWriteTimeUtc);
 			}
 			catch (Exception e)
 			{
@@ -63,6 +63,45 @@ namespace Teltec.FileSystem
 			{
 				logger.Error("Failed to get file size of file/directory \"{0}\" - {1}", path, e.Message);
 				return null;
+			}
+		}
+
+		public static string UnsafeGetDirectoryName(string filePath)
+		{
+			ZetaLongPaths.ZlpFileInfo file = new ZetaLongPaths.ZlpFileInfo(filePath);
+			return file.DirectoryName;
+		}
+
+		public static string SafeGetDirectoryName(string filePath)
+		{
+			try
+			{
+				return UnsafeGetDirectoryName(filePath);
+			}
+			catch (Exception e)
+			{
+				logger.Error("Failed to get directory name for file \"{0}\" - {1}", filePath, e.Message);
+				return null;
+			}
+		}
+
+		public static void UnsafeCreateDirectory(string path)
+		{
+			//DirectoryInfo info = Directory.CreateDirectory(path);
+			ZetaLongPaths.ZlpIOHelper.CreateDirectory(path);
+		}
+
+		public static bool SafeCreateDirectory(string path)
+		{
+			try
+			{
+				UnsafeCreateDirectory(path);
+				return true;
+			}
+			catch (Exception e)
+			{
+				logger.Error("Failed to create directory \"{0}\" - {1}", path, e.Message);
+				return false;
 			}
 		}
 
@@ -132,19 +171,9 @@ namespace Teltec.FileSystem
 			}
 		}
 
-		public static bool CreateDirectory(string path)
+		public static bool FileExists(string path)
 		{
-			try
-			{
-				//DirectoryInfo info = Directory.CreateDirectory(path);
-				ZetaLongPaths.ZlpIOHelper.CreateDirectory(path);
-				return true;
-			}
-			catch (Exception e)
-			{
-				logger.Error("Failed to create directory \"{0}\" - {1}", path, e.Message);
-				return false;
-			}
+			return ZetaLongPaths.ZlpIOHelper.FileExists(path);
 		}
 
 		public static bool VolumeExists(string letter)
@@ -166,6 +195,5 @@ namespace Teltec.FileSystem
 			}
 			return result.ToArray();
 		}
-
 	}
 }

@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="S3PathBuilderTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="S3StorageBackendTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Teltec.Storage\Teltec.Storage.csproj">

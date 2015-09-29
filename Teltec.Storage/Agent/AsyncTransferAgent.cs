@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Storage.Backend;
@@ -10,9 +11,10 @@ namespace Teltec.Storage.Agent
 	{
 		protected AsyncTransferAgent(StorageBackend impl)
 		{
-			RenewCancellationToken();
+			_shouldDispose = true;
+			RenewCancellationToken(); // The `CancellationTokenSource` created here should be diposed by this class.
 
-			Implementation = impl;
+			Implementation = impl; // This should be disposed by classe that inherit this class.
 
 			// Forward-proxy all events.
 			EventDispatcher = new EventDispatcher();
@@ -26,6 +28,7 @@ namespace Teltec.Storage.Agent
 			RegisterUploadDelegates();
 			RegisterDownloadDelegates();
 			RegisterListingDelegates();
+			RegisterDeletionDelegates();
 		}
 
 		private void RegisterUploadDelegates()
@@ -199,6 +202,53 @@ namespace Teltec.Storage.Agent
 			};
 		}
 
+		private void RegisterDeletionDelegates()
+		{
+			// We do all this magic because other threads should NOT change the UI.
+			// We want the changes made to the reusable `DeletionArgs` instance
+			// to raise change events on the context of the Main thread.
+			Implementation.DeletionStarted += (DeletionArgs args, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (DeleteFileStarted != null)
+						DeleteFileStarted.Invoke(this, args);
+				});
+			};
+			Implementation.DeletionCanceled += (DeletionArgs args, Exception ex, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (DeleteFileCanceled != null)
+						DeleteFileCanceled.Invoke(this, args, ex);
+				});
+			};
+			Implementation.DeletionFailed += (DeletionArgs args, Exception ex, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (DeleteFileFailed != null)
+						DeleteFileFailed.Invoke(this, args, ex);
+				});
+			};
+			Implementation.DeletionCompleted += (DeletionArgs args, Action action) =>
+			{
+				EventDispatcher.Invoke(() =>
+				{
+					if (action != null)
+						action.Invoke();
+					if (DeleteFileCompleted != null)
+						DeleteFileCompleted.Invoke(this, args);
+				});
+			};
+		}
+
 		#endregion
 
 		protected Task ExecuteOnBackround(Action action)
@@ -240,8 +290,8 @@ namespace Teltec.Storage.Agent
 		public event TransferFileExceptionHandler UploadFileFailed;
 		public event TransferFileProgressHandler UploadFileCompleted;
 
-		abstract public Task UploadVersionedFile(string sourcePath, IFileVersion version);
-		abstract public Task UploadFile(string sourcePath, string targetPath);
+		abstract public Task UploadVersionedFile(string sourcePath, IFileVersion version, object userData);
+		abstract public Task UploadFile(string sourcePath, string targetPath, object userData);
 
 		#endregion
 
@@ -253,8 +303,8 @@ namespace Teltec.Storage.Agent
 		public event TransferFileExceptionHandler DownloadFileFailed;
 		public event TransferFileProgressHandler DownloadFileCompleted;
 
-		abstract public Task DownloadVersionedFile(string sourcePath, IFileVersion version);
-		abstract public Task DownloadFile(string sourcePath, string targetPath);
+		abstract public Task DownloadVersionedFile(string sourcePath, IFileVersion version, object userData);
+		abstract public Task DownloadFile(string sourcePath, string targetPath, object userData);
 
 		#endregion
 
@@ -266,7 +316,19 @@ namespace Teltec.Storage.Agent
 		public event ListingExceptionHandler ListingFailed;
 		public event ListingProgressHandler ListingCompleted;
 
-		abstract public Task List(string prefix, bool recursive);
+		abstract public Task List(string prefix, bool recursive, object userData);
+
+		#endregion
+
+		#region Deletion
+
+		public event DeleteFileProgressHandler DeleteFileStarted;
+		public event DeleteFileExceptionHandler DeleteFileCanceled;
+		public event DeleteFileExceptionHandler DeleteFileFailed;
+		public event DeleteFileProgressHandler DeleteFileCompleted;
+
+		abstract public Task DeleteVersionedFile(string sourcePath, IFileVersion version, object userData);
+		abstract public Task DeleteMultipleVersionedFile(List<Tuple<string /*sourcePath*/, IFileVersion /*version*/, object /*userData*/>> files);
 
 		#endregion
 

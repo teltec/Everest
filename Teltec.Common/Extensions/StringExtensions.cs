@@ -1,13 +1,13 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Teltec.Common.Extensions
 {
 	public static class StringExtensions
 	{
-		// Code from http://www.levibotelho.com/development/c-remove-diacritics-accents-from-a-string/
+		// ORIGINAL CODE FROM http://www.levibotelho.com/development/c-remove-diacritics-accents-from-a-string/
+		// Copyright (c) 2015 Levi Botelho.
 		public static string RemoveDiacritics(this string text)
 		{
 			if (string.IsNullOrWhiteSpace(text))

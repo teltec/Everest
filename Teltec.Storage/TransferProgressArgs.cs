@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Teltec.Common;
-using Teltec.Common.Extensions;
 
 namespace Teltec.Storage
 {
@@ -17,11 +16,11 @@ namespace Teltec.Storage
 
 	public abstract class TransferProgressArgs : ObservableEventArgs
 	{
-		private object _Tag;
-		public object Tag
+		private object _UserData;
+		public object UserData
 		{
-			get { return _Tag; }
-			set { SetField(ref _Tag, value); }
+			get { return _UserData; }
+			set { SetField(ref _UserData, value); }
 		}
 
 		private TransferState _State;
@@ -85,7 +84,12 @@ namespace Teltec.Storage
 
 	public class TransferFileProgressArgs : TransferProgressArgs
 	{
-		public string FilePath { get; set; }
+		private string _FilePath;
+		public string FilePath
+		{
+			get { return _FilePath; }
+			set { SetField(ref _FilePath, value); }
+		}
 	}
 
 	public class ListingObject
@@ -104,6 +108,13 @@ namespace Teltec.Storage
 
 	public class ListingProgressArgs : ObservableEventArgs
 	{
+		private object _UserData;
+		public object UserData
+		{
+			get { return _UserData; }
+			set { SetField(ref _UserData, value); }
+		}
+
 		private TransferState _State;
 		public TransferState State
 		{
@@ -116,6 +127,23 @@ namespace Teltec.Storage
 		{
 			get { return _Objects; }
 			set { SetField(ref _Objects, value); }
+		}
+	}
+
+	public class DeletionArgs : ObservableEventArgs
+	{
+		private object _UserData;
+		public object UserData
+		{
+			get { return _UserData; }
+			set { SetField(ref _UserData, value); }
+		}
+
+		private string _FilePath;
+		public string FilePath
+		{
+			get { return _FilePath; }
+			set { SetField(ref _FilePath, value); }
 		}
 	}
 }

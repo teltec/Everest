@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Teltec.Backup.Data.FileSystem;
 using Teltec.Backup.Data.Models;
 using Teltec.Common.Controls;

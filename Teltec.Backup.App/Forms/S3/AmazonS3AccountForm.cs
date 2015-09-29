@@ -185,7 +185,7 @@ namespace Teltec.Backup.App.Forms.S3
 
 			try
 			{
-				Task task = transferAgent.List(transferAgent.RemoteRootDir, false);
+				Task task = transferAgent.List(transferAgent.RemoteRootDir, false, null);
 
 				await task;
 			}

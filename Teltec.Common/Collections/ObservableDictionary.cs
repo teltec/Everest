@@ -1,13 +1,13 @@
-﻿//from http://blogs.microsoft.co.il/blogs/shimmy/archive/2010/12/26/observabledictionary-lt-tkey-tvalue-gt-c.aspx
-//with modifications to not blow up when accessing a non-existent key
-//and to conform to the PCL declaration of NotifyCollectionChangedEventArgs
+// ORIGINAL CODE FROM http://blogs.microsoft.co.il/blogs/shimmy/archive/2010/12/26/observabledictionary-lt-tkey-tvalue-gt-c.aspx
+// with modifications to not blow up when accessing a non-existent key
+// and to conform to the PCL declaration of NotifyCollectionChangedEventArgs
 
 using System;
-using System.Linq;
-using System.ComponentModel;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Collections;
+using System.ComponentModel;
+using System.Linq;
 
 namespace Teltec.Common.Collections
 {
