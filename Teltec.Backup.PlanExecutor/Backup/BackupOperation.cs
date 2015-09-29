@@ -225,7 +225,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 
 				Models.BackupPlan plan = Backup.BackupPlan; //backupedFile.Backup.BackupPlan;
 
-				if (plan.PurgeOptions.IsTypeCustom && plan.PurgeOptions.EnabledKeepNumberOfVersions)
+				if (plan.PurgeOptions != null && plan.PurgeOptions.IsTypeCustom && plan.PurgeOptions.EnabledKeepNumberOfVersions)
 				{
 					// Purge the oldest versioned files if the count of versions exceeds the maximum specified for the Backup Plan.
 					IList<Models.BackupedFile> previousVersions = daoBackupedFile.GetCompleteByPlanAndPath(plan, args.FilePath);
