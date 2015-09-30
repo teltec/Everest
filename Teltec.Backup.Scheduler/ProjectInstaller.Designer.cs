@@ -1,4 +1,4 @@
-﻿namespace Teltec.Backup.Scheduler
+namespace Teltec.Backup.Scheduler
 {
 	partial class ProjectInstaller
 	{
@@ -39,8 +39,8 @@
 			//
 			// serviceInstaller1
 			//
-			this.serviceInstaller1.DisplayName = "Teltec.Backup.Svc";
-			this.serviceInstaller1.ServiceName = "Teltec.Backup.Svc";
+			this.serviceInstaller1.DisplayName = "Teltec Cloud Backup Scheduler";
+			this.serviceInstaller1.ServiceName = "Teltec.Backup.Scheduler";
 			this.serviceInstaller1.ServicesDependedOn = new string[] {
         "MSSQL$SQLEXPRESS"};
 			this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
