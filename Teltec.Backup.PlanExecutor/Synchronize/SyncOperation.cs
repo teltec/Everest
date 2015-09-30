@@ -1,4 +1,4 @@
-﻿using Amazon.Runtime;
+using Amazon.Runtime;
 using NHibernate;
 using NLog;
 using NUnit.Framework;
@@ -355,8 +355,9 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 					tx.Rollback(); // Rollback the transaction
 					throw;
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
+					logger.Log(LogLevel.Error, ex, "Caught exception");
 					tx.Rollback(); // Rollback the transaction
 					throw;
 				}
