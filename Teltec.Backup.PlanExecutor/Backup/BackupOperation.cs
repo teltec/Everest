@@ -13,6 +13,7 @@ using Teltec.Backup.PlanExecutor.Versioning;
 using Teltec.Common.Extensions;
 using Teltec.Common.Utils;
 using Teltec.Storage;
+using Teltec.Storage.Backend;
 using Teltec.Storage.Implementations.S3;
 using Teltec.Storage.Versioning;
 using Models = Teltec.Backup.Data.Models;
@@ -151,7 +152,11 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			// Setup agents.
 			//
 			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
-			TransferAgent = new S3TransferAgent(awsCredentials, s3account.BucketName, CancellationTokenSource.Token);
+			TransferAgentOptions options = new TransferAgentOptions
+			{
+				UploadChunkSizeInBytes = Teltec.Backup.Settings.Properties.Current.UploadChunkSize * 1024 * 1024,
+			};
+			TransferAgent = new S3TransferAgent(options, awsCredentials, s3account.BucketName, CancellationTokenSource.Token);
 			TransferAgent.RemoteRootDir = TransferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP",
 				Backup.BackupPlan.StorageAccount.Hostname);
 

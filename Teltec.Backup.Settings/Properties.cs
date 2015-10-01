@@ -42,16 +42,34 @@ namespace Teltec.Backup.Settings
 			}
 		}
 
+		public static readonly int MaxThreadCountMin = 1;
+		public static readonly int MaxThreadCountMax = 256;
 		private int _MaxThreadCount = EstimatedOptimalThreadCount;
 		public int MaxThreadCount
 		{
 			get { return _MaxThreadCount; }
 			set
 			{
-				if (value < 0 || value > 256)
+				if (value < MaxThreadCountMin || value > MaxThreadCountMax)
 					value = EstimatedOptimalThreadCount;
 
 				_MaxThreadCount = value;
+			}
+		}
+
+		public static readonly int UploadChunkSizeMin = 1; // MiB
+		public static readonly int UploadChunkSizeMax = 5120; // MiB
+		public static readonly int UploadChunkSizeDefault = 5; // MiB
+		private int _UploadChunkSize = UploadChunkSizeDefault;
+		public int UploadChunkSize // In MiB
+		{
+			get { return _UploadChunkSize; }
+			set
+			{
+				if (value < UploadChunkSizeMin || value > UploadChunkSizeMax)
+					value = UploadChunkSizeDefault;
+
+				_UploadChunkSize = value;
 			}
 		}
 
@@ -64,6 +82,15 @@ namespace Teltec.Backup.Settings
 			stream.Close();
 		}
 
+		private void Sanitize()
+		{
+			if (MaxThreadCount < MaxThreadCountMin || MaxThreadCount > MaxThreadCountMax)
+				MaxThreadCount = EstimatedOptimalThreadCount;
+
+			if (UploadChunkSize < UploadChunkSizeMin || UploadChunkSize > UploadChunkSizeMax)
+				UploadChunkSize = UploadChunkSizeDefault;
+		}
+
 		public static void Load()
 		{
 			try
@@ -72,9 +99,10 @@ namespace Teltec.Backup.Settings
 				IFormatter formatter = new BinaryFormatter();
 				Stream stream = new FileStream(SettingsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
 				_Current = (Properties)formatter.Deserialize(stream);
+				_Current.Sanitize();
 				stream.Close();
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
 				Console.WriteLine("{0} file doesn't exist. Will create it when needed.", SettingsFilePath);
 			}

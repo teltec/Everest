@@ -25,6 +25,7 @@ namespace Teltec.Storage.Implementations.S3
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+		TransferAgentOptions Options;
 		IAmazonS3 _s3Client; // IDisposable
 		string _awsBuckeName;
 		bool _shouldDispose = false;
@@ -32,19 +33,28 @@ namespace Teltec.Storage.Implementations.S3
 
 		#region Constructors
 
-		public S3StorageBackend(AWSCredentials awsCredentials, string awsBucketName, RegionEndpoint region)
-			: this(new AmazonS3Client(awsCredentials, region), awsBucketName)
+		public S3StorageBackend(TransferAgentOptions options, AWSCredentials awsCredentials, string awsBucketName, RegionEndpoint region)
+			: this(options, new AmazonS3Client(awsCredentials, region), awsBucketName)
 		{
 			this._shouldDispose = true;
 		}
 
-		public S3StorageBackend(IAmazonS3 s3Client, string awsBucketName)
+		public S3StorageBackend(TransferAgentOptions options, IAmazonS3 s3Client, string awsBucketName)
 		{
+			Options = options;
+			SanitizeOptions();
+
 			this._s3Client = s3Client;
 			this._awsBuckeName = awsBucketName;
 		}
 
 		#endregion
+
+		private void SanitizeOptions()
+		{
+			if (Options.UploadChunkSizeInBytes < AbsoluteMinPartSize)
+				Options.UploadChunkSizeInBytes = AbsoluteMinPartSize;
+		}
 
 		#region Upload
 
@@ -58,18 +68,25 @@ namespace Teltec.Storage.Implementations.S3
 		// > must be at least 5 MB in size, except the last part. There is
 		// > no size limit on the last part of your multipart upload.
 		//
-		public static readonly long MaxNumberOfParts = 10000;
-		public static readonly long MinPartSize = 5 * 1024 * 1024; // 1 MB = 2^20
+		public static readonly long AbsoluteMaxNumberOfParts = 10000;
+		public static readonly long AbsoluteMinPartSize = 5 * 1024 * 1024; // 1 MiB = 2^20
 
-		public static long CalculatePartSize(long fileSize)
+		public static long CalculatePartSize(long fileSize, long minPartSize, long maxNumberOfParts)
 		{
-			double partSize = Math.Ceiling((double)fileSize / MaxNumberOfParts);
-			if (partSize < MinPartSize)
+			double partSize = Math.Ceiling((double)fileSize / maxNumberOfParts);
+			if (partSize < minPartSize)
 			{
-				partSize = MinPartSize;
+				partSize = minPartSize;
 			}
 
 			return (long)partSize;
+		}
+
+		public long CalculatePartSize(long fileSize)
+		{
+			// If fileLength > 48.828125 GiB (50 GB) (`AbsoluteMinPartSize * AbsoluteMaxNumberOfParts`),
+			// then partSize will be > 5 MiB (`AbsoluteMinPartSize`).
+			return CalculatePartSize(fileSize, Options.UploadChunkSizeInBytes, AbsoluteMaxNumberOfParts);
 		}
 
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/LLuploadFileDotNet.html
@@ -110,7 +127,7 @@ namespace Teltec.Storage.Implementations.S3
 				// Create the input stream to actually read the file.
 				inputStream = new CancelableFileStream(filePath, FileMode.Open, FileAccess.Read, cancellationToken);
 
-				bool isMultiPart = contentLength >= MinPartSize;
+				bool isMultiPart = contentLength > Options.UploadChunkSizeInBytes;
 				if (isMultiPart)
 				{
 					// Multipart upload.
@@ -156,7 +173,7 @@ namespace Teltec.Storage.Implementations.S3
 							InputStream = inputStream,
 						};
 
-						if (filePosition + MinPartSize >= contentLength)
+						if (filePosition + Options.UploadChunkSizeInBytes >= contentLength)
 						{
 							uploadRequest.IsLastPart = true;
 							uploadRequest.PartSize = 0;

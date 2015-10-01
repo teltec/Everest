@@ -67,6 +67,7 @@
     <Compile Include="AbstractSyncAgent.cs" />
     <Compile Include="AsyncHelper.cs" />
     <Compile Include="Backend\PathBuilder.cs" />
+    <Compile Include="Backend\TransferAgentOptions.cs" />
     <Compile Include="BackupAgent.cs" />
     <Compile Include="IResults.cs" />
     <Compile Include="PathScanResults.cs" />

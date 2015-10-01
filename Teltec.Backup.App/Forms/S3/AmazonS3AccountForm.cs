@@ -171,7 +171,11 @@ namespace Teltec.Backup.App.Forms.S3
 			// Setup agents.
 			//
 			AWSCredentials awsCredentials = new BasicAWSCredentials(_account.AccessKey, _account.SecretKey);
-			ITransferAgent transferAgent = new S3TransferAgent(awsCredentials, _account.BucketName, CancellationTokenSource.Token);
+			TransferAgentOptions options = new TransferAgentOptions
+			{
+				UploadChunkSizeInBytes = Teltec.Backup.Settings.Properties.Current.UploadChunkSize * 1024 * 1024,
+			};
+			ITransferAgent transferAgent = new S3TransferAgent(options, awsCredentials, _account.BucketName, CancellationTokenSource.Token);
 			transferAgent.RemoteRootDir = transferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP");
 
 			List<string> remoteObjects = new List<string>(16); // Avoid small resizes without compromising memory.
