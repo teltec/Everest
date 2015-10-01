@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -49,6 +49,19 @@ namespace Teltec.Backup.Settings
 					value = EstimatedOptimalThreadCount;
 
 				_MaxThreadCount = value;
+			}
+		}
+
+		private int _UploadChunkSize = 5; // MiB
+		public int UploadChunkSize // In MiB
+		{
+			get { return _UploadChunkSize; }
+			set
+			{
+				if (value < 0 || value > 5120) // 5 GiB
+					value = 5; // MiB
+
+				_UploadChunkSize = value;
 			}
 		}
 
