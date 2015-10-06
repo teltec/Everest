@@ -1,9 +1,8 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Backup.Data.DAO;
-using Teltec.Backup.Ipc.PubSub;
 using Teltec.Backup.PlanExecutor.Backup;
 using Teltec.Common;
 using Teltec.Common.Extensions;
@@ -217,6 +216,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		static string LBL_DURATION_INITIAL = "Not started";
 		static string LBL_FILES_TRANSFER_STOPPED = "Not started";
 
+#if false
 		private void ProcessRemoteMessage(BackupUpdateMsg msg)
 		{
 			if (Model == null)
@@ -273,6 +273,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				UpdateStatsInfo(opStatus, true);
 			}
 		}
+#endif
 
 		private void UpdateStatsInfo(BackupOperationStatus status, bool runningRemotely = false)
 		{

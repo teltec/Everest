@@ -3,7 +3,6 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using Teltec.Backup.Data.DAO;
-using Teltec.Backup.Ipc.PubSub;
 using Teltec.Backup.PlanExecutor.Backup;
 using Teltec.Backup.PlanExecutor.Restore;
 using Teltec.Storage;
@@ -270,12 +269,12 @@ namespace Teltec.Backup.PlanExecutor
 
 			Models.BackupPlan plan = Model as Models.BackupPlan;
 
-			BackupUpdateMsg message = new BackupUpdateMsg
-			{
-				PlanId = plan.Id.Value,
-				OperationId = RunningOperation.OperationId.Value,
-				OperationStatus = (byte)status,
-			};
+			//BackupUpdateMsg message = new BackupUpdateMsg
+			//{
+			//	PlanId = plan.Id.Value,
+			//	OperationId = RunningOperation.OperationId.Value,
+			//	OperationStatus = (byte)status,
+			//};
 
 			switch (status)
 			{
@@ -296,8 +295,8 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("{0} backup", status == BackupOperationStatus.Resumed ? "Resuming" : "Starting");
 
-						message.StartedAt = (RunningOperation as BackupOperation).StartedAt.Value;
-						message.IsResuming = status == BackupOperationStatus.Resumed;
+						//message.StartedAt = (RunningOperation as BackupOperation).StartedAt.Value;
+						//message.IsResuming = status == BackupOperationStatus.Resumed;
 
 						/*
 						Assert.IsNotNull(BackupResults);
@@ -359,7 +358,7 @@ namespace Teltec.Backup.PlanExecutor
 						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
 						_daoBackupPlan.Update(plan);
 
-						message.FinishedAt = plan.LastRunAt.Value;
+						//message.FinishedAt = plan.LastRunAt.Value;
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
@@ -369,7 +368,7 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
-						message.TransferResults = TransferResultsMsgPart.CopyFrom(TransferResults);
+						//message.TransferResults = TransferResultsMsgPart.CopyFrom(TransferResults);
 
 						/*
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
@@ -403,7 +402,7 @@ namespace Teltec.Backup.PlanExecutor
 						plan.LastRunAt = DateTime.UtcNow;
 						_daoBackupPlan.Update(plan);
 
-						message.FinishedAt = plan.LastRunAt.Value;
+						//message.FinishedAt = plan.LastRunAt.Value;
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
@@ -421,12 +420,12 @@ namespace Teltec.Backup.PlanExecutor
 
 			Models.RestorePlan plan = Model as Models.RestorePlan;
 
-			RestoreUpdateMsg message = new RestoreUpdateMsg
-			{
-				PlanId = plan.Id.Value,
-				OperationId = RunningOperation.OperationId.Value,
-				OperationStatus = (byte)status,
-			};
+			//RestoreUpdateMsg message = new RestoreUpdateMsg
+			//{
+			//	PlanId = plan.Id.Value,
+			//	OperationId = RunningOperation.OperationId.Value,
+			//	OperationStatus = (byte)status,
+			//};
 
 			switch (status)
 			{
@@ -447,8 +446,8 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("{0} restore", status == RestoreOperationStatus.Resumed ? "Resuming" : "Starting");
 
-						message.StartedAt = (RunningOperation as RestoreOperation).StartedAt.Value;
-						message.IsResuming = status == RestoreOperationStatus.Resumed;
+						//message.StartedAt = (RunningOperation as RestoreOperation).StartedAt.Value;
+						//message.IsResuming = status == RestoreOperationStatus.Resumed;
 
 						/*
 						Assert.IsNotNull(RestoreResults);
@@ -522,7 +521,7 @@ namespace Teltec.Backup.PlanExecutor
 						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
 						_daoRestorePlan.Update(plan);
 
-						message.FinishedAt = plan.LastRunAt.Value;
+						//message.FinishedAt = plan.LastRunAt.Value;
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
@@ -532,7 +531,7 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
-						message.TransferResults = TransferResultsMsgPart.CopyFrom(TransferResults);
+						//message.TransferResults = TransferResultsMsgPart.CopyFrom(TransferResults);
 
 						/*
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
@@ -565,7 +564,7 @@ namespace Teltec.Backup.PlanExecutor
 						plan.LastRunAt = DateTime.UtcNow;
 						_daoRestorePlan.Update(plan);
 
-						message.FinishedAt = plan.LastRunAt.Value;
+						//message.FinishedAt = plan.LastRunAt.Value;
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();

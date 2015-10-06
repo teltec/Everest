@@ -1,4 +1,5 @@
-﻿using ProtobufSockets;
+/*
+using ProtobufSockets;
 using System;
 
 namespace Teltec.Backup.Ipc.PubSub
@@ -107,3 +108,4 @@ namespace Teltec.Backup.Ipc.PubSub
 		}
 	}
 }
+*/

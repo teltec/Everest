@@ -84,6 +84,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MockSynchronizeInvoke.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -94,6 +95,7 @@
     <Compile Include="Service.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="ServiceHelper.cs" />
     <Compile Include="ServiceInstaller.cs" />
     <Compile Include="Unmanaged.cs" />
   </ItemGroup>
@@ -149,6 +151,10 @@
     <ProjectReference Include="..\Teltec.Backup.Data\Teltec.Backup.Data.csproj">
       <Project>{991059ef-f7d6-4fd8-b462-1f54467f6a33}</Project>
       <Name>Teltec.Backup.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Teltec.Backup.Ipc\Teltec.Backup.Ipc.csproj">
+      <Project>{e0f1bb0e-7c53-4215-bbe8-133de93d5905}</Project>
+      <Name>Teltec.Backup.Ipc</Name>
     </ProjectReference>
     <ProjectReference Include="..\Teltec.Backup.Logging\Teltec.Backup.Logging.csproj">
       <Project>{b77226a6-5fdb-4e24-87df-49c64a9b1454}</Project>

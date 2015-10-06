@@ -2,15 +2,16 @@ using Microsoft.Win32.TaskScheduler;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Configuration.Install;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Principal;
 using System.ServiceProcess;
-using System.Threading;
 using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Ipc.Protocol;
+using Teltec.Backup.Ipc.TcpSocket;
 using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.Scheduler
@@ -19,89 +20,12 @@ namespace Teltec.Backup.Scheduler
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+		private ISynchronizeInvoke SynchronizingObject;
+		private ServerHandler Handler;
+
 		private const int RefreshCommand = 205;
 
-		#region Trap application termination
-
-		/// <summary>
-		///  Event set when the process is terminated.
-		/// </summary>
-		static readonly ManualResetEvent TerminationRequestedEvent = new ManualResetEvent(false);
-
-		/// <summary>
-		/// Event set when the process terminates.
-		/// </summary>
-		static readonly ManualResetEvent TerminationCompletedEvent = new ManualResetEvent(false);
-
-		static Unmanaged.HandlerRoutine Handler;
-
-		static bool OnConsoleEvent(Unmanaged.CtrlTypes reason)
-		{
-			Console.WriteLine("Exiting system due to external CTRL-C, or process kill, or shutdown");
-
-			// Signal termination
-			TerminationRequestedEvent.Set();
-
-			// Wait for cleanup
-			TerminationCompletedEvent.WaitOne();
-
-			// Shutdown right away so there are no lingering threads
-			Environment.Exit(1);
-
-			// Don't run other handlers, just exit.
-			return true;
-		}
-
-		static void CatchSpecialConsoleEvents()
-		{
-			// NOTE: Should NOT use `Console.CancelKeyPress` because it does NOT detect some events: window closing, shutdown, etc.
-
-			// Handle special events like: Ctrl+C, window close, kill, shutdown, etc.
-			Handler += new Unmanaged.HandlerRoutine(OnConsoleEvent);
-
-			Unmanaged.SetConsoleCtrlHandler(Handler, true);
-		}
-
-		#endregion
-
-		//static ServiceProcessInstaller ProcessInstaller;
-		//static System.ServiceProcess.ServiceInstaller ServiceInstaller;
-
-		static void SelfStart(bool run = false)
-		{
-			string serviceName = Assembly.GetExecutingAssembly().GetName().Name;
-
-			ServiceInstaller installer = new ServiceInstaller(serviceName);
-			installer.StartService();
-		}
-
-		static void SelfInstall(bool run = false)
-		{
-			ManagedInstallerClass.InstallHelper(new string[] { Assembly.GetExecutingAssembly().Location });
-
-			//string servicePath = Assembly.GetExecutingAssembly().Location;
-			//string serviceName = Assembly.GetExecutingAssembly().GetName().Name;
-			//
-			//ServiceInstaller installer = new ServiceInstaller(serviceName);
-			//installer.DesiredAccess = ServiceAccessRights.AllAccess;
-			//installer.BinaryPath = servicePath;
-			//installer.DependsOn = new[] {
-			//	"MSSQL$SQLEXPRESS"
-			//	//"MSSQLSERVER"
-			//};
-			//
-			//installer.InstallAndStart();
-		}
-
-		static void SelfUninstall()
-		{
-			ManagedInstallerClass.InstallHelper(new string[] { "/u", Assembly.GetExecutingAssembly().Location });
-
-			//string serviceName = Assembly.GetExecutingAssembly().GetName().Name;
-
-			//ServiceInstaller installer = new ServiceInstaller(serviceName);
-			//installer.Uninstall();
-		}
+		#region Main
 
 		static void Main(string[] args)
 		{
@@ -133,32 +57,32 @@ namespace Teltec.Backup.Scheduler
 					{
 						case "-install":
 						case "-i":
-							SelfInstall();
+							ServiceHelper.SelfInstall();
 							logger.Info("Service installed");
-							SelfStart();
+							ServiceHelper.SelfStart();
 							break;
 						case "-uninstall":
 						case "-u":
-							SelfUninstall();
+							ServiceHelper.SelfUninstall();
 							logger.Info("Service uninstalled");
 							break;
 					}
 				}
 				else
 				{
-					CatchSpecialConsoleEvents();
+					ServiceHelper.CatchSpecialConsoleEvents();
 
 					Service instance = new Service();
 					instance.OnStart(args);
 
 					// Sleep until termination
-					TerminationRequestedEvent.WaitOne();
+					ServiceHelper.TerminationRequestedEvent.WaitOne();
 
 					// Do any cleanups here...
 					instance.OnStop();
 
 					// Set this to terminate immediately (if not set, the OS will eventually kill the process)
-					TerminationCompletedEvent.Set();
+					ServiceHelper.TerminationCompletedEvent.Set();
 				}
 			}
 			else
@@ -167,7 +91,7 @@ namespace Teltec.Backup.Scheduler
 			}
 		}
 
-		#region Service implementation
+		#endregion
 
 		public Service()
 		{
@@ -175,12 +99,21 @@ namespace Teltec.Backup.Scheduler
 
 			ServiceName = typeof(Teltec.Backup.Scheduler.Service).Namespace;
 			CanShutdown = true;
+
+			Handler = new ServerHandler(SynchronizingObject);
+		}
+
+		private void InitializeComponent()
+		{
+
 		}
 
 		private string BuildTaskName(Models.ISchedulablePlan plan)
 		{
 			return plan.ScheduleParamName;
 		}
+
+		#region Triggers
 
 		private Trigger[] BuildTriggers(Models.ISchedulablePlan plan)
 		{
@@ -404,6 +337,20 @@ namespace Teltec.Backup.Scheduler
 			return triggers.ToArray();
 		}
 
+		#endregion
+
+		// Summary:
+		//     Returns whether we have Administrator privileges or not.
+		public static bool IsElevated
+		{
+			get
+			{
+				return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+			}
+		}
+
+		#region Scheduling
+
 		private Task FindScheduledTask(string taskName)
 		{
 			using (TaskService ts = new TaskService())
@@ -426,16 +373,6 @@ namespace Teltec.Backup.Scheduler
 		private bool HasScheduledTask(Models.ISchedulablePlan plan)
 		{
 			return HasScheduledTask(BuildTaskName(plan));
-		}
-
-		// Summary:
-		//     Returns whether we have Administrator privileges or not.
-		public static bool IsElevated
-		{
-			get
-			{
-				return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
-			}
 		}
 
 		private void SchedulePlanExecution(Models.ISchedulablePlan plan, bool reschedule = false)
@@ -534,15 +471,101 @@ namespace Teltec.Backup.Scheduler
 
 				// Create an action that will launch the PlanExecutor
 				string planType = isBackup ? "backup" : isRestore ? "restore" : string.Empty;
-				string executorCwd = GetExecutableDirectoryPath();
-				string executorPath = string.Format(@"{0}\{1}", executorCwd, "Teltec.Backup.PlanExecutor.exe");
-				string executorArgs = string.Format("-t {0} -p {1}", planType, plan.ScheduleParamId);
-				td.Actions.Add(new ExecAction(executorPath, executorArgs, executorCwd));
+				PlanExecutorEnv env = BuildPlanExecutorEnv(planType, plan.ScheduleParamId);
+				td.Actions.Add(new ExecAction(env.Path, env.Arguments, env.Cwd));
 
 				// Register the task in the root folder
 				ts.RootFolder.RegisterTaskDefinition(taskName, td, TaskCreation.CreateOrUpdate, null, null, TaskLogonType.InteractiveToken, null);
 			}
 		}
+
+		#endregion
+
+		private struct PlanExecutorEnv
+		{
+			public string Path;
+			public string Arguments;
+			public string Cwd;
+		}
+
+		private PlanExecutorEnv BuildPlanExecutorEnv(string planType, Int32 planId)
+		{
+			if (!planType.Equals("backup") && !planType.Equals("restore"))
+				throw new ArgumentException("Invalid plan type", "planType");
+
+			PlanExecutorEnv env = new PlanExecutorEnv();
+			env.Cwd = GetExecutableDirectoryPath();
+			env.Path = Path.Combine(env.Cwd, "Teltec.Backup.PlanExecutor.exe");
+			env.Arguments = string.Format("-t {0} -p {1}", planType, planId);
+
+			return env;
+		}
+
+		#region Sub-Process
+
+		private Dictionary<Int32, Process> RunningBackups = new Dictionary<Int32, Process>();
+		private Dictionary<Int32, Process> RunningRestores = new Dictionary<Int32, Process>();
+
+		private bool ControlRunRestorePlan(Server.ClientContext context, Int32 planId)
+		{
+			PlanExecutorEnv env = BuildPlanExecutorEnv("restore", planId);
+			EventHandler onExit = delegate(object sender, EventArgs e)
+			{
+				RunningRestores.Remove(planId);
+			};
+			try
+			{
+				Process process = StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
+				RunningRestores.Add(planId, process);
+				return true;
+			}
+			catch (Exception ex)
+			{
+				Handler.Send(context, Commands.ReportError(ex.Message));
+				return false;
+			}
+		}
+
+		private bool ControlRunBackupPlan(Server.ClientContext context, Int32 planId)
+		{
+			PlanExecutorEnv env = BuildPlanExecutorEnv("backup", planId);
+			EventHandler onExit = delegate(object sender, EventArgs e)
+				{
+					RunningBackups.Remove(planId);
+				};
+			Process process = StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
+			if (process == null)
+			{
+				return false;
+			}
+
+			RunningBackups.Add(planId, process);
+			return true;
+		}
+
+		private Process StartSubProcess(string filename, string arguments, string cwd, EventHandler onExit = null)
+		{
+			try
+			{
+				ProcessStartInfo info = new ProcessStartInfo(filename, arguments);
+				info.WorkingDirectory = cwd;
+				//info.CreateNoWindow = true;
+				Process process = new Process();
+				process.StartInfo = info;
+				process.EnableRaisingEvents = true;
+				if (onExit != null)
+					process.Exited += onExit;
+				process.Start();
+				return process;
+			}
+			catch (Exception ex)
+			{
+				logger.Log(LogLevel.Error, ex, "Failed to start sub-process {0} {1}", filename, arguments);
+				throw ex;
+			}
+		}
+
+		#endregion
 
 		List<Models.ISchedulablePlan> AllSchedulablePlans = new List<Models.ISchedulablePlan>();
 
@@ -581,6 +604,8 @@ namespace Teltec.Backup.Scheduler
 
 			ReloadPlansAndReschedule();
 		}
+
+		#region Service
 
 		protected override void OnStart(string[] args)
 		{
@@ -719,10 +744,5 @@ namespace Teltec.Backup.Scheduler
 		}
 
 		#endregion
-
-		private void InitializeComponent()
-		{
-
-		}
 	}
 }

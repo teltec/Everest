@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+/*
+using ProtoBuf;
 using System;
 using Teltec.Storage;
 
@@ -33,7 +34,7 @@ namespace Teltec.Backup.Ipc.PubSub
 		{
 			if (other == null)
 				return null;
-			
+
 			StatisticsMsgPart obj = new StatisticsMsgPart();
 
 			obj.Total = other.Total;
@@ -59,7 +60,7 @@ namespace Teltec.Backup.Ipc.PubSub
 			other.Completed = this.Completed;
 		}
 	}
-	
+
 	[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 	public class TransferResultsMsgPart : ProtocolMsgPart
 	{
@@ -124,3 +125,4 @@ namespace Teltec.Backup.Ipc.PubSub
 
 	#endregion
 }
+*/

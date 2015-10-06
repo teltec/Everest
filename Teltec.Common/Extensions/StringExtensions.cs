@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -16,6 +17,24 @@ namespace Teltec.Common.Extensions
 			text = text.Normalize(NormalizationForm.FormD);
 			var chars = text.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark).ToArray();
 			return new string(chars).Normalize(NormalizationForm.FormC);
+		}
+
+		public static Nullable<T> ToNullableEnum<T>(this string value, Nullable<T> defaultValue) where T : struct
+		{
+			if (string.IsNullOrEmpty(value))
+				return defaultValue;
+
+			T result;
+			return Enum.TryParse<T>(value, out result) ? result : defaultValue;
+		}
+
+		public static T ToEnum<T>(this string value, T defaultValue) where T : struct
+		{
+			if (string.IsNullOrEmpty(value))
+				return defaultValue;
+
+			T result;
+			return Enum.TryParse<T>(value, out result) ? result : defaultValue;
 		}
 	}
 }
