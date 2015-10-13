@@ -29,20 +29,49 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		public ServerHandler(ISynchronizeInvoke owner)
 		{
-			Commands.SRV_REGISTER.Handler = OnRegister;
-			Commands.SRV_ROUTE.Handler = OnRoute;
-			Commands.SRV_BROADCAST.Handler = OnBroadcast;
-			Commands.SRV_CONTROL_PLAN_RUN.Handler = OnControlPlanRun;
-			Commands.SRV_CONTROL_PLAN_RESUME.Handler = OnControlPlanResume;
-			Commands.SRV_CONTROL_PLAN_CANCEL.Handler = OnControlPlanCancel;
-			Commands.SRV_CONTROL_PLAN_KILL.Handler = OnControlPlanKill;
-
 			Owner = owner;
+			ClientsByName = new Dictionary<string, ClientState>();
+
 			Server = new Server(owner);
 			Server.Connected += Server_Connected;
 			Server.MessageReceived += Server_MessageReceived;
 			Server.Disconnected += Server_Disconnected;
-			ClientsByName = new Dictionary<string, ClientState>();
+
+			RegisterCommandHandlers();
+		}
+
+		public delegate void ServerCommandHandler(object sender, ServerCommandEventArgs e);
+
+		public ServerCommandHandler OnControlPlanRun;
+		public ServerCommandHandler OnControlPlanResume;
+		public ServerCommandHandler OnControlPlanCancel;
+		public ServerCommandHandler OnControlPlanKill;
+
+		private void RegisterCommandHandlers()
+		{
+			Commands.SRV_REGISTER.Handler = OnRegister;
+			Commands.SRV_ROUTE.Handler = OnRoute;
+			Commands.SRV_BROADCAST.Handler = OnBroadcast;
+			Commands.SRV_CONTROL_PLAN_RUN.Handler = delegate(object sender, EventArgs e)
+			{
+				if (OnControlPlanRun != null)
+					OnControlPlanRun(this, (ServerCommandEventArgs)e);
+			};
+			Commands.SRV_CONTROL_PLAN_RESUME.Handler = delegate(object sender, EventArgs e)
+			{
+				if (OnControlPlanResume != null)
+					OnControlPlanResume(this, (ServerCommandEventArgs)e);
+			};
+			Commands.SRV_CONTROL_PLAN_CANCEL.Handler = delegate(object sender, EventArgs e)
+			{
+				if (OnControlPlanCancel != null)
+					OnControlPlanCancel(this, (ServerCommandEventArgs)e);
+			};
+			Commands.SRV_CONTROL_PLAN_KILL.Handler = delegate(object sender, EventArgs e)
+			{
+				if (OnControlPlanKill != null)
+					OnControlPlanKill(this, (ServerCommandEventArgs)e);
+			};
 		}
 
 		public bool IsRunning
@@ -68,6 +97,13 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			}
 
 			return true;
+		}
+
+		public ClientState GetClientState(string clientName)
+		{
+			ClientState state;
+			bool found = ClientsByName.TryGetValue(clientName, out state);
+			return state;
 		}
 
 		public void Start(string ipAddressToBind, int port)
@@ -186,46 +222,6 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			ClientsByName.Add(newClientName, state);
 		}
 
-		private void OnControlPlanRun(object sender, EventArgs e)
-		{
-			ServerCommandEventArgs args = (ServerCommandEventArgs)e;
-
-			string planType = args.Command.GetArgumentValue<string>("planType");
-			Int32 planId = args.Command.GetArgumentValue<Int32>("planId");
-
-			// TODO(jweyrich): ...
-		}
-
-		private void OnControlPlanResume(object sender, EventArgs e)
-		{
-			ServerCommandEventArgs args = (ServerCommandEventArgs)e;
-
-			string planType = args.Command.GetArgumentValue<string>("planType");
-			Int32 planId = args.Command.GetArgumentValue<Int32>("planId");
-
-			// TODO(jweyrich): ...
-		}
-
-		private void OnControlPlanCancel(object sender, EventArgs e)
-		{
-			ServerCommandEventArgs args = (ServerCommandEventArgs)e;
-
-			string planType = args.Command.GetArgumentValue<string>("planType");
-			Int32 planId = args.Command.GetArgumentValue<Int32>("planId");
-
-			// TODO(jweyrich): ...
-		}
-
-		private void OnControlPlanKill(object sender, EventArgs e)
-		{
-			ServerCommandEventArgs args = (ServerCommandEventArgs)e;
-
-			string planType = args.Command.GetArgumentValue<string>("planType");
-			Int32 planId = args.Command.GetArgumentValue<Int32>("planId");
-
-			// TODO(jweyrich): ...
-		}
-
 		private void OnRoute(object sender, EventArgs e)
 		{
 			ServerCommandEventArgs args = (ServerCommandEventArgs)e;
@@ -243,7 +239,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			bool found = ClientsByName.TryGetValue(targetName, out targetState);
 			if (!found)
 			{
-				Send(args.Context, Commands.ReportError(string.Format("Unknown target {0}", targetName)));
+				Send(args.Context, Commands.ReportError("Unknown target {0}", targetName));
 				return;
 			}
 

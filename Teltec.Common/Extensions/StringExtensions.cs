@@ -2,11 +2,19 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace Teltec.Common.Extensions
 {
 	public static class StringExtensions
 	{
+		public static string ToTitleCase(this string text)
+		{
+			CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
+			TextInfo textInfo = cultureInfo.TextInfo;
+			return textInfo.ToTitleCase(text);
+		}
+
 		// ORIGINAL CODE FROM http://www.levibotelho.com/development/c-remove-diacritics-accents-from-a-string/
 		// Copyright (c) 2015 Levi Botelho.
 		public static string RemoveDiacritics(this string text)

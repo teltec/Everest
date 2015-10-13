@@ -13,6 +13,9 @@ using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Ipc.Protocol;
 using Teltec.Backup.Ipc.TcpSocket;
 using Models = Teltec.Backup.Data.Models;
+using Teltec.Common.Extensions;
+using System.Text;
+using Teltec.Common.Threading;
 
 namespace Teltec.Backup.Scheduler
 {
@@ -20,7 +23,7 @@ namespace Teltec.Backup.Scheduler
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		private ISynchronizeInvoke SynchronizingObject;
+		private ISynchronizeInvoke SynchronizingObject = new MockSynchronizeInvoke();
 		private ServerHandler Handler;
 
 		private const int RefreshCommand = 205;
@@ -101,6 +104,10 @@ namespace Teltec.Backup.Scheduler
 			CanShutdown = true;
 
 			Handler = new ServerHandler(SynchronizingObject);
+			Handler.OnControlPlanRun = OnControlPlanRun;
+			Handler.OnControlPlanResume = OnControlPlanResume;
+			Handler.OnControlPlanCancel = OnControlPlanCancel;
+			Handler.OnControlPlanKill = OnControlPlanKill;
 		}
 
 		private void InitializeComponent()
@@ -471,7 +478,7 @@ namespace Teltec.Backup.Scheduler
 
 				// Create an action that will launch the PlanExecutor
 				string planType = isBackup ? "backup" : isRestore ? "restore" : string.Empty;
-				PlanExecutorEnv env = BuildPlanExecutorEnv(planType, plan.ScheduleParamId);
+				PlanExecutorEnv env = BuildPlanExecutorEnv(planType, plan.ScheduleParamId, false);
 				td.Actions.Add(new ExecAction(env.Path, env.Arguments, env.Cwd));
 
 				// Register the task in the root folder
@@ -488,30 +495,188 @@ namespace Teltec.Backup.Scheduler
 			public string Cwd;
 		}
 
-		private PlanExecutorEnv BuildPlanExecutorEnv(string planType, Int32 planId)
+		private void ValidatePlanType(string planType)
 		{
 			if (!planType.Equals("backup") && !planType.Equals("restore"))
 				throw new ArgumentException("Invalid plan type", "planType");
+		}
+
+		private PlanExecutorEnv BuildPlanExecutorEnv(string planType, Int32 planId, bool resume)
+		{
+			ValidatePlanType(planType);
+
+			string clientName = Commands.BuildClientName(planType, planId);
 
 			PlanExecutorEnv env = new PlanExecutorEnv();
 			env.Cwd = GetExecutableDirectoryPath();
 			env.Path = Path.Combine(env.Cwd, "Teltec.Backup.PlanExecutor.exe");
-			env.Arguments = string.Format("-t {0} -p {1}", planType, planId);
+
+			StringBuilder sb = new StringBuilder(255);
+			sb.AppendFormat(" --client-name={0}", clientName);
+			sb.AppendFormat(" -t {0}", planType);
+			sb.AppendFormat(" -p {0}", planId);
+			if (resume)
+				sb.Append(" --resume");
+
+			env.Arguments = sb.ToString();
 
 			return env;
 		}
+
+		#region Remote messages
+
+		private void OnControlPlanRun(object sender, ServerCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+
+			if (IsPlanRunning(planType, planId))
+			{
+				string msg = Commands.ReportError("{0} plan #{1} is already running", planType.ToTitleCase(), planId);
+				Handler.Send(e.Context, msg);
+				return;
+			}
+
+			bool isBackup = planType.Equals("backup");
+			bool isRestore = planType.Equals("restore");
+			bool isResume = false;
+
+			bool didRun = false;
+			if (isBackup)
+				didRun = RunBackupPlan(e.Context, planId, isResume);
+			else if (isRestore)
+				didRun = RunRestorePlan(e.Context, planId, isResume);
+		}
+
+		private void OnControlPlanResume(object sender, ServerCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+
+			if (IsPlanRunning(planType, planId))
+			{
+				string msg = Commands.ReportError("{0} plan #{1} is already running", planType.ToTitleCase(), planId);
+				Handler.Send(e.Context, msg);
+				return;
+			}
+
+			bool isBackup = planType.Equals("backup");
+			bool isRestore = planType.Equals("restore");
+			bool isResume = true;
+
+			bool didRun = false;
+			if (isBackup)
+				didRun = RunBackupPlan(e.Context, planId, isResume);
+			else if (isRestore)
+				didRun = RunRestorePlan(e.Context, planId, isResume);
+		}
+
+		private void OnControlPlanCancel(object sender, ServerCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+
+			if (!IsPlanRunning(planType, planId))
+			{
+				string msg = Commands.ReportError("{0} plan #{1} is not running", planType.ToTitleCase(), planId);
+				Handler.Send(e.Context, msg);
+				return;
+			}
+
+			// Send to executor
+			string executorClientName = Commands.BuildClientName(planType, planId);
+			ClientState executor = Handler.GetClientState(executorClientName);
+			if (executor == null)
+			{
+				string msg = Commands.ReportError("Executor for {0} plan #{1} doesn't seem to be running",
+					planType.ToTitleCase(), planId);
+				Handler.Send(e.Context, msg);
+				return;
+			}
+
+			Handler.Send(executor.Context, Commands.ExecutorCancelPlan());
+		}
+
+		private void KillAllSubProcesses()
+		{
+			foreach (var entry in RunningBackups)
+				entry.Value.Kill();
+			RunningBackups.Clear();
+
+			foreach (var entry in RunningRestores)
+				entry.Value.Kill();
+			RunningRestores.Clear();
+		}
+
+		private void OnControlPlanKill(object sender, ServerCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+
+			Process processToBeKilled = null;
+			bool isBackup = planType.Equals("backup");
+			bool isRestore = planType.Equals("restore");
+
+			if (isBackup)
+				RunningBackups.TryGetValue(planId, out processToBeKilled);
+			else if (isRestore)
+				RunningRestores.TryGetValue(planId, out processToBeKilled);
+
+			if (processToBeKilled == null)
+			{
+				string msg = Commands.ReportError("{0} plan #{1} is not running", planType.ToTitleCase(), planId);
+				Handler.Send(e.Context, msg);
+				return;
+			}
+
+			processToBeKilled.Kill();
+
+			if (isBackup)
+				RunningBackups.Remove(planId);
+			else if (isRestore)
+				RunningRestores.Remove(planId);
+		}
+
+		#endregion
 
 		#region Sub-Process
 
 		private Dictionary<Int32, Process> RunningBackups = new Dictionary<Int32, Process>();
 		private Dictionary<Int32, Process> RunningRestores = new Dictionary<Int32, Process>();
 
-		private bool ControlRunRestorePlan(Server.ClientContext context, Int32 planId)
+		private bool IsPlanRunning(string planType, Int32 planId)
 		{
-			PlanExecutorEnv env = BuildPlanExecutorEnv("restore", planId);
+			ValidatePlanType(planType);
+
+			if (planType.Equals("backup"))
+				return IsBackupPlanRunning(planId);
+			else if (planType.Equals("restore"))
+				return IsRestorePlanRunning(planId);
+
+			return false;
+		}
+
+		private bool IsRestorePlanRunning(Int32 planId)
+		{
+			return RunningRestores.ContainsKey(planId);
+		}
+
+		private bool IsBackupPlanRunning(Int32 planId)
+		{
+			return RunningBackups.ContainsKey(planId);
+		}
+
+		private bool RunRestorePlan(Server.ClientContext context, Int32 planId, bool resume)
+		{
+			PlanExecutorEnv env = BuildPlanExecutorEnv("restore", planId, resume);
 			EventHandler onExit = delegate(object sender, EventArgs e)
 			{
 				RunningRestores.Remove(planId);
+				//Process process = (Process)sender;
+				//if (process.ExitCode != 0)
+				//{
+				//	Handler.Send(context, Commands.ReportError("FAILED"));
+				//}
 			};
 			try
 			{
@@ -526,21 +691,29 @@ namespace Teltec.Backup.Scheduler
 			}
 		}
 
-		private bool ControlRunBackupPlan(Server.ClientContext context, Int32 planId)
+		private bool RunBackupPlan(Server.ClientContext context, Int32 planId, bool resume)
 		{
-			PlanExecutorEnv env = BuildPlanExecutorEnv("backup", planId);
+			PlanExecutorEnv env = BuildPlanExecutorEnv("backup", planId, resume);
 			EventHandler onExit = delegate(object sender, EventArgs e)
 				{
 					RunningBackups.Remove(planId);
+					//Process process = (Process)sender;
+					//if (process.ExitCode != 0)
+					//{
+					//	Handler.Send(context, Commands.ReportError("FAILED"));
+					//}
 				};
-			Process process = StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
-			if (process == null)
+			try
 			{
+				Process process = StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
+				RunningBackups.Add(planId, process);
+				return true;
+			}
+			catch (Exception ex)
+			{
+				Handler.Send(context, Commands.ReportError(ex.Message));
 				return false;
 			}
-
-			RunningBackups.Add(planId, process);
-			return true;
 		}
 
 		private Process StartSubProcess(string filename, string arguments, string cwd, EventHandler onExit = null)
@@ -622,6 +795,8 @@ namespace Teltec.Backup.Scheduler
 
 			Info("Service is starting...");
 
+			Handler.Start("127.0.0.1", 8000);
+
 			timer = new System.Timers.Timer();
 			timer.Interval = 1000 * 60 * 5; // Set interval to 5 minutes
 			timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Elapsed);
@@ -644,6 +819,9 @@ namespace Teltec.Backup.Scheduler
 
 			Info("Service is stopping...");
 			timer.Stop();
+			KillAllSubProcesses();
+			Handler.RequestStop();
+			Handler.Wait();
 			Info("Service was stopped.");
 		}
 

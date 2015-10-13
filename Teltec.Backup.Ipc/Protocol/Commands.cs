@@ -5,6 +5,10 @@ namespace Teltec.Backup.Ipc.Protocol
 {
 	public static class Commands
 	{
+		public static readonly string GUI_CLIENT_NAME = "gui";
+
+		// ----------------------------------------------------------------------------------------
+
 		public static readonly Command SRV_ERROR = new Command("ERROR")
 			.WithArgument("message", typeof(string));
 
@@ -13,13 +17,13 @@ namespace Teltec.Backup.Ipc.Protocol
 			.AllowAnonymous();
 
 		public static readonly Command SRV_CONTROL = new Command("CONTROL")
-			.WithSub(SRV_CONTROL_PLAN);
+			.WithSubCommand(SRV_CONTROL_PLAN);
 
 		public static readonly Command SRV_CONTROL_PLAN = new Command("PLAN")
-			.WithSub(SRV_CONTROL_PLAN_RUN)
-			.WithSub(SRV_CONTROL_PLAN_RESUME)
-			.WithSub(SRV_CONTROL_PLAN_CANCEL)
-			.WithSub(SRV_CONTROL_PLAN_KILL);
+			.WithSubCommand(SRV_CONTROL_PLAN_RUN)
+			.WithSubCommand(SRV_CONTROL_PLAN_RESUME)
+			.WithSubCommand(SRV_CONTROL_PLAN_CANCEL)
+			.WithSubCommand(SRV_CONTROL_PLAN_KILL);
 
 		public static readonly Command SRV_CONTROL_PLAN_RUN = new Command("RUN")
 			.WithArgument("planType", typeof(string))
@@ -56,17 +60,62 @@ namespace Teltec.Backup.Ipc.Protocol
 
 		// ----------------------------------------------------------------------------------------
 
-		public static readonly Command CLI_ERROR = new Command("ERROR")
+		public static readonly Command EXECUTOR_ERROR = new Command("ERROR")
 			.WithArgument("message", typeof(string));
 
-		public static readonly Command CLI_CONTROL = new Command("CONTROL");
+		public static readonly Command EXECUTOR_CONTROL = new Command("CONTROL")
+			.WithSubCommand(EXECUTOR_CONTROL_PLAN);
 
-		public static readonly Command[] CLIENT_COMMANDS = new Command[]
+		public static readonly Command EXECUTOR_CONTROL_PLAN = new Command("PLAN")
+			.WithSubCommand(EXECUTOR_CONTROL_PLAN_CANCEL);
+
+		public static readonly Command EXECUTOR_CONTROL_PLAN_CANCEL = new Command("CANCEL");
+
+		public static readonly Command[] EXECUTOR_COMMANDS = new Command[]
 		{
-			CLI_ERROR,
-			CLI_CONTROL,
+			EXECUTOR_ERROR,
+			EXECUTOR_CONTROL,
 		};
-		public static readonly CommandParser ClientParser = new CommandParser(CLIENT_COMMANDS);
+		public static readonly CommandParser ExecutorParser = new CommandParser(EXECUTOR_COMMANDS);
+
+		// ----------------------------------------------------------------------------------------
+
+		public enum OperationState
+		{
+			STARTED,
+			RESUMED,
+			FINISHED,
+			FAILED,
+			CANCELED,
+		}
+
+		public static readonly Command GUI_ERROR = new Command("ERROR")
+			.WithArgument("message", typeof(string));
+
+		public static readonly Command GUI_REPORT = new Command("REPORT")
+			.WithSubCommand(GUI_REPORT_PLAN);
+
+		public static readonly Command GUI_REPORT_PLAN = new Command("PLAN")
+			.WithSubCommand(GUI_REPORT_PLAN_PROGRESS);
+
+		public static readonly Command GUI_REPORT_PLAN_STATE = new Command("STATE")
+			.WithArgument("planType", typeof(string))
+			.WithArgument("planId", typeof(Int32))
+			.WithArgument("state", typeof(OperationState))
+			;
+
+		public static readonly Command GUI_REPORT_PLAN_PROGRESS = new Command("PROGRESS")
+			.WithArgument("planType", typeof(string))
+			.WithArgument("planId", typeof(Int32))
+			//.WithArgument(...)
+			;
+
+		public static readonly Command[] GUI_COMMANDS = new Command[]
+		{
+			GUI_ERROR,
+			GUI_REPORT,
+		};
+		public static readonly CommandParser GuiParser = new CommandParser(GUI_COMMANDS);
 
 		// ----------------------------------------------------------------------------------------
 
@@ -87,7 +136,7 @@ namespace Teltec.Backup.Ipc.Protocol
 			return isBackup || isRestore;
 		}
 
-		public static string RunPlan(string planType, Int32 planId)
+		public static string ServerRunPlan(string planType, Int32 planId)
 		{
 			if (!IsValidPlanType(planType))
 				throw new ArgumentException("Invalid plan type", "planType");
@@ -100,7 +149,7 @@ namespace Teltec.Backup.Ipc.Protocol
 			return result;
 		}
 
-		public static string ResumePlan(string planType, Int32 planId)
+		public static string ServerResumePlan(string planType, Int32 planId)
 		{
 			if (!IsValidPlanType(planType))
 				throw new ArgumentException("Invalid plan type", "planType");
@@ -113,7 +162,7 @@ namespace Teltec.Backup.Ipc.Protocol
 			return result;
 		}
 
-		public static string CancelPlan(string planType, Int32 planId)
+		public static string ServerCancelPlan(string planType, Int32 planId)
 		{
 			if (!IsValidPlanType(planType))
 				throw new ArgumentException("Invalid plan type", "planType");
@@ -126,7 +175,7 @@ namespace Teltec.Backup.Ipc.Protocol
 			return result;
 		}
 
-		public static string KillPlan(string planType, Int32 planId)
+		public static string ServerKillPlan(string planType, Int32 planId)
 		{
 			if (!IsValidPlanType(planType))
 				throw new ArgumentException("Invalid plan type", "planType");
@@ -139,9 +188,44 @@ namespace Teltec.Backup.Ipc.Protocol
 			return result;
 		}
 
+		public static string ExecutorCancelPlan()
+		{
+			BoundCommand bound = new BoundCommand(EXECUTOR_CONTROL_PLAN_CANCEL);
+
+			string result = bound.ToString();
+			return result;
+		}
+
+		public static string ReportOperationState(string planType, Int32 planId, OperationState state)
+		{
+			if (!IsValidPlanType(planType))
+				throw new ArgumentException("Invalid plan type", "planType");
+
+			BoundCommand bound = new BoundCommand(GUI_REPORT_PLAN_STATE);
+			bound.BindArgument<string>("planType", planType);
+			bound.BindArgument<Int32>("planId", planId);
+			bound.BindArgument<string>("state", state.ToString());
+
+			string result = bound.ToString();
+			return result;
+		}
+
 		public static string ReportError(string message)
 		{
 			return "ERROR " + message;
+		}
+
+		public static string ReportError(string format, params object[] arguments)
+		{
+			return string.Format("ERROR " + format, arguments);
+		}
+
+		public static string BuildClientName(string planType, Int32 planId)
+		{
+			if (!IsValidPlanType(planType))
+				throw new ArgumentException("Invalid plan type", "planType");
+
+			return string.Format("executor:{0}:{1}", planType.ToUpper(), planId);
 		}
 	}
 }

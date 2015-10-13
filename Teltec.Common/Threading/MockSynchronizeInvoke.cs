@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Threading;
 
-namespace Teltec.Backup.Scheduler
+namespace Teltec.Common.Threading
 {
 	public class AsyncResult : IAsyncResult
 	{

@@ -11,7 +11,7 @@ namespace Teltec.Backup.Ipc.Protocol
 	{
 		public readonly string Name;
 
-		public CommandHandler Handler { internal get; set; }
+		internal CommandHandler Handler { get; set; }
 		public Command Parent { get; private set; }
 		public int NumArguments { get; private set; }
 		public int NumSubCommands { get; private set; }
@@ -51,7 +51,7 @@ namespace Teltec.Backup.Ipc.Protocol
 			return this;
 		}
 
-		public Command WithSub(Command sub)
+		public Command WithSubCommand(Command sub)
 		{
 			if (HasArguments)
 				throw new InvalidOperationException("A command cannot have both arguments and sub-commands");

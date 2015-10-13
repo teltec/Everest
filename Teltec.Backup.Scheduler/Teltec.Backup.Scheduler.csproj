@@ -84,7 +84,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MockSynchronizeInvoke.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -58,6 +58,8 @@
     <Compile Include="Protocol\CommandParser.cs" />
     <Compile Include="Protocol\Commands.cs" />
     <Compile Include="Protocol\Message.cs" />
+    <Compile Include="TcpSocket\GuiHandler.cs" />
+    <Compile Include="TcpSocket\ExecutorHandler.cs" />
     <Compile Include="TcpSocket\Server.cs" />
     <Compile Include="TcpSocket\ServerHandler.cs" />
     <Compile Include="TcpSocket\Shared.cs" />

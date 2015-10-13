@@ -1,19 +1,12 @@
 using NLog;
 using System;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using Teltec.Backup.Ipc.Protocol;
-using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.Ipc.TcpSocket
 {
-	public class ClientCommandEventArgs : BoundCommandEventArgs
-	{
-	}
-
-	public class ClientHandler : BaseHandler, IDisposable
+	public abstract class ClientHandler : BaseHandler, IDisposable
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -38,6 +31,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			Client.Disconnected += Client_Disconnected;
 			Client.MessageReceived += Client_MessageReceived;
 
+			RegisterCommandHandlers();
 			CreateConnectionMonitorThread();
 		}
 
@@ -164,72 +158,8 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			}
 		}
 
-		private bool HandleMessage(string message)
-		{
-			string errorMessage = null;
-			Message msg = new Message(message);
-
-			BoundCommand command = Commands.ClientParser.ParseMessage(msg, out errorMessage);
-			if (command == null)
-			{
-				Send(Commands.ReportError(errorMessage));
-				return false;
-			}
-
-			command.InvokeHandler(this, new ClientCommandEventArgs { Command = command });
-
-			return true;
-		}
-
-		private void HandleControl(Message msg)
-		{
-			string[] validTokens;
-
-			validTokens = new string[]{ "PLAN" };
-
-			string sub1 = msg.NextToken();
-			if (string.IsNullOrEmpty(sub1) || !validTokens.Contains(sub1))
-			{
-				// TODO(jweyrich): Handle invalid command.
-				return;
-			}
-
-			if (sub1.Equals("PLAN", StringComparison.InvariantCulture))
-			{
-				validTokens = new string[] { "RUN", "RESUME", "CANCEL", "KILL" };
-
-				string sub2 = msg.NextToken();
-				if (string.IsNullOrEmpty(sub1) || !validTokens.Contains(sub2))
-				{
-					// TODO(jweyrich): Handle invalid command.
-					return;
-				}
-
-				validTokens = new string[] { "BACKUP", "RESTORE" };
-				string sub3 = msg.NextToken();
-
-				if (string.IsNullOrEmpty(sub1) || !validTokens.Contains(sub2))
-				{
-					// TODO(jweyrich): Handle invalid command.
-					return;
-				}
-
-				if (sub2.Equals("RUN", StringComparison.InvariantCulture))
-				{
-
-				}
-				else if (sub2.Equals("RESUME", StringComparison.InvariantCulture))
-				{
-				}
-				else if (sub2.Equals("CANCEL", StringComparison.InvariantCulture))
-				{
-				}
-				else if (sub2.Equals("KILL", StringComparison.InvariantCulture))
-				{
-				}
-
-			}
-		}
+		protected abstract void RegisterCommandHandlers();
+		protected abstract bool HandleMessage(string message);
 
 		#region Dispose Pattern Implementation
 

@@ -1,10 +1,14 @@
 using NLog;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Ipc.Protocol;
+using Teltec.Backup.Ipc.TcpSocket;
 using Teltec.Backup.PlanExecutor.Backup;
 using Teltec.Backup.PlanExecutor.Restore;
+using Teltec.Common.Threading;
 using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
 
@@ -13,11 +17,23 @@ namespace Teltec.Backup.PlanExecutor
 	// Documentation at https://github.com/gsscoder/commandline
 	class Options
 	{
-		[CommandLine.Option('t', "type", Required = true, HelpText = "Inform the type of the plan to be executed: (backup | restore)")]
+		[CommandLine.Option("svc-host", DefaultValue = "127.0.0.1", HelpText = "The host where the IPC server is running.")]
+		public string ServiceHost { get; set; }
+
+		[CommandLine.Option("svc-port", DefaultValue = 8000, HelpText = "The port where the IPC server is running.")]
+		public int ServicePort { get; set; }
+
+		[CommandLine.Option("client-name", Required = true, HelpText = "The client name to register on the IPC server.")]
+		public string ClientName { get; set; }
+
+		[CommandLine.Option('t', "type", Required = true, HelpText = "The type of the plan to be executed [backup|restore].")]
 		public string PlanType { get; set; }
 
-		[CommandLine.Option('p', "plan", Required = true, HelpText = "Inform the ID of the plan to be executed.")]
+		[CommandLine.Option('p', "plan", Required = true, HelpText = "The ID of the plan to be executed.")]
 		public Int32 PlanIdentifier { get; set; }
+
+		[CommandLine.Option("resume", DefaultValue = false, HelpText = "Whether to continue a previous interrupted operation.")]
+		public bool Resume { get; set; }
 
 		[CommandLine.Option('v', "verbose", DefaultValue = true, HelpText = "Print all messages to standard output.")]
 		public bool Verbose { get; set; }
@@ -48,7 +64,12 @@ namespace Teltec.Backup.PlanExecutor
 
 		static readonly Options options = new Options();
 
+		private ISynchronizeInvoke SynchronizingObject = new MockSynchronizeInvoke();
+		private ExecutorHandler Handler;
+
 		//static OperationProgressReporter Reporter = new OperationProgressReporter(50052);
+
+		#region Main
 
 		static void Main(string[] args)
 		{
@@ -94,6 +115,8 @@ namespace Teltec.Backup.PlanExecutor
 			}
 		}
 
+		#endregion
+
 		static void LetMeDebugThisBeforeExiting()
 		{
 			if (Debugger.IsAttached)
@@ -102,6 +125,23 @@ namespace Teltec.Backup.PlanExecutor
 				Console.WriteLine("\nPress ENTER to exit.\n");
 				Console.ReadLine();
 			}
+		}
+
+		public PlanExecutor()
+		{
+			Handler = new ExecutorHandler(SynchronizingObject, options.ClientName, options.ServiceHost, options.ServicePort);
+			Handler.OnControlPlanCancel = OnControlPlanCancel;
+		}
+
+		private void OnControlPlanCancel(object sender, ExecutorCommandEventArgs e)
+		{
+			if (RunningOperation == null || !RunningOperation.IsRunning)
+			{
+				Handler.Send(Commands.ReportError("Can't cancel. Operation is not running"));
+				return;
+			}
+
+			RunningOperation.Cancel();
 		}
 
 		readonly BackupPlanRepository _daoBackupPlan = new BackupPlanRepository();
@@ -155,7 +195,12 @@ namespace Teltec.Backup.PlanExecutor
 				logger.Info("Running {0} #{1}", options.PlanType, options.PlanIdentifier);
 			}
 
-			RunOperation(selectedPlanType, plan);
+			bool ok = RunOperation(selectedPlanType, plan);
+			if (!ok)
+			{
+				Console.Error.WriteLine("Operation did not run.");
+				Environment.Exit(1);
+			}
 
 			while (!RunningOperationEndedEvent.WaitOne(250))
 			{
@@ -165,21 +210,23 @@ namespace Teltec.Backup.PlanExecutor
 			Console.WriteLine("Operation finished.");
 		}
 
-		private void RunOperation(PlanTypeEnum planType, object plan)
+		private bool RunOperation(PlanTypeEnum planType, object plan)
 		{
+			bool result = false;
 			switch (planType)
 			{
 				case PlanTypeEnum.Backup:
 					{
-						RunBackupOperation(plan as Models.BackupPlan);
+						result = RunBackupOperation(plan as Models.BackupPlan);
 						break;
 					}
 				case PlanTypeEnum.Restore:
 					{
-						RunRestoreOperation(plan as Models.RestorePlan);
+						result = RunRestoreOperation(plan as Models.RestorePlan);
 						break;
 					}
 			}
+			return result;
 		}
 
 		private void ExitShowingHelpText(int exitCode)
@@ -190,27 +237,27 @@ namespace Teltec.Backup.PlanExecutor
 			Environment.Exit(exitCode);
 		}
 
-		private void RunBackupOperation(Models.BackupPlan plan)
+		private bool RunBackupOperation(Models.BackupPlan plan)
 		{
 			var dao = new BackupRepository();
 
 			Models.Backup latest = dao.GetLatestByPlan(plan);
 			MustResumeLastOperation = latest != null && latest.NeedsResume();
 
-			if (MustResumeLastOperation)
+			if (MustResumeLastOperation && !options.Resume)
 			{
 				logger.Warn(
 					"The backup (#{0}) has not finished yet."
 					+ " If it's still running, please, wait until it finishes,"
 					+ " otherwise you should resume it manually.",
 					latest.Id);
-				return;
+				return false;
 			}
 
 			// Create new backup or resume the last unfinished one.
-			BackupOperation obj = /* MustResumeLastOperation
+			BackupOperation obj = MustResumeLastOperation
 				? new ResumeBackupOperation(latest) as BackupOperation
-				: */ new NewBackupOperation(plan) as BackupOperation;
+				: new NewBackupOperation(plan) as BackupOperation;
 
 			obj.Updated += (sender2, e2) => BackupUpdateStatsInfo(e2.Status);
 			//obj.EventLog = ...
@@ -224,23 +271,29 @@ namespace Teltec.Backup.PlanExecutor
 			// Actually RUN it
 			//
 			RunningOperation.Start(out TransferResults);
+			return true;
 		}
 
-		private void RunRestoreOperation(Models.RestorePlan plan)
+		private bool RunRestoreOperation(Models.RestorePlan plan)
 		{
 			var dao = new RestoreRepository();
 
 			Models.Restore latest = dao.GetLatestByPlan(plan);
 			MustResumeLastOperation = latest != null && latest.NeedsResume();
 
-			if (MustResumeLastOperation)
+			if (MustResumeLastOperation && options.Resume)
+			{
+				throw new NotImplementedException("The restore operation still does not support resuming.");
+			}
+
+			if (MustResumeLastOperation && !options.Resume)
 			{
 				logger.Warn(
 					"The restore (#{0}) has not finished yet."
 					+ " If it's still running, please, wait until it finishes,"
 					+ " otherwise you should resume it manually.",
 					latest.Id);
-				return;
+				return false;
 			}
 
 			// Create new restore or resume the last unfinished one.
@@ -260,6 +313,7 @@ namespace Teltec.Backup.PlanExecutor
 			// Actually RUN it
 			//
 			RunningOperation.Start(out TransferResults);
+			return true;
 		}
 
 		private void BackupUpdateStatsInfo(BackupOperationStatus status)
@@ -314,6 +368,11 @@ namespace Teltec.Backup.PlanExecutor
 						timer1.Enabled = true;
 						timer1.Start();
 						*/
+
+						// Report
+						Commands.OperationState cmdState = status == BackupOperationStatus.Started
+							? Commands.OperationState.STARTED : Commands.OperationState.RESUMED;
+						Handler.Send(Commands.ReportOperationState("backup", plan.Id.Value, cmdState));
 						break;
 					}
 				case BackupOperationStatus.ScanningFilesStarted:
@@ -362,6 +421,10 @@ namespace Teltec.Backup.PlanExecutor
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
+
+						// Report
+						Commands.OperationState cmdState = Commands.OperationState.FINISHED;
+						Handler.Send(Commands.ReportOperationState("backup", plan.Id.Value, cmdState));
 						break;
 					}
 				case BackupOperationStatus.Updated:
@@ -406,6 +469,11 @@ namespace Teltec.Backup.PlanExecutor
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
+
+						// Report
+						Commands.OperationState cmdState = status == BackupOperationStatus.Failed
+							? Commands.OperationState.FAILED : Commands.OperationState.CANCELED;
+						Handler.Send(Commands.ReportOperationState("backup", plan.Id.Value, cmdState));
 						break;
 					}
 			}
@@ -464,6 +532,11 @@ namespace Teltec.Backup.PlanExecutor
 						timer1.Enabled = true;
 						timer1.Start();
 						*/
+
+						// Report
+						Commands.OperationState cmdState = status == RestoreOperationStatus.Started
+							? Commands.OperationState.STARTED : Commands.OperationState.RESUMED;
+						Handler.Send(Commands.ReportOperationState("restore", plan.Id.Value, cmdState));
 						break;
 					}
 				case RestoreOperationStatus.ScanningFilesStarted:
@@ -525,6 +598,10 @@ namespace Teltec.Backup.PlanExecutor
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
+
+						// Report
+						Commands.OperationState cmdState = Commands.OperationState.FINISHED;
+						Handler.Send(Commands.ReportOperationState("restore", plan.Id.Value, cmdState));
 						break;
 					}
 				case RestoreOperationStatus.Updated:
@@ -568,6 +645,11 @@ namespace Teltec.Backup.PlanExecutor
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
+
+						// Report
+						Commands.OperationState cmdState = status == RestoreOperationStatus.Failed
+							? Commands.OperationState.FAILED : Commands.OperationState.CANCELED;
+						Handler.Send(Commands.ReportOperationState("restore", plan.Id.Value, cmdState));
 						break;
 					}
 			}
