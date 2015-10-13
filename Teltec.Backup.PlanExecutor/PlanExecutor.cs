@@ -370,30 +370,46 @@ namespace Teltec.Backup.PlanExecutor
 						*/
 
 						// Report
-						Commands.OperationState cmdState = status == BackupOperationStatus.Started
-							? Commands.OperationState.STARTED : Commands.OperationState.RESUMED;
-						Handler.Send(Commands.ReportOperationState("backup", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdState = status == BackupOperationStatus.Started
+							? Commands.OperationStatus.STARTED : Commands.OperationStatus.RESUMED;
+						Handler.Send(Commands.ReportOperationStatus("backup", plan.Id.Value, cmdState));
 						break;
 					}
 				case BackupOperationStatus.ScanningFilesStarted:
 					{
 						logger.Info("Scanning files...");
+
+						// Report
+						Commands.OperationStatus cmdState = Commands.OperationStatus.SCANNING_FILES_STARTED;
+						Handler.Send(Commands.ReportOperationStatus("backup", plan.Id.Value, cmdState));
 						break;
 					}
 				case BackupOperationStatus.ScanningFilesFinished:
 					{
 						logger.Info("Scanning files finished.");
+
+						// Report
+						Commands.OperationStatus cmdState = Commands.OperationStatus.SCANNING_FILES_FINISHED;
+						Handler.Send(Commands.ReportOperationStatus("backup", plan.Id.Value, cmdState));
 						break;
 					}
 				case BackupOperationStatus.ProcessingFilesStarted:
 					{
 						logger.Info("Processing files...");
+
+						// Report
+						Commands.OperationStatus cmdState = Commands.OperationStatus.PROCESSING_FILES_STARTED;
+						Handler.Send(Commands.ReportOperationStatus("backup", plan.Id.Value, cmdState));
 						break;
 					}
 				case BackupOperationStatus.ProcessingFilesFinished:
 					{
 						logger.Info("Processing files finished.");
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
+
+						// Report
+						Commands.OperationStatus cmdState = Commands.OperationStatus.PROCESSING_FILES_FINISHED;
+						Handler.Send(Commands.ReportOperationStatus("backup", plan.Id.Value, cmdState));
 						break;
 					}
 				case BackupOperationStatus.Finished:
@@ -423,8 +439,8 @@ namespace Teltec.Backup.PlanExecutor
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						Commands.OperationState cmdState = Commands.OperationState.FINISHED;
-						Handler.Send(Commands.ReportOperationState("backup", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdState = Commands.OperationStatus.FINISHED;
+						Handler.Send(Commands.ReportOperationStatus("backup", plan.Id.Value, cmdState));
 						break;
 					}
 				case BackupOperationStatus.Updated:
@@ -437,6 +453,10 @@ namespace Teltec.Backup.PlanExecutor
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
 							BackupResults.Stats.Completed, BackupResults.Stats.Total);
 						*/
+
+						// Report
+						Commands.OperationStatus cmdState = Commands.OperationStatus.UPDATED;
+						Handler.Send(Commands.ReportOperationStatus("backup", plan.Id.Value, cmdState));
 						break;
 					}
 				case BackupOperationStatus.Failed:
@@ -471,9 +491,9 @@ namespace Teltec.Backup.PlanExecutor
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						Commands.OperationState cmdState = status == BackupOperationStatus.Failed
-							? Commands.OperationState.FAILED : Commands.OperationState.CANCELED;
-						Handler.Send(Commands.ReportOperationState("backup", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdState = status == BackupOperationStatus.Failed
+							? Commands.OperationStatus.FAILED : Commands.OperationStatus.CANCELED;
+						Handler.Send(Commands.ReportOperationStatus("backup", plan.Id.Value, cmdState));
 						break;
 					}
 			}
@@ -534,9 +554,9 @@ namespace Teltec.Backup.PlanExecutor
 						*/
 
 						// Report
-						Commands.OperationState cmdState = status == RestoreOperationStatus.Started
-							? Commands.OperationState.STARTED : Commands.OperationState.RESUMED;
-						Handler.Send(Commands.ReportOperationState("restore", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdState = status == RestoreOperationStatus.Started
+							? Commands.OperationStatus.STARTED : Commands.OperationStatus.RESUMED;
+						Handler.Send(Commands.ReportOperationStatus("restore", plan.Id.Value, cmdState));
 						break;
 					}
 				case RestoreOperationStatus.ScanningFilesStarted:
@@ -546,11 +566,19 @@ namespace Teltec.Backup.PlanExecutor
 						/*
 						this.lblSources.Text = "Scanning files...";
 						*/
+
+						// Report
+						Commands.OperationStatus cmdState = Commands.OperationStatus.SCANNING_FILES_STARTED;
+						Handler.Send(Commands.ReportOperationStatus("restore", plan.Id.Value, cmdState));
 						break;
 					}
 				case RestoreOperationStatus.ScanningFilesFinished:
 					{
 						logger.Info("Scanning files finished.");
+
+						// Report
+						Commands.OperationStatus cmdState = Commands.OperationStatus.SCANNING_FILES_FINISHED;
+						Handler.Send(Commands.ReportOperationStatus("restore", plan.Id.Value, cmdState));
 						break;
 					}
 				case RestoreOperationStatus.ProcessingFilesStarted:
@@ -560,6 +588,10 @@ namespace Teltec.Backup.PlanExecutor
 						/*
 						this.lblSources.Text = "Processing files...";
 						*/
+
+						// Report
+						Commands.OperationStatus cmdState = Commands.OperationStatus.PROCESSING_FILES_STARTED;
+						Handler.Send(Commands.ReportOperationStatus("restore", plan.Id.Value, cmdState));
 						break;
 					}
 				case RestoreOperationStatus.ProcessingFilesFinished:
@@ -572,6 +604,10 @@ namespace Teltec.Backup.PlanExecutor
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
 							RestoreResults.Stats.Completed, RestoreResults.Stats.Total);
 						*/
+
+						// Report
+						Commands.OperationStatus cmdState = Commands.OperationStatus.PROCESSING_FILES_FINISHED;
+						Handler.Send(Commands.ReportOperationStatus("restore", plan.Id.Value, cmdState));
 						break;
 					}
 				case RestoreOperationStatus.Finished:
@@ -600,8 +636,8 @@ namespace Teltec.Backup.PlanExecutor
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						Commands.OperationState cmdState = Commands.OperationState.FINISHED;
-						Handler.Send(Commands.ReportOperationState("restore", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdState = Commands.OperationStatus.FINISHED;
+						Handler.Send(Commands.ReportOperationStatus("restore", plan.Id.Value, cmdState));
 						break;
 					}
 				case RestoreOperationStatus.Updated:
@@ -614,6 +650,10 @@ namespace Teltec.Backup.PlanExecutor
 						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
 							RestoreResults.Stats.Completed, RestoreResults.Stats.Total);
 						*/
+
+						// Report
+						Commands.OperationStatus cmdState = Commands.OperationStatus.UPDATED;
+						Handler.Send(Commands.ReportOperationStatus("restore", plan.Id.Value, cmdState));
 						break;
 					}
 				case RestoreOperationStatus.Failed:
@@ -647,9 +687,9 @@ namespace Teltec.Backup.PlanExecutor
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						Commands.OperationState cmdState = status == RestoreOperationStatus.Failed
-							? Commands.OperationState.FAILED : Commands.OperationState.CANCELED;
-						Handler.Send(Commands.ReportOperationState("restore", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdState = status == RestoreOperationStatus.Failed
+							? Commands.OperationStatus.FAILED : Commands.OperationStatus.CANCELED;
+						Handler.Send(Commands.ReportOperationStatus("restore", plan.Id.Value, cmdState));
 						break;
 					}
 			}

@@ -17,20 +17,20 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		public delegate void GuiCommandHandler(object sender, GuiCommandEventArgs e);
 
-		public GuiCommandHandler OnControlPlanState;
-		public GuiCommandHandler OnControlPlanProgress;
+		public GuiCommandHandler OnReportPlanStatus;
+		public GuiCommandHandler OnReportPlanProgress;
 
 		protected override void RegisterCommandHandlers()
 		{
-			Commands.GUI_REPORT_PLAN_STATE.Handler = delegate(object sender, EventArgs e)
+			Commands.GUI_REPORT_PLAN_STATUS.Handler = delegate(object sender, EventArgs e)
 			{
-				if (OnControlPlanState != null)
-					OnControlPlanState(this, (GuiCommandEventArgs)e);
+				if (OnReportPlanStatus != null)
+					OnReportPlanStatus(this, (GuiCommandEventArgs)e);
 			};
 			Commands.GUI_REPORT_PLAN_PROGRESS.Handler = delegate(object sender, EventArgs e)
 			{
-				if (OnControlPlanProgress != null)
-					OnControlPlanProgress(this, (GuiCommandEventArgs)e);
+				if (OnReportPlanProgress != null)
+					OnReportPlanProgress(this, (GuiCommandEventArgs)e);
 			};
 		}
 

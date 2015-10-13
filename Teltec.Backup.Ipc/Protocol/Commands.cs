@@ -80,10 +80,15 @@ namespace Teltec.Backup.Ipc.Protocol
 
 		// ----------------------------------------------------------------------------------------
 
-		public enum OperationState
+		public enum OperationStatus
 		{
 			STARTED,
 			RESUMED,
+			SCANNING_FILES_STARTED,
+			SCANNING_FILES_FINISHED,
+			PROCESSING_FILES_STARTED,
+			PROCESSING_FILES_FINISHED,
+			UPDATED,
 			FINISHED,
 			FAILED,
 			CANCELED,
@@ -98,10 +103,10 @@ namespace Teltec.Backup.Ipc.Protocol
 		public static readonly Command GUI_REPORT_PLAN = new Command("PLAN")
 			.WithSubCommand(GUI_REPORT_PLAN_PROGRESS);
 
-		public static readonly Command GUI_REPORT_PLAN_STATE = new Command("STATE")
+		public static readonly Command GUI_REPORT_PLAN_STATUS = new Command("STATUS")
 			.WithArgument("planType", typeof(string))
 			.WithArgument("planId", typeof(Int32))
-			.WithArgument("state", typeof(OperationState))
+			.WithArgument("state", typeof(OperationStatus))
 			;
 
 		public static readonly Command GUI_REPORT_PLAN_PROGRESS = new Command("PROGRESS")
@@ -196,12 +201,12 @@ namespace Teltec.Backup.Ipc.Protocol
 			return result;
 		}
 
-		public static string ReportOperationState(string planType, Int32 planId, OperationState state)
+		public static string ReportOperationStatus(string planType, Int32 planId, OperationStatus state)
 		{
 			if (!IsValidPlanType(planType))
 				throw new ArgumentException("Invalid plan type", "planType");
 
-			BoundCommand bound = new BoundCommand(GUI_REPORT_PLAN_STATE);
+			BoundCommand bound = new BoundCommand(GUI_REPORT_PLAN_STATUS);
 			bound.BindArgument<string>("planType", planType);
 			bound.BindArgument<Int32>("planId", planId);
 			bound.BindArgument<string>("state", state.ToString());

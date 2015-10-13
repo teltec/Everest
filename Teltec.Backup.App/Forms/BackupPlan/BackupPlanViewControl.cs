@@ -3,6 +3,8 @@ using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Ipc.Protocol;
+using Teltec.Backup.Ipc.TcpSocket;
 using Teltec.Backup.PlanExecutor.Backup;
 using Teltec.Common;
 using Teltec.Common.Extensions;
@@ -105,6 +107,47 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			RunningOperation = obj;
 
 			UpdateStatsInfo(BackupOperationStatus.Unknown);
+		}
+
+		private void ReportPlanStatus(object sender, GuiCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			if (!planType.Equals("backup"))
+				return;
+
+			Models.BackupPlan plan = this.Model as Models.BackupPlan;
+
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+			if (planId != plan.Id)
+				return;
+
+			Commands.OperationStatus status = e.Command.GetArgumentValue<Commands.OperationStatus>("status");
+			switch (status)
+			{
+				default:
+					// TODO(jweyrich): Somehow report unexpected status?
+					return;
+				case Commands.OperationStatus.STARTED:
+					break;
+				case Commands.OperationStatus.RESUMED:
+					break;
+				case Commands.OperationStatus.SCANNING_FILES_STARTED:
+					break;
+				case Commands.OperationStatus.SCANNING_FILES_FINISHED:
+					break;
+				case Commands.OperationStatus.PROCESSING_FILES_STARTED:
+					break;
+				case Commands.OperationStatus.PROCESSING_FILES_FINISHED:
+					break;
+				case Commands.OperationStatus.UPDATED:
+					break;
+				case Commands.OperationStatus.FINISHED:
+					break;
+				case Commands.OperationStatus.FAILED:
+					break;
+				case Commands.OperationStatus.CANCELED:
+					break;
+			}
 		}
 
 		#region Binding formatters

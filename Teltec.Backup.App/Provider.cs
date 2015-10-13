@@ -1,4 +1,6 @@
-﻿using SimpleInjector;
+using SimpleInjector;
+using Teltec.Backup.Ipc.TcpSocket;
+using Teltec.Common.Threading;
 
 namespace Teltec.Backup.App
 {
@@ -9,6 +11,14 @@ namespace Teltec.Backup.App
 		{
 			get { return _Container; }
 			private set { _Container = value; }
+		}
+
+		private static System.ComponentModel.ISynchronizeInvoke SynchronizingObject = new MockSynchronizeInvoke();
+		private static GuiHandler _Handler = new GuiHandler(SynchronizingObject, "gui", "127.0.0.1", 8000);
+		public static GuiHandler Handler
+		{
+			get { return _Handler; }
+			private set { _Handler = value; }
 		}
 
 		//private static DatabaseContext _DBContext = new DatabaseContext();
