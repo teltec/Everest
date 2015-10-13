@@ -42,6 +42,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		public delegate void ServerCommandHandler(object sender, ServerCommandEventArgs e);
 
+		public ServerCommandHandler OnControlPlanQuery;
 		public ServerCommandHandler OnControlPlanRun;
 		public ServerCommandHandler OnControlPlanResume;
 		public ServerCommandHandler OnControlPlanCancel;
@@ -52,6 +53,11 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			Commands.SRV_REGISTER.Handler = OnRegister;
 			Commands.SRV_ROUTE.Handler = OnRoute;
 			Commands.SRV_BROADCAST.Handler = OnBroadcast;
+			Commands.SRV_CONTROL_PLAN_QUERY.Handler = delegate(object sender, EventArgs e)
+			{
+				if (OnControlPlanQuery != null)
+					OnControlPlanQuery(this, (ServerCommandEventArgs)e);
+			};
 			Commands.SRV_CONTROL_PLAN_RUN.Handler = delegate(object sender, EventArgs e)
 			{
 				if (OnControlPlanRun != null)

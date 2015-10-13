@@ -1,4 +1,5 @@
 using SimpleInjector;
+using Teltec.Backup.Ipc.Protocol;
 using Teltec.Backup.Ipc.TcpSocket;
 using Teltec.Common.Threading;
 
@@ -14,7 +15,7 @@ namespace Teltec.Backup.App
 		}
 
 		private static System.ComponentModel.ISynchronizeInvoke SynchronizingObject = new MockSynchronizeInvoke();
-		private static GuiHandler _Handler = new GuiHandler(SynchronizingObject, "gui", "127.0.0.1", 8000);
+		private static GuiHandler _Handler = new GuiHandler(SynchronizingObject, Commands.GUI_CLIENT_NAME, Commands.IPC_DEFAULT_HOST, Commands.IPC_DEFAULT_PORT);
 		public static GuiHandler Handler
 		{
 			get { return _Handler; }

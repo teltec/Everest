@@ -93,6 +93,7 @@ namespace Teltec.Backup.Ipc.Protocol
 			{
 				string acceptedArgName = (string)entry.Key;
 				Type acceptedArgType = (Type)entry.Value;
+				// The call below DOES NOT CORRECTLY validate argument types.
 				BindArgument(acceptedArgName, argValues[i++]);
 			}
 

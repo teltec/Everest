@@ -5,7 +5,9 @@ namespace Teltec.Backup.Ipc.Protocol
 {
 	public static class Commands
 	{
-		public static readonly string GUI_CLIENT_NAME = "gui";
+		public static readonly string IPC_DEFAULT_HOST = "127.0.0.1";
+		public static readonly int IPC_DEFAULT_PORT = 8000;
+		public static readonly string IPC_DEFAULT_GUI_CLIENT_NAME = "gui";
 
 		// ----------------------------------------------------------------------------------------
 
@@ -20,10 +22,15 @@ namespace Teltec.Backup.Ipc.Protocol
 			.WithSubCommand(SRV_CONTROL_PLAN);
 
 		public static readonly Command SRV_CONTROL_PLAN = new Command("PLAN")
+			.WithSubCommand(SRV_CONTROL_PLAN_QUERY)
 			.WithSubCommand(SRV_CONTROL_PLAN_RUN)
 			.WithSubCommand(SRV_CONTROL_PLAN_RESUME)
 			.WithSubCommand(SRV_CONTROL_PLAN_CANCEL)
 			.WithSubCommand(SRV_CONTROL_PLAN_KILL);
+
+		public static readonly Command SRV_CONTROL_PLAN_QUERY = new Command("QUERY")
+			.WithArgument("planType", typeof(string))
+			.WithArgument("planId", typeof(Int32));
 
 		public static readonly Command SRV_CONTROL_PLAN_RUN = new Command("RUN")
 			.WithArgument("planType", typeof(string))
@@ -106,13 +113,17 @@ namespace Teltec.Backup.Ipc.Protocol
 		public static readonly Command GUI_REPORT_PLAN_STATUS = new Command("STATUS")
 			.WithArgument("planType", typeof(string))
 			.WithArgument("planId", typeof(Int32))
-			.WithArgument("state", typeof(OperationStatus))
+			.WithArgument("status", typeof(OperationStatus))
+			.WithArgument("startedAt", typeof(string))
+			.WithArgument("lastRunAt", typeof(string))
+			.WithArgument("lastSuccessfulRunAt", typeof(string))
+			.WithArgument("scheduleType", typeof(string))
+			.WithArgument("sources", typeof(string))
 			;
 
 		public static readonly Command GUI_REPORT_PLAN_PROGRESS = new Command("PROGRESS")
 			.WithArgument("planType", typeof(string))
 			.WithArgument("planId", typeof(Int32))
-			//.WithArgument(...)
 			;
 
 		public static readonly Command[] GUI_COMMANDS = new Command[]
@@ -139,6 +150,19 @@ namespace Teltec.Backup.Ipc.Protocol
 			bool isBackup = planType.Equals("backup", StringComparison.OrdinalIgnoreCase);
 			bool isRestore = planType.Equals("restore", StringComparison.OrdinalIgnoreCase);
 			return isBackup || isRestore;
+		}
+
+		public static string ServerQueryPlan(string planType, Int32 planId)
+		{
+			if (!IsValidPlanType(planType))
+				throw new ArgumentException("Invalid plan type", "planType");
+
+			BoundCommand bound = new BoundCommand(SRV_CONTROL_PLAN_QUERY)
+				.BindArgument("planType", planType)
+				.BindArgument("planId", planId);
+
+			string result = bound.ToString();
+			return result;
 		}
 
 		public static string ServerRunPlan(string planType, Int32 planId)
@@ -201,7 +225,15 @@ namespace Teltec.Backup.Ipc.Protocol
 			return result;
 		}
 
-		public static string ReportOperationStatus(string planType, Int32 planId, OperationStatus state)
+		public static string GuiReportOperationStatus(
+			string planType,
+			Int32 planId,
+			OperationStatus status,
+			DateTime? startedAt,
+			DateTime? lastRunAt,
+			DateTime? lastSuccessfulRunAt,
+			string scheduleType,
+			string sources)
 		{
 			if (!IsValidPlanType(planType))
 				throw new ArgumentException("Invalid plan type", "planType");
@@ -209,9 +241,33 @@ namespace Teltec.Backup.Ipc.Protocol
 			BoundCommand bound = new BoundCommand(GUI_REPORT_PLAN_STATUS);
 			bound.BindArgument<string>("planType", planType);
 			bound.BindArgument<Int32>("planId", planId);
-			bound.BindArgument<string>("state", state.ToString());
+			bound.BindArgument<string>("status", status.ToString());
 
-			string result = bound.ToString();
+			string startedAtStr = startedAt.HasValue
+				? startedAt.Value.ToLocalTime().ToString("o") // Convert to ISO (doesn't contain whitespace)
+				: null;
+			string lastRunAtStr = lastRunAt.HasValue
+				? lastRunAt.Value.ToLocalTime().ToString("o") // Convert to ISO (doesn't contain whitespace)
+				: "Never";
+			string lastSuccessfulRunAtStr = lastSuccessfulRunAt.HasValue
+				? lastSuccessfulRunAt.Value.ToLocalTime().ToString("o") // Convert to ISO (doesn't contain whitespace)
+				: "Never";
+
+			string sourcesStr = EncodeString(sources);
+
+			bound.BindArgument<string>("startedAt", startedAtStr);
+			bound.BindArgument<string>("lastRunAt", lastRunAtStr);
+			bound.BindArgument<string>("lastSuccessfulRunAt", lastSuccessfulRunAtStr);
+			bound.BindArgument<string>("scheduleType", scheduleType);
+			bound.BindArgument<string>("sources", sourcesStr);
+
+			string message = bound.ToString();
+
+			BoundCommand route = new BoundCommand(SRV_ROUTE);
+			route.BindArgument<string>("targetName", Commands.IPC_DEFAULT_GUI_CLIENT_NAME);
+			route.BindArgument<string>("message", message);
+
+			string result = route.ToString();
 			return result;
 		}
 
@@ -231,6 +287,22 @@ namespace Teltec.Backup.Ipc.Protocol
 				throw new ArgumentException("Invalid plan type", "planType");
 
 			return string.Format("executor:{0}:{1}", planType.ToUpper(), planId);
+		}
+
+		public static string EncodeString(string value)
+		{
+			if (value == null)
+				return null;
+
+			return value.Replace(" ", "|");
+		}
+
+		public static string DecodeString(string value)
+		{
+			if (value == null)
+				return null;
+
+			return value.Replace("|", " ");
 		}
 	}
 }

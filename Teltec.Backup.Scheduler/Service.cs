@@ -104,6 +104,7 @@ namespace Teltec.Backup.Scheduler
 			CanShutdown = true;
 
 			Handler = new ServerHandler(SynchronizingObject);
+			Handler.OnControlPlanQuery = OnControlPlanQuery;
 			Handler.OnControlPlanRun = OnControlPlanRun;
 			Handler.OnControlPlanResume = OnControlPlanResume;
 			Handler.OnControlPlanCancel = OnControlPlanCancel;
@@ -525,6 +526,14 @@ namespace Teltec.Backup.Scheduler
 
 		#region Remote messages
 
+		private void OnControlPlanQuery(object sender, ServerCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+
+			// TODO(jweyrich): Report to GUI.
+		}
+
 		private void OnControlPlanRun(object sender, ServerCommandEventArgs e)
 		{
 			string planType = e.Command.GetArgumentValue<string>("planType");
@@ -795,7 +804,7 @@ namespace Teltec.Backup.Scheduler
 
 			Info("Service is starting...");
 
-			Handler.Start("127.0.0.1", 8000);
+			Handler.Start(Commands.IPC_DEFAULT_HOST, Commands.IPC_DEFAULT_PORT);
 
 			timer = new System.Timers.Timer();
 			timer.Interval = 1000 * 60 * 5; // Set interval to 5 minutes

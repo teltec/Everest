@@ -50,22 +50,14 @@ namespace Teltec.Backup.Ipc.Protocol
 			{
 				LinkedList<string> argValues = new LinkedList<string>();
 
-				// Read arguments.
-				while (true)
-				{
-					currentToken = msg.NextToken();
-					if (currentToken == null)
-						break;
-					argValues.AddLast(currentToken);
-				}
-
-				// Validate arguments.
+				// Read and validate arguments.
 				foreach (DictionaryEntry entry in commandMatch.OrderedArgumentDefinitions)
 				{
+					currentToken = msg.NextToken();
+
 					string definedArgName = (string)entry.Key;
 					Type definedArgType = (Type)entry.Value;
-					string passedArgValue = argValues.First.Value;
-					argValues.RemoveFirst();
+					string passedArgValue = currentToken;
 
 					try
 					{

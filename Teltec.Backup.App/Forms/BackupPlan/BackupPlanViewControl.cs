@@ -62,6 +62,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				if (Model == null)
 					return;
 
+				Models.BackupPlan plan = Model as Models.BackupPlan;
+				Provider.Handler.Send(Commands.ServerQueryPlan("backup", plan.Id.Value));
+
 				Binding lblTitleTextBinding = new Binding("Text", Model,
 					this.GetPropertyName((Models.BackupPlan x) => x.Name));
 				lblTitleTextBinding.Format += TitleFormatter;
