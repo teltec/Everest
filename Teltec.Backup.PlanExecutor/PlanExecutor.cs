@@ -67,8 +67,6 @@ namespace Teltec.Backup.PlanExecutor
 		private ISynchronizeInvoke SynchronizingObject = new MockSynchronizeInvoke();
 		private ExecutorHandler Handler;
 
-		//static OperationProgressReporter Reporter = new OperationProgressReporter(50052);
-
 		#region Main
 
 		static void Main(string[] args)
@@ -130,7 +128,14 @@ namespace Teltec.Backup.PlanExecutor
 		public PlanExecutor()
 		{
 			Handler = new ExecutorHandler(SynchronizingObject, options.ClientName, options.ServiceHost, options.ServicePort);
-			Handler.OnControlPlanCancel = OnControlPlanCancel;
+			Handler.OnControlPlanCancel += OnControlPlanCancel;
+			Handler.OnError += OnErrorReceived;
+		}
+
+		private void OnErrorReceived(object sender, ExecutorCommandEventArgs e)
+		{
+			string message = e.Command.GetArgumentValue<string>("message");
+			logger.Warn("ERROR RECEIVED: {0}", message);
 		}
 
 		private void OnControlPlanCancel(object sender, ExecutorCommandEventArgs e)
@@ -316,6 +321,45 @@ namespace Teltec.Backup.PlanExecutor
 			return true;
 		}
 
+		private Commands.GuiReportPlanStatus BuildGuiReportPlanStatus(Commands.OperationStatus status)
+		{
+			Models.BackupPlan plan = Model as Models.BackupPlan;
+			BackupOperation op = RunningOperation as BackupOperation;
+			Commands.GuiReportPlanStatus data = new Commands.GuiReportPlanStatus
+			{
+				Status = status,
+				StartedAt = op.StartedAt,
+				LastRunAt = plan.LastRunAt,
+				LastSuccessfulRunAt = plan.LastSuccessfulRunAt,
+				Sources = op.Sources,
+			};
+
+			// Sources
+			if (status == Commands.OperationStatus.PROCESSING_FILES_FINISHED
+				|| status == Commands.OperationStatus.FINISHED
+				|| status == Commands.OperationStatus.FAILED
+				|| status == Commands.OperationStatus.CANCELED)
+			{
+				data.Sources = op.Sources;
+			}
+
+			return data;
+		}
+
+		private Commands.GuiReportPlanProgress BuildGuiReportPlanProgress(Commands.OperationStatus status)
+		{
+			Models.BackupPlan plan = Model as Models.BackupPlan;
+			BackupOperation op = RunningOperation as BackupOperation;
+			Commands.GuiReportPlanProgress data = new Commands.GuiReportPlanProgress
+			{
+				Total = TransferResults.Stats.Total,
+				Completed = TransferResults.Stats.Completed,
+				BytesTotal = TransferResults.Stats.BytesCompleted,
+				BytesCompleted = TransferResults.Stats.BytesTotal,
+			};
+			return data;
+		}
+
 		private void BackupUpdateStatsInfo(BackupOperationStatus status)
 		{
 			if (RunningOperation == null)
@@ -335,13 +379,6 @@ namespace Teltec.Backup.PlanExecutor
 				default: throw new ArgumentException("Unhandled status", "status");
 				case BackupOperationStatus.Unknown:
 					{
-						/*
-						this.lblSources.Text = RunningBackup.Sources;
-						this.lblStatus.Text = MustResumeLastBackup ? LBL_STATUS_INTERRUPTED : LBL_STATUS_STOPPED;
-						this.llblRunNow.Text = MustResumeLastBackup ? LBL_RUNNOW_RESUME : LBL_RUNNOW_STOPPED;
-						this.lblFilesTransferred.Text = LBL_FILES_TRANSFER_STOPPED;
-						this.lblDuration.Text = LBL_DURATION_INITIAL;
-						*/
 						break;
 					}
 				case BackupOperationStatus.Started:
@@ -349,30 +386,15 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("{0} backup", status == BackupOperationStatus.Resumed ? "Resuming" : "Starting");
 
+						// Report
 						//message.StartedAt = (RunningOperation as BackupOperation).StartedAt.Value;
 						//message.IsResuming = status == BackupOperationStatus.Resumed;
-
-						/*
-						Assert.IsNotNull(BackupResults);
-						this.lblSources.Text = RunningBackup.Sources;
-						this.llblRunNow.Text = LBL_RUNNOW_RUNNING;
-						this.lblStatus.Text = LBL_STATUS_STARTED;
-						this.lblDuration.Text = LBL_DURATION_STARTED;
-						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							BackupResults.Stats.Completed, BackupResults.Stats.Total);
-
-						this.llblEditPlan.Enabled = false;
-						this.llblDeletePlan.Enabled = false;
-						this.llblRestore.Enabled = false;
-
-						timer1.Enabled = true;
-						timer1.Start();
-						*/
-
-						// Report
-						Commands.OperationStatus cmdState = status == BackupOperationStatus.Started
-							? Commands.OperationStatus.STARTED : Commands.OperationStatus.RESUMED;
-						Handler.Send(Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdStatus = status == BackupOperationStatus.Started
+								? Commands.OperationStatus.STARTED
+								: Commands.OperationStatus.RESUMED;
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case BackupOperationStatus.ScanningFilesStarted:
@@ -380,8 +402,10 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Scanning files...");
 
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.SCANNING_FILES_STARTED;
-						Handler.Send(Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.SCANNING_FILES_STARTED;
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case BackupOperationStatus.ScanningFilesFinished:
@@ -389,8 +413,10 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Scanning files finished.");
 
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.SCANNING_FILES_FINISHED;
-						Handler.Send(Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.SCANNING_FILES_FINISHED;
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case BackupOperationStatus.ProcessingFilesStarted:
@@ -398,8 +424,10 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Processing files...");
 
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.PROCESSING_FILES_STARTED;
-						Handler.Send(Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.PROCESSING_FILES_STARTED;
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case BackupOperationStatus.ProcessingFilesFinished:
@@ -408,75 +436,51 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.PROCESSING_FILES_FINISHED;
-						Handler.Send(Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.PROCESSING_FILES_FINISHED;
+						// Report sources
+						Commands.GuiReportPlanStatus cmdData1 = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd1 = Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdData1);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd1);
+						// Report counts
+						Commands.GuiReportPlanProgress cmdData2 = BuildGuiReportPlanProgress(cmdStatus);
+						string cmd2 = Commands.GuiReportOperationProgress("backup", plan.Id.Value, cmdData2);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd2);
 						break;
 					}
 				case BackupOperationStatus.Finished:
 					{
-						/*
-						UpdateDuration(status);
-						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
-						this.lblStatus.Text = LBL_STATUS_COMPLETED;
-
-						this.llblEditPlan.Enabled = true;
-						this.llblDeletePlan.Enabled = true;
-						this.llblRestore.Enabled = true;
-
-						timer1.Stop();
-						timer1.Enabled = false;
-						*/
-
 						logger.Info("Backup finished.");
 
 						// Update timestamps.
 						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
 						_daoBackupPlan.Update(plan);
 
-						//message.FinishedAt = plan.LastRunAt.Value;
-
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.FINISHED;
-						Handler.Send(Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdState));
+						//message.FinishedAt = plan.LastRunAt.Value;
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.FINISHED;
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case BackupOperationStatus.Updated:
 					{
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
-						//message.TransferResults = TransferResultsMsgPart.CopyFrom(TransferResults);
-
-						/*
-						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							BackupResults.Stats.Completed, BackupResults.Stats.Total);
-						*/
-
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.UPDATED;
-						Handler.Send(Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdState));
+						//message.TransferResults = TransferResultsMsgPart.CopyFrom(TransferResults);
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.UPDATED;
+						Commands.GuiReportPlanProgress cmdData = BuildGuiReportPlanProgress(cmdStatus);
+						string cmd = Commands.GuiReportOperationProgress("backup", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case BackupOperationStatus.Failed:
 				case BackupOperationStatus.Canceled:
 					{
-						/*
-						UpdateDuration(status);
-
-						this.lblSources.Text = RunningBackup.Sources;
-						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
-						this.lblStatus.Text = status == BackupOperationStatus.Canceled ? LBL_STATUS_CANCELED : LBL_STATUS_FAILED;
-
-						this.llblEditPlan.Enabled = true;
-						this.llblDeletePlan.Enabled = true;
-						this.llblRestore.Enabled = true;
-
-						timer1.Stop();
-						timer1.Enabled = false;
-						*/
-
 						logger.Info("Backup {0}.", status == BackupOperationStatus.Failed ? "failed" : "was canceled");
 						logger.Info("{0}: {1} of {2}", status == BackupOperationStatus.Failed ? "Failed" : "Canceled",
 							TransferResults.Stats.Completed, TransferResults.Stats.Total);
@@ -485,15 +489,17 @@ namespace Teltec.Backup.PlanExecutor
 						plan.LastRunAt = DateTime.UtcNow;
 						_daoBackupPlan.Update(plan);
 
-						//message.FinishedAt = plan.LastRunAt.Value;
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						Commands.OperationStatus cmdState = status == BackupOperationStatus.Failed
+						//message.FinishedAt = plan.LastRunAt.Value;
+						Commands.OperationStatus cmdStatus = status == BackupOperationStatus.Failed
 							? Commands.OperationStatus.FAILED : Commands.OperationStatus.CANCELED;
-						Handler.Send(Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdState));
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 			}
@@ -520,13 +526,6 @@ namespace Teltec.Backup.PlanExecutor
 				default: throw new ArgumentException("Unhandled status", "status");
 				case RestoreOperationStatus.Unknown:
 					{
-						/*
-						this.lblSources.Text = RunningRestore.Sources;
-						this.lblStatus.Text = MustResumeLastRestore ? LBL_STATUS_INTERRUPTED : LBL_STATUS_STOPPED;
-						this.llblRunNow.Text = MustResumeLastRestore ? LBL_RUNNOW_RESUME : LBL_RUNNOW_STOPPED;
-						this.lblFilesTransferred.Text = LBL_FILES_TRANSFER_STOPPED;
-						this.lblDuration.Text = LBL_DURATION_INITIAL;
-						 */
 						break;
 					}
 				case RestoreOperationStatus.Started:
@@ -534,42 +533,25 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("{0} restore", status == RestoreOperationStatus.Resumed ? "Resuming" : "Starting");
 
+						// Report
 						//message.StartedAt = (RunningOperation as RestoreOperation).StartedAt.Value;
 						//message.IsResuming = status == RestoreOperationStatus.Resumed;
-
-						/*
-						Assert.IsNotNull(RestoreResults);
-						this.lblSources.Text = RunningRestore.Sources;
-						this.llblRunNow.Text = LBL_RUNNOW_RUNNING;
-						this.lblStatus.Text = LBL_STATUS_STARTED;
-						this.lblDuration.Text = LBL_DURATION_STARTED;
-						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							RestoreResults.Stats.Completed, RestoreResults.Stats.Total);
-
-						this.llblEditPlan.Enabled = false;
-						this.llblDeletePlan.Enabled = false;
-
-						timer1.Enabled = true;
-						timer1.Start();
-						*/
-
-						// Report
-						Commands.OperationStatus cmdState = status == RestoreOperationStatus.Started
+						Commands.OperationStatus cmdStatus = status == RestoreOperationStatus.Started
 							? Commands.OperationStatus.STARTED : Commands.OperationStatus.RESUMED;
-						Handler.Send(Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdState));
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case RestoreOperationStatus.ScanningFilesStarted:
 					{
 						logger.Info("Scanning files...");
 
-						/*
-						this.lblSources.Text = "Scanning files...";
-						*/
-
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.SCANNING_FILES_STARTED;
-						Handler.Send(Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.SCANNING_FILES_STARTED;
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case RestoreOperationStatus.ScanningFilesFinished:
@@ -577,21 +559,20 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Scanning files finished.");
 
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.SCANNING_FILES_FINISHED;
-						Handler.Send(Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.SCANNING_FILES_FINISHED;
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case RestoreOperationStatus.ProcessingFilesStarted:
 					{
 						logger.Info("Processing files...");
 
-						/*
-						this.lblSources.Text = "Processing files...";
-						*/
-
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.PROCESSING_FILES_STARTED;
-						Handler.Send(Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.PROCESSING_FILES_STARTED;
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						Handler.Send(Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdData));
 						break;
 					}
 				case RestoreOperationStatus.ProcessingFilesFinished:
@@ -599,80 +580,52 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Processing files finished.");
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
-						/*
-						this.lblSources.Text = RunningRestore.Sources;
-						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							RestoreResults.Stats.Completed, RestoreResults.Stats.Total);
-						*/
-
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.PROCESSING_FILES_FINISHED;
-						Handler.Send(Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdState));
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.PROCESSING_FILES_FINISHED;
+						// Report sources
+						Commands.GuiReportPlanStatus cmdData1 = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd1 = Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdData1);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd1);
+						// Report counts
+						Commands.GuiReportPlanProgress cmdData2 = BuildGuiReportPlanProgress(cmdStatus);
+						string cmd2 = Commands.GuiReportOperationProgress("restore", plan.Id.Value, cmdData2);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd2);
 						break;
 					}
 				case RestoreOperationStatus.Finished:
 					{
-						/*
-						UpdateDuration(status);
-						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
-						this.lblStatus.Text = LBL_STATUS_COMPLETED;
-
-						this.llblEditPlan.Enabled = true;
-						this.llblDeletePlan.Enabled = true;
-
-						timer1.Stop();
-						timer1.Enabled = false;
-						*/
-
 						logger.Info("Restore finished.");
 
 						// Update timestamps.
 						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
 						_daoRestorePlan.Update(plan);
 
-						//message.FinishedAt = plan.LastRunAt.Value;
-
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.FINISHED;
-						Handler.Send(Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdState));
+						//message.FinishedAt = plan.LastRunAt.Value;
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.FINISHED;
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case RestoreOperationStatus.Updated:
 					{
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
-						//message.TransferResults = TransferResultsMsgPart.CopyFrom(TransferResults);
-
-						/*
-						this.lblFilesTransferred.Text = string.Format("{0} of {1}",
-							RestoreResults.Stats.Completed, RestoreResults.Stats.Total);
-						*/
-
 						// Report
-						Commands.OperationStatus cmdState = Commands.OperationStatus.UPDATED;
-						Handler.Send(Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdState));
+						//message.TransferResults = TransferResultsMsgPart.CopyFrom(TransferResults);
+						Commands.OperationStatus cmdStatus = Commands.OperationStatus.UPDATED;
+						Commands.GuiReportPlanProgress cmdData = BuildGuiReportPlanProgress(cmdStatus);
+						string cmd = Commands.GuiReportOperationProgress("restore", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 				case RestoreOperationStatus.Failed:
 				case RestoreOperationStatus.Canceled:
 					{
-						/*
-						UpdateDuration(status);
-
-						this.lblSources.Text = RunningRestore.Sources;
-						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
-						this.lblStatus.Text = status == RestoreOperationStatus.Canceled ? LBL_STATUS_CANCELED : LBL_STATUS_FAILED;
-
-						this.llblEditPlan.Enabled = true;
-						this.llblDeletePlan.Enabled = true;
-
-						timer1.Stop();
-						timer1.Enabled = false;
-						*/
-
 						logger.Info("Restore {0}.", status == RestoreOperationStatus.Failed ? "failed" : "was canceled");
 						logger.Info("{0}: {1} of {2}", status == RestoreOperationStatus.Failed ? "Failed" : "Canceled",
 							TransferResults.Stats.Completed, TransferResults.Stats.Total);
@@ -681,15 +634,16 @@ namespace Teltec.Backup.PlanExecutor
 						plan.LastRunAt = DateTime.UtcNow;
 						_daoRestorePlan.Update(plan);
 
-						//message.FinishedAt = plan.LastRunAt.Value;
-
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						Commands.OperationStatus cmdState = status == RestoreOperationStatus.Failed
+						//message.FinishedAt = plan.LastRunAt.Value;
+						Commands.OperationStatus cmdStatus = status == RestoreOperationStatus.Failed
 							? Commands.OperationStatus.FAILED : Commands.OperationStatus.CANCELED;
-						Handler.Send(Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdState));
+						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
+						string cmd = Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdData);
+						Handler.Route(Commands.IPC_DEFAULT_GUI_CLIENT_NAME, cmd);
 						break;
 					}
 			}
@@ -718,13 +672,11 @@ namespace Teltec.Backup.PlanExecutor
 			{
 				if (disposing && _shouldDispose)
 				{
-					/*
-					if (Reporter != null)
+					if (Handler != null)
 					{
-						Reporter.Dispose();
-						Reporter = null;
+						Handler.Dispose();
+						Handler = null;
 					}
-					*/
 				}
 				this._isDisposed = true;
 			}

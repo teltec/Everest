@@ -17,11 +17,17 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		public delegate void ExecutorCommandHandler(object sender, ExecutorCommandEventArgs e);
 
-		public ExecutorCommandHandler OnControlPlanCancel;
+		public event ExecutorCommandHandler OnError;
+		public event ExecutorCommandHandler OnControlPlanCancel;
 
 		protected override void RegisterCommandHandlers()
 		{
-			Commands.EXECUTOR_CONTROL_PLAN_CANCEL.Handler = delegate(object sender, EventArgs e)
+			Commands.EXECUTOR_ERROR.Handler += delegate(object sender, EventArgs e)
+			{
+				if (OnError != null)
+					OnError(this, (ExecutorCommandEventArgs)e);
+			};
+			Commands.EXECUTOR_CONTROL_PLAN_CANCEL.Handler += delegate(object sender, EventArgs e)
 			{
 				if (OnControlPlanCancel != null)
 					OnControlPlanCancel(this, (ExecutorCommandEventArgs)e);

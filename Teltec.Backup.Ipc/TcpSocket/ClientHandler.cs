@@ -131,6 +131,13 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			Client.Send(data);
 		}
 
+		public void Route(string targetName, string cmd)
+		{
+			string routeCmd = Commands.WrapToRoute(targetName, cmd);
+			byte[] data = StringToBytes(routeCmd);
+			Client.Send(data);
+		}
+
 		private void Client_Connected(object sender, ClientConnectedEventArgs e)
 		{
 			Send(Commands.Register(ClientName));

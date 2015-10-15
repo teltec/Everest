@@ -46,7 +46,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Serialization\CustomJsonSerializer.cs" />
+    <Compile Include="Protocol\ArgumentDefinition.cs" />
+    <Compile Include="Serialization\NotNullJsonSerializer.cs" />
     <Compile Include="PubSub\Actors.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PubSub\Messages.cs" />

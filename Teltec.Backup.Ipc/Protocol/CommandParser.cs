@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.Ipc.Protocol
 {
@@ -53,22 +54,41 @@ namespace Teltec.Backup.Ipc.Protocol
 				// Read and validate arguments.
 				foreach (DictionaryEntry entry in commandMatch.OrderedArgumentDefinitions)
 				{
-					currentToken = msg.NextToken();
-
+					ArgumentDefinition definedArg = (ArgumentDefinition)entry.Value;
 					string definedArgName = (string)entry.Key;
-					Type definedArgType = (Type)entry.Value;
-					string passedArgValue = currentToken;
+					Type definedArgType = definedArg.Type;
+					string passedArgValue = definedArg.Trailing ? msg.RemainingTokens() : msg.NextToken();
 
 					try
 					{
-						object deserializedValue = JsonConvert.DeserializeObject(passedArgValue, definedArgType);
-						boundCommand.BindArgument(definedArgName, deserializedValue);
+						bool isString = definedArgType.IsSameOrSubclass(typeof(string));
+						if (isString)
+						{
+							boundCommand.BindArgument(definedArgName, passedArgValue);
+						}
+						else
+						{
+							bool isComplex = definedArgType.IsSameOrSubclass(typeof(ComplexArgument));
+							if (isComplex)
+							{
+								dynamic deserializedValue = JsonConvert.DeserializeObject(passedArgValue, definedArgType);
+								boundCommand.BindArgument(definedArgName, deserializedValue);
+							}
+							else
+							{
+								dynamic convertedArgValue = Convert.ChangeType(passedArgValue, definedArgType);
+								boundCommand.BindArgument(definedArgName, convertedArgValue);
+							}
+						}
 					}
 					catch (Exception ex)
 					{
 						errorMessage = ex.Message;
 						return null;
 					}
+
+					if (definedArg.Trailing)
+						break; // There shouldn't be any arguments after this one.
 				}
 			}
 

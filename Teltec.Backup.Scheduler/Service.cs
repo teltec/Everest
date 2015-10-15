@@ -104,11 +104,11 @@ namespace Teltec.Backup.Scheduler
 			CanShutdown = true;
 
 			Handler = new ServerHandler(SynchronizingObject);
-			Handler.OnControlPlanQuery = OnControlPlanQuery;
-			Handler.OnControlPlanRun = OnControlPlanRun;
-			Handler.OnControlPlanResume = OnControlPlanResume;
-			Handler.OnControlPlanCancel = OnControlPlanCancel;
-			Handler.OnControlPlanKill = OnControlPlanKill;
+			Handler.OnControlPlanQuery += OnControlPlanQuery;
+			Handler.OnControlPlanRun += OnControlPlanRun;
+			Handler.OnControlPlanResume += OnControlPlanResume;
+			Handler.OnControlPlanCancel += OnControlPlanCancel;
+			Handler.OnControlPlanKill += OnControlPlanKill;
 		}
 
 		private void InitializeComponent()
@@ -531,7 +531,14 @@ namespace Teltec.Backup.Scheduler
 			string planType = e.Command.GetArgumentValue<string>("planType");
 			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
 
-			// TODO(jweyrich): Report to GUI.
+			// Report to GUI.
+			Commands.GuiReportPlanStatus report = new Commands.GuiReportPlanStatus
+			{
+				Status = IsPlanRunning(planType, planId)
+					? Commands.OperationStatus.INTERRUPTED
+					: Commands.OperationStatus.NOT_RUNNING,
+			};
+			Handler.Send(e.Context, Commands.GuiReportOperationStatus(planType, planId, report));
 		}
 
 		private void OnControlPlanRun(object sender, ServerCommandEventArgs e)
@@ -928,6 +935,27 @@ namespace Teltec.Backup.Scheduler
 		protected void Info(string format, params object[] args)
 		{
 			Log(System.Diagnostics.EventLogEntryType.Information, format, args);
+		}
+
+		#endregion
+
+		#region Dispose Pattern Implementation
+
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				if (Handler != null)
+				{
+					Handler.Dispose();
+					Handler = null;
+				}
+			}
+			base.Dispose(disposing);
 		}
 
 		#endregion

@@ -6,6 +6,7 @@ using Teltec.Backup.App.Forms.BackupPlan;
 using Teltec.Backup.App.Forms.RestorePlan;
 using Teltec.Backup.App.Forms.Settings;
 using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Ipc.TcpSocket;
 
 namespace Teltec.Backup.App.Forms
 {
@@ -14,11 +15,31 @@ namespace Teltec.Backup.App.Forms
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 		private readonly BackupPlanRepository _dao = new BackupPlanRepository();
 
+		private void AttachEventHandlers()
+		{
+			// IMPORTANT: These handlers should be detached on Dispose.
+			Provider.Handler.OnError += OnError;
+		}
+
+		private void DetachEventHandlers()
+		{
+			Provider.Handler.OnError -= OnError;
+		}
+
         public MainForm()
         {
             InitializeComponent();
+
+			Provider.BuildHandler(this);
+
 			ChangedToTab(0);
         }
+
+		private void OnError(object sender, GuiCommandEventArgs e)
+		{
+			string message = e.Command.GetArgumentValue<string>("message");
+			MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+		}
 
         private void amazonS3ToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -93,5 +114,23 @@ namespace Teltec.Backup.App.Forms
 				form.ShowDialog(this);
 			}
 		}
-    }
+
+		#region Dispose Pattern Implementation
+
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing && (components != null))
+			{
+				components.Dispose();
+				DetachEventHandlers();
+			}
+			base.Dispose(disposing);
+		}
+
+		#endregion
+	}
 }

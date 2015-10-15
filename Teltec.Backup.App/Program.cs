@@ -38,10 +38,11 @@ namespace Teltec.Backup.App
 		static void UnsafeMain()
 		{
 			Provider.Setup();
+			LoadSettings();
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			LoadSettings();
-			Application.Run(new MainForm());
+			MainForm mainForm = new MainForm();
+			Application.Run(mainForm);
 			Provider.Cleanup();
 		}
 

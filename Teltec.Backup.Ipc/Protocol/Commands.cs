@@ -1,32 +1,23 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace Teltec.Backup.Ipc.Protocol
 {
 	public static class Commands
 	{
-		public static readonly string IPC_DEFAULT_HOST = "127.0.0.1";
-		public static readonly int IPC_DEFAULT_PORT = 8000;
-		public static readonly string IPC_DEFAULT_GUI_CLIENT_NAME = "gui";
+		public const string IPC_DEFAULT_HOST = "127.0.0.1";
+		public const int IPC_DEFAULT_PORT = 8000;
+		public const string IPC_DEFAULT_GUI_CLIENT_NAME = "gui";
 
 		// ----------------------------------------------------------------------------------------
 
 		public static readonly Command SRV_ERROR = new Command("ERROR")
-			.WithArgument("message", typeof(string));
+			.WithArgument("message", typeof(string), true);
 
 		public static readonly Command SRV_REGISTER = new Command("REGISTER")
 			.WithArgument("clientName", typeof(string))
 			.AllowAnonymous();
-
-		public static readonly Command SRV_CONTROL = new Command("CONTROL")
-			.WithSubCommand(SRV_CONTROL_PLAN);
-
-		public static readonly Command SRV_CONTROL_PLAN = new Command("PLAN")
-			.WithSubCommand(SRV_CONTROL_PLAN_QUERY)
-			.WithSubCommand(SRV_CONTROL_PLAN_RUN)
-			.WithSubCommand(SRV_CONTROL_PLAN_RESUME)
-			.WithSubCommand(SRV_CONTROL_PLAN_CANCEL)
-			.WithSubCommand(SRV_CONTROL_PLAN_KILL);
 
 		public static readonly Command SRV_CONTROL_PLAN_QUERY = new Command("QUERY")
 			.WithArgument("planType", typeof(string))
@@ -48,12 +39,22 @@ namespace Teltec.Backup.Ipc.Protocol
 			.WithArgument("planType", typeof(string))
 			.WithArgument("planId", typeof(Int32));
 
+		public static readonly Command SRV_CONTROL_PLAN = new Command("PLAN")
+			.WithSubCommand(SRV_CONTROL_PLAN_QUERY)
+			.WithSubCommand(SRV_CONTROL_PLAN_RUN)
+			.WithSubCommand(SRV_CONTROL_PLAN_RESUME)
+			.WithSubCommand(SRV_CONTROL_PLAN_CANCEL)
+			.WithSubCommand(SRV_CONTROL_PLAN_KILL);
+
+		public static readonly Command SRV_CONTROL = new Command("CONTROL")
+			.WithSubCommand(SRV_CONTROL_PLAN);
+
 		public static readonly Command SRV_ROUTE = new Command("ROUTE")
 			.WithArgument("targetName", typeof(string))
-			.WithArgument("message", typeof(string));
+			.WithArgument("message", typeof(string), true);
 
 		public static readonly Command SRV_BROADCAST = new Command("BROADCAST")
-			.WithArgument("message", typeof(string));
+			.WithArgument("message", typeof(string), true);
 
 		public static readonly Command[] SERVER_COMMANDS = new Command[]
 		{
@@ -68,15 +69,15 @@ namespace Teltec.Backup.Ipc.Protocol
 		// ----------------------------------------------------------------------------------------
 
 		public static readonly Command EXECUTOR_ERROR = new Command("ERROR")
-			.WithArgument("message", typeof(string));
+			.WithArgument("message", typeof(string), true);
 
-		public static readonly Command EXECUTOR_CONTROL = new Command("CONTROL")
-			.WithSubCommand(EXECUTOR_CONTROL_PLAN);
+		public static readonly Command EXECUTOR_CONTROL_PLAN_CANCEL = new Command("CANCEL");
 
 		public static readonly Command EXECUTOR_CONTROL_PLAN = new Command("PLAN")
 			.WithSubCommand(EXECUTOR_CONTROL_PLAN_CANCEL);
 
-		public static readonly Command EXECUTOR_CONTROL_PLAN_CANCEL = new Command("CANCEL");
+		public static readonly Command EXECUTOR_CONTROL = new Command("CONTROL")
+			.WithSubCommand(EXECUTOR_CONTROL_PLAN);
 
 		public static readonly Command[] EXECUTOR_COMMANDS = new Command[]
 		{
@@ -89,6 +90,8 @@ namespace Teltec.Backup.Ipc.Protocol
 
 		public enum OperationStatus
 		{
+			NOT_RUNNING,
+			INTERRUPTED,
 			STARTED,
 			RESUMED,
 			SCANNING_FILES_STARTED,
@@ -101,30 +104,54 @@ namespace Teltec.Backup.Ipc.Protocol
 			CANCELED,
 		}
 
+		public static bool IsEnded(this OperationStatus status)
+		{
+			return status == OperationStatus.NOT_RUNNING
+				|| status == OperationStatus.INTERRUPTED
+				|| status == OperationStatus.CANCELED
+				|| status == OperationStatus.FAILED
+				|| status == OperationStatus.FINISHED;
+		}
+
+		public class GuiReportPlanStatus : ComplexArgument
+		{
+			public OperationStatus Status;
+			public DateTime? StartedAt;
+			public DateTime? LastRunAt;
+			public DateTime? LastSuccessfulRunAt;
+			//public string ScheduleType;
+			public string Sources;
+		}
+
+		public class GuiReportPlanProgress : ComplexArgument
+		{
+			public int Total;
+			public int Completed;
+			public long BytesTotal;
+			public long BytesCompleted;
+		}
+
 		public static readonly Command GUI_ERROR = new Command("ERROR")
-			.WithArgument("message", typeof(string));
-
-		public static readonly Command GUI_REPORT = new Command("REPORT")
-			.WithSubCommand(GUI_REPORT_PLAN);
-
-		public static readonly Command GUI_REPORT_PLAN = new Command("PLAN")
-			.WithSubCommand(GUI_REPORT_PLAN_PROGRESS);
+			.WithArgument("message", typeof(string), true);
 
 		public static readonly Command GUI_REPORT_PLAN_STATUS = new Command("STATUS")
 			.WithArgument("planType", typeof(string))
 			.WithArgument("planId", typeof(Int32))
-			.WithArgument("status", typeof(OperationStatus))
-			.WithArgument("startedAt", typeof(string))
-			.WithArgument("lastRunAt", typeof(string))
-			.WithArgument("lastSuccessfulRunAt", typeof(string))
-			.WithArgument("scheduleType", typeof(string))
-			.WithArgument("sources", typeof(string))
+			.WithArgument("report", typeof(GuiReportPlanStatus), true)
 			;
 
 		public static readonly Command GUI_REPORT_PLAN_PROGRESS = new Command("PROGRESS")
 			.WithArgument("planType", typeof(string))
 			.WithArgument("planId", typeof(Int32))
+			.WithArgument("progress", typeof(GuiReportPlanProgress), true)
 			;
+
+		public static readonly Command GUI_REPORT_PLAN = new Command("PLAN")
+			.WithSubCommand(GUI_REPORT_PLAN_STATUS)
+			.WithSubCommand(GUI_REPORT_PLAN_PROGRESS);
+
+		public static readonly Command GUI_REPORT = new Command("REPORT")
+			.WithSubCommand(GUI_REPORT_PLAN);
 
 		public static readonly Command[] GUI_COMMANDS = new Command[]
 		{
@@ -225,15 +252,7 @@ namespace Teltec.Backup.Ipc.Protocol
 			return result;
 		}
 
-		public static string GuiReportOperationStatus(
-			string planType,
-			Int32 planId,
-			OperationStatus status,
-			DateTime? startedAt,
-			DateTime? lastRunAt,
-			DateTime? lastSuccessfulRunAt,
-			string scheduleType,
-			string sources)
+		public static string GuiReportOperationStatus(string planType, Int32 planId, GuiReportPlanStatus report)
 		{
 			if (!IsValidPlanType(planType))
 				throw new ArgumentException("Invalid plan type", "planType");
@@ -241,6 +260,9 @@ namespace Teltec.Backup.Ipc.Protocol
 			BoundCommand bound = new BoundCommand(GUI_REPORT_PLAN_STATUS);
 			bound.BindArgument<string>("planType", planType);
 			bound.BindArgument<Int32>("planId", planId);
+#if true
+			bound.BindArgument<GuiReportPlanStatus>("report", report);
+#else
 			bound.BindArgument<string>("status", status.ToString());
 
 			string startedAtStr = startedAt.HasValue
@@ -255,19 +277,37 @@ namespace Teltec.Backup.Ipc.Protocol
 
 			string sourcesStr = EncodeString(sources);
 
-			bound.BindArgument<string>("startedAt", startedAtStr);
+			bound.BindArgument<string>("report", startedAtStr);
 			bound.BindArgument<string>("lastRunAt", lastRunAtStr);
 			bound.BindArgument<string>("lastSuccessfulRunAt", lastSuccessfulRunAtStr);
 			bound.BindArgument<string>("scheduleType", scheduleType);
 			bound.BindArgument<string>("sources", sourcesStr);
+#endif
 
-			string message = bound.ToString();
+			string result = bound.ToString();
+			return result;
+		}
 
-			BoundCommand route = new BoundCommand(SRV_ROUTE);
-			route.BindArgument<string>("targetName", Commands.IPC_DEFAULT_GUI_CLIENT_NAME);
-			route.BindArgument<string>("message", message);
+		public static string GuiReportOperationProgress(string planType, Int32 planId, GuiReportPlanProgress progress)
+		{
+			if (!IsValidPlanType(planType))
+				throw new ArgumentException("Invalid plan type", "planType");
 
-			string result = route.ToString();
+			BoundCommand bound = new BoundCommand(GUI_REPORT_PLAN_PROGRESS);
+			bound.BindArgument<string>("planType", planType);
+			bound.BindArgument<Int32>("planId", planId);
+			bound.BindArgument<GuiReportPlanProgress>("progress", progress);
+
+			string result = bound.ToString();
+			return result;
+		}
+
+		public static string WrapToRoute(string targetName, string message)
+		{
+			BoundCommand bound = new BoundCommand(SRV_ROUTE);
+			bound.BindArgument<string>("targetName", targetName);
+			bound.BindArgument<string>("message", message);
+			string result = bound.ToString();
 			return result;
 		}
 
@@ -287,22 +327,6 @@ namespace Teltec.Backup.Ipc.Protocol
 				throw new ArgumentException("Invalid plan type", "planType");
 
 			return string.Format("executor:{0}:{1}", planType.ToUpper(), planId);
-		}
-
-		public static string EncodeString(string value)
-		{
-			if (value == null)
-				return null;
-
-			return value.Replace(" ", "|");
-		}
-
-		public static string DecodeString(string value)
-		{
-			if (value == null)
-				return null;
-
-			return value.Replace("|", " ");
 		}
 	}
 }

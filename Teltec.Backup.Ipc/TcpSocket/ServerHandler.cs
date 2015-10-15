@@ -42,38 +42,39 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		public delegate void ServerCommandHandler(object sender, ServerCommandEventArgs e);
 
-		public ServerCommandHandler OnControlPlanQuery;
-		public ServerCommandHandler OnControlPlanRun;
-		public ServerCommandHandler OnControlPlanResume;
-		public ServerCommandHandler OnControlPlanCancel;
-		public ServerCommandHandler OnControlPlanKill;
+		public event ServerCommandHandler OnControlPlanQuery;
+		public event ServerCommandHandler OnControlPlanRun;
+		public event ServerCommandHandler OnControlPlanResume;
+		public event ServerCommandHandler OnControlPlanCancel;
+		public event ServerCommandHandler OnControlPlanKill;
 
 		private void RegisterCommandHandlers()
 		{
-			Commands.SRV_REGISTER.Handler = OnRegister;
-			Commands.SRV_ROUTE.Handler = OnRoute;
-			Commands.SRV_BROADCAST.Handler = OnBroadcast;
-			Commands.SRV_CONTROL_PLAN_QUERY.Handler = delegate(object sender, EventArgs e)
+			Commands.SRV_ERROR.Handler += OnError;
+			Commands.SRV_REGISTER.Handler += OnRegister;
+			Commands.SRV_ROUTE.Handler += OnRoute;
+			Commands.SRV_BROADCAST.Handler += OnBroadcast;
+			Commands.SRV_CONTROL_PLAN_QUERY.Handler += delegate(object sender, EventArgs e)
 			{
 				if (OnControlPlanQuery != null)
 					OnControlPlanQuery(this, (ServerCommandEventArgs)e);
 			};
-			Commands.SRV_CONTROL_PLAN_RUN.Handler = delegate(object sender, EventArgs e)
+			Commands.SRV_CONTROL_PLAN_RUN.Handler += delegate(object sender, EventArgs e)
 			{
 				if (OnControlPlanRun != null)
 					OnControlPlanRun(this, (ServerCommandEventArgs)e);
 			};
-			Commands.SRV_CONTROL_PLAN_RESUME.Handler = delegate(object sender, EventArgs e)
+			Commands.SRV_CONTROL_PLAN_RESUME.Handler += delegate(object sender, EventArgs e)
 			{
 				if (OnControlPlanResume != null)
 					OnControlPlanResume(this, (ServerCommandEventArgs)e);
 			};
-			Commands.SRV_CONTROL_PLAN_CANCEL.Handler = delegate(object sender, EventArgs e)
+			Commands.SRV_CONTROL_PLAN_CANCEL.Handler += delegate(object sender, EventArgs e)
 			{
 				if (OnControlPlanCancel != null)
 					OnControlPlanCancel(this, (ServerCommandEventArgs)e);
 			};
-			Commands.SRV_CONTROL_PLAN_KILL.Handler = delegate(object sender, EventArgs e)
+			Commands.SRV_CONTROL_PLAN_KILL.Handler += delegate(object sender, EventArgs e)
 			{
 				if (OnControlPlanKill != null)
 					OnControlPlanKill(this, (ServerCommandEventArgs)e);
@@ -198,6 +199,14 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			command.InvokeHandler(this, new ServerCommandEventArgs { Context = context, Command = command });
 
 			return true;
+		}
+
+		private void OnError(object sender, EventArgs e)
+		{
+			ServerCommandEventArgs args = (ServerCommandEventArgs)e;
+			string message = args.Command.GetArgumentValue<string>("message");
+
+			logger.Warn("ERROR FROM CLIENT: {0}", message);
 		}
 
 		private void OnRegister(object sender, EventArgs e)

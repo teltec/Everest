@@ -14,7 +14,7 @@ namespace Teltec.Backup.Ipc.Serialization
 	// Source?  http://stackoverflow.com/a/10454062/298054
 	// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
 	//
-	public static class CustomJsonSerializer
+	public static class NotNullJsonSerializer
 	{
 		public static string SerializeObject(object obj, int maxDepth = 999)
 		{

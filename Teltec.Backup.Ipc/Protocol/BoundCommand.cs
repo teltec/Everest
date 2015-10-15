@@ -1,6 +1,8 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Teltec.Backup.Ipc.Serialization;
 using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.Ipc.Protocol
@@ -26,10 +28,7 @@ namespace Teltec.Backup.Ipc.Protocol
 
 		public void InvokeHandler(object sender, EventArgs e)
 		{
-			if (Command.Handler == null)
-				return;
-
-			Command.Handler.Invoke(sender, e);
+			Command.InvokeHandler(sender, e);
 		}
 
 		public BoundCommand BindArgument<T>(string argName, T argValue)
@@ -45,12 +44,13 @@ namespace Teltec.Backup.Ipc.Protocol
 				throw new InvalidOperationException(message);
 			}
 
-			Type argType = (Type)Command.OrderedArgumentDefinitions[argName];
+			Type argValueType = typeof(T);
+			ArgumentDefinition argDefinition = (ArgumentDefinition)Command.OrderedArgumentDefinitions[argName];
 
-			if (!typeof(T).IsSameOrSubclass(argType))
+			if (!argValueType.IsSameOrSubclass(argDefinition.Type))
 			{
 				string message = string.Format("Command {0} accepts argument {1} with type {2}, but received type {3}",
-					Command.Name, argName, argType.Name, typeof(T).Name);
+					Command.Name, argName, argDefinition.Type.Name, typeof(T).Name);
 				throw new InvalidOperationException(message);
 			}
 
@@ -91,8 +91,9 @@ namespace Teltec.Backup.Ipc.Protocol
 			int i = 0;
 			foreach (DictionaryEntry entry in Command.OrderedArgumentDefinitions)
 			{
+				ArgumentDefinition acceptedArgDefinition = (ArgumentDefinition)entry.Value;
 				string acceptedArgName = (string)entry.Key;
-				Type acceptedArgType = (Type)entry.Value;
+				Type acceptedArgType = acceptedArgDefinition.Type;
 				// The call below DOES NOT CORRECTLY validate argument types.
 				BindArgument(acceptedArgName, argValues[i++]);
 			}
@@ -107,18 +108,18 @@ namespace Teltec.Backup.Ipc.Protocol
 
 		public override string ToString()
 		{
-			Queue<Command> commandQueue = new Queue<Command>();
-			// Enqueue commands until there is no parent.
+			Stack<Command> commandStack = new Stack<Command>();
+			// Stack commands until there is no parent.
 			// For example: 1 RUN PLAN CONTROL
 			for (Command cmd = this.Command; cmd != null; cmd = cmd.Parent)
 			{
-				commandQueue.Enqueue(cmd);
+				commandStack.Push(cmd);
 			}
 
-			// Then dequeue them and add to a list.
+			// Then unstack them and add to a list.
 			// For example: CONTROL PLAN RUN 1
-			List<string> commandList = new List<string>(commandQueue.Count);
-			for (Command cmd = commandQueue.Dequeue(); cmd != null; cmd = commandQueue.Dequeue())
+			List<string> commandList = new List<string>(commandStack.Count);
+			for (Command cmd = commandStack.Pop(); cmd != null; cmd = commandStack.Pop())
 			{
 				commandList.Add(cmd.Name);
 
@@ -126,8 +127,9 @@ namespace Teltec.Backup.Ipc.Protocol
 				{
 					foreach (DictionaryEntry acceptedArg in cmd.OrderedArgumentDefinitions)
 					{
+						ArgumentDefinition acceptedArgDefinition = (ArgumentDefinition)acceptedArg.Value;
 						string acceptedArgName = (string)acceptedArg.Key;
-						Type acceptedArgType = (Type)acceptedArg.Value;
+						Type acceptedArgType = acceptedArgDefinition.Type;
 
 						bool found = ArgumentValues.ContainsKey(acceptedArgName);
 						if (!found)
@@ -145,7 +147,16 @@ namespace Teltec.Backup.Ipc.Protocol
 								cmd.Name, acceptedArgName, acceptedArgType.ToString()));
 						}
 
-						commandList.Add(passedArgValue.ToString());
+						bool isComplex = passedArgType.IsSameOrSubclass(typeof(ComplexArgument));
+						if (isComplex)
+						{
+							string serializedValue = NotNullJsonSerializer.SerializeObject(passedArgValue); // Needs strong typing?
+							commandList.Add(serializedValue);
+						}
+						else
+						{
+							commandList.Add(passedArgValue.ToString());
+						}
 					}
 
 					break; // Ignore remaining commands.

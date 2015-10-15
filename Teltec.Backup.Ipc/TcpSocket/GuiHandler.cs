@@ -17,17 +17,23 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		public delegate void GuiCommandHandler(object sender, GuiCommandEventArgs e);
 
-		public GuiCommandHandler OnReportPlanStatus;
-		public GuiCommandHandler OnReportPlanProgress;
+		public event GuiCommandHandler OnError;
+		public event GuiCommandHandler OnReportPlanStatus;
+		public event GuiCommandHandler OnReportPlanProgress;
 
 		protected override void RegisterCommandHandlers()
 		{
-			Commands.GUI_REPORT_PLAN_STATUS.Handler = delegate(object sender, EventArgs e)
+			Commands.GUI_ERROR.Handler += delegate(object sender, EventArgs e)
+			{
+				if (OnError != null)
+					OnError(this, (GuiCommandEventArgs)e);
+			};
+			Commands.GUI_REPORT_PLAN_STATUS.Handler += delegate(object sender, EventArgs e)
 			{
 				if (OnReportPlanStatus != null)
 					OnReportPlanStatus(this, (GuiCommandEventArgs)e);
 			};
-			Commands.GUI_REPORT_PLAN_PROGRESS.Handler = delegate(object sender, EventArgs e)
+			Commands.GUI_REPORT_PLAN_PROGRESS.Handler += delegate(object sender, EventArgs e)
 			{
 				if (OnReportPlanProgress != null)
 					OnReportPlanProgress(this, (GuiCommandEventArgs)e);
