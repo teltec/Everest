@@ -213,6 +213,9 @@ namespace Teltec.Backup.PlanExecutor
 			}
 
 			Console.WriteLine("Operation finished.");
+
+			Handler.Client.WaitUntilDone();
+			Thread.Sleep(5000);
 		}
 
 		private bool RunOperation(PlanTypeEnum planType, object plan)

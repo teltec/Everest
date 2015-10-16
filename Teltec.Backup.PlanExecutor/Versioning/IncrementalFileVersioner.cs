@@ -265,10 +265,15 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			return result;
 		}
 
-		private bool DidFileFailInTheLastBackup(Models.BackupPlanFile planFile)
+		private bool NeedsToRetryFile(Models.BackupPlanFile planFile)
 		{
 			Models.BackupedFile lastVersion = planFile.Versions != null ? planFile.Versions.Last() : null;
-			return lastVersion != null && lastVersion.TransferStatus == TransferStatus.FAILED;
+			if (lastVersion == null)
+				return false;
+
+			return lastVersion.TransferStatus == TransferStatus.FAILED // File transfer failed.
+				|| lastVersion.TransferStatus == TransferStatus.CANCELED // File transfer was canceled.
+				|| lastVersion.Backup.Status == TransferStatus.CANCELED; // Whole previous backup was canceled.
 		}
 
 		//
@@ -331,7 +336,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 										{
 											changeStatusTo = Models.BackupFileStatus.MODIFIED;
 										}
-										else if (DidFileFailInTheLastBackup(entry)) // Failed in the last backup?
+										else if (NeedsToRetryFile(entry)) // Failed in the last backup?
 										{
 											changeStatusTo = Models.BackupFileStatus.MODIFIED;
 										}
