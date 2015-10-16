@@ -215,7 +215,10 @@ namespace Teltec.Backup.PlanExecutor
 			Console.WriteLine("Operation finished.");
 
 			Handler.Client.WaitUntilDone();
-			Thread.Sleep(5000);
+#if DEBUG
+			// Wait 10 seconds before exiting, just for debugging purposes.
+			Thread.Sleep(10000);
+#endif
 		}
 
 		private bool RunOperation(PlanTypeEnum planType, object plan)
@@ -355,10 +358,10 @@ namespace Teltec.Backup.PlanExecutor
 			BackupOperation op = RunningOperation as BackupOperation;
 			Commands.GuiReportPlanProgress data = new Commands.GuiReportPlanProgress
 			{
-				Total = TransferResults.Stats.Total,
 				Completed = TransferResults.Stats.Completed,
-				BytesTotal = TransferResults.Stats.BytesCompleted,
-				BytesCompleted = TransferResults.Stats.BytesTotal,
+				Total = TransferResults.Stats.Total,
+				BytesCompleted = TransferResults.Stats.BytesCompleted,
+				BytesTotal = TransferResults.Stats.BytesTotal,
 			};
 			return data;
 		}
@@ -369,13 +372,6 @@ namespace Teltec.Backup.PlanExecutor
 				return;
 
 			Models.BackupPlan plan = Model as Models.BackupPlan;
-
-			//BackupUpdateMsg message = new BackupUpdateMsg
-			//{
-			//	PlanId = plan.Id.Value,
-			//	OperationId = RunningOperation.OperationId.Value,
-			//	OperationStatus = (byte)status,
-			//};
 
 			switch (status)
 			{
@@ -389,9 +385,11 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("{0} backup", status == BackupOperationStatus.Resumed ? "Resuming" : "Starting");
 
+						// Update timestamps.
+						plan.LastRunAt = DateTime.UtcNow;
+						_daoBackupPlan.Update(plan);
+
 						// Report
-						//message.StartedAt = (RunningOperation as BackupOperation).StartedAt.Value;
-						//message.IsResuming = status == BackupOperationStatus.Resumed;
 						Commands.OperationStatus cmdStatus = status == BackupOperationStatus.Started
 								? Commands.OperationStatus.STARTED
 								: Commands.OperationStatus.RESUMED;
@@ -454,15 +452,14 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("Backup finished.");
 
-						// Update timestamps.
-						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
+						// Update success timestamp.
+						plan.LastSuccessfulRunAt = DateTime.UtcNow;
 						_daoBackupPlan.Update(plan);
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						//message.FinishedAt = plan.LastRunAt.Value;
 						Commands.OperationStatus cmdStatus = Commands.OperationStatus.FINISHED;
 						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
 						string cmd = Commands.GuiReportOperationStatus("backup", plan.Id.Value, cmdData);
@@ -474,7 +471,6 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
 						// Report
-						//message.TransferResults = TransferResultsMsgPart.CopyFrom(TransferResults);
 						Commands.OperationStatus cmdStatus = Commands.OperationStatus.UPDATED;
 						Commands.GuiReportPlanProgress cmdData = BuildGuiReportPlanProgress(cmdStatus);
 						string cmd = Commands.GuiReportOperationProgress("backup", plan.Id.Value, cmdData);
@@ -488,16 +484,10 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("{0}: {1} of {2}", status == BackupOperationStatus.Failed ? "Failed" : "Canceled",
 							TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
-						// Update timestamps.
-						plan.LastRunAt = DateTime.UtcNow;
-						_daoBackupPlan.Update(plan);
-
-
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						//message.FinishedAt = plan.LastRunAt.Value;
 						Commands.OperationStatus cmdStatus = status == BackupOperationStatus.Failed
 							? Commands.OperationStatus.FAILED : Commands.OperationStatus.CANCELED;
 						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
@@ -506,8 +496,6 @@ namespace Teltec.Backup.PlanExecutor
 						break;
 					}
 			}
-
-			//Reporter.Publish(message);
 		}
 
 		private void RestoreUpdateStatsInfo(RestoreOperationStatus status)
@@ -516,13 +504,6 @@ namespace Teltec.Backup.PlanExecutor
 				return;
 
 			Models.RestorePlan plan = Model as Models.RestorePlan;
-
-			//RestoreUpdateMsg message = new RestoreUpdateMsg
-			//{
-			//	PlanId = plan.Id.Value,
-			//	OperationId = RunningOperation.OperationId.Value,
-			//	OperationStatus = (byte)status,
-			//};
 
 			switch (status)
 			{
@@ -536,9 +517,11 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("{0} restore", status == RestoreOperationStatus.Resumed ? "Resuming" : "Starting");
 
+						// Update timestamps.
+						plan.LastRunAt = DateTime.UtcNow;
+						_daoRestorePlan.Update(plan);
+
 						// Report
-						//message.StartedAt = (RunningOperation as RestoreOperation).StartedAt.Value;
-						//message.IsResuming = status == RestoreOperationStatus.Resumed;
 						Commands.OperationStatus cmdStatus = status == RestoreOperationStatus.Started
 							? Commands.OperationStatus.STARTED : Commands.OperationStatus.RESUMED;
 						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
@@ -599,15 +582,14 @@ namespace Teltec.Backup.PlanExecutor
 					{
 						logger.Info("Restore finished.");
 
-						// Update timestamps.
-						plan.LastRunAt = plan.LastSuccessfulRunAt = DateTime.UtcNow;
+						// Update success timestamp.
+						plan.LastSuccessfulRunAt = DateTime.UtcNow;
 						_daoRestorePlan.Update(plan);
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						//message.FinishedAt = plan.LastRunAt.Value;
 						Commands.OperationStatus cmdStatus = Commands.OperationStatus.FINISHED;
 						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
 						string cmd = Commands.GuiReportOperationStatus("restore", plan.Id.Value, cmdData);
@@ -619,7 +601,6 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
 						// Report
-						//message.TransferResults = TransferResultsMsgPart.CopyFrom(TransferResults);
 						Commands.OperationStatus cmdStatus = Commands.OperationStatus.UPDATED;
 						Commands.GuiReportPlanProgress cmdData = BuildGuiReportPlanProgress(cmdStatus);
 						string cmd = Commands.GuiReportOperationProgress("restore", plan.Id.Value, cmdData);
@@ -633,15 +614,10 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("{0}: {1} of {2}", status == RestoreOperationStatus.Failed ? "Failed" : "Canceled",
 							TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
-						// Update timestamps.
-						plan.LastRunAt = DateTime.UtcNow;
-						_daoRestorePlan.Update(plan);
-
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
 
 						// Report
-						//message.FinishedAt = plan.LastRunAt.Value;
 						Commands.OperationStatus cmdStatus = status == RestoreOperationStatus.Failed
 							? Commands.OperationStatus.FAILED : Commands.OperationStatus.CANCELED;
 						Commands.GuiReportPlanStatus cmdData = BuildGuiReportPlanStatus(cmdStatus);
@@ -650,8 +626,6 @@ namespace Teltec.Backup.PlanExecutor
 						break;
 					}
 			}
-
-			//Reporter.Publish(message);
 		}
 
 		private static void LoadSettings()

@@ -531,13 +531,33 @@ namespace Teltec.Backup.Scheduler
 			string planType = e.Command.GetArgumentValue<string>("planType");
 			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
 
+			BackupRepository daoBackup = new BackupRepository();
+			Models.Backup latest = daoBackup.GetLatestByPlan(new Models.BackupPlan { Id = planId });
+
+			bool isRunning = IsPlanRunning(planType, planId);
+			bool needsResume = latest != null && latest.NeedsResume();
+			bool isInterrupted = !isRunning && needsResume;
+
+			Commands.OperationStatus status;
+			// The condition order below is important because more than one flag might be true.
+			if (isInterrupted)
+				status = Commands.OperationStatus.INTERRUPTED;
+			else if (needsResume)
+				status = Commands.OperationStatus.RESUMED;
+			else if (isRunning)
+				status = Commands.OperationStatus.STARTED;
+			else
+				status = Commands.OperationStatus.NOT_RUNNING;
+
 			// Report to GUI.
 			Commands.GuiReportPlanStatus report = new Commands.GuiReportPlanStatus
 			{
-				Status = IsPlanRunning(planType, planId)
-					? Commands.OperationStatus.INTERRUPTED
-					: Commands.OperationStatus.NOT_RUNNING,
+				Status = status,
 			};
+
+			if (isRunning)
+				report.StartedAt = latest.StartedAt;
+
 			Handler.Send(e.Context, Commands.GuiReportOperationStatus(planType, planId, report));
 		}
 
@@ -555,7 +575,7 @@ namespace Teltec.Backup.Scheduler
 
 			bool isBackup = planType.Equals("backup");
 			bool isRestore = planType.Equals("restore");
-			bool isResume = false;
+			const bool isResume = false;
 
 			bool didRun = false;
 			if (isBackup)
@@ -578,7 +598,7 @@ namespace Teltec.Backup.Scheduler
 
 			bool isBackup = planType.Equals("backup");
 			bool isRestore = planType.Equals("restore");
-			bool isResume = true;
+			const bool isResume = true;
 
 			bool didRun = false;
 			if (isBackup)
@@ -744,6 +764,7 @@ namespace Teltec.Backup.Scheduler
 				process.EnableRaisingEvents = true;
 				if (onExit != null)
 					process.Exited += onExit;
+				logger.Info("Starting sub-process {0} {1}", filename, arguments);
 				process.Start();
 				return process;
 			}
@@ -811,8 +832,6 @@ namespace Teltec.Backup.Scheduler
 
 			Info("Service is starting...");
 
-			Handler.Start(Commands.IPC_DEFAULT_HOST, Commands.IPC_DEFAULT_PORT);
-
 			timer = new System.Timers.Timer();
 			timer.Interval = 1000 * 60 * 5; // Set interval to 5 minutes
 			timer.Elapsed += new System.Timers.ElapsedEventHandler(timer_Elapsed);
@@ -821,9 +840,11 @@ namespace Teltec.Backup.Scheduler
 			//serviceStatus.dwCurrentState = ServiceState.Running;
 			//ServiceInstaller.SetServiceStatus(this.ServiceHandle, ref serviceStatus);
 
-			Info("Service was started.");
-
 			ReloadPlansAndReschedule();
+
+			Handler.Start(Commands.IPC_DEFAULT_HOST, Commands.IPC_DEFAULT_PORT);
+
+			Info("Service was started.");
 
 			// Start timer only after the plans were already loaded and rescheduled.
 			start_timer();

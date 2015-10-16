@@ -17,6 +17,12 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private class Operation
 		{
+			public bool RequestedInitialInfo = false;
+			public bool GotInitialInfo = false;
+
+			public bool StartedDurationTimer = false;
+			private Timer DurationTimer;
+
 			public bool IsRunning { get { return !Status.IsEnded(); } }
 			public Commands.OperationStatus Status;
 			public DateTime? LastRunAt = null;
@@ -24,6 +30,39 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			public DateTime? StartedAt = null;
 			public DateTime? FinishedAt = null;
 			//public bool OperationNeedsResume { get { return Status == Commands.OperationStatus.INTERRUPTED; } }
+
+			public Operation(System.ComponentModel.IContainer components, System.EventHandler timerTick)
+			{
+				DurationTimer = new System.Windows.Forms.Timer(components);
+				DurationTimer.Interval = 1000;
+				DurationTimer.Tick += new System.EventHandler(timerTick);
+			}
+
+			public void StartTimer()
+			{
+				StartedDurationTimer = true;
+				DurationTimer.Enabled = true;
+				DurationTimer.Start();
+			}
+
+			public void StopTimer()
+			{
+				DurationTimer.Stop();
+				DurationTimer.Enabled = false;
+				StartedDurationTimer = false;
+			}
+
+			public void Reset()
+			{
+				StopTimer();
+				RequestedInitialInfo = false;
+				GotInitialInfo = false;
+
+				LastRunAt = null;
+				LastSuccessfulRunAt = null;
+				StartedAt = null;
+				FinishedAt = null;
+			}
 		}
 
 		private Operation CurrentOperation;
@@ -74,7 +113,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 				Models.BackupPlan plan = Model as Models.BackupPlan;
 
-				CurrentOperation = new Operation();
+				CurrentOperation = new Operation(this.components, DurationTimer_Tick);
 				CurrentOperation.Status = Commands.OperationStatus.NOT_RUNNING;
 				CurrentOperation.LastRunAt = plan.LastRunAt;
 				CurrentOperation.LastSuccessfulRunAt = plan.LastSuccessfulRunAt;
@@ -82,9 +121,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				this.lblSources.Text = plan.SelectedSourcesAsDelimitedString(", ", 50, "..."); // Duplicate from BackupOperation.cs - Sources property
 				this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
 				this.llblRunNow.Enabled = false;
-				this.lblStatus.Text = "Unknown";
-				this.lblDuration.Text = "Unknown";
-				this.lblFilesTransferred.Text = "Unknown";
+				this.lblStatus.Text = "Querying status..."; ;
+				this.lblDuration.Text = "Unknown"; ;
+				this.lblFilesTransferred.Text = "Unknown"; ;
 				this.llblEditPlan.Enabled = false;
 				this.llblDeletePlan.Enabled = false;
 				this.llblRestore.Enabled = false;
@@ -93,6 +132,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				this.lblTitle.Text = FormatTitle(plan.Name);
 				this.lblSchedule.Text = plan.ScheduleType.ToString();
 
+				CurrentOperation.RequestedInitialInfo = true;
 				Provider.Handler.Send(Commands.ServerQueryPlan("backup", plan.Id.Value));
 			};
 		}
@@ -115,6 +155,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 		private void OnReportPlanProgress(object sender, GuiCommandEventArgs e)
 		{
+			if (!CurrentOperation.GotInitialInfo)
+				return;
+
 			string planType = e.Command.GetArgumentValue<string>("planType");
 			if (!planType.Equals("backup"))
 				return;
@@ -170,6 +213,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
 						//this.lblTitle.Text = FormatTitle(plan.Name);
 						//this.lblSchedule.Text = plan.ScheduleType.ToString();
+
+						CurrentOperation.GotInitialInfo = true;
+
 						break;
 					}
 				case Commands.OperationStatus.STARTED:
@@ -178,9 +224,12 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						Models.BackupPlan plan = Model as Models.BackupPlan;
 
 						CurrentOperation.StartedAt = report.StartedAt;
+						CurrentOperation.LastRunAt = report.LastRunAt;
+						CurrentOperation.LastSuccessfulRunAt = report.LastSuccessfulRunAt;
 
 						this.lblSources.Text = this.lblSources.Text = plan.SelectedSourcesAsDelimitedString(", ", 50, "..."); // Duplicate from BackupOperation.cs - Sources property
 						this.llblRunNow.Text = LBL_RUNNOW_RUNNING;
+						this.llblRunNow.Enabled = true;
 						this.lblStatus.Text = LBL_STATUS_STARTED;
 						this.lblDuration.Text = LBL_DURATION_STARTED;
 						this.lblFilesTransferred.Text = string.Format("{0} of {1} ({2} / {3})",
@@ -190,13 +239,13 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						this.llblEditPlan.Enabled = false;
 						this.llblDeletePlan.Enabled = false;
 						this.llblRestore.Enabled = false;
-						//this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
-						//this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
+						this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
+						this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
 						//this.lblTitle.Text = FormatTitle(plan.Name);
 						//this.lblSchedule.Text = plan.ScheduleType.ToString();
 
-						timer1.Enabled = true;
-						timer1.Start();
+						CurrentOperation.GotInitialInfo = true;
+						CurrentOperation.StartTimer();
 						break;
 					}
 				case Commands.OperationStatus.SCANNING_FILES_STARTED:
@@ -230,46 +279,49 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				case Commands.OperationStatus.FINISHED:
 					{
 						CurrentOperation.FinishedAt = report.LastRunAt;
+						CurrentOperation.LastRunAt = report.LastRunAt;
+						CurrentOperation.LastSuccessfulRunAt = report.LastSuccessfulRunAt;
 						UpdateDuration(report.Status);
 
 						this.lblSources.Text = report.Sources;
 						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
+						this.llblRunNow.Enabled = true;
 						this.lblStatus.Text = LBL_STATUS_COMPLETED;
 						//this.lblDuration.Text = LBL_DURATION_INITIAL;
 						//this.lblFilesTransferred.Text = LBL_FILES_TRANSFER_STOPPED;
 						this.llblEditPlan.Enabled = true;
 						this.llblDeletePlan.Enabled = true;
 						this.llblRestore.Enabled = true;
-						//this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
-						//this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
+						this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
+						this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
 						//this.lblTitle.Text = FormatTitle(plan.Name);
 						//this.lblSchedule.Text = plan.ScheduleType.ToString();
 
-						timer1.Stop();
-						timer1.Enabled = false;
+						CurrentOperation.Reset();
 						break;
 					}
 				case Commands.OperationStatus.FAILED:
 				case Commands.OperationStatus.CANCELED:
 					{
 						CurrentOperation.FinishedAt = report.LastRunAt;
+						CurrentOperation.LastRunAt = report.LastRunAt;
 						UpdateDuration(report.Status);
 
 						this.lblSources.Text = report.Sources;
 						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
+						this.llblRunNow.Enabled = true;
 						this.lblStatus.Text = report.Status == Commands.OperationStatus.CANCELED ? LBL_STATUS_CANCELED : LBL_STATUS_FAILED;
 						//this.lblDuration.Text = LBL_DURATION_INITIAL;
 						//this.lblFilesTransferred.Text = LBL_FILES_TRANSFER_STOPPED;
 						this.llblEditPlan.Enabled = true;
 						this.llblDeletePlan.Enabled = true;
 						this.llblRestore.Enabled = true;
-						//this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
+						this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
 						//this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
 						//this.lblTitle.Text = FormatTitle(plan.Name);
 						//this.lblSchedule.Text = plan.ScheduleType.ToString();
 
-						timer1.Stop();
-						timer1.Enabled = false;
+						CurrentOperation.Reset();
 						break;
 					}
 			}
@@ -350,17 +402,34 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 			if (OperationIsRunning)
 			{
+				// These buttons are re-enabled after the GUI receives the command `Commands.GUI_REPORT_PLAN_STATUS`
+				// where the report status is one of these:
+				//   Commands.OperationStatus.FAILED:
+				//   Commands.OperationStatus.CANCELED:
+				//   Commands.OperationStatus.FINISHED:
 				this.llblRunNow.Enabled = false;
+				this.llblEditPlan.Enabled = false;
+				this.llblDeletePlan.Enabled = false;
+				this.llblRestore.Enabled = false;
+
 				Provider.Handler.Send(Commands.ServerCancelPlan("backup", plan.Id.Value));
-				// FIXME: Re-enable before starting the backup because it's not an async task.
-				this.llblRunNow.Enabled = true;
 			}
 			else
 			{
+				// These buttons are re-enabled after the GUI receives the command `Commands.GUI_REPORT_PLAN_STATUS`
+				// where the report status is one of these:
+				//   Commands.OperationStatus.FAILED:
+				//   Commands.OperationStatus.CANCELED:
+				//   Commands.OperationStatus.FINISHED:
 				this.llblRunNow.Enabled = false;
-				Provider.Handler.Send(Commands.ServerRunPlan("backup", plan.Id.Value));
-				// FIXME: Re-enable before starting the backup because it's not an async task.
-				this.llblRunNow.Enabled = true;
+				this.llblEditPlan.Enabled = false;
+				this.llblDeletePlan.Enabled = false;
+				this.llblRestore.Enabled = false;
+
+				string cmd = CurrentOperation.Status == Commands.OperationStatus.INTERRUPTED
+					? Commands.ServerResumePlan("backup", plan.Id.Value)
+					: Commands.ServerRunPlan("backup", plan.Id.Value);
+				Provider.Handler.Send(cmd);
 			}
 		}
 
@@ -373,13 +442,18 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				Deleted(this, e);
 		}
 
-		private void timer1_Tick(object sender, EventArgs e)
+		private void DurationTimer_Tick(object sender, EventArgs e)
 		{
 			UpdateDuration(OperationIsRunning ? Commands.OperationStatus.UPDATED : Commands.OperationStatus.FINISHED);
 		}
 
 		private void UpdateDuration(Commands.OperationStatus status)
 		{
+			// Prevent a NPE when accessing `CurrentOperation.StartedAt` below.
+			if (!CurrentOperation.GotInitialInfo)
+				return;
+
+			// Calculate duration.
 			var duration = !status.IsEnded()
 				? DateTime.UtcNow - CurrentOperation.StartedAt.Value
 				: CurrentOperation.FinishedAt.Value - CurrentOperation.StartedAt.Value;
