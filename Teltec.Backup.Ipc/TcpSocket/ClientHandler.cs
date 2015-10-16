@@ -127,6 +127,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		public void Send(string cmd)
 		{
+			//Console.WriteLine("SENDING TO {0} -> {1}", "server", cmd);
 			byte[] data = StringToBytes(cmd);
 			Client.Send(data);
 		}

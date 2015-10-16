@@ -153,6 +153,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		#region Events
 
+		private AutoResetEvent InternalConnectedEvent = new AutoResetEvent(false);
 		public AutoResetEvent ConnectedEvent = new AutoResetEvent(false);
 		public event ServerConnectEventHandler Connected;
 
@@ -237,7 +238,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 							Context.ServerSocket.BeginAccept(new AsyncCallback(EndAccept), null);
 
 							// Wait for a connection before accepting another.
-							while (!ShouldStop && !ConnectedEvent.WaitOne(500))
+							while (!ShouldStop && !InternalConnectedEvent.WaitOne(500))
 							{
 								//logger.Debug("Waiting connection...");
 							}
@@ -326,6 +327,22 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			obj.Server.ProcessClient(obj);
 		}
 
+		private void TryBeginReceive(ClientContext context)
+		{
+			// Read data and store in RecvBuffer.
+			try
+			{
+				byte[] buffer = context.RecvBuffer;
+				context.ClientSocket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None,
+					new AsyncCallback(EndReceive), context);
+			}
+			catch (SocketException ex)
+			{
+				logger.Error("ERROR BeginReceive: {0}", ex.Message);
+				HandleSocketError(ex.SocketErrorCode, context);
+			}
+		}
+
 		private void ProcessClient(ThreadArgument param)
 		{
 			ClientContext context = param.ClientContext;
@@ -344,27 +361,6 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				{
 					try
 					{
-						bool canRead = context.ClientSocket.Poll(pollTimeout, SelectMode.SelectRead);
-						// true if:
-						// - The Listen method has been called and a connection is pending.
-						// - Data is available for reading.
-						// - The connection has been closed, reset, or terminated.
-						if (canRead)
-						{
-							// Read data and enqueue on the read queue.
-							try
-							{
-								byte[] buffer = context.RecvBuffer;
-								context.ClientSocket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None,
-									new AsyncCallback(EndReceive), context);
-							}
-							catch (SocketException ex)
-							{
-								logger.Error("ERROR BeginReceive: {0}", ex.Message);
-								HandleSocketError(ex.SocketErrorCode, context);
-							}
-						}
-
 						// Check whether the previous read indicated a client disconnection.
 						if (context.ClientSocket == null)
 							break;
@@ -513,7 +509,10 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				OnConnected(new ServerConnectedEventArgs { Context = clientContext });
 
 				// Notify a connection has been made so the acceptor can now wait for another.
+				InternalConnectedEvent.Set();
 				ConnectedEvent.Set();
+
+				TryBeginReceive(clientContext); // Start receiving.
 			}
 			catch (ObjectDisposedException ex)
 			{
@@ -635,6 +634,8 @@ namespace Teltec.Backup.Ipc.TcpSocket
 					});
 
 					MessageReceivedEvent.Set();
+
+					TryBeginReceive(context); // Continue receiving.
 				}
 				else
 				{

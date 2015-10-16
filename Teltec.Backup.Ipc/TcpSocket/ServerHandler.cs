@@ -24,6 +24,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		private ISynchronizeInvoke Owner;
 		private Dictionary<string, ClientState> ClientsByName;
+		object ClientsByNameLock = new Object();
 
 		public Server Server { get; internal set; }
 
@@ -90,7 +91,11 @@ namespace Teltec.Backup.Ipc.TcpSocket
 		{
 			string clientName = (string)context.Tag;
 			ClientState state = null;
-			bool found = ClientsByName.TryGetValue(clientName, out state);
+
+			bool found;
+			lock (ClientsByNameLock)
+				found = ClientsByName.TryGetValue(clientName, out state);
+
 			if (!found)
 			{
 				logger.Error("The client named {0} is not connected?", clientName);
@@ -109,7 +114,8 @@ namespace Teltec.Backup.Ipc.TcpSocket
 		public ClientState GetClientState(string clientName)
 		{
 			ClientState state;
-			bool found = ClientsByName.TryGetValue(clientName, out state);
+			lock (ClientsByNameLock)
+				ClientsByName.TryGetValue(clientName, out state);
 			return state;
 		}
 
@@ -144,7 +150,9 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				IsRegistered = false,
 				LastSeen = DateTime.UtcNow,
 			};
-			ClientsByName.Add(clientName, newState);
+
+			lock (ClientsByNameLock)
+				ClientsByName.Add(clientName, newState);
 		}
 
 		private void Server_Disconnected(object sender, ServerConnectedEventArgs e)
@@ -153,14 +161,19 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			if (string.IsNullOrEmpty(clientName))
 				return;
 
-			if (ClientsByName.ContainsKey(clientName))
-				ClientsByName.Remove(clientName);
+			lock (ClientsByNameLock)
+			{
+				if (ClientsByName.ContainsKey(clientName))
+					ClientsByName.Remove(clientName);
+			}
 		}
 
 		private void Server_MessageReceived(object sender, ServerReceiveEventArgs e)
 		{
 			string clientName = (string)e.Context.Tag;
-			ClientsByName[clientName].LastSeen = DateTime.UtcNow;
+
+			lock (ClientsByNameLock)
+				ClientsByName[clientName].LastSeen = DateTime.UtcNow;
 
 			string message = BytesToString(e.Data);
 			if (string.IsNullOrEmpty(message))
@@ -222,19 +235,22 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				return;
 			}
 
-			if (ClientsByName.ContainsKey(newClientName))
+			lock (ClientsByNameLock)
 			{
-				Send(args.Context, Commands.ReportError("This name is already in use"));
-				return;
+				if (ClientsByName.ContainsKey(newClientName))
+				{
+					Send(args.Context, Commands.ReportError("This name is already in use"));
+					return;
+				}
+
+				ClientState state = ClientsByName[oldClientName];
+				state.IsRegistered = true;
+				args.Context.Tag = newClientName;
+
+				// Remove & re-add state using the new client name.
+				ClientsByName.Remove(oldClientName);
+				ClientsByName.Add(newClientName, state);
 			}
-
-			ClientState state = ClientsByName[oldClientName];
-			state.IsRegistered = true;
-			args.Context.Tag = newClientName;
-
-			// Remove & re-add state using the new client name.
-			ClientsByName.Remove(oldClientName);
-			ClientsByName.Add(newClientName, state);
 		}
 
 		private void OnRoute(object sender, EventArgs e)
@@ -251,14 +267,17 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			}
 
 			ClientState targetState = null;
-			bool found = ClientsByName.TryGetValue(targetName, out targetState);
+
+			bool found;
+			lock (ClientsByNameLock)
+				found = ClientsByName.TryGetValue(targetName, out targetState);
 			if (!found)
 			{
 				Send(args.Context, Commands.ReportError("Unknown target {0}", targetName));
 				return;
 			}
 
-			Console.WriteLine("SENDING TO {0} -> {1}", targetName, message);
+			//Console.WriteLine("SENDING TO {0} -> {1}", targetName, message);
 			Send(targetState.Context, message);
 		}
 
@@ -268,13 +287,16 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 			string message = args.Command.GetArgumentValue<string>("message");
 
-			foreach (var state in ClientsByName.Values)
+			lock (ClientsByNameLock)
 			{
-				// Do not send it to the sender.
-				if (state.Context.ClientKey.Equals(args.Context.ClientKey))
-					continue;
+				foreach (var state in ClientsByName.Values)
+				{
+					// Do not send it to the sender.
+					if (state.Context.ClientKey.Equals(args.Context.ClientKey))
+						continue;
 
-				Send(state.Context, message);
+					Send(state.Context, message);
+				}
 			}
 		}
 
