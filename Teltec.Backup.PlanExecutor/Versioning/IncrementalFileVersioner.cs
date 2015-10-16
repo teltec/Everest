@@ -583,8 +583,11 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		public void Undo()
 		{
 			Assert.IsFalse(IsSaved);
-			BackupRepository daoBackup = new BackupRepository();
-			daoBackup.Refresh(Backup);
+			if (Backup != null)
+			{
+				BackupRepository daoBackup = new BackupRepository();
+				daoBackup.Refresh(Backup);
+			}
 		}
 
 		//
