@@ -116,11 +116,16 @@ namespace Teltec.Backup.Ipc.Protocol
 				commandStack.Push(cmd);
 			}
 
+			int numCommands = commandStack.Count;
+			if (numCommands == 0)
+				return null;
+
 			// Then unstack them and add to a list.
 			// For example: CONTROL PLAN RUN 1
-			List<string> commandList = new List<string>(commandStack.Count);
-			for (Command cmd = commandStack.Pop(); cmd != null; cmd = commandStack.Pop())
+			List<string> commandList = new List<string>(numCommands);
+			for (int i = 0; i < numCommands; i++)
 			{
+				Command cmd = commandStack.Pop();
 				commandList.Add(cmd.Name);
 
 				if (cmd.HasArguments)
