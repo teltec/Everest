@@ -15,57 +15,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		private readonly BackupPlanRepository _daoBackupPlan = new BackupPlanRepository();
 		private readonly BackupRepository _daoBackup = new BackupRepository();
 
-		private class Operation
-		{
-			public bool RequestedInitialInfo = false;
-			public bool GotInitialInfo = false;
-
-			public bool StartedDurationTimer = false;
-			private Timer DurationTimer;
-
-			public bool IsRunning { get { return !Status.IsEnded(); } }
-			public Commands.OperationStatus Status;
-			public DateTime? LastRunAt = null;
-			public DateTime? LastSuccessfulRunAt = null;
-			public DateTime? StartedAt = null;
-			public DateTime? FinishedAt = null;
-			//public bool OperationNeedsResume { get { return Status == Commands.OperationStatus.INTERRUPTED; } }
-
-			public Operation(System.ComponentModel.IContainer components, System.EventHandler timerTick)
-			{
-				DurationTimer = new System.Windows.Forms.Timer(components);
-				DurationTimer.Interval = 1000;
-				DurationTimer.Tick += new System.EventHandler(timerTick);
-			}
-
-			public void StartTimer()
-			{
-				StartedDurationTimer = true;
-				DurationTimer.Enabled = true;
-				DurationTimer.Start();
-			}
-
-			public void StopTimer()
-			{
-				DurationTimer.Stop();
-				DurationTimer.Enabled = false;
-				StartedDurationTimer = false;
-			}
-
-			public void Reset()
-			{
-				StopTimer();
-				RequestedInitialInfo = false;
-				GotInitialInfo = false;
-
-				LastRunAt = null;
-				LastSuccessfulRunAt = null;
-				StartedAt = null;
-				FinishedAt = null;
-			}
-		}
-
-		private Operation CurrentOperation;
+		private RemoteOperation CurrentOperation;
 		public bool OperationIsRunning { get { return CurrentOperation.IsRunning; } }
 
 		private void AttachEventHandlers()
@@ -113,7 +63,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 				Models.BackupPlan plan = Model as Models.BackupPlan;
 
-				CurrentOperation = new Operation(this.components, DurationTimer_Tick);
+				CurrentOperation = new RemoteOperation(this.components, DurationTimer_Tick);
 				CurrentOperation.Status = Commands.OperationStatus.NOT_RUNNING;
 				CurrentOperation.LastRunAt = plan.LastRunAt;
 				CurrentOperation.LastSuccessfulRunAt = plan.LastSuccessfulRunAt;
@@ -127,9 +77,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				this.llblEditPlan.Enabled = false;
 				this.llblDeletePlan.Enabled = false;
 				this.llblRestore.Enabled = false;
-				this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
-				this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
-				this.lblTitle.Text = FormatTitle(plan.Name);
+				this.lblLastRun.Text = PlanCommon.Format(CurrentOperation.LastRunAt);
+				this.lblLastSuccessfulRun.Text = PlanCommon.Format(CurrentOperation.LastSuccessfulRunAt);
+				this.lblTitle.Text = PlanCommon.FormatTitle(plan.Name);
 				this.lblSchedule.Text = plan.ScheduleType.ToString();
 
 				CurrentOperation.RequestedInitialInfo = true;
@@ -172,20 +122,6 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			UpdatePlanProgress(progress);
 		}
 
-		public string FormatTitle(string value)
-		{
-			ConvertEventArgs e = new ConvertEventArgs(value, typeof(string));
-			TitleFormatter(this, e);
-			return e.Value as string;
-		}
-
-		public string Format(DateTime? value)
-		{
-			ConvertEventArgs e = new ConvertEventArgs(value, typeof(string));
-			DateTimeOptionalFormatter(this, e);
-			return e.Value as string;
-		}
-
 		private void UpdatePlanInfo(Commands.GuiReportPlanStatus report)
 		{
 			CurrentOperation.Status = report.Status;
@@ -209,9 +145,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						this.llblEditPlan.Enabled = true;
 						this.llblDeletePlan.Enabled = true;
 						this.llblRestore.Enabled = true;
-						this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
-						this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
-						//this.lblTitle.Text = FormatTitle(plan.Name);
+						this.lblLastRun.Text = PlanCommon.Format(CurrentOperation.LastRunAt);
+						this.lblLastSuccessfulRun.Text = PlanCommon.Format(CurrentOperation.LastSuccessfulRunAt);
+						//this.lblTitle.Text = PlanCommon.FormatTitle(plan.Name);
 						//this.lblSchedule.Text = plan.ScheduleType.ToString();
 
 						CurrentOperation.GotInitialInfo = true;
@@ -239,9 +175,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						this.llblEditPlan.Enabled = false;
 						this.llblDeletePlan.Enabled = false;
 						this.llblRestore.Enabled = false;
-						this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
-						this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
-						//this.lblTitle.Text = FormatTitle(plan.Name);
+						this.lblLastRun.Text = PlanCommon.Format(CurrentOperation.LastRunAt);
+						this.lblLastSuccessfulRun.Text = PlanCommon.Format(CurrentOperation.LastSuccessfulRunAt);
+						//this.lblTitle.Text = PlanCommon.FormatTitle(plan.Name);
 						//this.lblSchedule.Text = plan.ScheduleType.ToString();
 
 						CurrentOperation.GotInitialInfo = true;
@@ -292,9 +228,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						this.llblEditPlan.Enabled = true;
 						this.llblDeletePlan.Enabled = true;
 						this.llblRestore.Enabled = true;
-						this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
-						this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
-						//this.lblTitle.Text = FormatTitle(plan.Name);
+						this.lblLastRun.Text = PlanCommon.Format(CurrentOperation.LastRunAt);
+						this.lblLastSuccessfulRun.Text = PlanCommon.Format(CurrentOperation.LastSuccessfulRunAt);
+						//this.lblTitle.Text = PlanCommon.FormatTitle(plan.Name);
 						//this.lblSchedule.Text = plan.ScheduleType.ToString();
 
 						CurrentOperation.Reset();
@@ -316,9 +252,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 						this.llblEditPlan.Enabled = true;
 						this.llblDeletePlan.Enabled = true;
 						this.llblRestore.Enabled = true;
-						this.lblLastRun.Text = Format(CurrentOperation.LastRunAt);
-						//this.lblLastSuccessfulRun.Text = Format(CurrentOperation.LastSuccessfulRunAt);
-						//this.lblTitle.Text = FormatTitle(plan.Name);
+						this.lblLastRun.Text = PlanCommon.Format(CurrentOperation.LastRunAt);
+						//this.lblLastSuccessfulRun.Text = PlanCommon.Format(CurrentOperation.LastSuccessfulRunAt);
+						//this.lblTitle.Text = PlanCommon.FormatTitle(plan.Name);
 						//this.lblSchedule.Text = plan.ScheduleType.ToString();
 
 						CurrentOperation.Reset();
@@ -334,34 +270,6 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				FileSizeUtils.FileSizeToString(progress.BytesCompleted),
 				FileSizeUtils.FileSizeToString(progress.BytesTotal));
 		}
-
-		#region Binding formatters
-
-		void TitleFormatter(object sender, ConvertEventArgs e)
-		{
-			if (e.DesiredType != typeof(string))
-				return;
-
-			string value = e.Value as string;
-
-			e.Value = string.IsNullOrEmpty(value)
-				? "(UNNAMED)"
-				: e.Value = value.ToUpper();
-		}
-
-		void DateTimeOptionalFormatter(object sender, ConvertEventArgs e)
-		{
-			if (e.DesiredType != typeof(string))
-				return;
-
-			DateTime? dt = e.Value as DateTime?;
-
-			e.Value = dt.HasValue
-				? string.Format("{0:yyyy-MM-dd HH:mm:ss zzzz}", dt.Value.ToLocalTime())
-				: "Never";
-		}
-
-		#endregion
 
 		private void llblEditPlan_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{

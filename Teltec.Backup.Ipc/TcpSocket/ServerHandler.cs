@@ -262,7 +262,9 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 			if (string.IsNullOrEmpty(targetName) || targetName.Length > Commands.REGISTER_CLIENT_NAME_MAXLEN)
 			{
-				Send(args.Context, Commands.ReportError("Invalid route message"));
+				// Don't spam the sender with error messages if there's no GUI app running.
+				if (!targetName.Equals(Commands.IPC_DEFAULT_GUI_CLIENT_NAME))
+					Send(args.Context, Commands.ReportError("Invalid route message"));
 				return;
 			}
 

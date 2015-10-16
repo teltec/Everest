@@ -1,16 +1,16 @@
-﻿namespace Teltec.Backup.App.Forms.RestorePlan
+namespace Teltec.Backup.App.Forms.RestorePlan
 {
 	partial class RestorePlanViewControl
 	{
-		/// <summary> 
+		/// <summary>
 		/// Required designer variable.
 		/// </summary>
 		private System.ComponentModel.IContainer components = null;
 
 		#region Component Designer generated code
 
-		/// <summary> 
-		/// Required method for Designer support - do not modify 
+		/// <summary>
+		/// Required method for Designer support - do not modify
 		/// the contents of this method with the code editor.
 		/// </summary>
 		private void InitializeComponent()
@@ -38,15 +38,14 @@
 			this.panelTitle = new System.Windows.Forms.Panel();
 			this.panelActions = new System.Windows.Forms.Panel();
 			this.panelContents = new System.Windows.Forms.Panel();
-			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			this.groupBox1.SuspendLayout();
 			this.panelTitle.SuspendLayout();
 			this.panelActions.SuspendLayout();
 			this.panelContents.SuspendLayout();
 			this.SuspendLayout();
-			// 
+			//
 			// llblEditPlan
-			// 
+			//
 			this.llblEditPlan.AutoSize = true;
 			this.llblEditPlan.Location = new System.Drawing.Point(8, 8);
 			this.llblEditPlan.Name = "llblEditPlan";
@@ -55,9 +54,9 @@
 			this.llblEditPlan.TabStop = true;
 			this.llblEditPlan.Text = "Edit plan";
 			this.llblEditPlan.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.llblEditPlan_LinkClicked);
-			// 
+			//
 			// groupBox1
-			// 
+			//
 			this.groupBox1.Controls.Add(this.lblLastSuccessfulRun);
 			this.groupBox1.Controls.Add(this.label8);
 			this.groupBox1.Controls.Add(this.lblDuration);
@@ -78,9 +77,9 @@
 			this.groupBox1.Size = new System.Drawing.Size(398, 147);
 			this.groupBox1.TabIndex = 13;
 			this.groupBox1.TabStop = false;
-			// 
+			//
 			// lblLastSuccessfulRun
-			// 
+			//
 			this.lblLastSuccessfulRun.AutoSize = true;
 			this.lblLastSuccessfulRun.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblLastSuccessfulRun.Location = new System.Drawing.Point(132, 89);
@@ -89,9 +88,9 @@
 			this.lblLastSuccessfulRun.Size = new System.Drawing.Size(121, 13);
 			this.lblLastSuccessfulRun.TabIndex = 25;
 			this.lblLastSuccessfulRun.Text = "{{ LastSuccessfulRun }}";
-			// 
+			//
 			// label8
-			// 
+			//
 			this.label8.AutoSize = true;
 			this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.label8.Location = new System.Drawing.Point(6, 89);
@@ -100,9 +99,9 @@
 			this.label8.Size = new System.Drawing.Size(117, 13);
 			this.label8.TabIndex = 24;
 			this.label8.Text = "Last successful run";
-			// 
+			//
 			// lblDuration
-			// 
+			//
 			this.lblDuration.AutoSize = true;
 			this.lblDuration.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblDuration.Location = new System.Drawing.Point(132, 127);
@@ -111,9 +110,9 @@
 			this.lblDuration.Size = new System.Drawing.Size(69, 13);
 			this.lblDuration.TabIndex = 23;
 			this.lblDuration.Text = "{{ Duration }}";
-			// 
+			//
 			// lblFilesTransferred
-			// 
+			//
 			this.lblFilesTransferred.AutoSize = true;
 			this.lblFilesTransferred.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblFilesTransferred.Location = new System.Drawing.Point(132, 108);
@@ -122,9 +121,9 @@
 			this.lblFilesTransferred.Size = new System.Drawing.Size(104, 13);
 			this.lblFilesTransferred.TabIndex = 22;
 			this.lblFilesTransferred.Text = "{{ FilesTransferred }}";
-			// 
+			//
 			// lblLastRun
-			// 
+			//
 			this.lblLastRun.AutoSize = true;
 			this.lblLastRun.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblLastRun.Location = new System.Drawing.Point(132, 70);
@@ -133,9 +132,9 @@
 			this.lblLastRun.Size = new System.Drawing.Size(69, 13);
 			this.lblLastRun.TabIndex = 21;
 			this.lblLastRun.Text = "{{ LastRun }}";
-			// 
+			//
 			// lblStatus
-			// 
+			//
 			this.lblStatus.AutoSize = true;
 			this.lblStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblStatus.Location = new System.Drawing.Point(132, 51);
@@ -144,9 +143,9 @@
 			this.lblStatus.Size = new System.Drawing.Size(59, 13);
 			this.lblStatus.TabIndex = 20;
 			this.lblStatus.Text = "{{ Status }}";
-			// 
+			//
 			// lblSchedule
-			// 
+			//
 			this.lblSchedule.AutoSize = true;
 			this.lblSchedule.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblSchedule.Location = new System.Drawing.Point(132, 32);
@@ -155,9 +154,9 @@
 			this.lblSchedule.Size = new System.Drawing.Size(74, 13);
 			this.lblSchedule.TabIndex = 19;
 			this.lblSchedule.Text = "{{ Schedule }}";
-			// 
+			//
 			// lblSources
-			// 
+			//
 			this.lblSources.AutoSize = true;
 			this.lblSources.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblSources.Location = new System.Drawing.Point(132, 13);
@@ -166,9 +165,9 @@
 			this.lblSources.Size = new System.Drawing.Size(68, 13);
 			this.lblSources.TabIndex = 18;
 			this.lblSources.Text = "{{ Sources }}";
-			// 
+			//
 			// label6
-			// 
+			//
 			this.label6.AutoSize = true;
 			this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.label6.Location = new System.Drawing.Point(6, 127);
@@ -177,9 +176,9 @@
 			this.label6.Size = new System.Drawing.Size(101, 13);
 			this.label6.TabIndex = 17;
 			this.label6.Text = "Restore duration";
-			// 
+			//
 			// label5
-			// 
+			//
 			this.label5.AutoSize = true;
 			this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.label5.Location = new System.Drawing.Point(6, 108);
@@ -188,9 +187,9 @@
 			this.label5.Size = new System.Drawing.Size(85, 13);
 			this.label5.TabIndex = 16;
 			this.label5.Text = "Restored files";
-			// 
+			//
 			// label4
-			// 
+			//
 			this.label4.AutoSize = true;
 			this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.label4.Location = new System.Drawing.Point(6, 70);
@@ -199,9 +198,9 @@
 			this.label4.Size = new System.Drawing.Size(53, 13);
 			this.label4.TabIndex = 15;
 			this.label4.Text = "Last run";
-			// 
+			//
 			// label3
-			// 
+			//
 			this.label3.AutoSize = true;
 			this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.label3.Location = new System.Drawing.Point(6, 51);
@@ -210,9 +209,9 @@
 			this.label3.Size = new System.Drawing.Size(43, 13);
 			this.label3.TabIndex = 14;
 			this.label3.Text = "Status";
-			// 
+			//
 			// label2
-			// 
+			//
 			this.label2.AutoSize = true;
 			this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.label2.Location = new System.Drawing.Point(6, 32);
@@ -221,9 +220,9 @@
 			this.label2.Size = new System.Drawing.Size(60, 13);
 			this.label2.TabIndex = 13;
 			this.label2.Text = "Schedule";
-			// 
+			//
 			// label1
-			// 
+			//
 			this.label1.AutoSize = true;
 			this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.label1.Location = new System.Drawing.Point(6, 13);
@@ -232,9 +231,9 @@
 			this.label1.Size = new System.Drawing.Size(51, 13);
 			this.label1.TabIndex = 12;
 			this.label1.Text = "Restore";
-			// 
+			//
 			// llblDeletePlan
-			// 
+			//
 			this.llblDeletePlan.AutoSize = true;
 			this.llblDeletePlan.Location = new System.Drawing.Point(62, 8);
 			this.llblDeletePlan.Name = "llblDeletePlan";
@@ -243,9 +242,9 @@
 			this.llblDeletePlan.TabStop = true;
 			this.llblDeletePlan.Text = "Delete plan";
 			this.llblDeletePlan.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.llblDeletePlan_LinkClicked);
-			// 
+			//
 			// llblRunNow
-			// 
+			//
 			this.llblRunNow.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.llblRunNow.AutoSize = true;
 			this.llblRunNow.Location = new System.Drawing.Point(342, 8);
@@ -255,9 +254,9 @@
 			this.llblRunNow.TabStop = true;
 			this.llblRunNow.Text = "Run now";
 			this.llblRunNow.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.llblRunNow_LinkClicked);
-			// 
+			//
 			// lblTitle
-			// 
+			//
 			this.lblTitle.AutoSize = true;
 			this.lblTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.lblTitle.Location = new System.Drawing.Point(11, 8);
@@ -267,9 +266,9 @@
 			this.lblTitle.TabIndex = 24;
 			this.lblTitle.Text = "{{ TITLE }}";
 			this.lblTitle.MouseClick += new System.Windows.Forms.MouseEventHandler(this.panelTitle_MouseClick);
-			// 
+			//
 			// panelTitle
-			// 
+			//
 			this.panelTitle.BackColor = System.Drawing.Color.LightGray;
 			this.panelTitle.Controls.Add(this.lblTitle);
 			this.panelTitle.Dock = System.Windows.Forms.DockStyle.Top;
@@ -278,9 +277,9 @@
 			this.panelTitle.Size = new System.Drawing.Size(398, 28);
 			this.panelTitle.TabIndex = 24;
 			this.panelTitle.MouseClick += new System.Windows.Forms.MouseEventHandler(this.panelTitle_MouseClick);
-			// 
+			//
 			// panelActions
-			// 
+			//
 			this.panelActions.Controls.Add(this.llblEditPlan);
 			this.panelActions.Controls.Add(this.llblDeletePlan);
 			this.panelActions.Controls.Add(this.llblRunNow);
@@ -290,9 +289,9 @@
 			this.panelActions.Name = "panelActions";
 			this.panelActions.Size = new System.Drawing.Size(398, 28);
 			this.panelActions.TabIndex = 25;
-			// 
+			//
 			// panelContents
-			// 
+			//
 			this.panelContents.AutoSize = true;
 			this.panelContents.Controls.Add(this.groupBox1);
 			this.panelContents.Controls.Add(this.panelActions);
@@ -302,14 +301,9 @@
 			this.panelContents.Name = "panelContents";
 			this.panelContents.Size = new System.Drawing.Size(398, 175);
 			this.panelContents.TabIndex = 26;
-			// 
-			// timer1
-			// 
-			this.timer1.Interval = 1000;
-			this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-			// 
+			//
 			// RestorePlanViewControl
-			// 
+			//
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.Controls.Add(this.panelTitle);
@@ -351,7 +345,6 @@
 		private System.Windows.Forms.Panel panelTitle;
 		private System.Windows.Forms.Panel panelActions;
 		private System.Windows.Forms.Panel panelContents;
-		private System.Windows.Forms.Timer timer1;
 		private System.Windows.Forms.Label lblLastSuccessfulRun;
 		private System.Windows.Forms.Label label8;
 

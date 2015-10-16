@@ -183,6 +183,8 @@
     <Compile Include="Forms\BackupPlan\BackupPlanPurgeOptionsForm.Designer.cs">
       <DependentUpon>BackupPlanPurgeOptionsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\RemoteOperation.cs" />
+    <Compile Include="Forms\Formatters.cs" />
     <Compile Include="Forms\RestorePlan\RestorePlanSelectAccountForm.cs">
       <SubType>Form</SubType>
     </Compile>
