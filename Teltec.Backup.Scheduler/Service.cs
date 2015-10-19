@@ -16,6 +16,7 @@ using Models = Teltec.Backup.Data.Models;
 using Teltec.Common.Extensions;
 using System.Text;
 using Teltec.Common.Threading;
+using Teltec.Backup.Logging;
 
 namespace Teltec.Backup.Scheduler
 {
@@ -52,6 +53,8 @@ namespace Teltec.Backup.Scheduler
 
 		static void UnsafeMain(string[] args)
 		{
+			LoggingHelper.ChangeFilenamePostfix("scheduler");
+
 			if (System.Environment.UserInteractive)
 			{
 				if (args.Length > 0)

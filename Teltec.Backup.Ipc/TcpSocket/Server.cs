@@ -338,7 +338,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			}
 			catch (SocketException ex)
 			{
-				logger.Error("ERROR BeginReceive: {0}", ex.Message);
+				logger.Error("BeginReceive failed: {0}", ex.Message);
 				HandleSocketError(ex.SocketErrorCode, context);
 			}
 		}
@@ -384,7 +384,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 								}
 								catch (SocketException ex)
 								{
-									logger.Error("ERROR BeginSend: {0}", ex.Message);
+									logger.Error("BeginSend failed: {0}", ex.Message);
 									HandleSocketError(ex.SocketErrorCode, context);
 								}
 							}
@@ -456,7 +456,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			}
 			catch (SocketException ex)
 			{
-				logger.Error("ERROR BeginDisconnect: {0}", ex.Message);
+				logger.Error("BeginDisconnect failed: {0}", ex.Message);
 				HandleSocketError(ex.SocketErrorCode, context);
 			}
 		}
@@ -553,7 +553,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			}
 			catch (SocketException ex)
 			{
-				logger.Error("ERROR DISCONNECTING: {0}", ex.Message);
+				logger.Error("Error at EndDisconnect: {0}", ex.Message);
 				HandleSocketError(ex.SocketErrorCode, context);
 			}
 		}
@@ -603,7 +603,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			}
 			catch (SocketException ex)
 			{
-				logger.Error("ERROR SENDING: {0}", ex.Message);
+				logger.Error("Error at EndSend: {0}", ex.Message);
 				HandleSocketError(ex.SocketErrorCode, context);
 			}
 		}
@@ -648,7 +648,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			}
 			catch (SocketException ex)
 			{
-				logger.Error("ERROR RECEIVING: {0}", ex.Message);
+				logger.Error("Error at EndReceive: {0}", ex.Message);
 				HandleSocketError(ex.SocketErrorCode, context);
 			}
 		}

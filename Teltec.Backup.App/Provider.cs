@@ -1,3 +1,4 @@
+using NLog;
 using SimpleInjector;
 using System;
 using Teltec.Backup.Ipc.Protocol;
@@ -7,6 +8,8 @@ namespace Teltec.Backup.App
 {
 	public class Provider
 	{
+		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
 		private static Container _Container = new Container();
 		public static Container Container
 		{
@@ -38,6 +41,9 @@ namespace Teltec.Backup.App
 			_SynchronizingObject = synchronizingObject;
 			if (_Handler != null)
 				_Handler.Dispose();
+
+			logger.Info("Building new GuiHandler");
+
 			_Handler = new GuiHandler(_SynchronizingObject,
 				Commands.IPC_DEFAULT_GUI_CLIENT_NAME, Commands.IPC_DEFAULT_HOST, Commands.IPC_DEFAULT_PORT);
 		}

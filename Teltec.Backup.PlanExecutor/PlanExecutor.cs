@@ -6,6 +6,7 @@ using System.Threading;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Ipc.Protocol;
 using Teltec.Backup.Ipc.TcpSocket;
+using Teltec.Backup.Logging;
 using Teltec.Backup.PlanExecutor.Backup;
 using Teltec.Backup.PlanExecutor.Restore;
 using Teltec.Common.Threading;
@@ -91,6 +92,8 @@ namespace Teltec.Backup.PlanExecutor
 
 		static void UnsafeMain(string[] args)
 		{
+			LoggingHelper.ChangeFilenamePostfix("executor");
+
 			if (!CommandLine.Parser.Default.ParseArguments(args, options))
 				return;
 

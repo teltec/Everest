@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Windows.Forms;
 using Teltec.Backup.App.Forms;
+using Teltec.Backup.Logging;
 using Teltec.Storage;
 
 namespace Teltec.Backup.App
@@ -37,6 +38,7 @@ namespace Teltec.Backup.App
 
 		static void UnsafeMain()
 		{
+			LoggingHelper.ChangeFilenamePostfix("gui");
 			Provider.Setup();
 			LoadSettings();
 			Application.EnableVisualStyles();

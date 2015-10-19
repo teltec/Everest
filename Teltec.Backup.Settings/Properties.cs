@@ -1,4 +1,5 @@
-﻿using System;
+using NLog;
+using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -8,6 +9,8 @@ namespace Teltec.Backup.Settings
 	[Serializable]
 	public class Properties
 	{
+		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
 		static Properties()
 		{
 			_Current = new Properties();
@@ -54,6 +57,7 @@ namespace Teltec.Backup.Settings
 
 		public static void Save()
 		{
+			logger.Info("Saving settings...");
 			IFormatter formatter = new BinaryFormatter();
 			Stream stream = new FileStream(SettingsFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
 			formatter.Serialize(stream, _Current);
@@ -64,6 +68,7 @@ namespace Teltec.Backup.Settings
 		{
 			try
 			{
+				logger.Info("Loading settings...");
 				IFormatter formatter = new BinaryFormatter();
 				Stream stream = new FileStream(SettingsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
 				_Current = (Properties)formatter.Deserialize(stream);
