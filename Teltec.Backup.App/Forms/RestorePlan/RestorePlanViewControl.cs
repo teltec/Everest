@@ -6,7 +6,6 @@ using Teltec.Backup.App.Forms.BackupPlan;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Ipc.Protocol;
 using Teltec.Backup.Ipc.TcpSocket;
-using Teltec.Backup.PlanExecutor.Restore;
 using Teltec.Common;
 using Teltec.Common.Extensions;
 using Teltec.Common.Utils;

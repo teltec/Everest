@@ -1,11 +1,9 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
-using System.Windows.Forms;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.PlanExecutor.Synchronize;
 using Teltec.Common.Utils;
 using Teltec.Storage;
-using Teltec.Common.Extensions;
 using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms.Sync
