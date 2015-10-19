@@ -152,8 +152,6 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 						//this.lblTitle.Text = PlanCommon.FormatTitle(plan.Name);
 						//this.lblSchedule.Text = plan.ScheduleType.ToString();
 
-						CurrentOperation.GotInitialInfo = true;
-
 						break;
 					}
 				case Commands.OperationStatus.STARTED:
