@@ -7,8 +7,8 @@
     <ProjectGuid>{C3E6071D-6940-453C-A919-795795F82584}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Teltec.System</RootNamespace>
-    <AssemblyName>Teltec.System</AssemblyName>
+    <RootNamespace>Teltec.FileSystem</RootNamespace>
+    <AssemblyName>Teltec.FileSystem</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -36,6 +36,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -48,7 +49,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FileManager.cs" />
+    <Compile Include="MappedDriveResolver.cs" />
     <Compile Include="Native.cs" />
+    <Compile Include="NetworkDriveMapper.cs" />
     <Compile Include="PathComponents.cs" />
     <Compile Include="PathNode.cs" />
     <Compile Include="PathNodes.cs" />

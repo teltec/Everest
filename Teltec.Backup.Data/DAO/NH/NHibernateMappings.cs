@@ -94,6 +94,39 @@ namespace Teltec.Backup.Data.DAO.NH
 
 	#endregion
 
+	class NetworkCredentialMap : ClassMap<Models.NetworkCredential>
+	{
+		public NetworkCredentialMap()
+		{
+			Table("network_credentials");
+
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_network_credentials");
+
+			Map(p => p.MountPoint)
+				.Column("mount_point")
+				.Not.Nullable()
+				.Length(Models.NetworkCredential.MountPointMaxLen)
+				;
+
+			Map(p => p.Path)
+				.Column("path")
+				.Not.Nullable()
+				.Length(Models.NetworkCredential.PathMaxLen)
+				;
+
+			Map(p => p.Login)
+				.Column("login")
+				.Not.Nullable()
+				.Length(Models.NetworkCredential.LoginMaxLen)
+				;
+
+			Map(p => p.Password)
+				.Column("password")
+				.Length(Models.NetworkCredential.PasswordMaxLen)
+				;
+		}
+	}
+
 	#region Plan Schedule
 
 	class PlanScheduleDayOfWeekMap : ClassMap<Models.PlanScheduleDayOfWeek>

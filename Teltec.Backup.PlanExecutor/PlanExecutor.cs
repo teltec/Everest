@@ -1,7 +1,9 @@
 using NLog;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Ipc.Protocol;
@@ -10,6 +12,7 @@ using Teltec.Backup.Logging;
 using Teltec.Backup.PlanExecutor.Backup;
 using Teltec.Backup.PlanExecutor.Restore;
 using Teltec.Common.Threading;
+using Teltec.FileSystem;
 using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
 
@@ -165,6 +168,57 @@ namespace Teltec.Backup.PlanExecutor
 		/// </summary>
 		readonly ManualResetEvent RunningOperationEndedEvent = new ManualResetEvent(false);
 
+		private DriveInfo GetDriveInfo(string drive)
+		{
+			DriveInfo[] drivesInUse = DriveInfo.GetDrives();
+			foreach (DriveInfo d in drivesInUse)
+			{
+				if (d.RootDirectory.FullName.Equals(drive))
+					return d;
+			}
+			return null;
+		}
+
+		private void MapAllNetworkDrives()
+		{
+			NetworkCredentialRepository dao = new NetworkCredentialRepository();
+			List<Models.NetworkCredential> allCredentials = dao.GetAll();
+
+			if (allCredentials.Count > 0)
+				logger.Info("Mounting network shares...");
+
+			foreach (Models.NetworkCredential cred in allCredentials)
+			{
+				try
+				{
+					DriveInfo drive = GetDriveInfo(cred.MountPoint);
+					if (drive != null)
+					{
+						string remotePath = MappedDriveResolver.ResolveToRootUNC(cred.MountPoint);
+						logger.Info("{0} is already mounted to {1}", cred.MountPoint, remotePath);
+						return;
+					}
+
+					NetworkDriveMapper.MountNetworkLocation(cred.MountPoint, cred.Path, cred.Login, cred.Password, false);
+					logger.Info("Successfully mounted {0} to {1}", cred.MountPoint, cred.Path);
+				}
+				catch (Win32Exception ex)
+				{
+					string reason = ex.Message;
+
+					switch (ex.NativeErrorCode)
+					{
+						case NetworkDriveMapper.ERROR_ALREADY_ASSIGNED:
+							string remotePath = MappedDriveResolver.ResolveToRootUNC(cred.MountPoint);
+							reason = string.Format("It's already mounted to {0}", remotePath);
+							break;
+					}
+
+					logger.Warn("Failed to mount {0} to {1} - {2}", cred.MountPoint, cred.Path, reason);
+				}
+			}
+		}
+
 		private void Run()
 		{
 			// Validate plan type
@@ -197,6 +251,8 @@ namespace Teltec.Backup.PlanExecutor
 			}
 
 			Model = plan;
+
+			MapAllNetworkDrives();
 
 			if (options.Verbose)
 			{

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -250,7 +250,7 @@ namespace Teltec.Common.Controls
 		DefaultValue(true),
 		DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)
 		]
-		public bool _AutoExpandMixedNodes = true;
+		private bool _AutoExpandMixedNodes = true;
 		public bool AutoExpandMixedNodes
 		{
 			get { return _AutoExpandMixedNodes; }

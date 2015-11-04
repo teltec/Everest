@@ -109,6 +109,7 @@
     <Compile Include="Models\BaseEntity.cs" />
     <Compile Include="Models\EntryType.cs" />
     <Compile Include="Models\EStorageAccountType.cs" />
+    <Compile Include="Models\NetworkCredential.cs" />
     <Compile Include="Models\SchedulablePlan.cs" />
     <Compile Include="Models\PlanSchedule.cs" />
     <Compile Include="Models\Restore.cs" />

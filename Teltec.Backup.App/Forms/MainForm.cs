@@ -3,6 +3,7 @@ using System;
 using System.Windows.Forms;
 using Teltec.Backup.App.Forms.About;
 using Teltec.Backup.App.Forms.BackupPlan;
+using Teltec.Backup.App.Forms.NetworkCredentials;
 using Teltec.Backup.App.Forms.RestorePlan;
 using Teltec.Backup.App.Forms.Settings;
 using Teltec.Backup.Data.DAO;
@@ -111,6 +112,14 @@ namespace Teltec.Backup.App.Forms
 		private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			using (var form = new SettingsForm())
+			{
+				form.ShowDialog(this);
+			}
+		}
+
+		private void networkCredentialsToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			using (var form = new NetworkCredentialsForm())
 			{
 				form.ShowDialog(this);
 			}

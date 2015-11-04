@@ -37,6 +37,18 @@ namespace Teltec.Backup.Data.DAO
 
 	#endregion
 
+	public class NetworkCredentialRepository : BaseRepository<Models.NetworkCredential, Int32?>
+	{
+		public NetworkCredentialRepository()
+		{
+		}
+
+		public NetworkCredentialRepository(ISession session)
+			: base(session)
+		{
+		}
+	}
+
 	#region Schedule
 
 	public class PlanScheduleRepository : BaseRepository<Models.PlanSchedule, Int32?>
