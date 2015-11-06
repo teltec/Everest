@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Teltec.Storage;
 
 namespace Teltec.Backup.Data.Models
@@ -103,6 +103,13 @@ namespace Teltec.Backup.Data.Models
 		{
 			get { return _FileLastWrittenAt; }
 			set { SetField(ref _FileLastWrittenAt, value); }
+		}
+
+		private byte[] _FileLastChecksum; // SHA-1
+		public virtual byte[] FileLastChecksum
+		{
+			get { return _FileLastChecksum; }
+			set { SetField(ref _FileLastChecksum, value); }
 		}
 
 		private TransferStatus _TransferStatus;

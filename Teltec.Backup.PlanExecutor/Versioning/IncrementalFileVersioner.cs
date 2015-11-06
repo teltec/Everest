@@ -711,6 +711,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						backupedFile.FileSize = entry.LastSize;
 						backupedFile.FileStatus = entry.LastStatus;
 						backupedFile.FileLastWrittenAt = entry.LastWrittenAt;
+						backupedFile.FileLastChecksum = entry.LastChecksum;
 						switch (entry.LastStatus)
 						{
 							default:

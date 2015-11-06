@@ -261,7 +261,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							entry.Path = path;
 							entry.LastSize = obj.Size;
 							entry.LastWrittenAt = lastWrittenAt;
-							//entry.LastChecksum =
+							//entry.LastChecksum = ;
 							entry.LastStatus = Models.BackupFileStatus.UNCHANGED;
 							entry.CreatedAt = DateTime.UtcNow;
 
@@ -270,6 +270,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							version.StorageAccountType = account.Type;
 							version.StorageAccount = account;
 							version.FileLastWrittenAt = lastWrittenAt;
+							version.FileLastChecksum = entry.LastChecksum;
 							version.FileSize = entry.LastSize;
 							version.FileStatus = Models.BackupFileStatus.MODIFIED;
 							version.TransferStatus = TransferStatus.COMPLETED;
@@ -306,6 +307,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 								version.StorageAccountType = account.Type;
 								version.StorageAccount = account;
 								version.FileLastWrittenAt = entry.LastWrittenAt;
+								version.FileLastChecksum = entry.LastChecksum;
 								version.FileSize = entry.LastSize;
 								version.FileStatus = Models.BackupFileStatus.MODIFIED;
 								version.TransferStatus = TransferStatus.COMPLETED;
@@ -319,6 +321,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 								// Update `BackupedFile`.
 								version = versions.First();
 								version.FileLastWrittenAt = entry.LastWrittenAt;
+								version.FileLastChecksum = entry.LastChecksum;
 								version.FileSize = entry.LastSize;
 								version.UpdatedAt = DateTime.UtcNow;
 								//daoBackupedFile.Update(tx, version);

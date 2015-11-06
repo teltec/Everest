@@ -495,6 +495,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				//.CustomType<TimestampType>()
 				;
 
+			Map(p => p.FileLastChecksum)
+				.Column("file_last_checksum")
+				.Nullable()
+				.Length(20) // SHA-1 is 160 bits long (20 bytes)
+				;
+
 			Map(p => p.TransferStatus)
 				.Column("transfer_status")
 				.Not.Nullable()
