@@ -66,7 +66,8 @@ namespace Teltec.Storage
 		{
 			TransferAgent.UploadFileStarted += (object sender, TransferFileProgressArgs e) =>
 			{
-				Results.Stats.Running -= 1;
+				Results.Stats.Running += 1;
+				Results.Stats.Pending -= 1;
 				Results.OnStarted(this, e);
 			};
 			TransferAgent.UploadFileProgress += (object sender, TransferFileProgressArgs e) =>
@@ -97,7 +98,8 @@ namespace Teltec.Storage
 		{
 			TransferAgent.DownloadFileStarted += (object sender, TransferFileProgressArgs e) =>
 			{
-				Results.Stats.Running -= 1;
+				Results.Stats.Running += 1;
+				Results.Stats.Pending -= 1;
 				Results.OnStarted(this, e);
 			};
 			TransferAgent.DownloadFileProgress += (object sender, TransferFileProgressArgs e) =>
@@ -164,9 +166,6 @@ namespace Teltec.Storage
 
 			foreach (IVersionedFile file in Files)
 			{
-				Results.Stats.Pending -= 1;
-				Results.Stats.Running += 1;
-
 				Task task = DoImplementation(file, /*userData*/ null);
 				//	.ContinueWith((Task t) =>
 				//{

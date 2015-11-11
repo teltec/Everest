@@ -75,6 +75,9 @@ namespace Teltec.Storage.Implementations.S3
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/LLuploadFileDotNet.html
 		public override void UploadFile(string filePath, string keyName, object userData, CancellationToken cancellationToken)
 		{
+			if (cancellationToken != null)
+				cancellationToken.ThrowIfCancellationRequested();
+
 			CancelableFileStream inputStream = null;
 
 			TransferFileProgressArgs reusedProgressArgs = new TransferFileProgressArgs
@@ -286,6 +289,9 @@ namespace Teltec.Storage.Implementations.S3
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/RetrievingObjectUsingNetSDK.html
 		public override void DownloadFile(string filePath, string keyName, object userData, CancellationToken cancellationToken)
 		{
+			if (cancellationToken != null)
+				cancellationToken.ThrowIfCancellationRequested();
+
 			TransferFileProgressArgs reusedProgressArgs = new TransferFileProgressArgs
 			{
 				UserData = userData,
@@ -423,6 +429,9 @@ namespace Teltec.Storage.Implementations.S3
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/ListingObjectKeysUsingNetSDK.html
 		public override void List(string prefix, bool recursive, object userData, CancellationToken cancellationToken)
 		{
+			if (cancellationToken != null)
+				cancellationToken.ThrowIfCancellationRequested();
+
 			ListingProgressArgs reusedProgressArgs = new ListingProgressArgs
 			{
 				UserData = userData,
@@ -610,6 +619,9 @@ namespace Teltec.Storage.Implementations.S3
 
 		public override void DeleteFile(string keyName, object userData, CancellationToken cancellationToken)
 		{
+			if (cancellationToken != null)
+				cancellationToken.ThrowIfCancellationRequested();
+
 			DeletionArgs reusedArgs = new DeletionArgs
 			{
 				UserData = userData,

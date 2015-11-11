@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Schedulers;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.PlanExecutor.Versioning;
 using Teltec.Common.Utils;
@@ -447,6 +448,12 @@ namespace Teltec.Backup.PlanExecutor.Backup
 		{
 			agent.Cancel();
 			CancellationTokenSource.Cancel();
+
+			if (AsyncHelper.TaskSchedulerInstance is IDynamicConcurrencyLevelScheduler)
+			{
+				IDynamicConcurrencyLevelScheduler scheduler = AsyncHelper.TaskSchedulerInstance as IDynamicConcurrencyLevelScheduler;
+				scheduler.RemovePendingTasks();
+			}
 		}
 
 		#endregion

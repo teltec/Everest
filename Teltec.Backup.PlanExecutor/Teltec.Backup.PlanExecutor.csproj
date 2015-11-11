@@ -142,14 +142,12 @@
     <Compile Include="Backup\BackupOperation.cs" />
     <Compile Include="Backup\CustomBackupAgent.cs" />
     <Compile Include="Backup\NewBackupOperation.cs" />
-    <Compile Include="Backup\RemoteBackupOperation.cs" />
     <Compile Include="Backup\ResumeBackupOperation.cs" />
     <Compile Include="BaseOperation.cs" />
     <Compile Include="PlanExecutor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Restore\CustomRestoreAgent.cs" />
     <Compile Include="Restore\NewRestoreOperation.cs" />
-    <Compile Include="Restore\RemoteRestoreOperation.cs" />
     <Compile Include="Restore\RestoreOperation.cs" />
     <Compile Include="Serialization\CustomJsonSerializer.cs" />
     <Compile Include="Synchronize\CustomSynchronizationAgent.cs" />

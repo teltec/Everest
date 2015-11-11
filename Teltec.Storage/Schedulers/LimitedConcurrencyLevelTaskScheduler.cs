@@ -1,4 +1,4 @@
-﻿//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 //
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 //
@@ -51,6 +51,41 @@ namespace System.Threading.Tasks.Schedulers
 				{
 					++_delegatesQueuedOrRunning;
 					NotifyThreadPoolOfPendingWork();
+				}
+			}
+		}
+
+		public void RemovePendingTasks()
+		{
+			lock (_tasks)
+			{
+				while (true)
+				{
+					// When there are no more items to be processed,
+					// note that we're done processing, and get out.
+					if (_tasks.Count == 0)
+						break;
+
+					// Get the next item from the queue
+					Task task = _tasks.First.Value;
+					switch (task.Status)
+					{
+						// The task has been initialized but has not yet been scheduled.
+						case TaskStatus.Created:
+						// The task is waiting to be activated and scheduled internally.
+						case TaskStatus.WaitingForActivation:
+						// The task has been scheduled for execution but has not yet begun executing.
+						case TaskStatus.WaitingToRun:
+							_tasks.RemoveFirst();
+							break;
+						case TaskStatus.Running:
+						case TaskStatus.RanToCompletion:
+						case TaskStatus.Faulted:
+						case TaskStatus.Canceled:
+						case TaskStatus.WaitingForChildrenToComplete:
+							// Do nothing. The task execution just finishes or is underway.
+							break;
+					}
 				}
 			}
 		}
