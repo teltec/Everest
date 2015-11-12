@@ -12,7 +12,7 @@ using Teltec.Backup.Data.Models;
 using Teltec.Common.Extensions;
 using Teltec.Common.Types;
 using Teltec.Storage;
-using Teltec.Storage.Agent;
+using Teltec.Storage.Backend;
 using Teltec.Storage.Implementations.S3;
 
 namespace Teltec.Backup.App.Forms.S3
