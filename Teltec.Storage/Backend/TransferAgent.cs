@@ -7,10 +7,13 @@ namespace Teltec.Storage.Backend
 {
 	public abstract class TransferAgent : ITransferAgent
 	{
-		protected TransferAgent(StorageBackend impl, CancellationToken cancellationToken)
+		protected TransferAgentOptions Options { get; private set; }
+
+		protected TransferAgent(TransferAgentOptions options, StorageBackend impl, CancellationToken cancellationToken)
 		{
 			_shouldDispose = false;
 
+			Options = options;
 			Implementation = impl; // This should be disposed by classe that inherit this class.
 
 			CancellationToken = cancellationToken;

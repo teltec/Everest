@@ -12,13 +12,10 @@ namespace Teltec.Storage.Implementations.S3
 {
 	public sealed class S3TransferAgent : TransferAgent
 	{
-		bool _shouldDispose = false;
-		bool _isDisposed;
-
 		#region Public API
 
-		public S3TransferAgent(AWSCredentials awsCredentials, string awsBucketName, CancellationToken cancellationToken)
-			: base(new S3StorageBackend(awsCredentials, awsBucketName, RegionEndpoint.USEast1), cancellationToken)
+		public S3TransferAgent(TransferAgentOptions options, AWSCredentials awsCredentials, string awsBucketName, CancellationToken cancellationToken)
+			: base(options, new S3StorageBackend(options, awsCredentials, awsBucketName, RegionEndpoint.USEast1), cancellationToken)
 		{
 			// This is `true` because it should dispose the `StorageBackend` implementation passed to the base class.
 			_shouldDispose = true;
@@ -80,6 +77,9 @@ namespace Teltec.Storage.Implementations.S3
 		#endregion
 
 		#region Dispose Pattern Implementation
+
+		bool _shouldDispose = false;
+		bool _isDisposed;
 
 		protected override void Dispose(bool disposing)
 		{

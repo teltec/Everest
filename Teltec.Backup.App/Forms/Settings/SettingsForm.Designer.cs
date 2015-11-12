@@ -80,9 +80,9 @@ namespace Teltec.Backup.App.Forms.Settings
 			this.label3.AutoSize = true;
 			this.label3.Location = new System.Drawing.Point(240, 51);
 			this.label3.Name = "label3";
-			this.label3.Size = new System.Drawing.Size(23, 13);
+			this.label3.Size = new System.Drawing.Size(25, 13);
 			this.label3.TabIndex = 4;
-			this.label3.Text = "MB";
+			this.label3.Text = "MiB";
 			// 
 			// nudUploadChunkSize
 			// 
@@ -93,7 +93,7 @@ namespace Teltec.Backup.App.Forms.Settings
             0,
             0});
 			this.nudUploadChunkSize.Minimum = new decimal(new int[] {
-            5,
+            1,
             0,
             0,
             0});
