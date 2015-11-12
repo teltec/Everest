@@ -599,8 +599,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		public void Undo()
 		{
-			Assert.IsFalse(IsSaved);
-			if (Backup != null)
+			if (Backup != null && !IsSaved)
 			{
 				BackupRepository daoBackup = new BackupRepository();
 				daoBackup.Refresh(Backup);

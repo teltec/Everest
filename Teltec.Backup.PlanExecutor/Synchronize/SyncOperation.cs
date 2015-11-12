@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
+using Teltec.Common.Extensions;
 using Teltec.Common.Utils;
 using Teltec.Stats;
 using Teltec.Storage;
@@ -134,13 +135,14 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				TransferAgent.Dispose();
 			if (TransferListControl != null)
 				TransferListControl.ClearTransfers();
-
+			if (SyncAgent != null)
+				SyncAgent.Dispose();
 
 			//
 			// Setup agents.
 			//
 			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
-			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
+			TransferAgent = new S3TransferAgent(awsCredentials, s3account.BucketName, CancellationTokenSource.Token);
 			TransferAgent.RemoteRootDir = TransferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP", s3account.Hostname);
 
 			RemoteObjects = new List<ListingObject>(4096); // Avoid small resizes without compromising memory.
@@ -410,7 +412,14 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Synchronizing files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during synchronizing files");
+					}
 
 					if (syncTask.IsFaulted || syncTask.IsCanceled)
 					{
@@ -434,12 +443,23 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 						RemoteObjects.Count(), FileSizeUtils.FileSizeToString(agent.Results.Stats.TotalSize));
 					Info(message);
 				}
+			}
 
+			//
+			// Database files saving
+			//
+
+			{
 				Task saveTask = ExecuteOnBackround(() =>
 					{
 						// Save everything.
 						Save(CancellationTokenSource.Token);
 					}, CancellationTokenSource.Token);
+
+				{
+					var	message = string.Format("Database files saving started.");
+					Info(message);
+				}
 
 				try
 				{
@@ -447,7 +467,14 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Database files saving was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during database files saving");
+					}
 
 					if (saveTask.IsFaulted || saveTask.IsCanceled)
 					{
@@ -459,6 +486,10 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 					}
 				}
 
+				{
+					var message = string.Format("Database files saving finished.");
+					Info(message);
+				}
 			}
 
 			OnFinish(agent, sync);
@@ -572,7 +603,11 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			{
 				if (disposing && _shouldDispose)
 				{
-					SyncAgent = null;
+					if (SyncAgent != null)
+					{
+						SyncAgent.Dispose();
+						SyncAgent = null;
+					}
 				}
 				this._isDisposed = true;
 			}

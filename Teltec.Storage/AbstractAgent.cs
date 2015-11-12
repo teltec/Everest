@@ -2,20 +2,21 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Common.Extensions;
-using Teltec.Storage.Agent;
+using Teltec.Storage.Backend;
 using Teltec.Storage.Versioning;
 
 namespace Teltec.Storage
 {
-	public abstract class AbstractAgent<TFile> where TFile : IVersionedFile
+	public abstract class AbstractAgent<TFile> : IDisposable where TFile : IVersionedFile
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		protected IAsyncTransferAgent TransferAgent { get; private set; }
+		protected ITransferAgent TransferAgent { get; private set; }
 
-		public AbstractAgent(IAsyncTransferAgent agent)
+		public AbstractAgent(ITransferAgent agent)
 		{
 			Results = new TransferResults();
 			TransferAgent = agent;
@@ -76,18 +77,21 @@ namespace Teltec.Storage
 			};
 			TransferAgent.UploadFileCanceled += (object sender, TransferFileProgressArgs e, Exception ex) =>
 			{
+				Results.Stats.Running -= 1;
 				Results.Stats.Canceled += 1;
 				Results.Stats.BytesCanceled += e.TotalBytes;
 				Results.OnCanceled(this, e, ex);
 			};
 			TransferAgent.UploadFileFailed += (object sender, TransferFileProgressArgs e, Exception ex) =>
 			{
+				Results.Stats.Running -= 1;
 				Results.Stats.Failed += 1;
 				Results.Stats.BytesFailed += e.TotalBytes;
 				Results.OnFailed(this, e, ex);
 			};
 			TransferAgent.UploadFileCompleted += (object sender, TransferFileProgressArgs e) =>
 			{
+				Results.Stats.Running -= 1;
 				Results.Stats.Completed += 1;
 				Results.Stats.BytesCompleted += e.TotalBytes;
 				Results.OnCompleted(this, e);
@@ -108,18 +112,21 @@ namespace Teltec.Storage
 			};
 			TransferAgent.DownloadFileCanceled += (object sender, TransferFileProgressArgs e, Exception ex) =>
 			{
+				Results.Stats.Running -= 1;
 				Results.Stats.Canceled += 1;
 				Results.Stats.BytesCanceled += e.TotalBytes;
 				Results.OnCanceled(this, e, ex);
 			};
 			TransferAgent.DownloadFileFailed += (object sender, TransferFileProgressArgs e, Exception ex) =>
 			{
+				Results.Stats.Running -= 1;
 				Results.Stats.Failed += 1;
 				Results.Stats.BytesFailed += e.TotalBytes;
 				Results.OnFailed(this, e, ex);
 			};
 			TransferAgent.DownloadFileCompleted += (object sender, TransferFileProgressArgs e) =>
 			{
+				Results.Stats.Running -= 1;
 				Results.Stats.Completed += 1;
 				Results.Stats.BytesCompleted += e.TotalBytes;
 				Results.OnCompleted(this, e);
@@ -154,38 +161,101 @@ namespace Teltec.Storage
 
 		public void Cancel()
 		{
-			TransferAgent.CancelTransfers();
+			CancelTransfers();
+		}
+
+		private void CancelTransfers()
+		{
+			CancellationTokenSource.Cancel();
+		}
+
+		private CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+
+		private void RenewCancellationToken()
+		{
+			bool alreadyUsed = CancellationTokenSource != null && CancellationTokenSource.IsCancellationRequested;
+			if (alreadyUsed || CancellationTokenSource == null)
+			{
+				if (CancellationTokenSource != null)
+					CancellationTokenSource.Dispose();
+
+				CancellationTokenSource = new CancellationTokenSource();
+			}
 		}
 
 		public async Task Start()
 		{
 			Results.Stats.Reset(Files.Count());
 
-			TransferAgent.RenewCancellationToken();
-			List<Task> activeTasks = new List<Task>();
+			RenewCancellationToken();
 
-			foreach (IVersionedFile file in Files)
+			await Task.Run(() =>
 			{
-				Task task = DoImplementation(file, /*userData*/ null);
-				//	.ContinueWith((Task t) =>
-				//{
-				//	switch (t.Status)
-				//	{
-				//		case TaskStatus.Faulted:
-				//			break;
-				//		case TaskStatus.Canceled:
-				//			break;
-				//		case TaskStatus.RanToCompletion:
-				//			break;
-				//	}
-				//});
+				try
+				{
+					ParallelOptions options = new ParallelOptions();
+					options.CancellationToken = CancellationTokenSource.Token;
+					options.MaxDegreeOfParallelism = AsyncHelper.SettingsMaxThreadCount;
 
-				activeTasks.Add(task);
-			}
-
-			await Task.WhenAll(activeTasks.ToArray());
+					ParallelLoopResult result = Parallel.ForEach(Files, options, (currentFile) =>
+					{
+						DoImplementation(currentFile, /*userData*/ null);
+					});
+				}
+				catch (Exception ex)
+				{
+					// When there are Tasks running inside another Task, and the inner-tasks are cancelled,
+					// the propagated exception is an instance of `AggregateException`, rather than
+					// `OperationCanceledException`.
+					if (ex.IsCancellation())
+					{
+						throw new OperationCanceledException("The operation was canceled.");
+					}
+					else
+					{
+						throw ex;
+					}
+				}
+			});
 		}
 
-		public abstract Task DoImplementation(IVersionedFile file, object userData);
+		public abstract void DoImplementation(IVersionedFile file, object userData);
+
+		#region Dispose Pattern Implementation
+
+		bool _shouldDispose = true;
+		bool _isDisposed;
+
+		/// <summary>
+		/// Implements the Dispose pattern
+		/// </summary>
+		/// <param name="disposing">Whether this object is being disposed via a call to Dispose
+		/// or garbage collected.</param>
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!this._isDisposed)
+			{
+				if (disposing && _shouldDispose)
+				{
+					if (CancellationTokenSource != null)
+					{
+						CancellationTokenSource.Dispose();
+						CancellationTokenSource = null;
+					}
+				}
+				this._isDisposed = true;
+			}
+		}
+
+		/// <summary>
+		/// Disposes of all managed and unmanaged resources.
+		/// </summary>
+		public void Dispose()
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 }

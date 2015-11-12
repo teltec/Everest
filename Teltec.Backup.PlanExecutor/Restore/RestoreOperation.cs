@@ -8,10 +8,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Schedulers;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.Versioning;
 using Teltec.Backup.PlanExecutor.Versioning;
+using Teltec.Common.Extensions;
 using Teltec.Common.Utils;
 using Teltec.FileSystem;
 using Teltec.Storage;
@@ -131,6 +131,8 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				TransferAgent.Dispose();
 			if (TransferListControl != null)
 				TransferListControl.ClearTransfers();
+			if (RestoreAgent != null)
+				RestoreAgent.Dispose();
 			if (Versioner != null)
 				Versioner.Dispose();
 
@@ -138,7 +140,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			// Setup agents.
 			//
 			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
-			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
+			TransferAgent = new S3TransferAgent(awsCredentials, s3account.BucketName, CancellationTokenSource.Token);
 			TransferAgent.RemoteRootDir = TransferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP",
 				Restore.RestorePlan.StorageAccount.Hostname);
 
@@ -248,7 +250,14 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Scanning files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during scanning files");
+					}
 
 					if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
 					{
@@ -266,7 +275,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 					if (filesToProcessTask.Result.FailedFiles.Count > 0)
 					{
 						StringBuilder sb = new StringBuilder();
-						sb.AppendLine("Scanning failes for the following drives/files/directories:");
+						sb.AppendLine("Scanning failed for the following drives/files/directories:");
 						foreach (var entry in filesToProcessTask.Result.FailedFiles)
 							sb.AppendLine(string.Format("  Path: {0} - Reason: {1}", entry.Key, entry.Value));
 						Warn(sb.ToString());
@@ -299,7 +308,14 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Processing files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during processing files");
+					}
 
 					if (versionerTask.IsFaulted || versionerTask.IsCanceled)
 					{
@@ -331,12 +347,46 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			}
 
 			//
-			// Transfer
+			// Transfer files
 			//
 
 			{
 				Task transferTask = agent.Start();
-				await transferTask;
+
+				{
+					var message = string.Format("Transfer files started.");
+					Info(message);
+				}
+
+				try
+				{
+					await transferTask;
+				}
+				catch (Exception ex)
+				{
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Transfer files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during transfer files");
+					}
+
+					if (transferTask.IsFaulted || transferTask.IsCanceled)
+					{
+						if (transferTask.IsCanceled)
+							OnCancelation(agent, restore, ex); // transferTask.Exception
+						else
+							OnFailure(agent, restore, ex); // transferTask.Exception
+						return;
+					}
+				}
+
+				{
+					var message = string.Format("Transfer files finished.");
+					Info(message);
+				}
 			}
 
 			OnFinish(agent, restore);
@@ -352,12 +402,6 @@ namespace Teltec.Backup.PlanExecutor.Restore
 		{
 			agent.Cancel();
 			CancellationTokenSource.Cancel();
-
-			if (AsyncHelper.TaskSchedulerInstance is IDynamicConcurrencyLevelScheduler)
-			{
-				IDynamicConcurrencyLevelScheduler scheduler = AsyncHelper.TaskSchedulerInstance as IDynamicConcurrencyLevelScheduler;
-				scheduler.RemovePendingTasks();
-			}
 		}
 
 		#endregion
@@ -458,7 +502,11 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			{
 				if (disposing && _shouldDispose)
 				{
-					RestoreAgent = null;
+					if (RestoreAgent != null)
+					{
+						RestoreAgent.Dispose();
+						RestoreAgent = null;
+					}
 
 					if (Versioner != null)
 					{
