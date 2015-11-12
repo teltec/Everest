@@ -6,7 +6,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 {
 	public class CustomSynchronizationAgent : SynchronizationAgent<CustomVersionedFile>
 	{
-		public CustomSynchronizationAgent(IAsyncTransferAgent agent)
+		public CustomSynchronizationAgent(ITransferAgent agent)
 			: base(agent)
 		{
 		}

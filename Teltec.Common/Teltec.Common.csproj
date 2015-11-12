@@ -45,6 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Collections\ObservableDictionary.cs" />
+    <Compile Include="ConsoleAppHelper.cs" />
+    <Compile Include="Extensions\ExceptionExtensions.cs" />
     <Compile Include="Extensions\ICollectionExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
     <Compile Include="Controls\AdvancedTreeView.cs">
@@ -88,6 +90,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Threading\MockSynchronizeInvoke.cs" />
     <Compile Include="Types\Tribool.cs" />
+    <Compile Include="Unmanaged.cs" />
     <Compile Include="Utils\DateTimeUtils.cs" />
     <Compile Include="Utils\FileSizeUtils.cs" />
     <Compile Include="Utils\RuntimeUtils.cs" />

@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Teltec.Storage.Backend;
 using Teltec.Storage.Versioning;
 
-namespace Teltec.Storage.Agent
+namespace Teltec.Storage.Backend
 {
 	public delegate void TransferFileProgressHandler(object sender, TransferFileProgressArgs e);
 	public delegate void TransferFileExceptionHandler(object sender, TransferFileProgressArgs e, Exception ex);
@@ -13,7 +11,7 @@ namespace Teltec.Storage.Agent
 	public delegate void DeleteFileProgressHandler(object sender, DeletionArgs e);
 	public delegate void DeleteFileExceptionHandler(object sender, DeletionArgs e, Exception ex);
 
-	public interface IAsyncTransferAgent : IDisposable
+	public interface ITransferAgent : IDisposable
 	{
 		// ATTENTION: If an event listener performs changes to the UI, then the provided dispatcher
 		//            MUST have been created on the Main thread.
@@ -36,8 +34,8 @@ namespace Teltec.Storage.Agent
 		event TransferFileExceptionHandler UploadFileFailed;
 		event TransferFileProgressHandler UploadFileCompleted;
 
-		Task UploadVersionedFile(string sourcePath, IFileVersion version, object userData);
-		Task UploadFile(string sourcePath, string targetPath, object userData);
+		void UploadVersionedFile(string sourcePath, IFileVersion version, object userData);
+		void UploadFile(string sourcePath, string targetPath, object userData);
 
 		#endregion
 
@@ -49,8 +47,8 @@ namespace Teltec.Storage.Agent
 		event TransferFileExceptionHandler DownloadFileFailed;
 		event TransferFileProgressHandler DownloadFileCompleted;
 
-		Task DownloadVersionedFile(string sourcePath, IFileVersion version, object userData);
-		Task DownloadFile(string sourcePath, string targetPath, object userData);
+		void DownloadVersionedFile(string sourcePath, IFileVersion version, object userData);
+		void DownloadFile(string sourcePath, string targetPath, object userData);
 
 		#endregion
 
@@ -62,7 +60,7 @@ namespace Teltec.Storage.Agent
 		event ListingExceptionHandler ListingFailed;
 		event ListingProgressHandler ListingCompleted;
 
-		Task List(string prefix, bool recursive, object userData);
+		void List(string prefix, bool recursive, object userData);
 
 		#endregion
 
@@ -73,12 +71,9 @@ namespace Teltec.Storage.Agent
 		event DeleteFileExceptionHandler DeleteFileFailed;
 		event DeleteFileProgressHandler DeleteFileCompleted;
 
-		Task DeleteVersionedFile(string sourcePath, IFileVersion version, object userData);
-		Task DeleteMultipleVersionedFile(List<Tuple<string /*sourcePath*/, IFileVersion /*version*/, object /*userData*/>> files);
+		void DeleteVersionedFile(string sourcePath, IFileVersion version, object userData);
+		void DeleteMultipleVersionedFile(List<Tuple<string /*sourcePath*/, IFileVersion /*version*/, object /*userData*/>> files);
 
 		#endregion
-
-		void CancelTransfers();
-		void RenewCancellationToken();
 	}
 }

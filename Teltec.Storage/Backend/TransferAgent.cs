@@ -1,20 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
-using Teltec.Storage.Backend;
 using Teltec.Storage.Versioning;
 
-namespace Teltec.Storage.Agent
+namespace Teltec.Storage.Backend
 {
-	public abstract class AsyncTransferAgent : IAsyncTransferAgent
+	public abstract class TransferAgent : ITransferAgent
 	{
-		protected AsyncTransferAgent(StorageBackend impl)
+		protected TransferAgent(StorageBackend impl, CancellationToken cancellationToken)
 		{
-			_shouldDispose = true;
-			RenewCancellationToken(); // The `CancellationTokenSource` created here should be diposed by this class.
+			_shouldDispose = false;
 
 			Implementation = impl; // This should be disposed by classe that inherit this class.
+
+			CancellationToken = cancellationToken;
 
 			// Forward-proxy all events.
 			EventDispatcher = new EventDispatcher();
@@ -251,13 +250,8 @@ namespace Teltec.Storage.Agent
 
 		#endregion
 
-		protected Task ExecuteOnBackround(Action action)
-		{
-			return AsyncHelper.ExecuteOnBackround(action);
-		}
-
 		protected StorageBackend Implementation; // IDisposable
-		protected CancellationTokenSource CancellationTokenSource; // IDisposable
+		protected readonly CancellationToken CancellationToken;
 
 		#region IAsyncTransferAgent
 
@@ -290,8 +284,8 @@ namespace Teltec.Storage.Agent
 		public event TransferFileExceptionHandler UploadFileFailed;
 		public event TransferFileProgressHandler UploadFileCompleted;
 
-		abstract public Task UploadVersionedFile(string sourcePath, IFileVersion version, object userData);
-		abstract public Task UploadFile(string sourcePath, string targetPath, object userData);
+		abstract public void UploadVersionedFile(string sourcePath, IFileVersion version, object userData);
+		abstract public void UploadFile(string sourcePath, string targetPath, object userData);
 
 		#endregion
 
@@ -303,8 +297,8 @@ namespace Teltec.Storage.Agent
 		public event TransferFileExceptionHandler DownloadFileFailed;
 		public event TransferFileProgressHandler DownloadFileCompleted;
 
-		abstract public Task DownloadVersionedFile(string sourcePath, IFileVersion version, object userData);
-		abstract public Task DownloadFile(string sourcePath, string targetPath, object userData);
+		abstract public void DownloadVersionedFile(string sourcePath, IFileVersion version, object userData);
+		abstract public void DownloadFile(string sourcePath, string targetPath, object userData);
 
 		#endregion
 
@@ -316,7 +310,7 @@ namespace Teltec.Storage.Agent
 		public event ListingExceptionHandler ListingFailed;
 		public event ListingProgressHandler ListingCompleted;
 
-		abstract public Task List(string prefix, bool recursive, object userData);
+		abstract public void List(string prefix, bool recursive, object userData);
 
 		#endregion
 
@@ -327,27 +321,10 @@ namespace Teltec.Storage.Agent
 		public event DeleteFileExceptionHandler DeleteFileFailed;
 		public event DeleteFileProgressHandler DeleteFileCompleted;
 
-		abstract public Task DeleteVersionedFile(string sourcePath, IFileVersion version, object userData);
-		abstract public Task DeleteMultipleVersionedFile(List<Tuple<string /*sourcePath*/, IFileVersion /*version*/, object /*userData*/>> files);
+		abstract public void DeleteVersionedFile(string sourcePath, IFileVersion version, object userData);
+		abstract public void DeleteMultipleVersionedFile(List<Tuple<string /*sourcePath*/, IFileVersion /*version*/, object /*userData*/>> files);
 
 		#endregion
-
-		public void CancelTransfers()
-		{
-			CancellationTokenSource.Cancel();
-		}
-
-		public void RenewCancellationToken()
-		{
-			bool alreadyUsed = CancellationTokenSource != null && CancellationTokenSource.IsCancellationRequested;
-			if (alreadyUsed || CancellationTokenSource == null)
-			{
-				if (CancellationTokenSource != null)
-					CancellationTokenSource.Dispose();
-
-				CancellationTokenSource = new CancellationTokenSource();
-			}
-		}
 
 		#endregion
 
@@ -367,11 +344,7 @@ namespace Teltec.Storage.Agent
 			{
 				if (disposing && _shouldDispose)
 				{
-					if (CancellationTokenSource != null)
-					{
-						CancellationTokenSource.Dispose();
-						CancellationTokenSource = null;
-					}
+					// Do nothing.
 				}
 				this._isDisposed = true;
 			}

@@ -15,7 +15,7 @@ namespace Teltec.Backup.PlanExecutor
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		public ITransferMonitor TransferListControl; // May be IDisposable, but it's an external reference.
-		protected IAsyncTransferAgent TransferAgent; // IDisposable
+		protected ITransferAgent TransferAgent; // IDisposable
 
 		#region Properties
 

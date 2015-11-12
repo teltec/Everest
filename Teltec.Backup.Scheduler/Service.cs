@@ -17,6 +17,7 @@ using Teltec.Common.Extensions;
 using System.Text;
 using Teltec.Common.Threading;
 using Teltec.Backup.Logging;
+using Teltec.Common;
 
 namespace Teltec.Backup.Scheduler
 {
@@ -76,19 +77,19 @@ namespace Teltec.Backup.Scheduler
 				}
 				else
 				{
-					ServiceHelper.CatchSpecialConsoleEvents();
+					ConsoleAppHelper.CatchSpecialConsoleEvents();
 
 					Service instance = new Service();
 					instance.OnStart(args);
 
 					// Sleep until termination
-					ServiceHelper.TerminationRequestedEvent.WaitOne();
+					ConsoleAppHelper.TerminationRequestedEvent.WaitOne();
 
 					// Do any cleanups here...
 					instance.OnStop();
 
 					// Set this to terminate immediately (if not set, the OS will eventually kill the process)
-					ServiceHelper.TerminationCompletedEvent.Set();
+					ConsoleAppHelper.TerminationCompletedEvent.Set();
 				}
 			}
 			else

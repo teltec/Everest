@@ -80,12 +80,12 @@
     <Compile Include="Implementations\S3\S3PathBuilder.cs" />
     <Compile Include="PathScanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Agent\AsyncTransferAgent.cs" />
-    <Compile Include="Agent\IAsyncTransferAgent.cs" />
+    <Compile Include="Backend\TransferAgent.cs" />
+    <Compile Include="Backend\ITransferAgent.cs" />
     <Compile Include="Backend\IStorageBackend.cs" />
     <Compile Include="Backend\StorageBackend.cs" />
     <Compile Include="EventDispatcher.cs" />
-    <Compile Include="Implementations\S3\S3AsyncTransferAgent.cs" />
+    <Compile Include="Implementations\S3\S3TransferAgent.cs" />
     <Compile Include="Implementations\S3\S3StorageBackend.cs" />
     <Compile Include="Monitor\ExtendedProgressBar.cs">
       <SubType>Component</SubType>
@@ -127,6 +127,7 @@
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

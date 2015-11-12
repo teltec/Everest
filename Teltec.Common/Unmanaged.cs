@@ -1,6 +1,6 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 
-namespace Teltec.Backup.Scheduler
+namespace Teltec.Common
 {
 	public static class Unmanaged
 	{

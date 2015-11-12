@@ -11,6 +11,7 @@ using Teltec.Backup.Ipc.TcpSocket;
 using Teltec.Backup.Logging;
 using Teltec.Backup.PlanExecutor.Backup;
 using Teltec.Backup.PlanExecutor.Restore;
+using Teltec.Common;
 using Teltec.Common.Threading;
 using Teltec.FileSystem;
 using Teltec.Storage;
@@ -68,6 +69,12 @@ namespace Teltec.Backup.PlanExecutor
 
 		static readonly Options options = new Options();
 
+#if RELEASE
+		static readonly bool IsReleaseVersion = true;
+#else
+		static readonly bool IsReleaseVersion = false;
+#endif
+
 		private ISynchronizeInvoke SynchronizingObject = new MockSynchronizeInvoke();
 		private ExecutorHandler Handler;
 
@@ -97,14 +104,21 @@ namespace Teltec.Backup.PlanExecutor
 		{
 			LoggingHelper.ChangeFilenamePostfix("executor");
 
+			if (!IsReleaseVersion && System.Environment.UserInteractive)
+				ConsoleAppHelper.CatchSpecialConsoleEvents();
+
 			if (!CommandLine.Parser.Default.ParseArguments(args, options))
 				return;
+
+			PlanExecutor executor = null;
 
 			try
 			{
 				LoadSettings();
-				var executor = new PlanExecutor();
+
+				executor = new PlanExecutor();
 				executor.Run();
+
 				LetMeDebugThisBeforeExiting();
 			}
 			catch (Exception ex)
@@ -116,6 +130,12 @@ namespace Teltec.Backup.PlanExecutor
 
 				LetMeDebugThisBeforeExiting();
 				Environment.Exit(1);
+			}
+
+			if (!IsReleaseVersion && System.Environment.UserInteractive)
+			{
+				// Set this to terminate immediately (if not set, the OS will eventually kill the process)
+				ConsoleAppHelper.TerminationCompletedEvent.Set();
 			}
 		}
 
@@ -252,12 +272,12 @@ namespace Teltec.Backup.PlanExecutor
 
 			Model = plan;
 
-			MapAllNetworkDrives();
-
 			if (options.Verbose)
 			{
 				logger.Info("Running {0} #{1}", options.PlanType, options.PlanIdentifier);
 			}
+
+			MapAllNetworkDrives();
 
 			bool ok = RunOperation(selectedPlanType, plan);
 			if (!ok)
@@ -266,14 +286,29 @@ namespace Teltec.Backup.PlanExecutor
 				Environment.Exit(1);
 			}
 
-			while (!RunningOperationEndedEvent.WaitOne(250))
+			while (true)
 			{
+				if (!IsReleaseVersion && System.Environment.UserInteractive)
+				{
+					if (ConsoleAppHelper.TerminationRequestedEvent.WaitOne(1))
+					{
+						if (RunningOperation != null && RunningOperation.IsRunning)
+							RunningOperation.Cancel();
+						else
+							break;
+					}
+				}
+
+				if (RunningOperationEndedEvent.WaitOne(100))
+					break;
+
 				RunningOperation.DoEvents();
 			}
 
 			Console.WriteLine("Operation finished.");
 
 			Handler.Client.WaitUntilDone();
+
 #if DEBUG
 			// Wait 10 seconds before exiting, just for debugging purposes.
 			Thread.Sleep(10000);
@@ -509,7 +544,13 @@ namespace Teltec.Backup.PlanExecutor
 					}
 				case BackupOperationStatus.Finished:
 					{
-						logger.Info("Backup finished.");
+						//var message = string.Format(
+						//	"Backup {0}! Stats: {1} completed, {2} failed, {3} canceled, {4} pending, {5} running",
+						//	"finished",
+						//	TransferResults.Stats.Completed, TransferResults.Stats.Failed,
+						//	TransferResults.Stats.Canceled, TransferResults.Stats.Pending,
+						//	TransferResults.Stats.Running);
+						//logger.Info(message);
 
 						// Update success timestamp.
 						plan.LastSuccessfulRunAt = DateTime.UtcNow;
@@ -539,9 +580,13 @@ namespace Teltec.Backup.PlanExecutor
 				case BackupOperationStatus.Failed:
 				case BackupOperationStatus.Canceled:
 					{
-						logger.Info("Backup {0}.", status == BackupOperationStatus.Failed ? "failed" : "was canceled");
-						logger.Info("{0}: {1} of {2}", status == BackupOperationStatus.Failed ? "Failed" : "Canceled",
-							TransferResults.Stats.Completed, TransferResults.Stats.Total);
+						//var message = string.Format(
+						//	"Backup {0}! Stats: {1} completed, {2} failed, {3} canceled, {4} pending, {5} running",
+						//	status == BackupOperationStatus.Failed ? "failed" : "was canceled",
+						//	TransferResults.Stats.Completed, TransferResults.Stats.Failed,
+						//	TransferResults.Stats.Canceled, TransferResults.Stats.Pending,
+						//	TransferResults.Stats.Running);
+						//logger.Info(message);
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();
@@ -639,7 +684,13 @@ namespace Teltec.Backup.PlanExecutor
 					}
 				case RestoreOperationStatus.Finished:
 					{
-						logger.Info("Restore finished.");
+						//var message = string.Format(
+						//	"Restore {0}! Stats: {1} completed, {2} failed, {3} canceled, {4} pending, {5} running",
+						//	"finished",
+						//	TransferResults.Stats.Completed, TransferResults.Stats.Failed,
+						//	TransferResults.Stats.Canceled, TransferResults.Stats.Pending,
+						//	TransferResults.Stats.Running);
+						//logger.Info(message);
 
 						// Update success timestamp.
 						plan.LastSuccessfulRunAt = DateTime.UtcNow;
@@ -669,9 +720,13 @@ namespace Teltec.Backup.PlanExecutor
 				case RestoreOperationStatus.Failed:
 				case RestoreOperationStatus.Canceled:
 					{
-						logger.Info("Restore {0}.", status == RestoreOperationStatus.Failed ? "failed" : "was canceled");
-						logger.Info("{0}: {1} of {2}", status == RestoreOperationStatus.Failed ? "Failed" : "Canceled",
-							TransferResults.Stats.Completed, TransferResults.Stats.Total);
+						//var message = string.Format(
+						//	"Restore {0}! Stats: {1} completed, {2} failed, {3} canceled, {4} pending, {5} running",
+						//	status == RestoreOperationStatus.Failed ? "failed" : "was canceled",
+						//	TransferResults.Stats.Completed, TransferResults.Stats.Failed,
+						//	TransferResults.Stats.Canceled, TransferResults.Stats.Pending,
+						//	TransferResults.Stats.Running);
+						//logger.Info(message);
 
 						// Signal to the other thread it may terminate.
 						RunningOperationEndedEvent.Set();

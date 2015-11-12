@@ -1,9 +1,10 @@
-﻿using Amazon.Runtime;
+using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Teltec.Backup.App.Forms.Account;
@@ -44,8 +45,11 @@ namespace Teltec.Backup.App.Forms.S3
 
 		private void btnCancel_Click(object sender, EventArgs e)
 		{
+			CancellationTokenSource.Cancel();
+
 			if (AccountCanceled != null)
 				AccountCanceled(this, new AmazonS3AccountSaveEventArgs(_account));
+
 			this.Close();
 		}
 
@@ -64,7 +68,7 @@ namespace Teltec.Backup.App.Forms.S3
 			{
 				Task<List<string>> task = RetrieveAccountConfigurations();
 				await task;
-				if (task.Result.Count > 0)
+				if (task.Status == TaskStatus.RanToCompletion && task.Result.Count > 0)
 				{
 					using (AccountConfigurationSelector form = new AccountConfigurationSelector())
 					{
@@ -153,13 +157,21 @@ namespace Teltec.Backup.App.Forms.S3
 			}
 		}
 
+		private CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+
 		private async Task<List<string>> RetrieveAccountConfigurations()
 		{
+			// Renew cancellation token if was already used.
+			if (CancellationTokenSource.IsCancellationRequested)
+			{
+				CancellationTokenSource = new CancellationTokenSource();
+			}
+
 			//
 			// Setup agents.
 			//
 			AWSCredentials awsCredentials = new BasicAWSCredentials(_account.AccessKey, _account.SecretKey);
-			IAsyncTransferAgent transferAgent = new S3AsyncTransferAgent(awsCredentials, _account.BucketName);
+			ITransferAgent transferAgent = new S3TransferAgent(awsCredentials, _account.BucketName, CancellationTokenSource.Token);
 			transferAgent.RemoteRootDir = transferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP");
 
 			List<string> remoteObjects = new List<string>(16); // Avoid small resizes without compromising memory.
@@ -185,7 +197,10 @@ namespace Teltec.Backup.App.Forms.S3
 
 			try
 			{
-				Task task = transferAgent.List(transferAgent.RemoteRootDir, false, null);
+				Task task = Task.Run(() =>
+				{
+					transferAgent.List(transferAgent.RemoteRootDir, false, null);
+				});
 
 				await task;
 			}
