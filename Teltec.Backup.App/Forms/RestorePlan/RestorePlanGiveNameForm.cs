@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Common.Extensions;
@@ -15,7 +15,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 			InitializeComponent();
 			this.ModelChangedEvent += (sender, args) => {
 				this.Plan = args.Model as Models.RestorePlan;
-				
+
 				// Setup data bindings
 				textBox1.DataBindings.Clear();
 				textBox1.DataBindings.Add(new Binding("Text", this.Plan,

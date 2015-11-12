@@ -429,6 +429,7 @@ namespace Teltec.Backup.PlanExecutor
 			{
 				Status = status,
 				StartedAt = op.StartedAt,
+				FinishedAt = op.FinishedAt,
 				LastRunAt = plan.LastRunAt,
 				LastSuccessfulRunAt = plan.LastSuccessfulRunAt,
 				Sources = op.Sources,

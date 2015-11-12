@@ -212,7 +212,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 					}
 				case Commands.OperationStatus.FINISHED:
 					{
-						CurrentOperation.FinishedAt = report.LastRunAt;
+						CurrentOperation.FinishedAt = report.FinishedAt;
 						CurrentOperation.LastRunAt = report.LastRunAt;
 						CurrentOperation.LastSuccessfulRunAt = report.LastSuccessfulRunAt;
 						UpdateDuration(report.Status);

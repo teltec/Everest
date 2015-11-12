@@ -108,15 +108,16 @@ namespace Teltec.Backup.Ipc.Protocol
 		{
 			return status == OperationStatus.NOT_RUNNING
 				|| status == OperationStatus.INTERRUPTED
-				|| status == OperationStatus.CANCELED
+				|| status == OperationStatus.FINISHED
 				|| status == OperationStatus.FAILED
-				|| status == OperationStatus.FINISHED;
+				|| status == OperationStatus.CANCELED;
 		}
 
 		public class GuiReportPlanStatus : ComplexArgument
 		{
 			public OperationStatus Status;
 			public DateTime? StartedAt;
+			public DateTime? FinishedAt;
 			public DateTime? LastRunAt;
 			public DateTime? LastSuccessfulRunAt;
 			//public string ScheduleType;

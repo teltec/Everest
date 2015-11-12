@@ -541,6 +541,7 @@ namespace Teltec.Backup.Scheduler
 			bool isRunning = IsPlanRunning(planType, planId);
 			bool needsResume = latest != null && latest.NeedsResume();
 			bool isInterrupted = !isRunning && needsResume;
+			bool isFinished = latest != null && latest.IsFinished();
 
 			Commands.OperationStatus status;
 			// The condition order below is important because more than one flag might be true.
@@ -561,6 +562,8 @@ namespace Teltec.Backup.Scheduler
 
 			if (isRunning)
 				report.StartedAt = latest.StartedAt;
+			else if (isFinished)
+				report.FinishedAt = latest.FinishedAt;
 
 			Handler.Send(e.Context, Commands.GuiReportOperationStatus(planType, planId, report));
 		}
