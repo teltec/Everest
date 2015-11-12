@@ -1,4 +1,4 @@
-﻿namespace Teltec.Backup.App.Forms.Settings
+namespace Teltec.Backup.App.Forms.Settings
 {
 	partial class SettingsForm
 	{
@@ -31,9 +31,13 @@
 			this.btnApply = new System.Windows.Forms.Button();
 			this.btnCancel = new System.Windows.Forms.Button();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
+			this.label3 = new System.Windows.Forms.Label();
+			this.nudUploadChunkSize = new System.Windows.Forms.NumericUpDown();
+			this.label2 = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
 			this.nudMaxThreads = new System.Windows.Forms.NumericUpDown();
 			this.groupBox1.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.nudUploadChunkSize)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.nudMaxThreads)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -60,6 +64,9 @@
 			// 
 			// groupBox1
 			// 
+			this.groupBox1.Controls.Add(this.label3);
+			this.groupBox1.Controls.Add(this.nudUploadChunkSize);
+			this.groupBox1.Controls.Add(this.label2);
 			this.groupBox1.Controls.Add(this.label1);
 			this.groupBox1.Controls.Add(this.nudMaxThreads);
 			this.groupBox1.Location = new System.Drawing.Point(12, 12);
@@ -67,6 +74,46 @@
 			this.groupBox1.Size = new System.Drawing.Size(395, 208);
 			this.groupBox1.TabIndex = 2;
 			this.groupBox1.TabStop = false;
+			// 
+			// label3
+			// 
+			this.label3.AutoSize = true;
+			this.label3.Location = new System.Drawing.Point(240, 51);
+			this.label3.Name = "label3";
+			this.label3.Size = new System.Drawing.Size(23, 13);
+			this.label3.TabIndex = 4;
+			this.label3.Text = "MB";
+			// 
+			// nudUploadChunkSize
+			// 
+			this.nudUploadChunkSize.Location = new System.Drawing.Point(114, 49);
+			this.nudUploadChunkSize.Maximum = new decimal(new int[] {
+            5120,
+            0,
+            0,
+            0});
+			this.nudUploadChunkSize.Minimum = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+			this.nudUploadChunkSize.Name = "nudUploadChunkSize";
+			this.nudUploadChunkSize.Size = new System.Drawing.Size(120, 20);
+			this.nudUploadChunkSize.TabIndex = 3;
+			this.nudUploadChunkSize.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+			// 
+			// label2
+			// 
+			this.label2.AutoSize = true;
+			this.label2.Location = new System.Drawing.Point(6, 51);
+			this.label2.Name = "label2";
+			this.label2.Size = new System.Drawing.Size(95, 13);
+			this.label2.TabIndex = 2;
+			this.label2.Text = "Upload chunk size";
 			// 
 			// label1
 			// 
@@ -105,6 +152,7 @@
 			this.Text = "Settings";
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.nudUploadChunkSize)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.nudMaxThreads)).EndInit();
 			this.ResumeLayout(false);
 
@@ -117,5 +165,8 @@
 		private System.Windows.Forms.GroupBox groupBox1;
 		private System.Windows.Forms.NumericUpDown nudMaxThreads;
 		private System.Windows.Forms.Label label1;
+		private System.Windows.Forms.NumericUpDown nudUploadChunkSize;
+		private System.Windows.Forms.Label label2;
+		private System.Windows.Forms.Label label3;
 	}
 }

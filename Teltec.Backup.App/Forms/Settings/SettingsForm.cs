@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Schedulers;
+using System;
 using System.Windows.Forms;
 using Teltec.Storage;
 
@@ -41,12 +33,16 @@ namespace Teltec.Backup.App.Forms.Settings
 		{
 			//nudMaxThreads.Value = AsyncHelper.SettingsMaxThreadCount;
 			nudMaxThreads.Value = Teltec.Backup.Settings.Properties.Current.MaxThreadCount;
+			nudUploadChunkSize.Value = Teltec.Backup.Settings.Properties.Current.UploadChunkSize;
 		}
 
 		private void SaveSettings()
 		{
 			int maxThreadCount = int.Parse(nudMaxThreads.Value.ToString());
 			Teltec.Backup.Settings.Properties.Current.MaxThreadCount = maxThreadCount;
+
+			int uploadChunkSize = int.Parse(nudUploadChunkSize.Value.ToString());
+			Teltec.Backup.Settings.Properties.Current.UploadChunkSize = uploadChunkSize;
 
 			Teltec.Backup.Settings.Properties.Save();
 

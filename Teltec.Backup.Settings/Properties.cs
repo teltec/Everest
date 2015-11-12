@@ -55,6 +55,19 @@ namespace Teltec.Backup.Settings
 			}
 		}
 
+		private int _UploadChunkSize = 5; // MiB
+		public int UploadChunkSize // In MiB
+		{
+			get { return _UploadChunkSize; }
+			set
+			{
+				if (value < 0 || value > 5120) // 5 GiB
+					value = 5; // MiB
+
+				_UploadChunkSize = value;
+			}
+		}
+
 		public static void Save()
 		{
 			logger.Info("Saving settings...");
