@@ -9,12 +9,13 @@
 - Supports paths with more than 260 characters (Windows' MAX_PATH);
 - Automatic network shares mapping;
 - Runs backup/restore operations without requiring an active user session (a logged user);
+- Automatically deletes old backuped files;
 
 ## Known Problems
 
 - \#4: FileSystemTreeView: unchecking a parent node without expanding it doesn't uncheck its sub-nodes;
 - \#8: Task scheduler does not DELETE existing tasks for plans that no longer exist;
-- Can't run in more than one user session simultaneously;
+- Can't run the GUI in more than one user session simultaneously;
 
 ## Future Work
 
