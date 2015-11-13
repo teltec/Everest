@@ -18,6 +18,7 @@ using System.Text;
 using Teltec.Common.Threading;
 using Teltec.Backup.Logging;
 using Teltec.Common;
+using System.Net.Sockets;
 
 namespace Teltec.Backup.Scheduler
 {
@@ -82,14 +83,18 @@ namespace Teltec.Backup.Scheduler
 					Service instance = new Service();
 					instance.OnStart(args);
 
-					// Sleep until termination
-					ConsoleAppHelper.TerminationRequestedEvent.WaitOne();
+					// If initialization failed, then cleanup/OnStop is already done.
+					if (instance.ExitCode == 0)
+					{
+						// Sleep until termination
+						ConsoleAppHelper.TerminationRequestedEvent.WaitOne();
 
-					// Do any cleanups here...
-					instance.OnStop();
+						// Do any cleanups here...
+						instance.OnStop();
 
-					// Set this to terminate immediately (if not set, the OS will eventually kill the process)
-					ConsoleAppHelper.TerminationCompletedEvent.Set();
+						// Set this to terminate immediately (if not set, the OS will eventually kill the process)
+						ConsoleAppHelper.TerminationCompletedEvent.Set();
+					}
 				}
 			}
 			else
@@ -865,7 +870,17 @@ namespace Teltec.Backup.Scheduler
 
 			ReloadPlansAndReschedule();
 
-			Handler.Start(Commands.IPC_DEFAULT_HOST, Commands.IPC_DEFAULT_PORT);
+			try
+			{
+				Handler.Start(Commands.IPC_DEFAULT_HOST, Commands.IPC_DEFAULT_PORT);
+			}
+			catch (Exception ex)
+			{
+				Error("Couldn't start the server: {0}", ex.Message);
+				base.ExitCode = 1; // Signal the initialization failed.
+				base.Stop();
+				return;
+			}
 
 			Info("Service was started.");
 
@@ -878,10 +893,18 @@ namespace Teltec.Backup.Scheduler
 			base.OnStop();
 
 			Info("Service is stopping...");
-			timer.Stop();
+
+			if (timer.Enabled)
+				timer.Stop();
+
 			KillAllSubProcesses();
-			Handler.RequestStop();
-			Handler.Wait();
+
+			if (Handler != null && Handler.IsRunning)
+			{
+				Handler.RequestStop();
+				Handler.Wait();
+			}
+
 			Info("Service was stopped.");
 		}
 

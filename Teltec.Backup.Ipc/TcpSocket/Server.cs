@@ -223,6 +223,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 			IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(LocalIP), LocalPort);
 
+			// This will throw a SocketException if the port is already in use.
 			Context.ServerSocket.Bind(endpoint);
 			Context.ServerSocket.Listen(backlog);
 
@@ -261,7 +262,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		public void RequestStop()
 		{
-			if (ShouldStop)
+			if (!IsRunning || ShouldStop)
 				return;
 
 			// Stop acceptor before stopping the clients.
@@ -286,7 +287,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		public void Wait()
 		{
-			if (!ShouldStop)
+			if (!IsRunning || !ShouldStop)
 				return;
 
 			Thread[] threads = null;
