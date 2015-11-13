@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;

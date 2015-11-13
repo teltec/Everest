@@ -188,6 +188,7 @@ namespace Teltec.Storage.Implementations.S3
 							if (UploadProgressed != null)
 								UploadProgressed(reusedProgressArgs, () =>
 								{
+									reusedProgressArgs.DeltaTransferredBytes = args.IncrementTransferred;
 									reusedProgressArgs.TransferredBytes = filePosition;
 								});
 						};
@@ -222,6 +223,14 @@ namespace Teltec.Storage.Implementations.S3
 					};
 
 					PutObjectResponse putResponse = this._s3Client.PutObject(putRequest);
+
+					// Report 100% progress.
+					if (UploadProgressed != null)
+						UploadProgressed(reusedProgressArgs, () =>
+						{
+							reusedProgressArgs.DeltaTransferredBytes = contentLength;
+							reusedProgressArgs.TransferredBytes = contentLength;
+						});
 				}
 
 				// Report completion.
@@ -375,6 +384,7 @@ namespace Teltec.Storage.Implementations.S3
 						if (DownloadProgressed != null)
 							DownloadProgressed(reusedProgressArgs, () =>
 							{
+								reusedProgressArgs.DeltaTransferredBytes = bytesRead;
 								reusedProgressArgs.TransferredBytes = filePosition;
 							});
 					}

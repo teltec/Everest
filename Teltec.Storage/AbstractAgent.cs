@@ -73,6 +73,7 @@ namespace Teltec.Storage
 			};
 			TransferAgent.UploadFileProgress += (object sender, TransferFileProgressArgs e) =>
 			{
+				Results.Stats.BytesCompleted += e.DeltaTransferredBytes;
 				Results.OnProgress(this, e);
 			};
 			TransferAgent.UploadFileCanceled += (object sender, TransferFileProgressArgs e, Exception ex) =>
@@ -80,6 +81,7 @@ namespace Teltec.Storage
 				Results.Stats.Running -= 1;
 				Results.Stats.Canceled += 1;
 				Results.Stats.BytesCanceled += e.TotalBytes;
+				//Results.Stats.BytesCompleted -= e.TransferredBytes;
 				Results.OnCanceled(this, e, ex);
 			};
 			TransferAgent.UploadFileFailed += (object sender, TransferFileProgressArgs e, Exception ex) =>
@@ -87,13 +89,14 @@ namespace Teltec.Storage
 				Results.Stats.Running -= 1;
 				Results.Stats.Failed += 1;
 				Results.Stats.BytesFailed += e.TotalBytes;
+				//Results.Stats.BytesCompleted -= e.TransferredBytes;
 				Results.OnFailed(this, e, ex);
 			};
 			TransferAgent.UploadFileCompleted += (object sender, TransferFileProgressArgs e) =>
 			{
 				Results.Stats.Running -= 1;
 				Results.Stats.Completed += 1;
-				Results.Stats.BytesCompleted += e.TotalBytes;
+				//Results.Stats.BytesCompleted += e.TotalBytes;
 				Results.OnCompleted(this, e);
 			};
 		}
@@ -108,6 +111,7 @@ namespace Teltec.Storage
 			};
 			TransferAgent.DownloadFileProgress += (object sender, TransferFileProgressArgs e) =>
 			{
+				Results.Stats.BytesCompleted += e.DeltaTransferredBytes;
 				Results.OnProgress(this, e);
 			};
 			TransferAgent.DownloadFileCanceled += (object sender, TransferFileProgressArgs e, Exception ex) =>
@@ -115,6 +119,7 @@ namespace Teltec.Storage
 				Results.Stats.Running -= 1;
 				Results.Stats.Canceled += 1;
 				Results.Stats.BytesCanceled += e.TotalBytes;
+				//Results.Stats.BytesCompleted -= e.TransferredBytes;
 				Results.OnCanceled(this, e, ex);
 			};
 			TransferAgent.DownloadFileFailed += (object sender, TransferFileProgressArgs e, Exception ex) =>
@@ -122,13 +127,14 @@ namespace Teltec.Storage
 				Results.Stats.Running -= 1;
 				Results.Stats.Failed += 1;
 				Results.Stats.BytesFailed += e.TotalBytes;
+				//Results.Stats.BytesCompleted -= e.TransferredBytes;
 				Results.OnFailed(this, e, ex);
 			};
 			TransferAgent.DownloadFileCompleted += (object sender, TransferFileProgressArgs e) =>
 			{
 				Results.Stats.Running -= 1;
 				Results.Stats.Completed += 1;
-				Results.Stats.BytesCompleted += e.TotalBytes;
+				//Results.Stats.BytesCompleted += e.TotalBytes;
 				Results.OnCompleted(this, e);
 			};
 		}

@@ -42,6 +42,13 @@ namespace Teltec.Storage
 			}
 		}
 
+		private long _DeltaBytes;
+		public long DeltaTransferredBytes
+		{
+			get { return _DeltaBytes; }
+			set { SetField(ref _DeltaBytes, value); }
+		}
+
 		private long _TransferredBytes;
 		public long TransferredBytes
 		{
