@@ -201,7 +201,6 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				ChangeSet.DeletedFiles = GetDeletedFilesAndUpdateTheirStatus(SuppliedFiles);
 			}
 
-			DoUpdateFilesProperties(SuppliedFiles);
 			//throw new Exception("Simulating failure.");
 		}
 
@@ -264,13 +263,16 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		//
 		// Summary:
-		// Update the `LastStatus` property of each file in `files` according to the actual
-		// state of the file in the filesystem.
+		// Update the `LastWrittenAt`,`LastSize`,`LastStatus` properties of each file in `files`
+		// according to the actual state of the file in the filesystem.
 		// NOTE: This function has a side effect - It updates properties of items from `files`.
 		//
 		private void DoUpdateBackupPlanFilesStatus(LinkedList<Models.BackupPlanFile> files, bool isNewVersion)
 		{
 			Assert.IsNotNull(files);
+
+			ISession session = NHibernateHelper.GetSession();
+			BackupedFileRepository daoBackupedFile = new BackupedFileRepository(session);
 
 			BlockPerfStats stats = new BlockPerfStats();
 			stats.Begin();
@@ -283,6 +285,9 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				Models.BackupPlanFile entry = node.Value;
 				Models.BackupedFile lastVersion = entry.Versions != null && entry.Versions.Count > 0
 					? entry.Versions.Last() : null;
+#else
+				Models.BackupedFile lastVersion = entry.Id.HasValue ? daoBackupedFile.GetLatestVersion(entry) : null;
+#endif
 
 				// Throw if the operation was canceled.
 				CancellationToken.ThrowIfCancellationRequested();
@@ -499,65 +504,6 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 #endif
 
 			return result;
-		}
-
-		//
-		// Summary:
-		// Update all files' properties like size, last written date, etc, skipping files
-		// marked as REMOVED, DELETED or UNCHANGED.
-		// NOTE: This function has a side effect - It updates properties of items from `files`.
-		//
-		private void DoUpdateFilesProperties(LinkedList<Models.BackupPlanFile> files)
-		{
-			BatchProcessor batchProcessor = new BatchProcessor();
-
-			LinkedListNode<Models.BackupPlanFile> node = files.First;
-			while (node != null)
-			{
-				var next = node.Next;
-				Models.BackupPlanFile entry = node.Value;
-
-				batchProcessor.ProcessBatch(null);
-
-				// Throw if the operation was canceled.
-				CancellationToken.ThrowIfCancellationRequested();
-
-				switch (entry.LastStatus)
-				{
-					// Skip REMOVED, DELETED, and UNCHANGED files.
-					default:
-						break;
-
-					case Models.BackupFileStatus.ADDED:
-					case Models.BackupFileStatus.MODIFIED:
-						{
-							// Update file related properties
-							string path = entry.Path;
-							try
-							{
-								long lastSize = FileManager.UnsafeGetFileSize(path);
-								DateTime lastWrittenAt = FileManager.UnsafeGetFileLastWriteTimeUtc(path);
-
-								entry.LastSize = lastSize;
-								entry.LastWrittenAt = lastWrittenAt;
-
-								if (entry.Id.HasValue)
-									entry.UpdatedAt = DateTime.UtcNow;
-							}
-							catch (Exception ex)
-							{
-								FailedFile<Models.BackupPlanFile> failedEntry = new FailedFile<Models.BackupPlanFile>(entry, ex.Message, ex);
-								ChangeSet.FailedFiles.AddLast(failedEntry);
-
-								// Remove this entry from `files` as it clearly failed.
-								files.Remove(node); // Complexity is O(1)
-							}
-							break;
-						}
-				}
-
-				node = next;
-			}
 		}
 
 		//

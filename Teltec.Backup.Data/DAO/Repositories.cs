@@ -291,6 +291,17 @@ namespace Teltec.Backup.Data.DAO
 		//	};
 		//}
 
+		public Models.BackupedFile GetLatestVersion(Models.BackupPlanFile planFile)
+		{
+			Assert.IsNotNull(planFile);
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+			string filePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
+			string idPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Id);
+			crit.Add(Restrictions.Eq(filePropertyName, planFile));
+			crit.AddOrder(Order.Desc(idPropertyName));
+			return crit.UniqueResult<Models.BackupedFile>(); // May return null
+		}
+
 		public Models.BackupedFile GetByBackupAndPath(Models.Backup backup, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(backup);
