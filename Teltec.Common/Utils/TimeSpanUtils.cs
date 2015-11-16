@@ -87,7 +87,7 @@ namespace Teltec.Common.Utils
 						fmt = String.Format(new HMSFormatter("{0} days", "{0} day"), "{0}", arg);
 						break;
 					default:
-						// plural/ singular
+						// plural/singular
 						fmt = String.Format((int)arg > 1 ? _plural : _singular, arg);  // watch the cast to int here...
 						break;
 				}

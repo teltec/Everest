@@ -6,7 +6,7 @@
 - Backup and restore plans;
 - Scheduled execution of backup and restore plans;
 - Synchronization;
-- Supports paths with more than 260 characters (Windows' MAX_PATH);
+- Supports long paths (with more than 260 characters - Windows' MAX_PATH);
 - Automatic network shares mapping;
 - Runs backup/restore operations without requiring an active user session (a logged user);
 - Automatically deletes old backuped files;

@@ -58,13 +58,25 @@ namespace Teltec.Stats
 
 		private void LogBegin()
 		{
-			logger.Info("{0}:{1}:{2} - BEGIN {3}", SourceFilePath, SourceLineNumberCreated, MemberName, Identifier);
+			logger.Info(
+#if DEBUG
+				"{0}:{1}:{2} - BEGIN {3}",
+#else
+				"{2} - BEGIN {3}",
+#endif
+				SourceFilePath, SourceLineNumberCreated, MemberName, Identifier);
 		}
 
 		private void LogEnd()
 		{
-			logger.Info("{0}:{1}:{2} - ENDED {3} - TOOK {4}",
-				SourceFilePath, SourceLineNumberCreated, MemberName, Identifier, TimeSpanUtils.GetReadableTimespan(Duration));
+			logger.Info(
+#if DEBUG
+				"{0}:{1}:{2} - ENDED {3} - TOOK {4}",
+#else
+				"{2} - ENDED {3} - TOOK {4}",
+#endif
+				SourceFilePath, SourceLineNumberCreated, MemberName, Identifier,
+				TimeSpanUtils.GetReadableTimespan(Duration));
 		}
 	}
 }
