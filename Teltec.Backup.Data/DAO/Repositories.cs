@@ -299,6 +299,7 @@ namespace Teltec.Backup.Data.DAO
 			string idPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Id);
 			crit.Add(Restrictions.Eq(filePropertyName, planFile));
 			crit.AddOrder(Order.Desc(idPropertyName));
+			crit.SetMaxResults(1);
 			return crit.UniqueResult<Models.BackupedFile>(); // May return null
 		}
 
