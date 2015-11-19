@@ -1,9 +1,11 @@
 using Amazon;
 using Amazon.Runtime;
+using Amazon.S3;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using Teltec.Storage.Backend;
 using Teltec.Storage.Versioning;
@@ -15,11 +17,24 @@ namespace Teltec.Storage.Implementations.S3
 		#region Public API
 
 		public S3TransferAgent(TransferAgentOptions options, AWSCredentials awsCredentials, string awsBucketName, CancellationToken cancellationToken)
-			: base(options, new S3StorageBackend(options, awsCredentials, awsBucketName, RegionEndpoint.USEast1), cancellationToken)
+			: base(options, new S3StorageBackend(options, awsCredentials, GetDefaultS3Config(), awsBucketName), cancellationToken)
 		{
 			// This is `true` because it should dispose the `StorageBackend` implementation passed to the base class.
 			_shouldDispose = true;
+
 			PathBuilder = new S3PathBuilder();
+		}
+
+		private static AmazonS3Config GetDefaultS3Config()
+		{
+			ServicePointManager.DefaultConnectionLimit = 50;
+
+			return new AmazonS3Config
+			{
+				//ConnectionLimit = 50,
+				RegionEndpoint = Amazon.RegionEndpoint.USEast1,
+				BufferSize = 128 * 1024, // 128 KiB
+			};
 		}
 
 		public override void UploadVersionedFile(string sourcePath, IFileVersion version, object userData)
