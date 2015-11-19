@@ -132,12 +132,12 @@ namespace Teltec.Backup.Data.Models
 
 		public virtual string Version
 		{
-			get { return FileLastWrittenAt != null ? FileLastWrittenAt.ToString(VersionFormat) : string.Empty; }
+			get { return FileLastWrittenAt.ToString(VersionFormat); }
 		}
 
 		public virtual string VersionName
 		{
-			get { return FileLastWrittenAt != null ? FileLastWrittenAt.ToString("yyyy/MM/dd - HH:mm:ss") : string.Empty; }
+			get { return FileLastWrittenAt.ToString("yyyy/MM/dd - HH:mm:ss"); }
 		}
 
 		#endregion
