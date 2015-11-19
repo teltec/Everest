@@ -19,6 +19,16 @@ namespace Teltec.Storage.Implementations
 			_CancellationToken = cancellationToken;
 		}
 
+		public CancelableFileStream(string path, FileMode mode, FileAccess access, int bufferSize, CancellationToken cancellationToken)
+			: base(ZetaLongPaths.ZlpIOHelper.CreateFileHandle(
+				path,
+				(ZetaLongPaths.Native.CreationDisposition)mode,
+				(ZetaLongPaths.Native.FileAccess)access,
+				ZetaLongPaths.Native.FileShare.Read), access, bufferSize)
+		{
+			_CancellationToken = cancellationToken;
+		}
+
 		public override int Read(byte[] array, int offset, int count)
 		{
 			if (_CancellationToken != null)
