@@ -230,7 +230,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			Context.AcceptorThread = new Thread(() =>
 				{
 					Thread.CurrentThread.Name = "acceptor_proc";
-					logger.Debug("LISTENING ON {0}:{1}", LocalIP, LocalPort);
+					logger.Info("LISTENING ON {0}:{1}", LocalIP, LocalPort);
 
 					try
 					{

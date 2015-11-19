@@ -73,6 +73,8 @@ namespace Teltec.Storage
 			};
 			TransferAgent.UploadFileProgress += (object sender, TransferFileProgressArgs e) =>
 			{
+				//logger.Debug("## DEBUG Results.Stats.BytesCompleted = {0}, e.DeltaTransferredBytes = {1}",
+				//				Results.Stats.BytesCompleted, e.DeltaTransferredBytes);
 				Results.Stats.BytesCompleted += e.DeltaTransferredBytes;
 				Results.OnProgress(this, e);
 			};
