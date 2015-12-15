@@ -111,7 +111,7 @@ namespace Teltec.Storage.Implementations.S3
 
 				TransferUtilityConfig xferConfig = new TransferUtilityConfig
 				{
-					ConcurrentServiceRequests = 30,
+					ConcurrentServiceRequests = 10,
 					MinSizeBeforePartUpload = AbsoluteMinPartSize,
 				};
 
@@ -153,6 +153,7 @@ namespace Teltec.Storage.Implementations.S3
 						reusedProgressArgs.State = TransferState.STARTED;
 					});
 
+				// TODO(jweyrich): Make it interruptible - use UploadAsync?
 				fileTransferUtility.Upload(uploadRequest);
 
 				// Report completion.
