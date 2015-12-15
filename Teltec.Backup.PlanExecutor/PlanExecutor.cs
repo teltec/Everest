@@ -364,11 +364,11 @@ namespace Teltec.Backup.PlanExecutor
 				? new ResumeBackupOperation(latest) as BackupOperation
 				: new NewBackupOperation(plan) as BackupOperation;
 
-			obj.Updated += (sender2, e2) => BackupUpdateStatsInfo(e2.Status);
+			obj.Updated += (sender2, e2) => BackupUpdateStatsInfo(e2.Status, e2.TransferStatus);
 			//obj.EventLog = ...
 			//obj.TransferListControl = ...
 
-			BackupUpdateStatsInfo(BackupOperationStatus.Unknown);
+			BackupUpdateStatsInfo(BackupOperationStatus.Unknown, TransferStatus.STOPPED);
 
 			RunningOperation = obj;
 
@@ -406,11 +406,11 @@ namespace Teltec.Backup.PlanExecutor
 				? new ResumeRestoreOperation(latest) as RestoreOperation
 				: */ new NewRestoreOperation(plan) as RestoreOperation;
 
-			obj.Updated += (sender2, e2) => RestoreUpdateStatsInfo(e2.Status);
+			obj.Updated += (sender2, e2) => RestoreUpdateStatsInfo(e2.Status, e2.TransferStatus);
 			//obj.EventLog = ...
 			//obj.TransferListControl = ...
 
-			RestoreUpdateStatsInfo(RestoreOperationStatus.Unknown);
+			RestoreUpdateStatsInfo(RestoreOperationStatus.Unknown, TransferStatus.STOPPED);
 
 			RunningOperation = obj;
 
@@ -461,7 +461,7 @@ namespace Teltec.Backup.PlanExecutor
 			return data;
 		}
 
-		private void BackupUpdateStatsInfo(BackupOperationStatus status)
+		private void BackupUpdateStatsInfo(BackupOperationStatus status, TransferStatus xferStatus)
 		{
 			if (RunningOperation == null)
 				return;
@@ -569,7 +569,8 @@ namespace Teltec.Backup.PlanExecutor
 					}
 				case BackupOperationStatus.Updated:
 					{
-						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
+						if (xferStatus == TransferStatus.COMPLETED || xferStatus == TransferStatus.CANCELED || xferStatus == TransferStatus.FAILED)
+							logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
 						// Report
 						Commands.OperationStatus cmdStatus = Commands.OperationStatus.UPDATED;
@@ -603,7 +604,7 @@ namespace Teltec.Backup.PlanExecutor
 			}
 		}
 
-		private void RestoreUpdateStatsInfo(RestoreOperationStatus status)
+		private void RestoreUpdateStatsInfo(RestoreOperationStatus status, TransferStatus xferStatus)
 		{
 			if (RunningOperation == null)
 				return;
@@ -709,7 +710,8 @@ namespace Teltec.Backup.PlanExecutor
 					}
 				case RestoreOperationStatus.Updated:
 					{
-						logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
+						if (xferStatus == TransferStatus.COMPLETED || xferStatus == TransferStatus.CANCELED || xferStatus == TransferStatus.FAILED)
+							logger.Info("Completed: {0} of {1}", TransferResults.Stats.Completed, TransferResults.Stats.Total);
 
 						// Report
 						Commands.OperationStatus cmdStatus = Commands.OperationStatus.UPDATED;

@@ -50,6 +50,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 	{
 		public RestoreOperationStatus Status;
 		public string Message;
+		public TransferStatus TransferStatus; // Only matters when Status == BackupOperationStatus.UPDATE
 	}
 
 	public sealed class RestoreOperationOptions
@@ -177,7 +178,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				var message = string.Format("Failed {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
-				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.FAILED });
 			};
 			results.Canceled += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
@@ -189,7 +190,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				var message = string.Format("Canceled {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
-				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.CANCELED });
 			};
 			results.Completed += (object sender, TransferFileProgressArgs args) =>
 			{
@@ -203,7 +204,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 
 				var message = string.Format("Completed {0}", args.FilePath);
 				Info(message);
-				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.COMPLETED });
 			};
 			results.Started += (object sender, TransferFileProgressArgs args) =>
 			{
