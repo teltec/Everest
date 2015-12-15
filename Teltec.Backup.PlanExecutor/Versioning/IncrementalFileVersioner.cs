@@ -58,7 +58,10 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					Backup = daoBackup.Get(backup.Id);
 
 					BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository(session);
-					AllFilesFromPlan = daoBackupPlanFile.GetAllByBackupPlan(backup.BackupPlan).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
+					if (newVersion)
+						AllFilesFromPlan = daoBackupPlanFile.GetAllByBackupPlan(backup.BackupPlan).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
+					else
+						AllFilesFromPlan = daoBackupPlanFile.GetAllPendingByBackup(backup).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
 
 					Execute(backup, filePaths, newVersion);
 

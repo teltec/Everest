@@ -180,6 +180,35 @@ namespace Teltec.Backup.Data.DAO
 			return crit.List<Models.BackupPlanFile>();
 		}
 
+		public IList<Models.BackupPlanFile> GetAllPendingByBackup(Models.Backup backup)
+		{
+			string bfModelName = typeof(Models.BackupedFile).Name;
+			string bfFilePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
+			string bfBackupIdPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
+			string bfTransferStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
+
+			// REFERENCE: https://docs.jboss.org/hibernate/orm/3.5/reference/en-US/html/queryhql.html#queryhql-expressions
+			string queryString = string.Format(
+				"SELECT bpf"
+				+ " FROM {0} AS bf"
+				+ " INNER JOIN bf.{1} AS bpf"
+				+ " WHERE"
+				+ "   bf.{2} = :backupId"
+				+ "   AND bf.{3} != :transferStatusCompleted"
+				, bfModelName
+				, bfFilePropertyName
+				, bfBackupIdPropertyName
+				, bfTransferStatusPropertyName
+			);
+
+			IQuery query = Session.CreateQuery(queryString)
+				.SetParameter("backupId", backup.Id)
+				.SetParameter("transferStatusCompleted", TransferStatus.COMPLETED)
+				;
+
+			return query.List<Models.BackupPlanFile>();
+		}
+
 		public Models.BackupPlanFile GetByStorageAccountAndPath(Models.StorageAccount account, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNullOrEmpty(path);
@@ -193,6 +222,7 @@ namespace Teltec.Backup.Data.DAO
 			crit.Add(expr);
 			return crit.UniqueResult<Models.BackupPlanFile>();
 		}
+
 
 		public int AssociateSyncedFileToBackupPlan(Models.BackupPlan plan, string path, bool ignoreCase = false)
 		{
@@ -216,12 +246,8 @@ namespace Teltec.Backup.Data.DAO
 			);
 
 			IQuery query = Session.CreateQuery(queryString)
-				//.SetParameter("modelName", modelName)
-				//.SetParameter("backupPlanPropertyName", backupPlanPropertyName)
 				.SetParameter("backupPlanId", plan.Id)
-				//.SetParameter("storageAccountPropertyName", storageAccountPropertyName)
 				.SetParameter("storageAccountId", plan.StorageAccount.Id)
-				//.SetParameter("pathPropertyName", pathPropertyName)
 				.SetParameter("path", path)
 				;
 
