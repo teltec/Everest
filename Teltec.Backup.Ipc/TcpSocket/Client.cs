@@ -153,6 +153,10 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				context.ClientSocket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None,
 					new AsyncCallback(EndReceive), context);
 			}
+			catch (ObjectDisposedException)
+			{
+				// Socket was already closed.
+			}
 			catch (SocketException ex)
 			{
 				logger.Error("BeginReceive failed: {0}", ex.Message);
@@ -172,7 +176,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 			try
 			{
-				int pollTimeout = 1000; // In microseconds
+				int pollTimeout = 200000; // 1/5 of a second in microseconds
 
 				while (!context.ShouldStopWorkerThread)
 				{
@@ -485,6 +489,8 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			if (iar == null || iar.AsyncState == null)
 				return;
 
+			bool continueReceiving = false;
+
 			LocalContext context = (LocalContext)iar.AsyncState;
 			try
 			{
@@ -506,7 +512,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 					MessageReceivedEvent.Set();
 
-					TryBeginReceive(context); // Continue receiving.
+					continueReceiving = true;
 				}
 				else
 				{
@@ -522,6 +528,9 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				logger.Error("Error at EndReceive: {0}", ex.Message);
 				HandleSocketError(ex.SocketErrorCode, context);
 			}
+
+			if (continueReceiving)
+				TryBeginReceive(context); // Continue receiving.
 		}
 
 		#endregion

@@ -1,4 +1,3 @@
-using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using System;
