@@ -81,7 +81,7 @@ namespace Teltec.Storage.Implementations.S3
 
 		public long CalculatePartSize(long fileSize)
 		{
-			// If fileLength > 48.828125 GiB (50 GB) (`AbsoluteMinPartSize * AbsoluteMaxNumberOfParts`),
+			// If fileSize > 48.828125 GiB (50 GB) (`AbsoluteMinPartSize * AbsoluteMaxNumberOfParts`),
 			// then partSize will be > 5 MiB (`AbsoluteMinPartSize`).
 			return CalculatePartSize(fileSize, Options.UploadChunkSizeInBytes, AbsoluteMaxNumberOfParts);
 		}
@@ -111,7 +111,7 @@ namespace Teltec.Storage.Implementations.S3
 
 				TransferUtilityConfig xferConfig = new TransferUtilityConfig
 				{
-					ConcurrentServiceRequests = 10,
+					ConcurrentServiceRequests = 10, // Maximum allowed concurrent requests for this file alone.
 					MinSizeBeforePartUpload = AbsoluteMinPartSize,
 				};
 

@@ -11,13 +11,18 @@ namespace Teltec.Stats
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		Stopwatch Timer;
-		TimeSpan Duration;
 		string MemberName;
 		string SourceFilePath;
 		int SourceLineNumberCreated;
 		int SourceLineNumberStarted;
 		int SourceLineNumberEnded;
 		string Identifier;
+
+		public TimeSpan Duration
+		{
+			get;
+			internal set;
+		}
 
 		public BlockPerfStats([CallerMemberName] string memberName = "",
 			[CallerFilePath] string sourceFilePath = "",

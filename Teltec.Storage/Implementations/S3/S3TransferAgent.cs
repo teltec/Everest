@@ -26,13 +26,14 @@ namespace Teltec.Storage.Implementations.S3
 
 		private static AmazonS3Config GetDefaultS3Config()
 		{
+			// Global maximum allowed concurrent requests.
 			ServicePointManager.DefaultConnectionLimit = 50;
 
 			return new AmazonS3Config
 			{
 				//ConnectionLimit = 50,
 				RegionEndpoint = Amazon.RegionEndpoint.USEast1,
-				BufferSize = 128 * 1024, // 128 KiB
+				BufferSize = 1 * 1024 * 1024, // 1 MiB
 			};
 		}
 
