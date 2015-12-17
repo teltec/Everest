@@ -78,6 +78,15 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			Context.ShouldStopWorkerThread = false;
 		}
 
+		internal void ResetOutBuffer()
+		{
+			byte[] ignored;
+			while (Context.OutBuffer.TryDequeue(out ignored))
+			{
+				// Do nothing.
+			}
+		}
+
 		public Client(ISynchronizeInvoke owner) : base(owner)
 		{
 			CreateWorkerThread();
