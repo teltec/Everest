@@ -2,6 +2,8 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
+using Teltec.Common.Extensions;
 using Teltec.Backup.Ipc.Protocol;
 
 namespace Teltec.Backup.Ipc.TcpSocket
@@ -250,6 +252,9 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				// Remove & re-add state using the new client name.
 				ClientsByName.Remove(oldClientName);
 				ClientsByName.Add(newClientName, state);
+
+				// Remove this client from the list of unknown target hits if it's there.
+				UnknownTargetHits_Remove(newClientName);
 			}
 		}
 
@@ -275,7 +280,9 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				found = ClientsByName.TryGetValue(targetName, out targetState);
 			if (!found)
 			{
-				Send(args.Context, Commands.ReportError("Unknown target {0}", targetName));
+				bool canProceed = UnknownTargetHits_Hit(targetName);
+				if (canProceed)
+					Send(args.Context, Commands.ReportError("Unknown target {0}", targetName));
 				return;
 			}
 
@@ -301,6 +308,60 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				}
 			}
 		}
+
+		#region Unknown target hits
+
+		//
+		// This mechanism is used to avoid spamming the sender of ROUTE messages with
+		// ERROR messages when the intended target is not connected.
+		//
+
+		private static readonly int UnknownTargetMaxConsecutiveHits = 3;
+		private static readonly int UnknownTargetMaxCapacity = 10;
+		private Dictionary<string, int> UnknownTargetHits = new Dictionary<string, int>(UnknownTargetMaxCapacity + 1);
+		object UnknownTargetHitsLock = new Object();
+
+		//
+		// Summary:
+		//     Increment the hit counter for a given client and check whether it exceeded
+		//     the maximum consecutive hits.
+		//
+		// Returns:
+		//     true if the caller did not exceed the maximum consecutive hits and may continue
+		//     the intended action, false otherwise.
+		//
+		private bool UnknownTargetHits_Hit(string clientName)
+		{
+			lock (UnknownTargetHitsLock)
+			{
+				if (UnknownTargetHits.ContainsKey(clientName))
+					UnknownTargetHits[clientName]++;
+				else
+					UnknownTargetHits[clientName] = 1;
+
+				// Our dict can store at most `UnknownTargetMaxCapacity` items.
+				if (UnknownTargetHits.Count > UnknownTargetMaxCapacity) // Count is O(1)
+				{
+					// Remove the key with fewer hits.
+					string keyToBeRemoved = UnknownTargetHits.MinBy(kvp => kvp.Value).Key;
+					UnknownTargetHits.Remove(keyToBeRemoved);
+				}
+
+				// Did reach maximum consecutive hits for this target?
+				if (UnknownTargetHits[clientName] > UnknownTargetMaxConsecutiveHits)
+					return false;
+			}
+
+			return true;
+		}
+
+		private void UnknownTargetHits_Remove(string clientName)
+		{
+			lock (UnknownTargetHitsLock)
+				UnknownTargetHits.Remove(clientName);
+		}
+
+		#endregion
 
 		#region Dispose Pattern Implementation
 

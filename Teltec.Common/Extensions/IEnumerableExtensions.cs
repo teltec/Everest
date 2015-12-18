@@ -8,6 +8,37 @@ namespace Teltec.Common.Extensions
 {
 	public static class IEnumerableExtensions
 	{
+		//
+		// "use LINQ to find the product with the cheapest value?" by "jason" is licensed under CC BY-SA 3.0
+		//
+		// Title?   use LINQ to find the product with the cheapest value?
+		// Author?  jason - http://stackoverflow.com/users/45914/jason
+		// Source?  http://stackoverflow.com/a/10912887/298054
+		// License? CC BY-SA 3.0 - https://creativecommons.org/licenses/by-sa/3.0/legalcode
+		//
+		public static TSource MinBy<TSource>(this IEnumerable<TSource> source, Func<TSource, IComparable> projectionToComparable)
+		{
+			using (var e = source.GetEnumerator())
+			{
+				if (!e.MoveNext())
+				{
+					throw new InvalidOperationException("Sequence is empty.");
+				}
+				TSource min = e.Current;
+				IComparable minProjection = projectionToComparable(e.Current);
+				while (e.MoveNext())
+				{
+					IComparable currentProjection = projectionToComparable(e.Current);
+					if (currentProjection.CompareTo(minProjection) < 0)
+					{
+						min = e.Current;
+						minProjection = currentProjection;
+					}
+				}
+				return min;
+			}
+		}
+
 		// Converts `IEnumerable<TSource>` to `LinkedList<TTarget>` using the specified selector for conversion.
 		public static LinkedList<TTarget> ToLinkedList<TTarget, TSource>(this IEnumerable<TSource> source, Func<TSource, TTarget> selector)
 		{
