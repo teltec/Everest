@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Windows.Forms;
+using Teltec.Backup.App.Forms.S3;
 using Teltec.Backup.Data.DAO;
 using Teltec.Common.Extensions;
 using Models = Teltec.Backup.Data.Models;
@@ -83,13 +84,13 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			base.OnBeforeNextOrFinish(sender, e);
 		}
 
-		private void LoadAccounts(Models.EStorageAccountType accountType)
+		private void LoadAccounts(Models.EStorageAccountType accountType, bool reload = false)
 		{
 			switch (accountType)
 			{
 				case Models.EStorageAccountType.AmazonS3:
 					{
-						if (this.cbAmazonS3.Items.Count > 0)
+						if (!reload && this.cbAmazonS3.Items.Count > 0)
 							return;
 
 						var accounts = _s3dao.GetAll();
@@ -102,7 +103,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 					}
 				case Models.EStorageAccountType.FileSystem:
 					{
-						if (this.cbFileSystem.Items.Count > 0)
+						if (!reload && this.cbFileSystem.Items.Count > 0)
 							return;
 						//var accounts = null;
 						//accounts.Insert(0, new FileSystemAccount() { DisplayName = "<Create new account>" });
@@ -137,7 +138,20 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		{
 			if (cbAmazonS3.SelectedIndex == 0)
 			{
-				MessageBox.Show("Show <Create new account> window.");
+				using (var form = new AmazonS3AccountForm(new Models.AmazonS3Account()))
+				{
+					form.AccountSaved += (object sender1, AmazonS3AccountSaveEventArgs e1) =>
+					{
+						_s3dao.Insert(e1.Account); // Insert new account into the database.
+						LoadAccounts(Models.EStorageAccountType.AmazonS3, true);
+						SelectExistingAccount(Models.EStorageAccountType.AmazonS3, e1.Account.Id);
+					};
+					form.AccountCanceled += (object sender1, AmazonS3AccountSaveEventArgs e1) =>
+					{
+						cbAmazonS3.SelectedIndex = -1; // Deselect it.
+					};
+					form.ShowDialog(this);
+				}
 			}
 			else
 			{
