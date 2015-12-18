@@ -7,7 +7,7 @@ namespace Teltec.Backup.Ipc.Protocol
 	public static class Commands
 	{
 		public const string IPC_DEFAULT_HOST = "127.0.0.1";
-		public const int IPC_DEFAULT_PORT = 8000;
+		public const int IPC_DEFAULT_PORT = 35832; // ELTEC translated to keypad :-)
 		public const string IPC_DEFAULT_GUI_CLIENT_NAME = "gui";
 
 		// ----------------------------------------------------------------------------------------
