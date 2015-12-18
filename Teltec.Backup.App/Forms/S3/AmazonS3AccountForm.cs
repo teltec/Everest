@@ -130,6 +130,7 @@ namespace Teltec.Backup.App.Forms.S3
 			}
 			catch (Exception ex)
 			{
+				cbBucketName.Items.Clear();
 				MessageBox.Show(ex.Message, "Error");
 				return;
 			}
@@ -171,10 +172,7 @@ namespace Teltec.Backup.App.Forms.S3
 			// Setup agents.
 			//
 			AWSCredentials awsCredentials = new BasicAWSCredentials(_account.AccessKey, _account.SecretKey);
-			TransferAgentOptions options = new TransferAgentOptions
-			{
-				UploadChunkSizeInBytes = Teltec.Backup.Settings.Properties.Current.UploadChunkSize * 1024 * 1024,
-			};
+			TransferAgentOptions options = new TransferAgentOptions();
 			ITransferAgent transferAgent = new S3TransferAgent(options, awsCredentials, _account.BucketName, CancellationTokenSource.Token);
 			transferAgent.RemoteRootDir = transferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP");
 
