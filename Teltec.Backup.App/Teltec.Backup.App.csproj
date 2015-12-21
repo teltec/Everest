@@ -250,6 +250,12 @@
     <Compile Include="Forms\RestorePlan\RestorePlanGiveNameForm.Designer.cs">
       <DependentUpon>RestorePlanGiveNameForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\S3\AmazonS3CreateBucketForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\S3\AmazonS3CreateBucketForm.Designer.cs">
+      <DependentUpon>AmazonS3CreateBucketForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\Schedule\ScheduleRecurringOptionsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -374,6 +380,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectAccountForm.resx">
       <DependentUpon>RestorePlanSelectAccountForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\S3\AmazonS3CreateBucketForm.resx">
+      <DependentUpon>AmazonS3CreateBucketForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\Schedule\SchedulablePlanForm.resx">
       <DependentUpon>SchedulablePlanForm.cs</DependentUpon>

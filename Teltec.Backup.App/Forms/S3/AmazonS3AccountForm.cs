@@ -8,12 +8,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Teltec.Backup.App.Forms.Account;
-using Teltec.Backup.Data.Models;
 using Teltec.Common.Extensions;
 using Teltec.Common.Types;
 using Teltec.Storage;
 using Teltec.Storage.Backend;
 using Teltec.Storage.Implementations.S3;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms.S3
 {
@@ -21,12 +21,12 @@ namespace Teltec.Backup.App.Forms.S3
 	{
 		public event EventHandler<AmazonS3AccountSaveEventArgs> AccountSaved;
 		public event EventHandler<AmazonS3AccountSaveEventArgs> AccountCanceled;
-		private AmazonS3Account _account;
+		private Models.AmazonS3Account _account;
 		private Tribool _accountAlreadyHasBackup = Tribool.Unknown;
 
-		public AmazonS3AccountForm(AmazonS3Account account)
+		public AmazonS3AccountForm(Models.AmazonS3Account account)
 		{
-			if (account.Type != EStorageAccountType.AmazonS3)
+			if (account.Type != Models.EStorageAccountType.AmazonS3)
 				throw new ArgumentException("Attempt to edit an account of an incompatible type");
 
 			InitializeComponent();
@@ -34,13 +34,13 @@ namespace Teltec.Backup.App.Forms.S3
 
 			// Setup data bindings
 			tbDisplayName.DataBindings.Add(new Binding("Text", _account,
-				this.GetPropertyName((AmazonS3Account x) => x.DisplayName)));
+				this.GetPropertyName((Models.AmazonS3Account x) => x.DisplayName)));
 			tbAccessKey.DataBindings.Add(new Binding("Text", _account,
-				this.GetPropertyName((AmazonS3Account x) => x.AccessKey)));
+				this.GetPropertyName((Models.AmazonS3Account x) => x.AccessKey)));
 			tbSecretKey.DataBindings.Add(new Binding("Text", _account,
-				this.GetPropertyName((AmazonS3Account x) => x.SecretKey)));
+				this.GetPropertyName((Models.AmazonS3Account x) => x.SecretKey)));
 			cbBucketName.DataBindings.Add(new Binding("Text", _account,
-				this.GetPropertyName((AmazonS3Account x) => x.BucketName)));
+				this.GetPropertyName((Models.AmazonS3Account x) => x.BucketName)));
 		}
 
 		private void btnCancel_Click(object sender, EventArgs e)
@@ -90,7 +90,7 @@ namespace Teltec.Backup.App.Forms.S3
 
 		private void CleanData()
 		{
-			if (!String.IsNullOrEmpty(_account.BucketName))
+			if (!string.IsNullOrEmpty(_account.BucketName))
 				_account.BucketName = _account.BucketName.ToLower(CultureInfo.CurrentCulture);
 		}
 
@@ -105,11 +105,11 @@ namespace Teltec.Backup.App.Forms.S3
 		{
 			bool hasDisplayName = !string.IsNullOrEmpty(_account.DisplayName);
 			bool hasValidDisplayName = hasDisplayName
-				&& _account.DisplayName.Length <= AmazonS3Account.DisplayNameMaxLen;
+				&& _account.DisplayName.Length <= Models.AmazonS3Account.DisplayNameMaxLen;
 			bool hasAccessKey = _account.AccessKey != null;
 			bool hasValidAccessKey = hasAccessKey
-				&& _account.AccessKey.Length >= AmazonS3Account.AccessKeyIdMinLen
-				&& _account.AccessKey.Length <= AmazonS3Account.AccessKeyIdMaxLen;
+				&& _account.AccessKey.Length >= Models.AmazonS3Account.AccessKeyIdMinLen
+				&& _account.AccessKey.Length <= Models.AmazonS3Account.AccessKeyIdMaxLen;
 			bool hasSecretKey = _account.SecretKey != null;
 			bool hasValidSecretKey = hasSecretKey && _account.SecretKey.Length > 0;
 
@@ -154,7 +154,19 @@ namespace Teltec.Backup.App.Forms.S3
 		{
 			if (cbBucketName.SelectedIndex == 0)
 			{
-				MessageBox.Show("Show <Create new bucket> window.");
+				using (var form = new AmazonS3CreateBucketForm(_account))
+				{
+					form.BucketCreated += (object sender1, AmazonS3CreateBucketEventArgs e1) =>
+					{
+						int index = cbBucketName.Items.Add(e1.Account.BucketName); // Add new bucket to the ComboBox.
+						cbBucketName.SelectedIndex = index; // Select it.
+					};
+					form.BucketCanceled += (object sender1, AmazonS3CreateBucketEventArgs e1) =>
+					{
+						cbBucketName.SelectedIndex = -1; // Deselect it.
+					};
+					form.ShowDialog(this);
+				}
 			}
 		}
 
@@ -224,13 +236,13 @@ namespace Teltec.Backup.App.Forms.S3
 
 	public class AmazonS3AccountSaveEventArgs : EventArgs
 	{
-		private AmazonS3Account _account;
-		public AmazonS3Account Account
+		private Models.AmazonS3Account _account;
+		public Models.AmazonS3Account Account
 		{
 			get { return _account; }
 		}
 
-		public AmazonS3AccountSaveEventArgs(AmazonS3Account account)
+		public AmazonS3AccountSaveEventArgs(Models.AmazonS3Account account)
 		{
 			_account = account;
 		}
