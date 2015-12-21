@@ -184,13 +184,13 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			internal set { _LocalIP = value; }
 		}
 
-		private int _LocalPort = short.MaxValue;
+		private int _LocalPort = ushort.MaxValue;
 		public int LocalPort
 		{
 			get { return _LocalPort; }
 			internal set
 			{
-				if (value < 1 || value > short.MaxValue)
+				if (value < 1 || value > ushort.MaxValue)
 					throw new ArgumentException("Invalid port number");
 				_LocalPort = value;
 			}

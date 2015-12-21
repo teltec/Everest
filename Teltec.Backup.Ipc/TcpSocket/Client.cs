@@ -297,13 +297,13 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			internal set { _RemoteIP = value; }
 		}
 
-		private int _RemotePort;
+		private int _RemotePort = ushort.MaxValue;
 		public int RemotePort
 		{
 			get { return _RemotePort; }
 			internal set
 			{
-				if (value < 1 || value > short.MaxValue)
+				if (value < 1 || value > ushort.MaxValue)
 					throw new ArgumentException("Invalid port number");
 				_RemotePort = value;
 			}
