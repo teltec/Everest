@@ -47,7 +47,16 @@ namespace Teltec.Backup.Data.DAO.NH
 
 			HasMany(p => p.Files)
 				.KeyColumn("storage_account_id")
-				.Cascade.AllDeleteOrphan()
+				// Cascade everything except Refresh.
+				.Cascade.Delete()
+				.Cascade.DeleteOrphan()
+				.Cascade.Evict()
+				.Cascade.Lock()
+				.Cascade.Merge()
+				.Cascade.Persist()
+				//.Cascade.Refresh()
+				.Cascade.Replicate()
+				.Cascade.SaveUpdate()
 				.AsBag()
 				;
 
