@@ -211,6 +211,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 							{
 								byte[] buffer = null;
 								context.OutBuffer.TryDequeue(out buffer);
+								//logger.Debug("Sending: {0}", Encoding.UTF8.GetString(buffer));
 
 								try
 								{

@@ -33,6 +33,8 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 			RegisterCommandHandlers();
 			CreateConnectionMonitorThread();
+
+			SendRegister(); // Put REGISTER in the write/send/output buffer, before anything else.
 		}
 
 		~ClientHandler()
@@ -140,6 +142,11 @@ namespace Teltec.Backup.Ipc.TcpSocket
 		}
 
 		private void Client_Connected(object sender, ClientConnectedEventArgs e)
+		{
+			SendRegister();
+		}
+
+		private void SendRegister()
 		{
 			Send(Commands.Register(ClientName));
 		}

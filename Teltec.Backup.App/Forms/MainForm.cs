@@ -29,9 +29,10 @@ namespace Teltec.Backup.App.Forms
 
         public MainForm()
         {
+			Provider.BuildHandler(this);
+
             InitializeComponent();
 
-			Provider.BuildHandler(this);
 			AttachEventHandlers();
 
 			ChangedToTab(0);
