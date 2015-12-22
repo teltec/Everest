@@ -11,13 +11,13 @@ namespace Teltec.Backup.Ipc.TcpSocket
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		private ISynchronizeInvoke Owner;
-		private string ClientName;
 		private string Host;
 		private int Port;
 		private volatile bool ShouldStopConnectionMonitor;
 		private Thread ConnectionMonitor;
 
 		public Client Client { get; internal set; }
+		public string ClientName { get; private set; }
 
 		public ClientHandler(ISynchronizeInvoke owner, string clientName, string host, int port)
 		{

@@ -40,8 +40,17 @@ namespace Teltec.Backup.App.Forms
 
 		private void OnError(object sender, GuiCommandEventArgs e)
 		{
+			int errorCode = e.Command.GetArgumentValue<int>("errorCode");
 			string message = e.Command.GetArgumentValue<string>("message");
-			MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+			switch (errorCode)
+			{
+				default:
+					MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					break;
+				//case (int)Commands.ErrorCode.NOT_AUTHORIZED:
+				//	Provider.Handler.SendRegister();
+				//	break;
+			}
 		}
 
         private void amazonS3ToolStripMenuItem_Click(object sender, EventArgs e)

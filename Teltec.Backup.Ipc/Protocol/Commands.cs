@@ -7,12 +7,22 @@ namespace Teltec.Backup.Ipc.Protocol
 	public static class Commands
 	{
 		public const string IPC_DEFAULT_HOST = "127.0.0.1";
-		public const int IPC_DEFAULT_PORT = 35832; // ELTEC translated to keypad :-)
+		public const int IPC_DEFAULT_PORT = 35832; // (T)ELTEC translated to keypad, without the T :-)
 		public const string IPC_DEFAULT_GUI_CLIENT_NAME = "gui";
+
+		public enum ErrorCode
+		{
+			INVALID_CMD = 1,
+			NOT_AUTHORIZED = 2,
+			NAME_ALREADY_IN_USE = 3,
+			INVALID_ROUTE_MSG = 4,
+			UNKNOWN_TARGET = 5,
+		}
 
 		// ----------------------------------------------------------------------------------------
 
 		public static readonly Command SRV_ERROR = new Command("ERROR")
+			.WithArgument("errorCode", typeof(int), false)
 			.WithArgument("message", typeof(string), true);
 
 		public static readonly Command SRV_REGISTER = new Command("REGISTER")
@@ -69,6 +79,7 @@ namespace Teltec.Backup.Ipc.Protocol
 		// ----------------------------------------------------------------------------------------
 
 		public static readonly Command EXECUTOR_ERROR = new Command("ERROR")
+			.WithArgument("errorCode", typeof(int), false)
 			.WithArgument("message", typeof(string), true);
 
 		public static readonly Command EXECUTOR_CONTROL_PLAN_CANCEL = new Command("CANCEL");
@@ -133,6 +144,7 @@ namespace Teltec.Backup.Ipc.Protocol
 		}
 
 		public static readonly Command GUI_ERROR = new Command("ERROR")
+			.WithArgument("errorCode", typeof(int), false)
 			.WithArgument("message", typeof(string), true);
 
 		public static readonly Command GUI_REPORT_PLAN_STATUS = new Command("STATUS")
@@ -312,14 +324,14 @@ namespace Teltec.Backup.Ipc.Protocol
 			return result;
 		}
 
-		public static string ReportError(string message)
+		public static string ReportError(int errorCode, string message)
 		{
-			return "ERROR " + message;
+			return "ERROR " + errorCode + " " + message;
 		}
 
-		public static string ReportError(string format, params object[] arguments)
+		public static string ReportError(int errorCode, string format, params object[] arguments)
 		{
-			return string.Format("ERROR " + format, arguments);
+			return string.Format("ERROR " + errorCode + " " + format, arguments);
 		}
 
 		public static string BuildClientName(string planType, Int32 planId)

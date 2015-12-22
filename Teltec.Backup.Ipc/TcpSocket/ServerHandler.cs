@@ -106,7 +106,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 			if (!state.IsRegistered)
 			{
-				Send(context, Commands.ReportError("Not authorized"));
+				Send(context, Commands.ReportError((int)Commands.ErrorCode.NOT_AUTHORIZED, "Not authorized"));
 				return false;
 			}
 
@@ -200,7 +200,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			BoundCommand command = Commands.ServerParser.ParseMessage(msg, out errorMessage);
 			if (command == null)
 			{
-				Send(context, Commands.ReportError(errorMessage));
+				Send(context, Commands.ReportError((int)Commands.ErrorCode.INVALID_CMD, errorMessage));
 				return false;
 			}
 
@@ -241,7 +241,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			{
 				if (ClientsByName.ContainsKey(newClientName))
 				{
-					Send(args.Context, Commands.ReportError("This name is already in use"));
+					Send(args.Context, Commands.ReportError((int)Commands.ErrorCode.NAME_ALREADY_IN_USE, "This name is already in use"));
 					return;
 				}
 
@@ -269,7 +269,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			{
 				// Don't spam the sender with error messages if there's no GUI app running.
 				if (!targetName.Equals(Commands.IPC_DEFAULT_GUI_CLIENT_NAME))
-					Send(args.Context, Commands.ReportError("Invalid route message"));
+					Send(args.Context, Commands.ReportError((int)Commands.ErrorCode.INVALID_ROUTE_MSG, "Invalid route message"));
 				return;
 			}
 
@@ -282,7 +282,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			{
 				bool canProceed = UnknownTargetHits_Hit(targetName);
 				if (canProceed)
-					Send(args.Context, Commands.ReportError("Unknown target {0}", targetName));
+					Send(args.Context, Commands.ReportError((int)Commands.ErrorCode.UNKNOWN_TARGET, "Unknown target {0}", targetName));
 				return;
 			}
 

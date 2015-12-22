@@ -580,7 +580,7 @@ namespace Teltec.Backup.Scheduler
 
 			if (IsPlanRunning(planType, planId))
 			{
-				string msg = Commands.ReportError("{0} plan #{1} is already running", planType.ToTitleCase(), planId);
+				string msg = Commands.ReportError(0, "{0} plan #{1} is already running", planType.ToTitleCase(), planId);
 				Handler.Send(e.Context, msg);
 				return;
 			}
@@ -603,7 +603,7 @@ namespace Teltec.Backup.Scheduler
 
 			if (IsPlanRunning(planType, planId))
 			{
-				string msg = Commands.ReportError("{0} plan #{1} is already running", planType.ToTitleCase(), planId);
+				string msg = Commands.ReportError(0, "{0} plan #{1} is already running", planType.ToTitleCase(), planId);
 				Handler.Send(e.Context, msg);
 				return;
 			}
@@ -626,7 +626,7 @@ namespace Teltec.Backup.Scheduler
 
 			if (!IsPlanRunning(planType, planId))
 			{
-				string msg = Commands.ReportError("{0} plan #{1} is not running", planType.ToTitleCase(), planId);
+				string msg = Commands.ReportError(0, "{0} plan #{1} is not running", planType.ToTitleCase(), planId);
 				Handler.Send(e.Context, msg);
 				return;
 			}
@@ -636,7 +636,7 @@ namespace Teltec.Backup.Scheduler
 			ClientState executor = Handler.GetClientState(executorClientName);
 			if (executor == null)
 			{
-				string msg = Commands.ReportError("Executor for {0} plan #{1} doesn't seem to be running",
+				string msg = Commands.ReportError(0, "Executor for {0} plan #{1} doesn't seem to be running",
 					planType.ToTitleCase(), planId);
 				Handler.Send(e.Context, msg);
 				return;
@@ -672,7 +672,7 @@ namespace Teltec.Backup.Scheduler
 
 			if (processToBeKilled == null)
 			{
-				string msg = Commands.ReportError("{0} plan #{1} is not running", planType.ToTitleCase(), planId);
+				string msg = Commands.ReportError(0, "{0} plan #{1} is not running", planType.ToTitleCase(), planId);
 				Handler.Send(e.Context, msg);
 				return;
 			}
@@ -734,7 +734,7 @@ namespace Teltec.Backup.Scheduler
 			}
 			catch (Exception ex)
 			{
-				Handler.Send(context, Commands.ReportError(ex.Message));
+				Handler.Send(context, Commands.ReportError(0, ex.Message));
 				return false;
 			}
 		}
@@ -759,7 +759,7 @@ namespace Teltec.Backup.Scheduler
 			}
 			catch (Exception ex)
 			{
-				Handler.Send(context, Commands.ReportError(ex.Message));
+				Handler.Send(context, Commands.ReportError(0, ex.Message));
 				return false;
 			}
 		}

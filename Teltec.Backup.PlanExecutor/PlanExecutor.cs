@@ -168,7 +168,7 @@ namespace Teltec.Backup.PlanExecutor
 		{
 			if (RunningOperation == null || !RunningOperation.IsRunning)
 			{
-				Handler.Send(Commands.ReportError("Can't cancel. Operation is not running"));
+				Handler.Send(Commands.ReportError(0, "Can't cancel. Operation is not running"));
 				return;
 			}
 

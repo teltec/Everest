@@ -42,7 +42,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			BoundCommand command = Commands.ExecutorParser.ParseMessage(msg, out errorMessage);
 			if (command == null)
 			{
-				Send(Commands.ReportError(errorMessage));
+				Send(Commands.ReportError((int)Commands.ErrorCode.INVALID_CMD, errorMessage));
 				return false;
 			}
 
