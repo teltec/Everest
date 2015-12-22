@@ -25,8 +25,20 @@ namespace Teltec.Backup.Ipc.TcpSocket
 		{
 			Commands.GUI_ERROR.Handler += delegate(object sender, EventArgs e)
 			{
+				GuiCommandEventArgs args = (GuiCommandEventArgs)e;
+				int errorCode = args.Command.GetArgumentValue<int>("errorCode");
+
+				switch (errorCode)
+				{
+					default:
+						break;
+					case (int)Commands.ErrorCode.NAME_ALREADY_IN_USE:
+						DidSendRegister = false;
+						break;
+				}
+
 				if (OnError != null)
-					OnError(this, (GuiCommandEventArgs)e);
+					OnError(this, args);
 			};
 			Commands.GUI_REPORT_PLAN_STATUS.Handler += delegate(object sender, EventArgs e)
 			{

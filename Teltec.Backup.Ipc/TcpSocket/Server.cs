@@ -381,7 +381,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 							{
 								byte[] buffer = null;
 								context.OutBuffer.TryDequeue(out buffer);
-								//logger.Debug("Sending: {0}", Encoding.UTF8.GetString(buffer));
+								//logger.Debug("BeginSend: {0}", Encoding.UTF8.GetString(buffer));
 
 								try
 								{
@@ -437,12 +437,19 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		public void Send(ClientContext context, byte[] data)
 		{
-			if (context == null || context.ClientSocket == null)
+			if (context == null)
 				return;
+
+			// NOTE: Comment the following condition if you want to queue commands
+			//       even if the socket is not connected.
+			//if (Context.ClientSocket == null)
+			//	return;
 
 			int count = data.Length;
 			byte[] copiedData = new byte[count];
 			Buffer.BlockCopy(data, 0, copiedData, 0, count);
+
+			//logger.Debug("Send: {0}", Encoding.UTF8.GetString(copiedData));
 
 			context.OutBuffer.Enqueue(copiedData);
 		}

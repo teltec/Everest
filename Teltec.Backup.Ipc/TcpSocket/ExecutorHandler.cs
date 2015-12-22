@@ -24,8 +24,20 @@ namespace Teltec.Backup.Ipc.TcpSocket
 		{
 			Commands.EXECUTOR_ERROR.Handler += delegate(object sender, EventArgs e)
 			{
+				ExecutorCommandEventArgs args = (ExecutorCommandEventArgs)e;
+				int errorCode = args.Command.GetArgumentValue<int>("errorCode");
+
+				switch (errorCode)
+				{
+					default:
+						break;
+					case (int)Commands.ErrorCode.NAME_ALREADY_IN_USE:
+						DidSendRegister = false;
+						break;
+				}
+
 				if (OnError != null)
-					OnError(this, (ExecutorCommandEventArgs)e);
+					OnError(this, args);
 			};
 			Commands.EXECUTOR_CONTROL_PLAN_CANCEL.Handler += delegate(object sender, EventArgs e)
 			{

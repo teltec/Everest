@@ -15,6 +15,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 		private int Port;
 		private volatile bool ShouldStopConnectionMonitor;
 		private Thread ConnectionMonitor;
+		protected bool DidSendRegister = false;
 
 		public Client Client { get; internal set; }
 		public string ClientName { get; private set; }
@@ -148,11 +149,24 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 		private void SendRegister()
 		{
+			if (DidSendRegister)
+				return;
+
+			DidSendRegister = true;
 			Send(Commands.Register(ClientName));
 		}
 
 		private void Client_Disconnected(object sender, ClientConnectedEventArgs e)
 		{
+			DidSendRegister = false;
+
+			// Remove ALL pending outgoing commands.
+			Client.ResetOutBuffer();
+
+			// Put REGISTER in the write/send/output buffer, so it should be the 1st command when
+			// the client gets a new connection.
+			SendRegister();
+
 			// ...
 		}
 

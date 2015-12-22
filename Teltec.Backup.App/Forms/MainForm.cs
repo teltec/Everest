@@ -30,12 +30,11 @@ namespace Teltec.Backup.App.Forms
         public MainForm()
         {
 			Provider.BuildHandler(this);
+			AttachEventHandlers();
 
             InitializeComponent();
 
-			AttachEventHandlers();
-
-			ChangedToTab(0);
+			this.Load += (object sender, EventArgs e) => ChangedToTab(0);
         }
 
 		private void OnError(object sender, GuiCommandEventArgs e)
