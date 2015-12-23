@@ -1,13 +1,26 @@
 using System;
+using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace Teltec.Common.Extensions
 {
 	public static class StringExtensions
 	{
+		static readonly Regex VariableRegex = new Regex(@"\{\{([^\}]+)\}\}", RegexOptions.Compiled);
+
+		public static string ExpandVariables(this string input, StringDictionary variables)
+		{
+			string output = VariableRegex.Replace(input, delegate(Match match)
+			{
+				return variables[match.Groups[1].Value];
+			});
+			return output;
+		}
+
 		public static string ToTitleCase(this string text)
 		{
 			CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
