@@ -124,7 +124,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 
 		protected IncrementalFileVersioner Versioner; // IDisposable
 		protected BackupOperationOptions Options;
-		protected CustomBackupAgent BackupAgent;
+		protected CustomBackupAgent BackupAgent; // IDisposable
 
 		public override void Start(out TransferResults results)
 		{

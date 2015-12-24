@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
 namespace Teltec.FileSystem.Tests
@@ -16,19 +16,19 @@ namespace Teltec.FileSystem.Tests
 			PathNodes nodes2 = new PathNodes(@"C:\");
 			CollectionAssert.AreEqual(new string[] { @"C:\" }, nodes2.Nodes.Select(p => p.Path).ToArray());
 			CollectionAssert.AreEqual(new string[] { @"C:" }, nodes2.Nodes.Select(p => p.Name).ToArray());
-			
+
 			PathNodes nodes3 = new PathNodes(@"C:\.txt");
 			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\.txt" }, nodes3.Nodes.Select(p => p.Path).ToArray());
 			CollectionAssert.AreEqual(new string[] { @"C:", @".txt" }, nodes3.Nodes.Select(p => p.Name).ToArray());
-			
-			PathNodes nodes4 = new PathNodes(@"C:\TODO.txt");
-			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\TODO.txt" }, nodes4.Nodes.Select(p => p.Path).ToArray());
-			CollectionAssert.AreEqual(new string[] { @"C:", @"TODO.txt" }, nodes4.Nodes.Select(p => p.Name).ToArray());
-			
-			PathNodes nodes5 = new PathNodes(@"C:\Users\TODO.txt");
-			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\Users\", @"C:\Users\TODO.txt" }, nodes5.Nodes.Select(p => p.Path).ToArray());
-			CollectionAssert.AreEqual(new string[] { @"C:", @"Users", @"TODO.txt" }, nodes5.Nodes.Select(p => p.Name).ToArray());
-			
+
+			PathNodes nodes4 = new PathNodes(@"C:\FOO.txt");
+			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\FOO.txt" }, nodes4.Nodes.Select(p => p.Path).ToArray());
+			CollectionAssert.AreEqual(new string[] { @"C:", @"FOO.txt" }, nodes4.Nodes.Select(p => p.Name).ToArray());
+
+			PathNodes nodes5 = new PathNodes(@"C:\Users\FOO.txt");
+			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\Users\", @"C:\Users\FOO.txt" }, nodes5.Nodes.Select(p => p.Path).ToArray());
+			CollectionAssert.AreEqual(new string[] { @"C:", @"Users", @"FOO.txt" }, nodes5.Nodes.Select(p => p.Name).ToArray());
+
 			PathNodes nodes6 = new PathNodes(@"C:\Users\johndoe\");
 			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\Users\", @"C:\Users\johndoe\" }, nodes6.Nodes.Select(p => p.Path).ToArray());
 			CollectionAssert.AreEqual(new string[] { @"C:", @"Users", "johndoe" }, nodes6.Nodes.Select(p => p.Name).ToArray());
@@ -37,17 +37,17 @@ namespace Teltec.FileSystem.Tests
 			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\Users\", @"C:\Users\johndoe\", @"C:\Users\johndoe\Desktop\" }, nodes7.Nodes.Select(p => p.Path).ToArray());
 			CollectionAssert.AreEqual(new string[] { @"C:", @"Users", @"johndoe", @"Desktop" }, nodes7.Nodes.Select(p => p.Name).ToArray());
 
-			PathNodes nodes8 = new PathNodes(@"C:\Users\johndoe\Desktop\TODO.txt");
-			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\Users\", @"C:\Users\johndoe\", @"C:\Users\johndoe\Desktop\", @"C:\Users\johndoe\Desktop\TODO.txt" }, nodes8.Nodes.Select(p => p.Path).ToArray());
-			CollectionAssert.AreEqual(new string[] { @"C:", @"Users", @"johndoe", @"Desktop", @"TODO.txt" }, nodes8.Nodes.Select(p => p.Name).ToArray());
-			
+			PathNodes nodes8 = new PathNodes(@"C:\Users\johndoe\Desktop\FOO.txt");
+			CollectionAssert.AreEqual(new string[] { @"C:\", @"C:\Users\", @"C:\Users\johndoe\", @"C:\Users\johndoe\Desktop\", @"C:\Users\johndoe\Desktop\FOO.txt" }, nodes8.Nodes.Select(p => p.Path).ToArray());
+			CollectionAssert.AreEqual(new string[] { @"C:", @"Users", @"johndoe", @"Desktop", @"FOO.txt" }, nodes8.Nodes.Select(p => p.Name).ToArray());
+
 			PathNodes nodes9 = new PathNodes(@"Users\johndoe\Desktop\");
 			CollectionAssert.AreEqual(new string[] { @"Users\", @"Users\johndoe\", @"Users\johndoe\Desktop\" }, nodes9.Nodes.Select(p => p.Path).ToArray());
 			CollectionAssert.AreEqual(new string[] { @"Users", @"johndoe", @"Desktop" }, nodes9.Nodes.Select(p => p.Name).ToArray());
-			
-			PathNodes nodes10 = new PathNodes(@"TODO.txt");
-			CollectionAssert.AreEqual(new string[] { @"TODO.txt" }, nodes10.Nodes.Select(p => p.Path).ToArray());
-			CollectionAssert.AreEqual(new string[] { @"TODO.txt" }, nodes10.Nodes.Select(p => p.Name).ToArray());
+
+			PathNodes nodes10 = new PathNodes(@"FOO.txt");
+			CollectionAssert.AreEqual(new string[] { @"FOO.txt" }, nodes10.Nodes.Select(p => p.Path).ToArray());
+			CollectionAssert.AreEqual(new string[] { @"FOO.txt" }, nodes10.Nodes.Select(p => p.Name).ToArray());
 		}
 	}
 
@@ -57,7 +57,7 @@ namespace Teltec.FileSystem.Tests
 		[TestMethod]
 		public void TestParse()
 		{
-			PathComponents path = new PathComponents(@"C:\Users\johndoe\Desktop\TODO.txt");
+			PathComponents path = new PathComponents(@"C:\Users\johndoe\Desktop\FOO.txt");
 
 			Assert.IsTrue(path.HasDrive);
 			Assert.IsTrue(path.HasDirectories);
@@ -66,15 +66,15 @@ namespace Teltec.FileSystem.Tests
 
 			Assert.AreEqual("C", path.Drive);
 			CollectionAssert.AreEqual(new string[] { "Users", "johndoe", "Desktop" }, path.Directories);
-			Assert.AreEqual("TODO.txt", path.FileName);
-			Assert.AreEqual("TODO", path.FileNameWithoutExtension);
+			Assert.AreEqual("FOO.txt", path.FileName);
+			Assert.AreEqual("FOO", path.FileNameWithoutExtension);
 			Assert.AreEqual("txt", path.Extension);
 		}
 
 		[TestMethod]
 		public void TestParseWithoutDirectories()
 		{
-			PathComponents path = new PathComponents(@"C:\TODO.txt");
+			PathComponents path = new PathComponents(@"C:\FOO.txt");
 
 			Assert.IsTrue(path.HasDrive);
 			Assert.IsFalse(path.HasDirectories);
@@ -83,7 +83,7 @@ namespace Teltec.FileSystem.Tests
 
 			Assert.AreEqual("C", path.Drive);
 			CollectionAssert.AreEqual(null, path.Directories);
-			Assert.AreEqual("TODO.txt", path.FileName);
+			Assert.AreEqual("FOO.txt", path.FileName);
 		}
 
 		[TestMethod]
@@ -123,7 +123,7 @@ namespace Teltec.FileSystem.Tests
 		[TestMethod]
 		public void TestParseRelative()
 		{
-			PathComponents path = new PathComponents(@"Users\johndoe\Desktop\TODO.txt");
+			PathComponents path = new PathComponents(@"Users\johndoe\Desktop\FOO.txt");
 
 			Assert.IsFalse(path.HasDrive);
 			Assert.IsTrue(path.HasDirectories);
@@ -132,8 +132,8 @@ namespace Teltec.FileSystem.Tests
 
 			Assert.AreEqual(string.Empty, path.Drive);
 			CollectionAssert.AreEqual(new string[] { "Users", "johndoe", "Desktop" }, path.Directories);
-			Assert.AreEqual("TODO.txt", path.FileName);
-			Assert.AreEqual("TODO", path.FileNameWithoutExtension);
+			Assert.AreEqual("FOO.txt", path.FileName);
+			Assert.AreEqual("FOO", path.FileNameWithoutExtension);
 			Assert.AreEqual("txt", path.Extension);
 		}
 
@@ -157,7 +157,7 @@ namespace Teltec.FileSystem.Tests
 		[TestMethod]
 		public void TestParseFilenameAlone()
 		{
-			PathComponents path = new PathComponents(@"TODO.txt");
+			PathComponents path = new PathComponents(@"FOO.txt");
 
 			Assert.IsFalse(path.HasDrive);
 			Assert.IsFalse(path.HasDirectories);
@@ -166,8 +166,8 @@ namespace Teltec.FileSystem.Tests
 
 			Assert.AreEqual(string.Empty, path.Drive);
 			CollectionAssert.AreEqual(null, path.Directories);
-			Assert.AreEqual("TODO.txt", path.FileName);
-			Assert.AreEqual("TODO", path.FileNameWithoutExtension);
+			Assert.AreEqual("FOO.txt", path.FileName);
+			Assert.AreEqual("FOO", path.FileNameWithoutExtension);
 			Assert.AreEqual("txt", path.Extension);
 		}
 

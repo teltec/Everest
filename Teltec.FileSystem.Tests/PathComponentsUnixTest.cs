@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Teltec.FileSystem.Tests
 {
@@ -8,7 +8,7 @@ namespace Teltec.FileSystem.Tests
 		[TestMethod]
 		public void TestParse()
 		{
-			PathComponents path = new PathComponents("/home/johndoe/Desktop/TODO.txt");
+			PathComponents path = new PathComponents("/home/johndoe/Desktop/FOO.txt");
 
 			Assert.IsTrue(path.HasDrive);
 			Assert.IsTrue(path.HasDirectories);
@@ -17,8 +17,8 @@ namespace Teltec.FileSystem.Tests
 
 			Assert.AreEqual("/home", path.Drive);
 			CollectionAssert.AreEqual(new string[] { "johndoe", "Desktop" }, path.Directories);
-			Assert.AreEqual("TODO.txt", path.FileName);
-			Assert.AreEqual("TODO", path.FileNameWithoutExtension);
+			Assert.AreEqual("FOO.txt", path.FileName);
+			Assert.AreEqual("FOO", path.FileNameWithoutExtension);
 			Assert.AreEqual("txt", path.Extension);
 		}
 	}
