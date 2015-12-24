@@ -106,7 +106,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 		#region Transfer
 
 		protected SyncOperationOptions Options;
-		protected CustomSynchronizationAgent SyncAgent;
+		protected CustomSynchronizationAgent SyncAgent; // IDisposable
 		protected List<ListingObject> RemoteObjects;
 
 		public string RemoteRootDirectory
@@ -153,9 +153,9 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			RemoteObjects = new List<ListingObject>(4096); // Avoid small resizes without compromising memory.
 			SyncAgent = new CustomSynchronizationAgent(TransferAgent);
 
-			results = SyncAgent.Results;
-
 			RegisterEventHandlers(Synchronization);
+
+			results = SyncAgent.Results;
 
 			//
 			// Start the sync.

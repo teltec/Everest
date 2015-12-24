@@ -127,14 +127,7 @@ namespace Teltec.Storage
 			{
 				try
 				{
-					ParallelOptions options = new ParallelOptions();
-					options.CancellationToken = CancellationTokenSource.Token;
-					options.MaxDegreeOfParallelism = AsyncHelper.SettingsMaxThreadCount;
-
-					ParallelLoopResult result = Parallel.ForEach(Files, options, (currentFile) =>
-					{
-						DoImplementation(prefix, recursive, /*userData*/ null);
-					});
+					DoImplementation(prefix, recursive, /*userData*/ null);
 				}
 				catch (Exception ex)
 				{
@@ -150,7 +143,7 @@ namespace Teltec.Storage
 						throw ex;
 					}
 				}
-			});
+			}, CancellationTokenSource.Token);
 		}
 
 		public abstract void DoImplementation(string prefix, bool recursive, object userData);
