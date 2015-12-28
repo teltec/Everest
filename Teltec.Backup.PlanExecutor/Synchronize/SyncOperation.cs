@@ -249,8 +249,28 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 						string path = string.Empty;
 						string versionString = string.Empty;
 
-						// Parse obj.Key into its relevant parts.
-						bool ok = ParseS3Key(obj.Key, out type, out path, out versionString);
+						try
+						{
+							// Parse obj.Key into its relevant parts.
+							bool ok = ParseS3Key(obj.Key, out type, out path, out versionString);
+						}
+						catch (Exception ex)
+						{
+							if (ex is ArgumentException || ex is IndexOutOfRangeException)
+							{
+								// Report error.
+								logger.Warn("Failed to parse S3 key: {0}", obj.Key);
+
+								//SyncAgent.Results.Stats.FailedSavedFileCount += 1;
+
+								// Report save progress
+								//ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount);
+
+								continue; // Skip this file.
+							}
+
+							throw;
+						}
 
 						DateTime lastWrittenAt = DateTime.ParseExact(versionString, Models.BackupedFile.VersionFormat, CultureInfo.InvariantCulture);
 
