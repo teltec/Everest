@@ -18,10 +18,10 @@ namespace Teltec.Common.Utils
 		{
 			// Formats and its cutoffs based on totalseconds
 			var cutoff = new SortedList<long, string> {
-				{ 60,				"{3:S}"			},
-				{ 60 * 60,			"{2:M}, {3:S}"	},
-				{ 24 * 60 * 60,		"{1:H}, {2:M}"	},
-				{ Int64.MaxValue,	"{0:D}, {1:H}"	},
+				{ 60,				"{3:S}"							},
+				{ 60 * 60,			"{2:M}, {3:S}"					},
+				{ 24 * 60 * 60,		"{1:H}, {2:M}, {3:S}"			},
+				{ Int64.MaxValue,	"{0:D}, {1:H}, {2:M}, {3:S}"	},
 			};
 
 			// Find nearest best match
