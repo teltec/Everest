@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using NLog;
 using System;
 using System.Diagnostics;
@@ -39,6 +40,10 @@ namespace Teltec.Backup.App
 		static void UnsafeMain()
 		{
 			LoggingHelper.ChangeFilenamePostfix("gui");
+			SystemEvents.SessionEnding += (object sender, SessionEndingEventArgs e) =>
+			{
+				logger.Info("Session ending due to {0}", e.Reason.ToString());
+			};
 			Provider.Setup();
 			LoadSettings();
 			Application.EnableVisualStyles();

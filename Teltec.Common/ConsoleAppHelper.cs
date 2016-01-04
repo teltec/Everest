@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Teltec.Common
 {
@@ -25,7 +21,7 @@ namespace Teltec.Common
 
 		public static bool OnConsoleEvent(Unmanaged.CtrlTypes reason)
 		{
-			Console.WriteLine("Exiting system due to external CTRL-C, or process kill, or shutdown");
+			Console.WriteLine("Exiting system due to {0}.", reason.ToString());
 
 			// Signal termination
 			TerminationRequestedEvent.Set();
