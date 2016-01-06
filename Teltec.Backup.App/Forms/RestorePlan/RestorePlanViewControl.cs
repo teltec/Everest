@@ -93,7 +93,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 		private void OnReportPlanStatus(object sender, GuiCommandEventArgs e)
 		{
 			string planType = e.Command.GetArgumentValue<string>("planType");
-			if (!planType.Equals("restore"))
+			if (this.Model == null || !planType.Equals("restore"))
 				return;
 
 			Models.RestorePlan plan = this.Model as Models.RestorePlan;
@@ -108,7 +108,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 
 		private void OnReportPlanProgress(object sender, GuiCommandEventArgs e)
 		{
-			if (!CurrentOperation.GotInitialInfo)
+			if (this.Model == null || !CurrentOperation.GotInitialInfo)
 				return;
 
 			string planType = e.Command.GetArgumentValue<string>("planType");
