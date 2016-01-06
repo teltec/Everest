@@ -360,7 +360,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				return;
 
 			// Calculate duration.
-			var duration = !status.IsEnded()
+			var duration = !status.IsEnded() || !CurrentOperation.FinishedAt.HasValue
 				? DateTime.UtcNow - CurrentOperation.StartedAt.Value
 				: CurrentOperation.FinishedAt.Value - CurrentOperation.StartedAt.Value;
 

@@ -119,6 +119,11 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			get { return TransferAgent != null ? TransferAgent.LocalRootDir : null; }
 		}
 
+		public override void Cancel()
+		{
+			CancellationTokenSource.Cancel();
+		}
+
 		public override void Start(out SyncResults results)
 		{
 			Assert.IsFalse(IsRunning);
@@ -193,7 +198,10 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			};
 			TransferAgent.ListingCanceled += (object sender, ListingProgressArgs e, Exception ex) =>
 			{
-				throw new NotImplementedException();
+				var message = string.Format("Canceled: {0}", ex != null ? ex.Message : "Unknown reason");
+				Info(message);
+				//StatusInfo.Update(SyncStatusLevel.INFO, message);
+				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });
 			};
 			TransferAgent.ListingFailed += (object sender, ListingProgressArgs e, Exception ex) =>
 			{

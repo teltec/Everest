@@ -456,11 +456,13 @@ namespace Teltec.Storage.Implementations.S3
 					{
 						IEnumerable<S3Object> resultObjects = response.S3Objects;
 
+#if DEBUG
 						// Process response.
 						foreach (S3Object entry in resultObjects)
 						{
 							Console.WriteLine("Key = {0}, Size = {1}, LastModified = {2}", entry.Key, entry.Size, entry.LastModified);
 						}
+#endif
 
 						// If response is truncated, set the marker to get the next set of keys.
 						if (response.IsTruncated)
