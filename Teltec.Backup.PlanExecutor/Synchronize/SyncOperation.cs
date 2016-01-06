@@ -177,15 +177,19 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			{
 				RemoteObjects.AddRange(e.Objects);
 
+#if DEBUG
 				foreach (var obj in e.Objects)
-				{
-					SyncAgent.Results.Stats.FileCount += 1;
-					SyncAgent.Results.Stats.TotalSize += obj.Size;
+					Info("Found {0}", obj.Key);
+#endif
 
-					var message = string.Format("Found {0}", obj.Key);
-					Info(message);
-					OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });
-				}
+				int filesCount = e.Objects.Count;
+				long filesSize = e.Objects.Sum(x => x.Size);
+
+				SyncAgent.Results.Stats.FileCount += filesCount;
+				SyncAgent.Results.Stats.TotalSize += filesSize;
+
+				var message = string.Format("Found {0} files ({1} bytes)", filesCount, filesSize);
+				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });
 			};
 			TransferAgent.ListingCanceled += (object sender, ListingProgressArgs e, Exception ex) =>
 			{
@@ -210,11 +214,14 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			return true;
 		}
 
+		// Summary:
+		//    Saves all instances from RemoteObjects list to the database.
+		//    Also removes them from RemoteObjects list to free memory.
 		private void Save(CancellationToken CancellationToken)
 		{
 			ISession session = NHibernateHelper.GetSession();
 
-			BatchProcessor batchProcessor = new BatchProcessor();
+			BatchProcessor batchProcessor = new BatchProcessor(250);
 			StorageAccountRepository daoStorageAccount = new StorageAccountRepository(session);
 			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository(session);
 			BackupPlanPathNodeRepository daoBackupPlanPathNode = new BackupPlanPathNodeRepository(session);
@@ -222,7 +229,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 
 			BlockPerfStats stats = new BlockPerfStats();
 
-			using (ITransaction tx = session.BeginTransaction())
+			using (BatchTransaction tx = batchProcessor.BeginTransaction(session))
 			{
 				try
 				{
@@ -240,8 +247,12 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 					ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount, true);
 
 					// Saving loop
-					foreach (var obj in RemoteObjects)
+					for (int i = RemoteObjects.Count - 1; i >= 0; i--)
 					{
+						ListingObject obj = RemoteObjects[i]; // Get instance of object.
+						//RemoteObjects[i] = null;
+						RemoteObjects.RemoveAt(i); // Remove to free memory. RemoveAt(int) is O(N).
+
 						// Throw if the operation was canceled.
 						CancellationToken.ThrowIfCancellationRequested();
 
@@ -259,7 +270,8 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							if (ex is ArgumentException || ex is IndexOutOfRangeException)
 							{
 								// Report error.
-								logger.Warn("Failed to parse S3 key: {0}", obj.Key);
+								logger.Warn("Failed to parse S3 key: {0} -- Skipping.", obj.Key);
+								//logger.Log(LogLevel.Warn, ex, "Failed to parse S3 key: {0}", obj.Key);
 
 								//SyncAgent.Results.Stats.FailedSavedFileCount += 1;
 
@@ -320,14 +332,18 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							{
 								versions = daoBackupedFile.GetCompletedByStorageAccountAndPath(account, path, versionString);
 							}
-							catch (FormatException ex)
+							catch (FormatException)
 							{
-								logger.Log(LogLevel.Error, ex, "Invalid date format?");
+								// Report error.
+								logger.Warn("Failed to parse versionString: {0} -- Skipping.", versionString);
+
+								//SyncAgent.Results.Stats.FailedSavedFileCount += 1;
+
 								continue; // TODO(jweyrich): Should we abort?
 							}
 
 							// Check whether our database already contains this exact file + version.
-							if (versions != null && versions.Count == 0)
+							if (versions == null || (versions != null && versions.Count == 0))
 							{
 								// Create `BackupedFile`.
 								version = new Models.BackupedFile(null, entry);
@@ -363,13 +379,13 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 
 						SyncAgent.Results.Stats.SavedFileCount += 1;
 
-						bool didFlush = batchProcessor.ProcessBatch(session);
+						bool didCommit = batchProcessor.ProcessBatch(tx);
 
 						// Report save progress
 						ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount);
 					}
 
-					batchProcessor.ProcessBatch(session, true);
+					batchProcessor.ProcessBatch(tx, true);
 
 					// Report save progress
 					ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount, true);
@@ -400,15 +416,17 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			}
 		}
 
-		private readonly int ReportSaveBatchSize = 5;
+		private readonly int ReportSaveBatchSize = 50;
 
 		private void ReportSaveProgress(int totalSaved, bool force = false)
 		{
 			if ((totalSaved % ReportSaveBatchSize == 0) || force)
 			{
-				var message = string.Format("Saved {0} more files", totalSaved);
+				var message = string.Format("Saved {0} files", totalSaved);
 				//var message = string.Format("Saved {0} @ {1}", entry.Path, version.VersionName);
+#if DEBUG
 				Info(message);
+#endif
 				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.SavingUpdated, Message = message });
 			}
 		}
@@ -630,6 +648,8 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				{
 					if (SyncAgent != null)
 					{
+						logger.Info("DISPOSING SyncAgent.");
+
 						SyncAgent.Dispose();
 						SyncAgent = null;
 					}
