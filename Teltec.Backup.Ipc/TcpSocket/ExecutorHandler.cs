@@ -1,3 +1,4 @@
+using NLog;
 using System;
 using System.ComponentModel;
 using Teltec.Backup.Ipc.Protocol;
@@ -10,6 +11,8 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 	public class ExecutorHandler : ClientHandler
 	{
+		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
 		public ExecutorHandler(ISynchronizeInvoke owner, string clientName, string host, int port)
 			: base(owner, clientName, host, port)
 		{
@@ -54,6 +57,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			BoundCommand command = Commands.ExecutorParser.ParseMessage(msg, out errorMessage);
 			if (command == null)
 			{
+				logger.Warn("Did not accept the message: {0}", message);
 				Send(Commands.ReportError((int)Commands.ErrorCode.INVALID_CMD, errorMessage));
 				return false;
 			}

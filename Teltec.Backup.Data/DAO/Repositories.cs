@@ -317,14 +317,45 @@ namespace Teltec.Backup.Data.DAO
 		//	};
 		//}
 
+		public bool IsLatestVersion(Models.BackupedFile file)
+		{
+			Models.BackupedFile found = GetLatestVersionCompleted(file.File);
+			return found == null || (found != null && found.Id.Value == file.Id.Value);
+		}
+
+		// NOTE: This may return a version that has not COMPLETED the transfer.
 		public Models.BackupedFile GetLatestVersion(Models.BackupPlanFile planFile)
 		{
+			return GetLatestVersionWithTransferStatus(planFile);
+		}
+
+		public Models.BackupedFile GetLatestVersionCompleted(Models.BackupPlanFile planFile)
+		{
+			return GetLatestVersionWithTransferStatus(planFile, new TransferStatus[] { TransferStatus.COMPLETED });
+		}
+
+		public Models.BackupedFile GetLatestVersionWithTransferStatus(Models.BackupPlanFile planFile, params TransferStatus[] statuses)
+		{
 			Assert.IsNotNull(planFile);
+			//Assert.IsFalse(IsTransient(Session, file));
+
 			ICriteria crit = Session.CreateCriteria(PersistentType);
+
 			string filePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
-			string idPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Id);
 			crit.Add(Restrictions.Eq(filePropertyName, planFile));
-			crit.AddOrder(Order.Desc(idPropertyName));
+
+			if (statuses != null && statuses.Length > 0)
+			{
+				string transferStatus = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
+				crit.Add(Restrictions.Eq(transferStatus, TransferStatus.COMPLETED));
+			}
+
+			//string idPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Id);
+			//crit.AddOrder(Order.Desc(idPropertyName));
+
+			string fileLastWrittenAtPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.FileLastWrittenAt);
+			crit.AddOrder(Order.Desc(fileLastWrittenAtPropertyName));
+
 			crit.SetMaxResults(1);
 			return crit.UniqueResult<Models.BackupedFile>(); // May return null
 		}

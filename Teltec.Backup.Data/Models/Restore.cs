@@ -118,6 +118,13 @@ namespace Teltec.Backup.Data.Models
 			return Status == TransferStatus.STOPPED || Status == TransferStatus.RUNNING;
 		}
 
+		public virtual bool IsFinished()
+		{
+			return Status == TransferStatus.CANCELED
+				|| Status == TransferStatus.COMPLETED
+				|| Status == TransferStatus.FAILED;
+		}
+
 		#endregion
 	}
 }

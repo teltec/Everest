@@ -286,11 +286,13 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			{
 				var next = node.Next;
 				Models.BackupPlanFile entry = node.Value;
-				// TODO(jweyrich): Measure whether `daoBackupedFile.GetLatestVersion(entry)` is faster or not.
+				// TODO(jweyrich): Measure whether `daoBackupedFile.GetLatestVersion(entry)` is faster or not,
+				//                 and whether "entry.Versions.anything" would cause all related version to be fetched.
 #if false
 				Models.BackupedFile lastVersion = entry.Versions != null && entry.Versions.Count > 0
 					? entry.Versions.Last() : null;
 #else
+				// This may be a version that has not COMPLETED the transfer.
 				Models.BackupedFile lastVersion = entry.Id.HasValue ? daoBackupedFile.GetLatestVersion(entry) : null;
 #endif
 

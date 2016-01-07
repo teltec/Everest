@@ -135,7 +135,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 				case Commands.OperationStatus.NOT_RUNNING:
 				case Commands.OperationStatus.INTERRUPTED:
 					{
-						Models.BackupPlan plan = Model as Models.BackupPlan;
+						Models.RestorePlan plan = Model as Models.RestorePlan;
 
 						//this.lblSources.Text = report.Sources;
 						this.llblRunNow.Text = report.Status == Commands.OperationStatus.NOT_RUNNING
@@ -157,7 +157,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 				case Commands.OperationStatus.STARTED:
 				case Commands.OperationStatus.RESUMED:
 					{
-						Models.BackupPlan plan = Model as Models.BackupPlan;
+						Models.RestorePlan plan = Model as Models.RestorePlan;
 
 						CurrentOperation.StartedAt = report.StartedAt;
 						CurrentOperation.LastRunAt = report.LastRunAt;

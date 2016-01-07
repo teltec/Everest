@@ -168,6 +168,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 		protected void RegisterResultsEventHandlers(Models.Restore restore, TransferResults results)
 		{
 			RestoredFileRepository daoRestoredFile = new RestoredFileRepository();
+			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
 			results.Failed += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
 				Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(restore, args.FilePath);
@@ -199,8 +200,18 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				restoredFile.UpdatedAt = DateTime.UtcNow;
 				daoRestoredFile.Update(restoredFile);
 
-				// Set original LastWriteTime so this file won't be erroneously included in the next Backup.
-				FileManager.SafeSetFileLastWriteTimeUtc(restoredFile.File.Path, restoredFile.BackupedFile.FileLastWrittenAt);
+				// Only set original modified date if the restored file is the latest version whose transfer is completed,
+				// otherwise, keep the date the OS/filesystem gave it.
+				bool isLatestVersion = daoBackupedFile.IsLatestVersion(restoredFile.BackupedFile);
+				if (isLatestVersion)
+				{
+					// Set original LastWriteTime so this file won't be erroneously included in the next Backup.
+					FileManager.SafeSetFileLastWriteTimeUtc(restoredFile.File.Path, restoredFile.BackupedFile.FileLastWrittenAt);
+				}
+				else
+				{
+					// Keep the original LastWriteTime so this file will be included in the next backup.
+				}
 
 				var message = string.Format("Completed {0}", args.FilePath);
 				Info(message);

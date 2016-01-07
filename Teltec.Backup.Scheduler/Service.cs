@@ -540,13 +540,46 @@ namespace Teltec.Backup.Scheduler
 			string planType = e.Command.GetArgumentValue<string>("planType");
 			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
 
-			BackupRepository daoBackup = new BackupRepository();
-			Models.Backup latest = daoBackup.GetLatestByPlan(new Models.BackupPlan { Id = planId });
+			ValidatePlanType(planType);
 
 			bool isRunning = IsPlanRunning(planType, planId);
-			bool needsResume = latest != null && latest.NeedsResume();
+			bool needsResume = false;
+			bool isFinished = false;
+
+			bool isBackup = planType.Equals("backup");
+			bool isRestore = planType.Equals("restore");
+
+			// Report to GUI.
+			Commands.GuiReportPlanStatus report = new Commands.GuiReportPlanStatus();
+
+			if (isBackup)
+			{
+				BackupRepository daoBackup = new BackupRepository();
+				Models.Backup latest = daoBackup.GetLatestByPlan(new Models.BackupPlan { Id = planId });
+
+				needsResume = latest != null && latest.NeedsResume();
+				isFinished = latest != null && latest.IsFinished();
+
+				if (isRunning)
+					report.StartedAt = latest.StartedAt;
+				else if (isFinished)
+					report.FinishedAt = latest.FinishedAt;
+			}
+			else if (isRestore)
+			{
+				RestoreRepository daoRestore = new RestoreRepository();
+				Models.Restore latest = daoRestore.GetLatestByPlan(new Models.RestorePlan { Id = planId });
+
+				needsResume = latest != null && latest.NeedsResume();
+				isFinished = latest != null && latest.IsFinished();
+
+				if (isRunning)
+					report.StartedAt = latest.StartedAt;
+				else if (isFinished)
+					report.FinishedAt = latest.FinishedAt;
+			}
+
 			bool isInterrupted = !isRunning && needsResume;
-			bool isFinished = latest != null && latest.IsFinished();
 
 			Commands.OperationStatus status;
 			// The condition order below is important because more than one flag might be true.
@@ -559,16 +592,7 @@ namespace Teltec.Backup.Scheduler
 			else
 				status = Commands.OperationStatus.NOT_RUNNING;
 
-			// Report to GUI.
-			Commands.GuiReportPlanStatus report = new Commands.GuiReportPlanStatus
-			{
-				Status = status,
-			};
-
-			if (isRunning)
-				report.StartedAt = latest.StartedAt;
-			else if (isFinished)
-				report.FinishedAt = latest.FinishedAt;
+			report.Status = status;
 
 			Handler.Send(e.Context, Commands.GuiReportOperationStatus(planType, planId, report));
 		}

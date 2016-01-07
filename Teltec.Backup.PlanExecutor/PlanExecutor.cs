@@ -423,25 +423,58 @@ namespace Teltec.Backup.PlanExecutor
 
 		private Commands.GuiReportPlanStatus BuildGuiReportPlanStatus(Commands.OperationStatus status)
 		{
-			Models.BackupPlan plan = Model as Models.BackupPlan;
-			BackupOperation op = RunningOperation as BackupOperation;
-			Commands.GuiReportPlanStatus data = new Commands.GuiReportPlanStatus
-			{
-				Status = status,
-				StartedAt = op.StartedAt,
-				FinishedAt = op.FinishedAt,
-				LastRunAt = plan.LastRunAt,
-				LastSuccessfulRunAt = plan.LastSuccessfulRunAt,
-				Sources = op.Sources,
-			};
+			Commands.GuiReportPlanStatus data = null;
 
-			// Sources
-			if (status == Commands.OperationStatus.PROCESSING_FILES_FINISHED
-				|| status == Commands.OperationStatus.FINISHED
-				|| status == Commands.OperationStatus.FAILED
-				|| status == Commands.OperationStatus.CANCELED)
+			if (RunningOperation is BackupOperation)
 			{
-				data.Sources = op.Sources;
+				BackupOperation op = RunningOperation as BackupOperation;
+				Models.BackupPlan plan = Model as Models.BackupPlan;
+				data = new Commands.GuiReportPlanStatus
+				{
+					Status = status,
+					StartedAt = op.StartedAt,
+					FinishedAt = op.FinishedAt,
+					LastRunAt = plan.LastRunAt,
+					LastSuccessfulRunAt = plan.LastSuccessfulRunAt,
+					//Sources = op.Sources,
+				};
+
+				// Sources
+				if (status == Commands.OperationStatus.PROCESSING_FILES_FINISHED
+					|| status == Commands.OperationStatus.FINISHED
+					|| status == Commands.OperationStatus.FAILED
+					|| status == Commands.OperationStatus.CANCELED)
+				{
+					data.Sources = op.Sources;
+				}
+			}
+			else if (RunningOperation is RestoreOperation)
+			{
+				RestoreOperation op = RunningOperation as RestoreOperation;
+				Models.RestorePlan plan = Model as Models.RestorePlan;
+				data = new Commands.GuiReportPlanStatus
+				{
+					Status = status,
+					StartedAt = op.StartedAt,
+					FinishedAt = op.FinishedAt,
+					LastRunAt = plan.LastRunAt,
+					LastSuccessfulRunAt = plan.LastSuccessfulRunAt,
+					//Sources = op.Sources,
+				};
+
+				// Sources
+				if (status == Commands.OperationStatus.PROCESSING_FILES_FINISHED
+					|| status == Commands.OperationStatus.FINISHED
+					|| status == Commands.OperationStatus.FAILED
+					|| status == Commands.OperationStatus.CANCELED)
+				{
+					data.Sources = op.Sources;
+				}
+			}
+			else
+			{
+				string message = string.Format("Type {0} is not handled", RunningOperation.GetType().FullName);
+				throw new NotImplementedException(message);
 			}
 
 			return data;
@@ -449,8 +482,6 @@ namespace Teltec.Backup.PlanExecutor
 
 		private Commands.GuiReportPlanProgress BuildGuiReportPlanProgress(Commands.OperationStatus status)
 		{
-			Models.BackupPlan plan = Model as Models.BackupPlan;
-			BackupOperation op = RunningOperation as BackupOperation;
 			Commands.GuiReportPlanProgress data = new Commands.GuiReportPlanProgress
 			{
 				Completed = TransferResults.Stats.Completed,
