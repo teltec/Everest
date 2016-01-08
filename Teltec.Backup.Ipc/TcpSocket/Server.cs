@@ -566,7 +566,9 @@ namespace Teltec.Backup.Ipc.TcpSocket
 			}
 			catch (SocketException ex)
 			{
-				logger.Error("Error at EndDisconnect: {0}", ex.Message);
+				// Minimize log polution - Don't log the following exceptions as ERRORs:
+				//   - An existing connection was forcibly closed by the remote host
+				logger.Warn("Error at EndDisconnect: {0}", ex.Message);
 				HandleSocketError(ex.SocketErrorCode, context);
 			}
 		}
