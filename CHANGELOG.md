@@ -2,7 +2,29 @@
 
 This CHANGELOG attemps to follow most convetions established by http://keepachangelog.com/.
 
-## [0.6.0] - 2016-12-22
+## [0.7.0] - 2016-01-08
+
+### Added
+
+- Restore: Only set original modified date if the restored file is the latest complete
+  version;
+- GUI: Log session ending event;
+
+### Changed
+
+- Logging: Minimize log polution;
+- Sync: Make cancellation work and improve performance;
+
+### Fixed
+
+- GUI: Fix possible NPE triggered by tab switching;
+- GUI: Always show minutes and seconds for duration periods;
+- Sync: Skip and log S3 keys that don't comply with the standard path conventions,
+  instead of failing the sync;
+- Sync: Fix UQ violation;
+
+
+## [0.6.0] - 2015-12-22
 
 ### Added
 
@@ -61,4 +83,4 @@ This CHANGELOG attemps to follow most convetions established by http://keepachan
 - IPC: Catch `ObjectDisposedException` during socket recv;
 - IPC: Detect when the TCP port is already in use and handle it during
   the Service starting process so it can fail and exit correctly.
-	
+
