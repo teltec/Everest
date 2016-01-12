@@ -439,7 +439,13 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupedFileMap()
 		{
-			string UNIQUE_KEY = "uk_backuped_file"; // (backup_plan_file_id, file_last_written_at, storage_account_id, transfer_status)
+			// This UQ needs the following columns:
+			//   - backup_plan_file_id  : because that's the only way to identify the file;
+			//   - file_last_written_at : because Sync can't deduce backup IDs;
+			//   - storage_account_id   : because we need to distinguish between accounts - the same file can be o multiple accounts;
+			//   - transfer_status      : ...
+			//   - backup_id            : because the same file can FAIL in two consecutive backups;
+			string UNIQUE_KEY = "uk_backuped_file"; // (backup_plan_file_id, file_last_written_at, storage_account_id, transfer_status, backup_id)
 			string INDEX_BACKUP_PATH_XFERSTATUS = "idx_backup_path_xferstatus"; // (backup_plan_file_id, backup_id, transfer_status)
 			string INDEX_BACKUP_XFERSTATUS = "idx_backup_xferstatus"; // (backup_id, transfer_status)
 
@@ -453,6 +459,7 @@ namespace Teltec.Backup.Data.DAO.NH
 				// seems to set it to `NULL` before deleting the object/row.
 				//.Not.Nullable()
 				.Cascade.None()
+				.UniqueKey(UNIQUE_KEY)
 				.Index(INDEX_BACKUP_PATH_XFERSTATUS)
 				.Index(INDEX_BACKUP_XFERSTATUS)
 				;
