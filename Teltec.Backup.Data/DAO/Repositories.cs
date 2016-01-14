@@ -211,7 +211,7 @@ namespace Teltec.Backup.Data.DAO
 
 		public Models.BackupPlanFile GetByStorageAccountAndPath(Models.StorageAccount account, string path, bool ignoreCase = false)
 		{
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string storageAccountPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.StorageAccount);
 			crit.Add(Restrictions.Eq(storageAccountPropertyName, account));
@@ -228,7 +228,7 @@ namespace Teltec.Backup.Data.DAO
 		{
 			Assert.IsNotNull(plan);
 			Assert.IsNotNull(plan.Id);
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 
 			string modelName = typeof(Models.BackupPlanFile).Name;
 			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.BackupPlan);
@@ -363,7 +363,7 @@ namespace Teltec.Backup.Data.DAO
 		public Models.BackupedFile GetByBackupAndPath(Models.Backup backup, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(backup);
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
 			string filePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
@@ -392,7 +392,7 @@ namespace Teltec.Backup.Data.DAO
 		public IList<Models.BackupedFile> GetCompletedByStorageAccountAndPath(Models.StorageAccount account, string path, string version = null, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(account);
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 
 			string storageAccountPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.StorageAccount);
@@ -421,7 +421,7 @@ namespace Teltec.Backup.Data.DAO
 		public IList<Models.BackupedFile> GetCompleteByPlanAndPath(Models.BackupPlan plan, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(plan);
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 
 			// By status
@@ -596,7 +596,7 @@ namespace Teltec.Backup.Data.DAO
 		public Models.RestoredFile GetByRestoreAndPath(Models.Restore restore, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(restore);
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string restorePropertyName = this.GetPropertyName((Models.RestoredFile x) => x.Restore);
 			string filePropertyName = this.GetPropertyName((Models.RestoredFile x) => x.File);
