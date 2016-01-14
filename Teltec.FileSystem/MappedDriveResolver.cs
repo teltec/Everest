@@ -84,7 +84,8 @@ namespace Teltec.FileSystem
 				return path;
 			}
 
-			string rootPath = ResolveToRootUNC(path);
+			string userName = null;
+			string rootPath = ResolveToRootUNC(path, out userName);
 
 			if (path.StartsWith(rootPath))
 			{
@@ -96,13 +97,19 @@ namespace Teltec.FileSystem
 			}
 		}
 
+		public static string ResolveToRootUNC(string path)
+		{
+			string userName = null;
+			return ResolveToRootUNC(path, out userName);
+		}
+
 		/// <summary>
 		/// Resolves the given path to a root UNC path if the path is a mapped drive.
 		/// Otherwise, just returns the given path.
 		/// </summary>
 		/// <param name="path">The path to resolve.</param>
 		/// <returns></returns>
-		public static string ResolveToRootUNC(string path)
+		public static string ResolveToRootUNC(string path, out string userName)
 		{
 			if (String.IsNullOrWhiteSpace(path))
 			{
@@ -119,6 +126,7 @@ namespace Teltec.FileSystem
 
 			if (path.StartsWith(@"\\"))
 			{
+				userName = null;
 				return Directory.GetDirectoryRoot(path);
 			}
 
@@ -132,6 +140,7 @@ namespace Teltec.FileSystem
 
 				DriveType driveType = (DriveType)((uint)mo["DriveType"]);
 				string networkRoot = Convert.ToString(mo["ProviderName"]);
+				userName = Convert.ToString(mo["UserName"]);
 
 				if (driveType == DriveType.Network)
 				{

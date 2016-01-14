@@ -214,13 +214,24 @@ namespace Teltec.Backup.PlanExecutor
 					DriveInfo drive = GetDriveInfo(cred.MountPoint);
 					if (drive != null)
 					{
-						string remotePath = MappedDriveResolver.ResolveToRootUNC(cred.MountPoint);
-						logger.Info("{0} is already mounted to {1}", cred.MountPoint, remotePath);
-						return;
+						string userName = null;
+						string remotePath = MappedDriveResolver.ResolveToRootUNC(cred.MountPoint, out userName);
+						logger.Info("{0} is already mounted to {1} by {2}", cred.MountPoint, remotePath, userName);
+
+						// Was this mounted using the same credential?
+						if (userName != null && userName.Equals(cred.Login, StringComparison.InvariantCulture))
+						{
+							return; // We're OK then.
+						}
+						else
+						{
+							NetworkDriveMapper.UnmountNetworkLocation(cred.MountPoint);
+							logger.Info("Umounted {0}", cred.MountPoint);
+						}
 					}
 
 					NetworkDriveMapper.MountNetworkLocation(cred.MountPoint, cred.Path, cred.Login, cred.Password, false);
-					logger.Info("Successfully mounted {0} to {1}", cred.MountPoint, cred.Path);
+					logger.Info("Successfully mounted {0} to {1} as {2}", cred.MountPoint, cred.Path, cred.Login);
 				}
 				catch (Win32Exception ex)
 				{
@@ -229,12 +240,13 @@ namespace Teltec.Backup.PlanExecutor
 					switch (ex.NativeErrorCode)
 					{
 						case NetworkDriveMapper.ERROR_ALREADY_ASSIGNED:
-							string remotePath = MappedDriveResolver.ResolveToRootUNC(cred.MountPoint);
-							reason = string.Format("It's already mounted to {0}", remotePath);
+							string userName = null;
+							string remotePath = MappedDriveResolver.ResolveToRootUNC(cred.MountPoint, out userName);
+							reason = string.Format("It's already mounted to {0} by {1}", remotePath, userName);
 							break;
 					}
 
-					logger.Warn("Failed to mount {0} to {1} - {2}", cred.MountPoint, cred.Path, reason);
+					logger.Warn("Failed to mount {0} to {1} as {2} - {3}", cred.MountPoint, cred.Path, cred.Login, reason);
 				}
 			}
 		}
