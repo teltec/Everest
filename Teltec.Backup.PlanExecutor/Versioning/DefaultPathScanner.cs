@@ -99,6 +99,11 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				}
 
 				var item = file.FullName;
+
+				// IMPORTANT: Strip the \\?\ prefix Windows uses for long paths (those > MAX_PATH).
+				if (item != null && item.StartsWith(@"\\?\"))
+					item = item.Substring(4);
+
 				Results.AddedFile(item);
 
 				if (FileAdded != null)
