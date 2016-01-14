@@ -6,7 +6,7 @@
 - Backup and restore plans;
 - Scheduled execution of backup and restore plans;
 - Synchronization;
-- Supports long paths (with more than 260 characters - Windows' MAX_PATH);
+- Supports long paths (with more than 260 characters - Windows' MAX_PATH) -- Currently limited by lack of support from the AWSSDK - see https://github.com/aws/aws-sdk-net/issues/294;
 - Automatic network shares mapping;
 - Runs backup/restore operations without requiring an active user session (a logged user);
 - Automatically deletes old backuped files;
