@@ -84,8 +84,7 @@ namespace Teltec.FileSystem
 				return path;
 			}
 
-			string userName = null;
-			string rootPath = ResolveToRootUNC(path, out userName);
+			string rootPath = ResolveToRootUNC(path);
 
 			if (path.StartsWith(rootPath))
 			{
@@ -97,19 +96,13 @@ namespace Teltec.FileSystem
 			}
 		}
 
-		public static string ResolveToRootUNC(string path)
-		{
-			string userName = null;
-			return ResolveToRootUNC(path, out userName);
-		}
-
 		/// <summary>
 		/// Resolves the given path to a root UNC path if the path is a mapped drive.
 		/// Otherwise, just returns the given path.
 		/// </summary>
 		/// <param name="path">The path to resolve.</param>
 		/// <returns></returns>
-		public static string ResolveToRootUNC(string path, out string userName)
+		public static string ResolveToRootUNC(string path)
 		{
 			if (String.IsNullOrWhiteSpace(path))
 			{
@@ -126,7 +119,6 @@ namespace Teltec.FileSystem
 
 			if (path.StartsWith(@"\\"))
 			{
-				userName = null;
 				return Directory.GetDirectoryRoot(path);
 			}
 
@@ -138,12 +130,17 @@ namespace Teltec.FileSystem
 			{
 				mo.Path = new ManagementPath(string.Format("Win32_LogicalDisk='{0}'", driveletter));
 
+				// REFERENCE: https://msdn.microsoft.com/en-us/library/windows/desktop/aa394173(v=vs.85).aspx
 				DriveType driveType = (DriveType)((uint)mo["DriveType"]);
 				string networkRoot = Convert.ToString(mo["ProviderName"]);
-				userName = Convert.ToString(mo["UserName"]);
 
 				if (driveType == DriveType.Network)
 				{
+#if false
+					Console.WriteLine("DRIVE {0}", driveletter);
+					PrintManagementObjectProperties(mo);
+					Console.ReadLine();
+#endif
 					return networkRoot;
 				}
 				else
@@ -151,6 +148,20 @@ namespace Teltec.FileSystem
 					return driveletter + Path.DirectorySeparatorChar;
 				}
 			}
+		}
+
+		public static readonly string UNKNOWN_CREDENTIAL = "<unknown>";
+
+		public static string GetCredentialUsedToMapNetworkDrive(string path)
+		{
+			//throw new NotImplementedException();
+			return UNKNOWN_CREDENTIAL;
+		}
+
+		private static void PrintManagementObjectProperties(ManagementObject mo)
+		{
+			foreach (PropertyData prop in mo.Properties)
+				Console.WriteLine("  mo['{0}'] = {1}", prop.Name, prop.Value);
 		}
 
 		/// <summary>

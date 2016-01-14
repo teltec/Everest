@@ -165,7 +165,7 @@ namespace Teltec.Storage.Implementations.S3
 			}
 			catch (OperationCanceledException exception)
 			{
-				logger.Info("Upload canceled.");
+				logger.Info("Upload canceled: {0}", filePath);
 
 				// Report cancelation.
 				if (UploadCanceled != null)
@@ -185,12 +185,12 @@ namespace Teltec.Storage.Implementations.S3
 					}
 					else
 					{
-						logger.Warn("Error occurred. Message:'{0}' when uploading object", amznException.Message);
+						logger.Warn("Error occurred during the upload of {0}\nMessage:'{1}'", filePath, amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred: {0}", exception.Message);
+					logger.Warn("Exception occurred during the upload of {0}\nException: {1}", filePath, exception.Message);
 				}
 
 				// Report failure.
@@ -311,7 +311,7 @@ namespace Teltec.Storage.Implementations.S3
 			}
 			catch (OperationCanceledException exception)
 			{
-				logger.Info("Download canceled.");
+				logger.Info("Download canceled: {0}", filePath);
 
 				// Report cancelation.
 				if (DownloadCanceled != null)
@@ -331,12 +331,12 @@ namespace Teltec.Storage.Implementations.S3
 					}
 					else
 					{
-						logger.Warn("Error occurred. Message:'{0}' when downloading object", amznException.Message);
+						logger.Warn("Error occurred during the download of {0}\nMessage:'{1}'", filePath, amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred: {0}", exception.Message);
+					logger.Warn("Exception occurred during the download of {0}\nException: {1}", filePath, exception.Message);
 				}
 
 				// Report failure.
@@ -524,12 +524,12 @@ namespace Teltec.Storage.Implementations.S3
 					}
 					else
 					{
-						logger.Warn("Error occurred. Message:'{0}' when listing objects", amznException.Message);
+						logger.Warn("Error occurred during listing\nMessage:'{0}'", amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred: {0}", exception.Message);
+					logger.Warn("Exception occurred during listing\nException: {0}", exception.Message);
 				}
 
 				// Report failure.
