@@ -539,9 +539,11 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupPlanFileMap()
 		{
-			string UNIQUE_KEY_PLAN_PATH = "uk_backup_plan_path"; // (backup_plan_id, path)
 			string UNIQUE_KEY_PLAN_PATHNODE = "uk_backup_plan_path_node"; // (backup_plan_id, path_node_id)
 			string INDEX_PATHNODE = "idx_path_node"; // (path_node_id)
+			// IMPORTANT: Warning! The maximum key length is 900 bytes.
+			// http://stackoverflow.com/questions/12717317/900-byte-index-size-limit-in-character-length
+			string INDEX_PLAN_PATH = "idx_backup_plan_path"; // (backup_plan_id, path)
 
 			Table("backup_plan_files");
 
@@ -551,8 +553,8 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Column("backup_plan_id")
 				.Nullable() // Nullable because Sync creates files with this property set to NULL.
 				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
 				.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
+				.Index(INDEX_PLAN_PATH)
 				;
 
 			Map(p => p.StorageAccountType)
@@ -573,7 +575,7 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Column("path")
 				.Not.Nullable()
 				.Length(Models.BackupPlanSourceEntry.PathMaxLen)
-				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
+				.Index(INDEX_PLAN_PATH)
 				;
 
 			Map(p => p.LastSize)

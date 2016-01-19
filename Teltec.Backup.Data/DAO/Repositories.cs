@@ -223,7 +223,6 @@ namespace Teltec.Backup.Data.DAO
 			return crit.UniqueResult<Models.BackupPlanFile>();
 		}
 
-
 		public int AssociateSyncedFileToBackupPlan(Models.BackupPlan plan, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(plan);
