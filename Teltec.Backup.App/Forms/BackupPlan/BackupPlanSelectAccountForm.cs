@@ -153,7 +153,8 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 					form.ShowDialog(this);
 				}
 			}
-			else
+
+			if (cbAmazonS3.SelectedIndex != -1)
 			{
 				Models.BackupPlan plan = Model as Models.BackupPlan;
 				plan.StorageAccountType = Models.EStorageAccountType.AmazonS3;
