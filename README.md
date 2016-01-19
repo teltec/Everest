@@ -15,6 +15,7 @@
 
 - \#4: FileSystemTreeView: unchecking a parent node without expanding it doesn't uncheck its sub-nodes;
 - \#8: Task scheduler does not DELETE existing tasks for plans that no longer exist;
+- \#14: Editing a plan and changing its storage account won't work properly.
 - Can't run the GUI in more than one user session simultaneously;
 
 ## Future Work
