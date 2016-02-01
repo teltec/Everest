@@ -11,6 +11,10 @@
 - Runs backup/restore operations without requiring an active user session (a logged user);
 - Automatically deletes old backuped files;
 
+## Changelog
+
+You can read the entire changelog [here](CHANGELOG.md).
+
 ## Known Problems
 
 - \#4: FileSystemTreeView: unchecking a parent node without expanding it doesn't uncheck its sub-nodes;

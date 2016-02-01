@@ -1,6 +1,6 @@
 # CHANGELOG
 
-This CHANGELOG attemps to follow most convetions established by http://keepachangelog.com/.
+This CHANGELOG attemps to follow most conventions established by http://keepachangelog.com/.
 
 ## [0.7.0] - 2016-01-08
 
