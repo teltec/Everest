@@ -16,6 +16,14 @@ namespace Teltec.Backup.Data.Models
 			File = file;
 		}
 
+		public BackupedFile(Backup backup, BackupPlanFile file, Synchronization sync)
+			: this()
+		{
+			Backup = backup;
+			File = file;
+			Synchronization = sync;
+		}
+
 		private Int64? _Id;
 		public virtual Int64? Id
 		{
@@ -76,6 +84,13 @@ namespace Teltec.Backup.Data.Models
 		}
 
 		#endregion
+
+		private Synchronization _Synchronization;
+		public virtual Synchronization Synchronization
+		{
+			get { return _Synchronization; }
+			protected set { _Synchronization = value; }
+		}
 
 		private BackupPlanFile _File;
 		public virtual BackupPlanFile File

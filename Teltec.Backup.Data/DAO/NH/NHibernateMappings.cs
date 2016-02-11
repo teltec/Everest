@@ -484,6 +484,13 @@ namespace Teltec.Backup.Data.DAO.NH
 				.UniqueKey(UNIQUE_KEY)
 				;
 
+			References(fk => fk.Synchronization)
+				.Column("synchronization_id")
+				.Nullable()
+				.Cascade.None()
+				//.Access.ReadOnly()
+				;
+
 			References(fk => fk.File)
 				.Column("backup_plan_file_id")
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`

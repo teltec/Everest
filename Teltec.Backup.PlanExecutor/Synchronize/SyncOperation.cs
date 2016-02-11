@@ -313,7 +313,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							entry.CreatedAt = DateTime.UtcNow;
 
 							// Create `BackupedFile`.
-							version = new Models.BackupedFile(null, entry);
+							version = new Models.BackupedFile(null, entry, Synchronization);
 							version.StorageAccountType = account.Type;
 							version.StorageAccount = account;
 							version.FileLastWrittenAt = lastWrittenAt;
@@ -354,7 +354,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							if (versions == null || (versions != null && versions.Count == 0))
 							{
 								// Create `BackupedFile`.
-								version = new Models.BackupedFile(null, entry);
+								version = new Models.BackupedFile(null, entry, Synchronization);
 								version.StorageAccountType = account.Type;
 								version.StorageAccount = account;
 								version.FileLastWrittenAt = entry.LastWrittenAt;
