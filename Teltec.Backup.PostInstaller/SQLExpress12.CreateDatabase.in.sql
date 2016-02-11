@@ -1,6 +1,12 @@
 ﻿-- Create database
 CREATE DATABASE [{{database_name}}]
  CONTAINMENT = NONE
+ -- NOTE: Collation Latin1_General_100_* uses the Latin1 General dictionary sorting rules,
+ --       code page 1252. Is case-insensitive and accent-sensitive. Collation uses the Latin1
+ --       General dictionary sorting rules and maps to code page 1252. Shows the version number
+ --       of the collation if it is a Windows collation: _90 or _100. Is case-insensitive (CI),
+ --       and accent-sensitive (AS).
+ COLLATE Latin1_General_100_CI_AS
 GO
 
 -- Alter database file properties
