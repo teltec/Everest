@@ -43,10 +43,9 @@ namespace Teltec.Common.Extensions
 		public static LinkedList<TTarget> ToLinkedList<TTarget, TSource>(this IEnumerable<TSource> source, Func<TSource, TTarget> selector)
 		{
 			LinkedList<TTarget> to = new LinkedList<TTarget>();
+			//var enumerable = from item in source select selector(item);
 			foreach (TSource item in source)
 				to.AddLast(selector(item));
-			var a = from item in source
-					select selector(item);
 			return to;
 		}
 
