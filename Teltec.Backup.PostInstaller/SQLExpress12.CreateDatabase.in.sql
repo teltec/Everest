@@ -11,12 +11,12 @@ GO
 
 -- Alter database file properties
 ALTER DATABASE [{{database_name}}] MODIFY FILE
- ( NAME = N'{{database_name}}',  SIZE = 5120KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB )
+ ( NAME = N'{{database_name}}',  SIZE = 51200KB /* 50MB */ , MAXSIZE = UNLIMITED, FILEGROWTH = 51200KB /* 50MB */ )
 GO
 
 -- Alter database log properties
 ALTER DATABASE [{{database_name}}] MODIFY FILE
- ( NAME = N'{{database_name}}_log', SIZE = 6272KB , MAXSIZE = 2048GB , FILEGROWTH = 10%)
+ ( NAME = N'{{database_name}}_log', SIZE = 10240KB /* 10MB */ , MAXSIZE = 2048GB , FILEGROWTH = 10%)
 GO
 
 -- USE IT!
