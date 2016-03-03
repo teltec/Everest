@@ -188,33 +188,36 @@ namespace Teltec.Backup.Scheduler
 
 									WeeklyTrigger wt = tr as WeeklyTrigger;
 
+									// IMPORTANT: The default constructed `WeeklyTrigger` sets Sunday.
+									wt.DaysOfWeek = 0;
+
 									Models.PlanScheduleDayOfWeek matchDay = null;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Monday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Monday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Monday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Tuesday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Tuesday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Tuesday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Wednesday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Wednesday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Wednesday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Thursday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Thursday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Thursday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Friday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Friday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Friday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Saturday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Saturday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Saturday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Sunday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Sunday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Sunday;
 
@@ -479,6 +482,7 @@ namespace Teltec.Backup.Scheduler
 				td.RegistrationInfo.Description = description;
 
 				// Create triggers to fire the task when planned.
+				td.Triggers.Clear();
 				td.Triggers.AddRange(BuildTriggers(plan));
 
 				bool isBackup = plan is Models.BackupPlan;
@@ -838,8 +842,8 @@ namespace Teltec.Backup.Scheduler
 			BackupPlanRepository daoBackupPlans = new BackupPlanRepository();
 			RestorePlanRepository daoRestorePlans = new RestorePlanRepository();
 
-			AllSchedulablePlans.AddRange(daoBackupPlans.GetAll());
-			AllSchedulablePlans.AddRange(daoRestorePlans.GetAll());
+			AllSchedulablePlans.AddRange(daoBackupPlans.GetAllActive());
+			AllSchedulablePlans.AddRange(daoRestorePlans.GetAllActive());
 
 			// TODO(jweyrich): Currently does not DELETE existing tasks for plans that no longer exist.
 			// TODO(jweyrich): Currently does not CHECK if an existing plan schedule has been changed.
@@ -864,7 +868,22 @@ namespace Teltec.Backup.Scheduler
 
 			Info("Time to check for changes...");
 
-			ReloadPlansAndReschedule();
+			try
+			{
+				ReloadPlansAndReschedule();
+			}
+			catch (Exception ex)
+			{
+				if (Environment.UserInteractive)
+				{
+					string message = string.Format(
+						"Caught a fatal exception ({0}). Check the log file for more details.",
+						ex.Message);
+					//if (Process.GetCurrentProcess().MainWindowHandle != IntPtr.Zero)
+					//	MessageBox.Show(message);
+				}
+				logger.Log(LogLevel.Fatal, ex, "Caught a fatal exception");
+			}
 		}
 
 		#region Service
