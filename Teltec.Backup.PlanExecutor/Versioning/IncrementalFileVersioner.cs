@@ -14,6 +14,7 @@ using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
 using Teltec.Backup.Data.Versioning;
 using Teltec.Backup.PlanExecutor.Serialization;
+using Teltec.Common.Extensions;
 using Teltec.FileSystem;
 using Teltec.Stats;
 using Teltec.Storage;
@@ -55,17 +56,24 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				try
 				{
 					BackupRepository daoBackup = new BackupRepository(session);
+					BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository(session);
+
 					Backup = daoBackup.Get(backup.Id);
 
-					BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository(session);
-					if (newVersion)
-						AllFilesFromPlan = daoBackupPlanFile.GetAllByBackupPlan(backup.BackupPlan).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
-					else
-						AllFilesFromPlan = daoBackupPlanFile.GetAllPendingByBackup(backup).ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
+					IList<Models.BackupPlanFile> list = newVersion
+						? daoBackupPlanFile.GetAllByBackupPlan(Backup.BackupPlan)
+						: daoBackupPlanFile.GetAllPendingByBackup(Backup);
 
-					Execute(backup, filePaths, newVersion);
+					AllFilesFromPlan = list.ToDictionary<Models.BackupPlanFile, string>(p => p.Path);
+
+					Execute(Backup, filePaths, newVersion);
 
 					Save(session);
+				}
+				catch (Exception ex)
+				{
+					logger.Log(LogLevel.Error, ex, "File versioning FAILED with an exception: {0}", ex.Message);
+					throw ex;
 				}
 				finally
 				{
@@ -182,12 +190,12 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			SuppliedFiles = DoLoadOrCreateBackupPlanFiles(backup.BackupPlan, filePaths);
 			DoUpdateBackupPlanFilesStatus(SuppliedFiles, isNewVersion);
 
-			ChangeSet.AddedFiles = GetAddedFiles();
+			ChangeSet.AddedFiles = GetAddedFiles(SuppliedFiles);
 #if false
 			foreach (var item in ChangeSet.AddedFiles)
 				Console.WriteLine("BackupPlanAddedFiles: {0}", item.Path);
 #endif
-			ChangeSet.ModifiedFiles = GetModifiedFiles();
+			ChangeSet.ModifiedFiles = GetModifiedFiles(SuppliedFiles);
 #if false
 			foreach (var item in changeset.modifiedfiles)
 				console.writeline("backupplanmodifiedfiles: {0}", item.path);
@@ -196,7 +204,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			// only for `NewBackupOperation`.
 			if (isNewVersion)
 			{
-				ChangeSet.RemovedFiles = GetRemovedFiles();
+				ChangeSet.RemovedFiles = GetRemovedFiles(AllFilesFromPlan.Values);
 #if false
 				foreach (var item in ChangeSet.RemovedFiles)
 					Console.WriteLine("BackupPlanRemovedFiles: {0}", item.Path);
@@ -208,10 +216,11 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		}
 
 		//
-		// Loads or creates `BackupPlanFile`s for each file in `files`.
-		// Returns the complete list of `BackupPlanFile`s that are related to `files`.
-		// It modifies the `UserData` property for each file in `files`.
-		// NOTE: Does not save to the database because this method is run by a secondary thread.
+		// Loads or creates `BackupPlanFile`s for each file in `filePaths`.
+		// Returns the complete list of `BackupPlanFile`s that are related to `filePaths`.
+		// If a `BackupPlanFile` does not exist for a given filePath, one will be created.
+		//
+		// NOTE: This method does NOT change the database.
 		//
 		private LinkedList<Models.BackupPlanFile> DoLoadOrCreateBackupPlanFiles(Models.BackupPlan plan, LinkedList<string> filePaths)
 		{
@@ -222,7 +231,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			BlockPerfStats stats = new BlockPerfStats();
 			stats.Begin();
 
-			LinkedList<Models.BackupPlanFile> result = new LinkedList<Models.BackupPlanFile>();
+			Dictionary<string, Models.BackupPlanFile> processed = new Dictionary<string, Models.BackupPlanFile>();
 
 			// Check all files.
 			foreach (string path in filePaths)
@@ -234,6 +243,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				// Create or update `BackupPlanFile`.
 				//
 				Models.BackupPlanFile backupPlanFile = null;
+				// The complexity of Dictionary<TKey,TValue>.TryGetValue(TKey,TValue) approaches O(1)
 				bool backupPlanFileAlreadyExists = AllFilesFromPlan.TryGetValue(path, out backupPlanFile);
 
 				if (!backupPlanFileAlreadyExists)
@@ -242,8 +252,13 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					backupPlanFile.CreatedAt = DateTime.UtcNow;
 				}
 
-				result.AddLast(backupPlanFile);
+				// This avoids duplicates in the list.
+				// The complexity of setting Dictionary<TKey,TValue>[TKey] is amortized O(1)
+				processed[path] = backupPlanFile;
 			}
+
+			LinkedList<Models.BackupPlanFile> result =
+				processed.ToLinkedList<Models.BackupPlanFile, KeyValuePair<string, Models.BackupPlanFile>>(p => p.Value);
 
 			stats.End();
 
@@ -266,8 +281,9 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		//
 		// Summary:
-		// Update the `LastWrittenAt`,`LastSize`,`LastStatus` properties of each file in `files`
-		// according to the actual state of the file in the filesystem.
+		// Update the `LastWrittenAt`,`LastSize`,`LastStatus`,`LastUpdatedAt`,`LastChecksum`
+		// properties of each file in `files` according to the actual state of the file in the filesystem.
+		//
 		// NOTE: This function has a side effect - It updates properties of items from `files`.
 		//
 		private void DoUpdateBackupPlanFilesStatus(LinkedList<Models.BackupPlanFile> files, bool isNewVersion)
@@ -417,51 +433,54 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 		//
 		// Summary:
-		// Return all files from `SuppliedFiles` which are marked as `ADDED`;
+		// Return all files from `files` which are marked as `ADDED`;
+		//
 		// NOTE: This function has no side effects.
 		//
-		private IEnumerable<Models.BackupPlanFile> GetAddedFiles()
+		private IEnumerable<Models.BackupPlanFile> GetAddedFiles(IEnumerable<Models.BackupPlanFile> files)
 		{
-			Assert.IsNotNull(SuppliedFiles);
+			Assert.IsNotNull(files);
 
-			// Find all `BackupPlanFile`s from this `BackupPlan` that are marked as ADDED.
-			return SuppliedFiles.Where(p => p.LastStatus == Models.BackupFileStatus.ADDED);
+			// Find all `BackupPlanFile`s from `files` that are marked as ADDED.
+			return files.Where(p => p.LastStatus == Models.BackupFileStatus.ADDED);
 		}
 
 		//
 		// Summary:
-		// Return all files from `SuppliedFiles` which are marked as `MODIFIED`;
+		// Return all files from `files` which are marked as `MODIFIED`;
+		//
 		// NOTE: This function has no side effects.
 		//
-		private IEnumerable<Models.BackupPlanFile> GetModifiedFiles()
+		private IEnumerable<Models.BackupPlanFile> GetModifiedFiles(IEnumerable<Models.BackupPlanFile> files)
 		{
-			Assert.IsNotNull(SuppliedFiles);
+			Assert.IsNotNull(files);
 
-			// Find all `BackupPlanFile`s from this `BackupPlan` that are marked as MODIFIED.
-			return SuppliedFiles.Where(p => p.LastStatus == Models.BackupFileStatus.MODIFIED);
+			// Find all `BackupPlanFile`s from `files` that are marked as MODIFIED.
+			return files.Where(p => p.LastStatus == Models.BackupFileStatus.MODIFIED);
 		}
 
 		//
 		// Summary:
-		// Return all files from `AllFilesFromPlan` which are marked as `REMOVED`;
+		// Return all files from `files` which are marked as `REMOVED`;
+		//
 		// NOTE: This function has no side effects.
 		//
-		private IEnumerable<Models.BackupPlanFile> GetRemovedFiles()
+		private IEnumerable<Models.BackupPlanFile> GetRemovedFiles(IEnumerable<Models.BackupPlanFile> files)
 		{
-			Assert.IsNotNull(AllFilesFromPlan);
+			Assert.IsNotNull(files);
 
-			// Find all `BackupPlanFile`s from this `BackupPlan` that are marked as REMOVED.
-			return AllFilesFromPlan.Values.Where(p => p.LastStatus == Models.BackupFileStatus.REMOVED);
+			// Find all `BackupPlanFile`s from `files` that are marked as REMOVED.
+			return files.Where(p => p.LastStatus == Models.BackupFileStatus.REMOVED);
 		}
 
 		//
 		// Summary:
-		// 1. Check which files from `files` are not marked as DELETED;
-		// 2. Check which files from `files` are not marked as REMOVED;
-		// 3. Check which files from `AllFilesFromPlan` are not in the results of 1 AND 2, meaning
-		//    they have been deleted from the filesystem.
-		// 4. Mark them as DELETED;
-		// 5. Return the union of all files from 1 and 3;
+		// 1. Find all files from `files` that are not marked as REMOVED or DELETED;
+		// 2. Check which files from `AllFilesFromPlan` are not in the result of 1, meaning
+		//    they have been deleted from the filesystem;
+		// 3. Mark them as DELETED;
+		// 4. Return all deleted files (all from 2);
+		//
 		// NOTE: This function has a side effect - It updates properties of items from `files`.
 		//
 		private IEnumerable<Models.BackupPlanFile> GetDeletedFilesAndUpdateTheirStatus(LinkedList<Models.BackupPlanFile> files)
@@ -469,29 +488,22 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			Assert.IsNotNull(files);
 			Assert.IsNotNull(AllFilesFromPlan);
 
-			// 1. Find all files from `files` that were previously marked as DELETED.
-			IEnumerable<Models.BackupPlanFile> deletedFiles = files.Where(p => p.LastStatus == Models.BackupFileStatus.DELETED);
+			// 1. Find all files from `files` that are not marked as REMOVED or DELETED.
+			IEnumerable<Models.BackupPlanFile> filesThatExist = files.Where(p => p.LastStatus != Models.BackupFileStatus.DELETED && p.LastStatus != Models.BackupFileStatus.REMOVED);
 #if false
 			foreach (var item in deletedFiles)
-				Console.WriteLine("GetDeletedFilesAndUpdateTheirStatus: deletedFiles: {0}", item.Path);
+				Console.WriteLine("GetDeletedFilesAndUpdateTheirStatus: filesThatExist: {0}", item.Path);
 #endif
 
-			// 2. Find all files from `files` that were previously marked as REMOVED.
-			IEnumerable<Models.BackupPlanFile> nonRemovedFiles = files.Where(p => p.LastStatus != Models.BackupFileStatus.REMOVED);
-#if false
-			foreach (var item in nonRemovedFiles)
-				Console.WriteLine("GetDeletedFilesAndUpdateTheirStatus: nonRemovedFiles: {0}", item.Path);
-#endif
-
-			// 3. Check which files from `AllFilesFromPlan` are not in the results of 1 AND 2, meaning
+			// 2. Check which files from `AllFilesFromPlan` are not in the result of 1, meaning
 			//    they have been deleted from the filesystem.
-			IEnumerable<Models.BackupPlanFile> deletedFilesToBeUpdated = AllFilesFromPlan.Values.Except(nonRemovedFiles).Except(deletedFiles);
+			IEnumerable<Models.BackupPlanFile> deletedFilesToBeUpdated = AllFilesFromPlan.Values.Except(filesThatExist);
 #if false
 			foreach (var item in deletedFilesToBeUpdated)
 				Console.WriteLine("GetDeletedFilesAndUpdateTheirStatus: deletedFilesToBeUpdated: {0}", item.Path);
 #endif
 
-			// 4. Mark them as DELETED;
+			// 3. Mark them as DELETED;
 			foreach (Models.BackupPlanFile entry in deletedFilesToBeUpdated)
 			{
 				// Throw if the operation was canceled.
@@ -501,10 +513,8 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				entry.UpdatedAt = DateTime.UtcNow;
 			}
 
-			// 5. Return all files from 1 and 3;
-			List<Models.BackupPlanFile> result = new List<Models.BackupPlanFile>(deletedFiles.Count() + deletedFilesToBeUpdated.Count());
-			result.AddRange(deletedFiles);
-			result.AddRange(deletedFilesToBeUpdated);
+			// 4. Return all deleted files;
+			List<Models.BackupPlanFile> result = new List<Models.BackupPlanFile>(deletedFilesToBeUpdated);
 #if false
 			foreach (var item in result)
 				Console.WriteLine("GetDeletedFilesAndUpdateTheirStatus: result: {0}", item.Path);
@@ -581,6 +591,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository(session);
 			BackupPlanPathNodeRepository daoBackupPlanPathNode = new BackupPlanPathNodeRepository(session);
 
+#if false
 			var FilesToTrack = SuppliedFiles.Union(ChangeSet.DeletedFiles);
 			var FilesToInsertOrUpdate =
 				from f in FilesToTrack
@@ -591,6 +602,16 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					|| ((f.LastStatus == Models.BackupFileStatus.REMOVED || f.LastStatus == Models.BackupFileStatus.DELETED) && (f.LastStatus != f.PreviousLastStatus))
 				// Skip all UNCHANGED files.
 				select f;
+#else
+			var FilesToTrack = SuppliedFiles;
+			var FilesToInsertOrUpdate =
+				from f in FilesToTrack
+				where
+					// Keep it so we'll later add or update a `BackupedFile`.
+					((f.LastStatus == Models.BackupFileStatus.ADDED || f.LastStatus == Models.BackupFileStatus.MODIFIED))
+				// Skip all UNCHANGED/DELETED/REMOVED files.
+				select f;
+#endif
 
 			BlockPerfStats stats = new BlockPerfStats();
 
