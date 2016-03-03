@@ -406,6 +406,12 @@ namespace Teltec.Backup.Scheduler
 
 				if (existingTask != null)
 				{
+					// Check if the plan changed after the existing task was scheduled.
+					// It's important to convert the DateTime's to the same TimeZone before comparing them.
+					bool changed = plan.UpdatedAt.ToLocalTime() > existingTask.Definition.RegistrationInfo.Date.ToLocalTime();
+					if (!changed)
+						return;
+
 					if (plan.IsRunManually)
 					{
 						Info("{0} is already scheduled - Deleting schedule because it's now Manual.", taskName);
@@ -437,7 +443,8 @@ namespace Teltec.Backup.Scheduler
 				}
 			}
 
-			Info("Scheduling task {0}", taskName);
+			Info("Scheduling task {0} (plan last changed at {1})", taskName,
+				plan.UpdatedAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ssK"));
 
 			// Get the service on the local machine
 			using (TaskService ts = new TaskService())
@@ -478,7 +485,13 @@ namespace Teltec.Backup.Scheduler
 
 				td.RegistrationInfo.Author = string.Format(@"{0}\{1}", Environment.UserDomainName, Environment.UserName);
 
-				string description = string.Format("This task was automatically created by the {0} service", typeof(Teltec.Backup.Scheduler.Service).Namespace);
+				// We identify the Scheduled task needs an update if this Date is older than `SchedulablePlan.UpdatedAt`.
+				td.RegistrationInfo.Date = DateTime.UtcNow;
+
+				string description = string.Format(
+					"This task was automatically created by the {0} service at {1}",
+					typeof(Teltec.Backup.Scheduler.Service).Namespace,
+					td.RegistrationInfo.Date.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ssK"));
 				td.RegistrationInfo.Description = description;
 
 				// Create triggers to fire the task when planned.

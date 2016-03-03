@@ -318,6 +318,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				.AsBag()
 				;
 
+			Map(p => p.UpdatedAt)
+				.Column("updated_at")
+				.Not.Nullable()
+				//.CustomType<TimestampType>()
+				;
+
 			Map(p => p.ScheduleType)
 				.Column("schedule_type")
 				.Not.Nullable()
@@ -763,6 +769,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				.KeyColumn("restore_plan_id")
 				.Cascade.AllDeleteOrphan()
 				.AsBag()
+				;
+
+			Map(p => p.UpdatedAt)
+				.Column("updated_at")
+				.Not.Nullable()
+				//.CustomType<TimestampType>()
 				;
 
 			Map(p => p.ScheduleType)

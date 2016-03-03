@@ -127,6 +127,8 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 					break;
 			}
 
+			plan.UpdatedAt = DateTime.UtcNow;
+
 			//try
 			//{
 				if (IsEditingModel)

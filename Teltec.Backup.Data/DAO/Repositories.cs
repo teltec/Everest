@@ -83,7 +83,6 @@ namespace Teltec.Backup.Data.DAO
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string isDeletedPropertyName = this.GetPropertyName((Models.BackupPlan x) => x.IsDeleted);
 			crit.Add(Restrictions.Eq(isDeletedPropertyName, false));
-			string lastRunAtPropertyName = this.GetPropertyName((Models.BackupPlan x) => x.LastRunAt);
 			return crit.List<Models.BackupPlan>();
 		}
 
@@ -470,7 +469,6 @@ namespace Teltec.Backup.Data.DAO
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string isDeletedPropertyName = this.GetPropertyName((Models.RestorePlan x) => x.IsDeleted);
 			crit.Add(Restrictions.Eq(isDeletedPropertyName, false));
-			string lastRunAtPropertyName = this.GetPropertyName((Models.RestorePlan x) => x.LastRunAt);
 			return crit.List<Models.RestorePlan>();
 		}
 

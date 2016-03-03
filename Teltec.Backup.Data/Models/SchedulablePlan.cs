@@ -4,6 +4,7 @@ namespace Teltec.Backup.Data.Models
 {
 	public interface ISchedulablePlan
 	{
+		DateTime UpdatedAt { get; set; }
 		Int32 ScheduleParamId { get; }
 		string ScheduleParamName { get; }
 		ScheduleTypeEnum ScheduleType { get; set; }
@@ -73,6 +74,13 @@ namespace Teltec.Backup.Data.Models
 		}
 
 		#endregion
+
+		private DateTime _UpdatedAt; // Last date this entity was updated.
+		public virtual DateTime UpdatedAt
+		{
+			get { return _UpdatedAt; }
+			set { SetField(ref _UpdatedAt, value); }
+		}
 
 		#region Schedule
 
