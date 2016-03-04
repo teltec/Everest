@@ -399,6 +399,7 @@ namespace Teltec.Backup.Scheduler
 		{
 			string taskName = BuildTaskName(plan);
 
+			// Get the service on the local machine
 			using (TaskService ts = new TaskService())
 			{
 				// Find if there's already a task for the informed plan.
@@ -441,17 +442,15 @@ namespace Teltec.Backup.Scheduler
 						return;
 					}
 				}
-			}
 
-			Info("Scheduling task {0} (plan last changed at {1})", taskName,
-				plan.UpdatedAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ssK"));
+				Info("Scheduling task {0} (plan last changed at {1})", taskName,
+					plan.UpdatedAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ssK"));
 
-			// Get the service on the local machine
-			using (TaskService ts = new TaskService())
-			{
-				// Create a new task definition and assign properties
+				// If the task doesn't exist yet, create a new task definition and assign properties
 				// This task will require Task Scheduler 2.0 (Windows >= Vista or Server >= 2008) or newer.
-				TaskDefinition td = ts.NewTask();
+				TaskDefinition td = existingTask != null
+					? existingTask.Definition
+					: ts.NewTask();
 
 				// Run this task even if the user is NOT logged on.
 				if (td.LowestSupportedVersion == TaskCompatibility.V1)
@@ -489,7 +488,8 @@ namespace Teltec.Backup.Scheduler
 				td.RegistrationInfo.Date = DateTime.UtcNow;
 
 				string description = string.Format(
-					"This task was automatically created by the {0} service at {1}",
+					"This task was automatically {0} by the {1} service at {2}",
+					existingTask != null ? "updated" : "created",
 					typeof(Teltec.Backup.Scheduler.Service).Namespace,
 					td.RegistrationInfo.Date.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ssK"));
 				td.RegistrationInfo.Description = description;
@@ -506,6 +506,7 @@ namespace Teltec.Backup.Scheduler
 				// Create an action that will launch the PlanExecutor
 				string planType = isBackup ? "backup" : isRestore ? "restore" : string.Empty;
 				PlanExecutorEnv env = BuildPlanExecutorEnv(planType, plan.ScheduleParamId, false);
+				td.Actions.Clear();
 				td.Actions.Add(new ExecAction(env.Path, env.Arguments, env.Cwd));
 
 				// Register the task in the root folder
