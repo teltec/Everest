@@ -510,7 +510,10 @@ namespace Teltec.Backup.Scheduler
 				td.Actions.Add(new ExecAction(env.Path, env.Arguments, env.Cwd));
 
 				// Register the task in the root folder
-				ts.RootFolder.RegisterTaskDefinition(taskName, td, TaskCreation.CreateOrUpdate, null, null, TaskLogonType.InteractiveToken, null);
+				const string username = "SYSTEM";
+				const string password = null;
+				const TaskLogonType logonType = TaskLogonType.ServiceAccount;
+				ts.RootFolder.RegisterTaskDefinition(taskName, td, TaskCreation.CreateOrUpdate, username, password, logonType);
 			}
 		}
 
