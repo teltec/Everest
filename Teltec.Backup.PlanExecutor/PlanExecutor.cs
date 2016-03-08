@@ -104,6 +104,10 @@ namespace Teltec.Backup.PlanExecutor
 		{
 			LoggingHelper.ChangeFilenamePostfix("executor");
 
+			string cwd = AppDomain.CurrentDomain.BaseDirectory;
+			Directory.SetCurrentDirectory(cwd ?? ".");
+			logger.Info("Current directory is {0}", cwd);
+
 			if (!IsReleaseVersion && System.Environment.UserInteractive)
 				ConsoleAppHelper.CatchSpecialConsoleEvents();
 
