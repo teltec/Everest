@@ -193,12 +193,22 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 					}
 				case Commands.OperationStatus.PROCESSING_FILES_STARTED:
 					{
-						this.lblSources.Text = "Scanning files...";
+						this.lblSources.Text = "Processing files...";
+						this.llblRunNow.Text = LBL_RUNNOW_RUNNING;
+						this.llblRunNow.Enabled = true;
+						this.lblStatus.Text = LBL_STATUS_STARTED;
+						this.llblEditPlan.Enabled = false;
+						this.llblDeletePlan.Enabled = false;
 						break;
 					}
 				case Commands.OperationStatus.PROCESSING_FILES_FINISHED:
 					{
 						this.lblSources.Text = report.Sources;
+						this.llblRunNow.Text = LBL_RUNNOW_RUNNING;
+						this.llblRunNow.Enabled = true;
+						this.lblStatus.Text = LBL_STATUS_STARTED;
+						this.llblEditPlan.Enabled = false;
+						this.llblDeletePlan.Enabled = false;
 						//this.lblFilesTransferred.Text = string.Format("{0} of {1} ({2} / {3})",
 						//	progress.Completed, progress.Total,
 						//	FileSizeUtils.FileSizeToString(progress.BytesCompleted),
