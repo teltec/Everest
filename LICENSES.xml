@@ -2,7 +2,7 @@
 <?xml-stylesheet href="LICENSES.xsl" type="text/xsl" ?>
 <global>
 	<dependencies>
-		<dependency title="AWSSDK - Core Runtime" name="AWSSDK.Core" version="3.1.5.0" license="Apache License 2.0" project-url="https://github.com/aws/aws-sdk-net">
+		<dependency title="AWSSDK - Core Runtime" name="AWSSDK.Core" version="3.1.5.1" license="Apache License 2.0" project-url="https://github.com/aws/aws-sdk-net">
 			Copyright 2008-2013 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 			Licensed under the Apache License, Version 2.0 (the "License"). You may not use
 			this file except in compliance with the License. A copy of the License is located at
@@ -14,7 +14,7 @@
 			CONDITIONS OF ANY KIND, either express or implied. See the License for the
 			specific language governing permissions and limitations under the License.
 		</dependency>
-		<dependency title="AWSSDK - Amazon Simple Storage Service" name="AWSSDK.S3" version="3.1.3.13" license="Apache License 2.0" project-url="https://github.com/aws/aws-sdk-net">
+		<dependency title="AWSSDK - Amazon Simple Storage Service" name="AWSSDK.S3" version="3.1.4.0" license="Apache License 2.0" project-url="https://github.com/aws/aws-sdk-net">
 			Copyright 2008-2013 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 			Licensed under the Apache License, Version 2.0 (the "License"). You may not use
 			this file except in compliance with the License. A copy of the License is located at
@@ -217,7 +217,7 @@
 			OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 			SOFTWARE.
 		</dependency>
-		<dependency title="Json.NET" name="Json.NET" version="8.0.2" license="MIT" project-url="http://www.newtonsoft.com/json">
+		<dependency title="Json.NET" name="Json.NET" version="8.0.3" license="MIT" project-url="http://www.newtonsoft.com/json">
 			The MIT License (MIT)
 
 			Copyright (c) 2007 James Newton-King

@@ -1,4 +1,4 @@
-﻿using NHibernate;
+using NHibernate;
 using NUnit.Framework;
 using Teltec.Backup.Data.DAO;
 using Teltec.FileSystem;
