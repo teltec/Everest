@@ -1,6 +1,8 @@
-﻿using NLog;
+using NLog;
 using System;
 using System.Collections.Generic;
+using Teltec.Common.Extensions;
+using Teltec.Common.Utils;
 
 namespace Teltec.Backup.Data.Models
 {
@@ -103,7 +105,7 @@ namespace Teltec.Backup.Data.Models
 		public virtual string Path
 		{
 			get { return _Path; }
-			set { SetField(ref _Path, value); }
+			set { SetField(ref _Path, StringUtils.NormalizeUsingPreferredForm(value)); }
 		}
 
 		private long _LastSize;

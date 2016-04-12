@@ -8,6 +8,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
@@ -15,6 +16,7 @@ using Teltec.Backup.Data.DAO.NH;
 using Teltec.Backup.Data.Versioning;
 using Teltec.Backup.PlanExecutor.Serialization;
 using Teltec.Common.Extensions;
+using Teltec.Common.Utils;
 using Teltec.FileSystem;
 using Teltec.Stats;
 using Teltec.Storage;
@@ -231,10 +233,12 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			BlockPerfStats stats = new BlockPerfStats();
 			stats.Begin();
 
+			IEnumerable<string> normalizedFilePaths = filePaths.Select(path => StringUtils.NormalizeUsingPreferredForm(path));
+
 			Dictionary<string, Models.BackupPlanFile> processed = new Dictionary<string, Models.BackupPlanFile>();
 
 			// Check all files.
-			foreach (string path in filePaths)
+			foreach (string path in normalizedFilePaths)
 			{
 				// Throw if the operation was canceled.
 				CancellationToken.ThrowIfCancellationRequested();

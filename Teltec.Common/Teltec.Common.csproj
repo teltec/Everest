@@ -95,6 +95,7 @@
     <Compile Include="Utils\DateTimeUtils.cs" />
     <Compile Include="Utils\FileSizeUtils.cs" />
     <Compile Include="Utils\RuntimeUtils.cs" />
+    <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\TimeSpanUtils.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,6 @@
-﻿using System;
+using System;
+using Teltec.Common;
+using Teltec.Common.Utils;
 
 namespace Teltec.Backup.Data.Models
 {
@@ -30,7 +32,7 @@ namespace Teltec.Backup.Data.Models
 		public virtual string Path
 		{
 			get { return _Path; }
-			set { SetField(ref _Path, value); }
+			set { SetField(ref _Path, StringUtils.NormalizeUsingPreferredForm(value)); }
 		}
 
 		private BackupPlanPathNode _PathNode;
