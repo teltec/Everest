@@ -8,7 +8,6 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
@@ -233,32 +232,32 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			BlockPerfStats stats = new BlockPerfStats();
 			stats.Begin();
 
-			IEnumerable<string> normalizedFilePaths = filePaths.Select(path => StringUtils.NormalizeUsingPreferredForm(path));
-
 			Dictionary<string, Models.BackupPlanFile> processed = new Dictionary<string, Models.BackupPlanFile>();
 
 			// Check all files.
-			foreach (string path in normalizedFilePaths)
+			foreach (string path in filePaths)
 			{
 				// Throw if the operation was canceled.
 				CancellationToken.ThrowIfCancellationRequested();
+
+				string normalizedPath = StringUtils.NormalizeUsingPreferredForm(path);
 
 				//
 				// Create or update `BackupPlanFile`.
 				//
 				Models.BackupPlanFile backupPlanFile = null;
 				// The complexity of Dictionary<TKey,TValue>.TryGetValue(TKey,TValue) approaches O(1)
-				bool backupPlanFileAlreadyExists = AllFilesFromPlan.TryGetValue(path, out backupPlanFile);
+				bool backupPlanFileAlreadyExists = AllFilesFromPlan.TryGetValue(normalizedPath, out backupPlanFile);
 
 				if (!backupPlanFileAlreadyExists)
 				{
-					backupPlanFile = new Models.BackupPlanFile(plan, path);
+					backupPlanFile = new Models.BackupPlanFile(plan, normalizedPath);
 					backupPlanFile.CreatedAt = DateTime.UtcNow;
 				}
 
 				// This avoids duplicates in the list.
 				// The complexity of setting Dictionary<TKey,TValue>[TKey] is amortized O(1)
-				processed[path] = backupPlanFile;
+				processed[normalizedPath] = backupPlanFile;
 			}
 
 			LinkedList<Models.BackupPlanFile> result =
@@ -675,6 +674,8 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							logger.Log(LogLevel.Error, ex, "BUG: Failed to insert/update {0} => {1}",
 								typeof(Models.BackupPlanFile).Name,
 								CustomJsonSerializer.SerializeObject(entry, 1));
+
+							logger.Error("Dump of failed object: {0}", entry.DumpMe());
 							throw ex;
 						}
 

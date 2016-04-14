@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
+using Teltec.Backup.PlanExecutor.Serialization;
 using Teltec.Common.Extensions;
 using Teltec.Common.Utils;
 using Teltec.Stats;
@@ -292,6 +293,8 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							throw;
 						}
 
+						path = StringUtils.NormalizeUsingPreferredForm(path);
+
 						DateTime lastWrittenAt = DateTime.ParseExact(versionString, Models.BackupedFile.VersionFormat, CultureInfo.InvariantCulture);
 
 						// Create/Update BackupPlanFile, but do not SAVE it.
@@ -379,15 +382,27 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							}
 						}
 
-						// Create path nodes and INSERT them, if they don't exist yet.
-						entry.PathNode = pathNodeCreator.CreateOrUpdatePathNodes(account, entry);
+						try
+						{
+							// Create path nodes and INSERT them, if they don't exist yet.
+							entry.PathNode = pathNodeCreator.CreateOrUpdatePathNodes(account, entry);
 
-						// Create or update `BackupPlanFile`.
-						daoBackupPlanFile.InsertOrUpdate(tx, entry);
+							// Create or update `BackupPlanFile`.
+							daoBackupPlanFile.InsertOrUpdate(tx, entry);
+						}
+						catch (Exception ex)
+						{
+							logger.Log(LogLevel.Error, ex, "BUG: Failed to insert/update {0} => {1}",
+									typeof(Models.BackupPlanFile).Name,
+									CustomJsonSerializer.SerializeObject(entry, 1));
 
-						SyncAgent.Results.Stats.SavedFileCount += 1;
+							logger.Error("Dump of failed object: {0}", entry.DumpMe());
+							throw ex;
+						}
 
 						bool didCommit = batchProcessor.ProcessBatch(tx);
+
+						SyncAgent.Results.Stats.SavedFileCount += 1;
 
 						// Report save progress
 						ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount);
