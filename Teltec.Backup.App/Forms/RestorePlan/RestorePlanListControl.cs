@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
@@ -50,7 +50,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 					continue;
 
 				RestorePlanViewControl obj = ctrl as RestorePlanViewControl;
-				if (!obj.IsRunning)
+				if (!obj.OperationIsRunning)
 					toBeRemoved.Add(ctrl);
 			}
 

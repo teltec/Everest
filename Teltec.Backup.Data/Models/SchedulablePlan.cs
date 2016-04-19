@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 
 namespace Teltec.Backup.Data.Models
 {
 	public interface ISchedulablePlan
 	{
-		string ScheduleParamId { get; }
+		DateTime UpdatedAt { get; set; }
+		Int32 ScheduleParamId { get; }
 		string ScheduleParamName { get; }
 		ScheduleTypeEnum ScheduleType { get; set; }
 		PlanSchedule Schedule { get; set; }
@@ -15,7 +16,7 @@ namespace Teltec.Backup.Data.Models
 
 	public abstract class SchedulablePlan : BaseEntity<Int32?>, ISchedulablePlan
 	{
-		public static readonly string TaskNamePrefix = "TeltecBackup-";
+		public static readonly string TaskNamePrefix = "TeltecCloudBackup-";
 
 		public abstract Type GetVirtualType();
 
@@ -74,11 +75,18 @@ namespace Teltec.Backup.Data.Models
 
 		#endregion
 
+		private DateTime _UpdatedAt; // Last date this entity was updated.
+		public virtual DateTime UpdatedAt
+		{
+			get { return _UpdatedAt; }
+			set { SetField(ref _UpdatedAt, value); }
+		}
+
 		#region Schedule
 
-		public virtual string ScheduleParamId
+		public virtual Int32 ScheduleParamId
 		{
-			get { return this.Id.HasValue ? this.Id.Value.ToString() : string.Empty; }
+			get { return this.Id.Value; }
 		}
 
 		public virtual string ScheduleParamName

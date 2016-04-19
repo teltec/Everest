@@ -185,6 +185,11 @@ namespace Teltec.FileSystem
 			return GetVolumes().Contains(letter[0]);
 		}
 
+		public static string GetDriveLetter(string path)
+		{
+			return ZetaLongPaths.ZlpPathHelper.GetDrive(path); // Transforms @"C:\Foo\Bar" into @"C:"
+		}
+
 		private static char[] GetVolumes()
 		{
 			List<char> result = new List<char>();

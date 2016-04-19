@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Common;
 using Teltec.Storage;
-using Teltec.Storage.Agent;
+using Teltec.Storage.Backend;
 using Teltec.Storage.Monitor;
 
 namespace Teltec.Backup.PlanExecutor
@@ -15,7 +15,7 @@ namespace Teltec.Backup.PlanExecutor
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		public ITransferMonitor TransferListControl; // May be IDisposable, but it's an external reference.
-		protected IAsyncTransferAgent TransferAgent; // IDisposable
+		protected ITransferAgent TransferAgent; // IDisposable
 
 		#region Properties
 

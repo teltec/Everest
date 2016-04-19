@@ -1,4 +1,4 @@
-﻿using Amazon.Runtime;
+using Amazon.Runtime;
 using NHibernate;
 using NLog;
 using NUnit.Framework;
@@ -10,9 +10,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.DAO.NH;
+using Teltec.Backup.PlanExecutor.Serialization;
+using Teltec.Common.Extensions;
 using Teltec.Common.Utils;
 using Teltec.Stats;
 using Teltec.Storage;
+using Teltec.Storage.Backend;
 using Teltec.Storage.Implementations.S3;
 using Models = Teltec.Backup.Data.Models;
 
@@ -104,7 +107,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 		#region Transfer
 
 		protected SyncOperationOptions Options;
-		protected CustomSynchronizationAgent SyncAgent;
+		protected CustomSynchronizationAgent SyncAgent; // IDisposable
 		protected List<ListingObject> RemoteObjects;
 
 		public string RemoteRootDirectory
@@ -115,6 +118,11 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 		public string LocalRootDirectory
 		{
 			get { return TransferAgent != null ? TransferAgent.LocalRootDir : null; }
+		}
+
+		public override void Cancel()
+		{
+			CancellationTokenSource.Cancel();
 		}
 
 		public override void Start(out SyncResults results)
@@ -134,21 +142,26 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				TransferAgent.Dispose();
 			if (TransferListControl != null)
 				TransferListControl.ClearTransfers();
-
+			if (SyncAgent != null)
+				SyncAgent.Dispose();
 
 			//
 			// Setup agents.
 			//
 			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
-			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
+			TransferAgentOptions options = new TransferAgentOptions
+			{
+				UploadChunkSizeInBytes = Teltec.Backup.Settings.Properties.Current.UploadChunkSize * 1024 * 1024,
+			};
+			TransferAgent = new S3TransferAgent(options, awsCredentials, s3account.BucketName, CancellationTokenSource.Token);
 			TransferAgent.RemoteRootDir = TransferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP", s3account.Hostname);
 
 			RemoteObjects = new List<ListingObject>(4096); // Avoid small resizes without compromising memory.
 			SyncAgent = new CustomSynchronizationAgent(TransferAgent);
 
-			results = SyncAgent.Results;
-
 			RegisterEventHandlers(Synchronization);
+
+			results = SyncAgent.Results;
 
 			//
 			// Start the sync.
@@ -170,19 +183,26 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			{
 				RemoteObjects.AddRange(e.Objects);
 
+#if DEBUG
 				foreach (var obj in e.Objects)
-				{
-					SyncAgent.Results.Stats.FileCount += 1;
-					SyncAgent.Results.Stats.TotalSize += obj.Size;
+					Info("Found {0}", obj.Key);
+#endif
 
-					var message = string.Format("Found {0}", obj.Key);
-					Info(message);
-					OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });
-				}
+				int filesCount = e.Objects.Count;
+				long filesSize = e.Objects.Sum(x => x.Size);
+
+				SyncAgent.Results.Stats.FileCount += filesCount;
+				SyncAgent.Results.Stats.TotalSize += filesSize;
+
+				var message = string.Format("Found {0} files ({1} bytes)", filesCount, filesSize);
+				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });
 			};
 			TransferAgent.ListingCanceled += (object sender, ListingProgressArgs e, Exception ex) =>
 			{
-				throw new NotImplementedException();
+				var message = string.Format("Canceled: {0}", ex != null ? ex.Message : "Unknown reason");
+				Info(message);
+				//StatusInfo.Update(SyncStatusLevel.INFO, message);
+				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });
 			};
 			TransferAgent.ListingFailed += (object sender, ListingProgressArgs e, Exception ex) =>
 			{
@@ -203,11 +223,14 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			return true;
 		}
 
+		// Summary:
+		//    Saves all instances from RemoteObjects list to the database.
+		//    Also removes them from RemoteObjects list to free memory.
 		private void Save(CancellationToken CancellationToken)
 		{
 			ISession session = NHibernateHelper.GetSession();
 
-			BatchProcessor batchProcessor = new BatchProcessor();
+			BatchProcessor batchProcessor = new BatchProcessor(250);
 			StorageAccountRepository daoStorageAccount = new StorageAccountRepository(session);
 			BackupPlanFileRepository daoBackupPlanFile = new BackupPlanFileRepository(session);
 			BackupPlanPathNodeRepository daoBackupPlanPathNode = new BackupPlanPathNodeRepository(session);
@@ -215,7 +238,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 
 			BlockPerfStats stats = new BlockPerfStats();
 
-			using (ITransaction tx = session.BeginTransaction())
+			using (BatchTransaction tx = batchProcessor.BeginTransaction(session))
 			{
 				try
 				{
@@ -233,8 +256,12 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 					ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount, true);
 
 					// Saving loop
-					foreach (var obj in RemoteObjects)
+					for (int i = RemoteObjects.Count - 1; i >= 0; i--)
 					{
+						ListingObject obj = RemoteObjects[i]; // Get instance of object.
+						//RemoteObjects[i] = null;
+						RemoteObjects.RemoveAt(i); // Remove to free memory. RemoveAt(int) is O(N).
+
 						// Throw if the operation was canceled.
 						CancellationToken.ThrowIfCancellationRequested();
 
@@ -242,8 +269,31 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 						string path = string.Empty;
 						string versionString = string.Empty;
 
-						// Parse obj.Key into its relevant parts.
-						bool ok = ParseS3Key(obj.Key, out type, out path, out versionString);
+						try
+						{
+							// Parse obj.Key into its relevant parts.
+							bool ok = ParseS3Key(obj.Key, out type, out path, out versionString);
+						}
+						catch (Exception ex)
+						{
+							if (ex is ArgumentException || ex is IndexOutOfRangeException)
+							{
+								// Report error.
+								logger.Warn("Failed to parse S3 key: {0} -- Skipping.", obj.Key);
+								//logger.Log(LogLevel.Warn, ex, "Failed to parse S3 key: {0}", obj.Key);
+
+								//SyncAgent.Results.Stats.FailedSavedFileCount += 1;
+
+								// Report save progress
+								//ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount);
+
+								continue; // Skip this file.
+							}
+
+							throw;
+						}
+
+						path = StringUtils.NormalizeUsingPreferredForm(path);
 
 						DateTime lastWrittenAt = DateTime.ParseExact(versionString, Models.BackupedFile.VersionFormat, CultureInfo.InvariantCulture);
 
@@ -261,15 +311,16 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							entry.Path = path;
 							entry.LastSize = obj.Size;
 							entry.LastWrittenAt = lastWrittenAt;
-							//entry.LastChecksum =
+							//entry.LastChecksum = ;
 							entry.LastStatus = Models.BackupFileStatus.UNCHANGED;
 							entry.CreatedAt = DateTime.UtcNow;
 
 							// Create `BackupedFile`.
-							version = new Models.BackupedFile(null, entry);
+							version = new Models.BackupedFile(null, entry, Synchronization);
 							version.StorageAccountType = account.Type;
 							version.StorageAccount = account;
 							version.FileLastWrittenAt = lastWrittenAt;
+							version.FileLastChecksum = entry.LastChecksum;
 							version.FileSize = entry.LastSize;
 							version.FileStatus = Models.BackupFileStatus.MODIFIED;
 							version.TransferStatus = TransferStatus.COMPLETED;
@@ -292,20 +343,25 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 							{
 								versions = daoBackupedFile.GetCompletedByStorageAccountAndPath(account, path, versionString);
 							}
-							catch (FormatException ex)
+							catch (FormatException)
 							{
-								logger.Log(LogLevel.Error, ex, "Invalid date format?");
+								// Report error.
+								logger.Warn("Failed to parse versionString: {0} -- Skipping.", versionString);
+
+								//SyncAgent.Results.Stats.FailedSavedFileCount += 1;
+
 								continue; // TODO(jweyrich): Should we abort?
 							}
 
 							// Check whether our database already contains this exact file + version.
-							if (versions != null && versions.Count == 0)
+							if (versions == null || (versions != null && versions.Count == 0))
 							{
 								// Create `BackupedFile`.
-								version = new Models.BackupedFile(null, entry);
+								version = new Models.BackupedFile(null, entry, Synchronization);
 								version.StorageAccountType = account.Type;
 								version.StorageAccount = account;
 								version.FileLastWrittenAt = entry.LastWrittenAt;
+								version.FileLastChecksum = entry.LastChecksum;
 								version.FileSize = entry.LastSize;
 								version.FileStatus = Models.BackupFileStatus.MODIFIED;
 								version.TransferStatus = TransferStatus.COMPLETED;
@@ -319,27 +375,40 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 								// Update `BackupedFile`.
 								version = versions.First();
 								version.FileLastWrittenAt = entry.LastWrittenAt;
+								version.FileLastChecksum = entry.LastChecksum;
 								version.FileSize = entry.LastSize;
 								version.UpdatedAt = DateTime.UtcNow;
 								//daoBackupedFile.Update(tx, version);
 							}
 						}
 
-						// Create path nodes and INSERT them, if they don't exist yet.
-						entry.PathNode = pathNodeCreator.CreateOrUpdatePathNodes(account, entry);
+						try
+						{
+							// Create path nodes and INSERT them, if they don't exist yet.
+							entry.PathNode = pathNodeCreator.CreateOrUpdatePathNodes(account, entry);
 
-						// Create or update `BackupPlanFile`.
-						daoBackupPlanFile.InsertOrUpdate(tx, entry);
+							// Create or update `BackupPlanFile`.
+							daoBackupPlanFile.InsertOrUpdate(tx, entry);
+						}
+						catch (Exception ex)
+						{
+							logger.Log(LogLevel.Error, ex, "BUG: Failed to insert/update {0} => {1}",
+									typeof(Models.BackupPlanFile).Name,
+									CustomJsonSerializer.SerializeObject(entry, 1));
+
+							logger.Error("Dump of failed object: {0}", entry.DumpMe());
+							throw ex;
+						}
+
+						bool didCommit = batchProcessor.ProcessBatch(tx);
 
 						SyncAgent.Results.Stats.SavedFileCount += 1;
-
-						bool didFlush = batchProcessor.ProcessBatch(session);
 
 						// Report save progress
 						ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount);
 					}
 
-					batchProcessor.ProcessBatch(session, true);
+					batchProcessor.ProcessBatch(tx, true);
 
 					// Report save progress
 					ReportSaveProgress(SyncAgent.Results.Stats.SavedFileCount, true);
@@ -355,8 +424,9 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 					tx.Rollback(); // Rollback the transaction
 					throw;
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
+					logger.Log(LogLevel.Error, ex, "Caught exception");
 					tx.Rollback(); // Rollback the transaction
 					throw;
 				}
@@ -369,15 +439,17 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			}
 		}
 
-		private readonly int ReportSaveBatchSize = 5;
+		private readonly int ReportSaveBatchSize = 50;
 
 		private void ReportSaveProgress(int totalSaved, bool force = false)
 		{
 			if ((totalSaved % ReportSaveBatchSize == 0) || force)
 			{
-				var message = string.Format("Saved {0} more files", totalSaved);
+				var message = string.Format("Saved {0} files", totalSaved);
 				//var message = string.Format("Saved {0} @ {1}", entry.Path, version.VersionName);
+#if DEBUG
 				Info(message);
+#endif
 				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.SavingUpdated, Message = message });
 			}
 		}
@@ -406,7 +478,14 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Synchronizing files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during synchronizing files");
+					}
 
 					if (syncTask.IsFaulted || syncTask.IsCanceled)
 					{
@@ -430,12 +509,23 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 						RemoteObjects.Count(), FileSizeUtils.FileSizeToString(agent.Results.Stats.TotalSize));
 					Info(message);
 				}
+			}
 
+			//
+			// Database files saving
+			//
+
+			{
 				Task saveTask = ExecuteOnBackround(() =>
 					{
 						// Save everything.
 						Save(CancellationTokenSource.Token);
 					}, CancellationTokenSource.Token);
+
+				{
+					var	message = string.Format("Database files saving started.");
+					Info(message);
+				}
 
 				try
 				{
@@ -443,7 +533,14 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Database files saving was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during database files saving");
+					}
 
 					if (saveTask.IsFaulted || saveTask.IsCanceled)
 					{
@@ -455,6 +552,10 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 					}
 				}
 
+				{
+					var message = string.Format("Database files saving finished.");
+					Info(message);
+				}
 			}
 
 			OnFinish(agent, sync);
@@ -568,7 +669,13 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 			{
 				if (disposing && _shouldDispose)
 				{
-					SyncAgent = null;
+					if (SyncAgent != null)
+					{
+						logger.Info("DISPOSING SyncAgent.");
+
+						SyncAgent.Dispose();
+						SyncAgent = null;
+					}
 				}
 				this._isDisposed = true;
 			}

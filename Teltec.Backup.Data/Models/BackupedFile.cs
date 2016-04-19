@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Teltec.Storage;
 
 namespace Teltec.Backup.Data.Models
@@ -14,6 +14,14 @@ namespace Teltec.Backup.Data.Models
 		{
 			Backup = backup;
 			File = file;
+		}
+
+		public BackupedFile(Backup backup, BackupPlanFile file, Synchronization sync)
+			: this()
+		{
+			Backup = backup;
+			File = file;
+			Synchronization = sync;
 		}
 
 		private Int64? _Id;
@@ -77,6 +85,13 @@ namespace Teltec.Backup.Data.Models
 
 		#endregion
 
+		private Synchronization _Synchronization;
+		public virtual Synchronization Synchronization
+		{
+			get { return _Synchronization; }
+			protected set { _Synchronization = value; }
+		}
+
 		private BackupPlanFile _File;
 		public virtual BackupPlanFile File
 		{
@@ -105,6 +120,13 @@ namespace Teltec.Backup.Data.Models
 			set { SetField(ref _FileLastWrittenAt, value); }
 		}
 
+		private byte[] _FileLastChecksum; // SHA-1
+		public virtual byte[] FileLastChecksum
+		{
+			get { return _FileLastChecksum; }
+			set { SetField(ref _FileLastChecksum, value); }
+		}
+
 		private TransferStatus _TransferStatus;
 		public virtual TransferStatus TransferStatus
 		{
@@ -125,12 +147,12 @@ namespace Teltec.Backup.Data.Models
 
 		public virtual string Version
 		{
-			get { return FileLastWrittenAt != null ? FileLastWrittenAt.ToString(VersionFormat) : string.Empty; }
+			get { return FileLastWrittenAt.ToString(VersionFormat); }
 		}
 
 		public virtual string VersionName
 		{
-			get { return FileLastWrittenAt != null ? FileLastWrittenAt.ToString("yyyy/MM/dd - HH:mm:ss") : string.Empty; }
+			get { return FileLastWrittenAt.ToString("yyyy/MM/dd - HH:mm:ss"); }
 		}
 
 		#endregion

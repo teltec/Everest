@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Permissions; // Requires WindowsBase assembly.
 using System.Windows.Threading;
 

@@ -7,6 +7,14 @@ namespace Teltec.Storage.Tests
 	[TestClass]
 	public class S3StorageBackendTest
 	{
+		private long CalculatePartSize(long contentLength)
+		{
+			return S3StorageBackend.CalculatePartSize(
+				contentLength,
+				S3StorageBackend.AbsoluteMinPartSize,
+				S3StorageBackend.AbsoluteMaxNumberOfParts);
+		}
+
 		[TestMethod]
 		public void TestCalculatePartSize()
 		{
@@ -14,28 +22,28 @@ namespace Teltec.Storage.Tests
 			long partSize = 0;
 
 			contentLength = 1; // 1 byte
-			partSize = S3StorageBackend.CalculatePartSize(contentLength);
-			Assert.AreEqual(S3StorageBackend.MinPartSize, partSize);
+			partSize = CalculatePartSize(contentLength);
+			Assert.AreEqual(S3StorageBackend.AbsoluteMinPartSize, partSize);
 
 			contentLength = 1024; // 1 KB
-			partSize = S3StorageBackend.CalculatePartSize(contentLength);
-			Assert.AreEqual(S3StorageBackend.MinPartSize, partSize);
+			partSize = CalculatePartSize(contentLength);
+			Assert.AreEqual(S3StorageBackend.AbsoluteMinPartSize, partSize);
 
 			contentLength = 1024 * 1024 * 1; // 1 MB
-			partSize = S3StorageBackend.CalculatePartSize(contentLength);
-			Assert.AreEqual(S3StorageBackend.MinPartSize, partSize);
+			partSize = CalculatePartSize(contentLength);
+			Assert.AreEqual(S3StorageBackend.AbsoluteMinPartSize, partSize);
 
 			contentLength = 1024 * 1024 * 10; // 10 MB
-			partSize = S3StorageBackend.CalculatePartSize(contentLength);
-			Assert.AreEqual(S3StorageBackend.MinPartSize, partSize);
+			partSize = CalculatePartSize(contentLength);
+			Assert.AreEqual(S3StorageBackend.AbsoluteMinPartSize, partSize);
 
 			contentLength = 1024 * 1024 * 100; // 100 MB
-			partSize = S3StorageBackend.CalculatePartSize(contentLength);
-			Assert.AreEqual(S3StorageBackend.MinPartSize, partSize);
+			partSize = CalculatePartSize(contentLength);
+			Assert.AreEqual(S3StorageBackend.AbsoluteMinPartSize, partSize);
 
 			contentLength = 1024 * 1024 * 1024; // 1 GB
-			partSize = S3StorageBackend.CalculatePartSize(contentLength);
-			Assert.AreEqual(S3StorageBackend.MinPartSize, partSize);
+			partSize = CalculatePartSize(contentLength);
+			Assert.AreEqual(S3StorageBackend.AbsoluteMinPartSize, partSize);
 		}
 	}
 }

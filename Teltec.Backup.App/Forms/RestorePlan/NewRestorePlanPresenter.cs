@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using System;
 using Teltec.Backup.App.Forms.Schedule;
 using Teltec.Backup.Data.DAO;
@@ -64,6 +64,8 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 				Console.WriteLine("SelectedSource => #{0}, {1}, {2}, {3}",
 					entry.Id, entry.Type.ToString(), entry.Path, entry.Version);
 			Console.WriteLine("ScheduleType = {0}", plan.ScheduleType.ToString());
+
+			plan.UpdatedAt = DateTime.UtcNow;
 
 			//try
 			//{

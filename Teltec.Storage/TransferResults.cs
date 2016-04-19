@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Teltec.Common.Collections;
-using Teltec.Storage.Agent;
+using Teltec.Storage.Backend;
 using Teltec.Storage.Monitor;
 
 namespace Teltec.Storage
@@ -70,14 +70,14 @@ namespace Teltec.Storage
 		{
 			get
 			{
-				if (Stats.Pending > 0 || Stats.Running > 0) // Running has priority over all status.
-					return TransferStatus.RUNNING;
-				else if (Stats.Failed > 0) // Failure has priority over cancelation.
-					return TransferStatus.FAILED;
-				else if (Stats.Canceled > 0) // Cancelation has priority over completion.
+				if (Stats.Canceled > 0) // Cancelation has priority over failure.
 					return TransferStatus.CANCELED;
-				else if (Stats.Completed == Stats.Total) // Completion has priority over stopped.
+				else if (Stats.Failed > 0) // Failure has priority over completetion.
+					return TransferStatus.FAILED;
+				else if (Stats.Completed == Stats.Total) // Completion has priority over running.
 					return TransferStatus.COMPLETED;
+				else if (Stats.Pending > 0 || Stats.Running > 0) // Running has priority over stopped.
+					return TransferStatus.RUNNING;
 				else
 					return TransferStatus.STOPPED;
 			}

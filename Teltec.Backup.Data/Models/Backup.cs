@@ -1,4 +1,3 @@
-﻿using NLog;
 using System;
 using System.Collections.Generic;
 using Teltec.Storage;
@@ -7,8 +6,6 @@ namespace Teltec.Backup.Data.Models
 {
 	public class Backup : BaseEntity<Int32?>
 	{
-		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
-
 		public Backup()
 		{
 		}
@@ -119,6 +116,13 @@ namespace Teltec.Backup.Data.Models
 		{
 			// Check if it did run or is still running.
 			return Status == TransferStatus.STOPPED || Status == TransferStatus.RUNNING;
+		}
+
+		public virtual bool IsFinished()
+		{
+			return Status == TransferStatus.CANCELED
+				|| Status == TransferStatus.COMPLETED
+				|| Status == TransferStatus.FAILED;
 		}
 
 		#endregion

@@ -1,8 +1,10 @@
+using Microsoft.Win32;
 using NLog;
 using System;
 using System.Diagnostics;
 using System.Windows.Forms;
 using Teltec.Backup.App.Forms;
+using Teltec.Backup.Logging;
 using Teltec.Storage;
 
 namespace Teltec.Backup.App
@@ -37,11 +39,17 @@ namespace Teltec.Backup.App
 
 		static void UnsafeMain()
 		{
+			LoggingHelper.ChangeFilenamePostfix("gui");
+			SystemEvents.SessionEnding += (object sender, SessionEndingEventArgs e) =>
+			{
+				logger.Info("Session ending due to {0}", e.Reason.ToString());
+			};
 			Provider.Setup();
+			LoadSettings();
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			LoadSettings();
-			Application.Run(new MainForm());
+			MainForm mainForm = new MainForm();
+			Application.Run(mainForm);
 			Provider.Cleanup();
 		}
 

@@ -6,27 +6,30 @@
 - Backup and restore plans;
 - Scheduled execution of backup and restore plans;
 - Synchronization;
-- Supports paths with more than 260 characters (Windows' MAX_PATH);
+- Supports long paths (with more than 260 characters - Windows' MAX_PATH) -- Currently limited by lack of support from the AWSSDK - see https://github.com/aws/aws-sdk-net/issues/294;
+- Automatic network shares mapping;
+- Runs backup/restore operations without requiring an active user session (a logged user);
+- Automatically deletes old backuped files;
+
+## Changelog
+
+You can read the entire changelog [here](CHANGELOG.md).
 
 ## Known Problems
 
-- \#1: Automap network shares using saved credentials;
 - \#4: FileSystemTreeView: unchecking a parent node without expanding it doesn't uncheck its sub-nodes;
 - \#8: Task scheduler does not DELETE existing tasks for plans that no longer exist;
-- Can't run in more than one user session simultanously;
-- Can't close the GUI and continue the operation in background;
+- \#14: Editing a plan and changing its storage account won't work properly.
+- Can't run the GUI in more than one user session simultaneously;
 
 ## Future Work
 
 - Support pre/post command execution;
 - Upload/Download retry policy (with exponential backoff) - See http://docs.aws.amazon.com/general/latest/gr/api-retries.html
 - Automatically send reports upon failure or completion;
-- Run scheduled backup/restore without requiring an active user session (a logged user);
 - Improve concurrency;
 - Limit bandwidth;
-- Real time status report from background processes to GUI;
 - Restore files to a specified point in time;
-- Save network shares and credentials for automapping? (refs \#1);
 - Add lifecycle rules to transition to Glacier after a configurable amount of days - Note that object restoration from an archive can take up to five hours;
 
 ## Licensing Policy

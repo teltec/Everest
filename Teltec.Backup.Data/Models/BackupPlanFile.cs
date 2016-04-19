@@ -1,6 +1,9 @@
-﻿using NLog;
+using NLog;
 using System;
 using System.Collections.Generic;
+using System.Text;
+using Teltec.Common.Extensions;
+using Teltec.Common.Utils;
 
 namespace Teltec.Backup.Data.Models
 {
@@ -103,7 +106,7 @@ namespace Teltec.Backup.Data.Models
 		public virtual string Path
 		{
 			get { return _Path; }
-			set { SetField(ref _Path, value); }
+			set { SetField(ref _Path, StringUtils.NormalizeUsingPreferredForm(value)); }
 		}
 
 		private long _LastSize;
@@ -235,6 +238,45 @@ namespace Teltec.Backup.Data.Models
 		public static bool operator !=(BackupPlanFile x, BackupPlanFile y)
 		{
 			return !(x == y);
+		}
+
+		#endregion
+
+		#region Debug helpers
+
+		public virtual string DumpMe()
+		{
+			StringBuilder sb = new StringBuilder();
+			sb.Append("BackupPlanFile {{ ");
+			sb.AppendFormat("Id = {0}, ", this.Id.HasValue ? this.Id.Value.ToString() : "NULL");
+			sb.AppendFormat("BackupPlan = {{ Id = {0} }}, ", this.BackupPlan.Id.HasValue ? this.BackupPlan.Id.ToString() : "NULL");
+			sb.AppendFormat("Path = {0}, ", this.Path);
+			sb.AppendFormat("LastSize = {0}, ", this.LastSize);
+			sb.AppendFormat("LastWrittenAt = {0}, ", this.LastWrittenAt);
+			sb.AppendFormat("LastChecksum = {0}, ", this.LastChecksum.ToString());
+			sb.AppendFormat("LastStatus = {0}, ", this.LastStatus);
+			sb.AppendFormat("CreatedAt = {0}, ", this.CreatedAt);
+			sb.AppendFormat("UpdatedAt = {0}, ", this.UpdatedAt.HasValue ? this.UpdatedAt.Value.ToString() : "NULL");
+			if (this.PathNode != null)
+			{
+				bool hasPlanFile = this.PathNode.PlanFile != null;
+				bool hasPlanFileId = hasPlanFile && this.PathNode.PlanFile.Id.HasValue;
+				sb.AppendFormat("PathNode = {{ Id = {0}, Name = {1}, Parent = {2}, Type = {3}, HasPlanFile = {4}, PlanFile = {{ Id = {5} }} }}",
+					this.PathNode.Id.HasValue ? this.PathNode.Id.ToString() : "NULL",
+					this.PathNode.Name,
+					this.PathNode.Parent,
+					this.PathNode.Type,
+					hasPlanFile,
+					hasPlanFile && hasPlanFileId ? this.PathNode.PlanFile.Id.ToString() : "NULL"
+				);
+			}
+			else
+			{
+				sb.AppendFormat("PathNode = NULL");
+			}
+			sb.Append(" }");
+
+			return sb.ToString();
 		}
 
 		#endregion

@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using Teltec.Storage.Agent;
+using Teltec.Storage.Backend;
 
 namespace Teltec.Storage
 {
@@ -69,7 +69,7 @@ namespace Teltec.Storage
 
 		internal void OnCanceled(object sender, ListingProgressArgs args, Exception exception)
 		{
-			ErrorMessages.Add(string.Format("Listing canceled: {1}", exception.Message));
+			ErrorMessages.Add(string.Format("Listing canceled: {0}", exception.Message));
 			if (Canceled != null)
 				Canceled.Invoke(sender, args, exception);
 		}

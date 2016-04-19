@@ -11,9 +11,11 @@ using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.Versioning;
 using Teltec.Backup.PlanExecutor.Versioning;
+using Teltec.Common.Extensions;
 using Teltec.Common.Utils;
 using Teltec.FileSystem;
 using Teltec.Storage;
+using Teltec.Storage.Backend;
 using Teltec.Storage.Implementations.S3;
 using Models = Teltec.Backup.Data.Models;
 
@@ -48,6 +50,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 	{
 		public RestoreOperationStatus Status;
 		public string Message;
+		public TransferStatus TransferStatus; // Only matters when Status == BackupOperationStatus.UPDATE
 	}
 
 	public sealed class RestoreOperationOptions
@@ -130,6 +133,8 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				TransferAgent.Dispose();
 			if (TransferListControl != null)
 				TransferListControl.ClearTransfers();
+			if (RestoreAgent != null)
+				RestoreAgent.Dispose();
 			if (Versioner != null)
 				Versioner.Dispose();
 
@@ -137,7 +142,11 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			// Setup agents.
 			//
 			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
-			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
+			TransferAgentOptions options = new TransferAgentOptions
+			{
+				UploadChunkSizeInBytes = Teltec.Backup.Settings.Properties.Current.UploadChunkSize * 1024 * 1024,
+			};
+			TransferAgent = new S3TransferAgent(options, awsCredentials, s3account.BucketName, CancellationTokenSource.Token);
 			TransferAgent.RemoteRootDir = TransferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP",
 				Restore.RestorePlan.StorageAccount.Hostname);
 
@@ -159,6 +168,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 		protected void RegisterResultsEventHandlers(Models.Restore restore, TransferResults results)
 		{
 			RestoredFileRepository daoRestoredFile = new RestoredFileRepository();
+			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
 			results.Failed += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
 				Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(restore, args.FilePath);
@@ -169,7 +179,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				var message = string.Format("Failed {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
-				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.FAILED });
 			};
 			results.Canceled += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
@@ -181,7 +191,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				var message = string.Format("Canceled {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
-				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.CANCELED });
 			};
 			results.Completed += (object sender, TransferFileProgressArgs args) =>
 			{
@@ -190,12 +200,22 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				restoredFile.UpdatedAt = DateTime.UtcNow;
 				daoRestoredFile.Update(restoredFile);
 
-				// Set original LastWriteTime so this file won't be erroneously included in the next Backup.
-				FileManager.SafeSetFileLastWriteTimeUtc(restoredFile.File.Path, restoredFile.BackupedFile.FileLastWrittenAt);
+				// Only set original modified date if the restored file is the latest version whose transfer is completed,
+				// otherwise, keep the date the OS/filesystem gave it.
+				bool isLatestVersion = daoBackupedFile.IsLatestVersion(restoredFile.BackupedFile);
+				if (isLatestVersion)
+				{
+					// Set original LastWriteTime so this file won't be erroneously included in the next Backup.
+					FileManager.SafeSetFileLastWriteTimeUtc(restoredFile.File.Path, restoredFile.BackupedFile.FileLastWrittenAt);
+				}
+				else
+				{
+					// Keep the original LastWriteTime so this file will be included in the next backup.
+				}
 
 				var message = string.Format("Completed {0}", args.FilePath);
 				Info(message);
-				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message });
+				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.COMPLETED });
 			};
 			results.Started += (object sender, TransferFileProgressArgs args) =>
 			{
@@ -247,7 +267,14 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Scanning files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during scanning files");
+					}
 
 					if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
 					{
@@ -265,7 +292,7 @@ namespace Teltec.Backup.PlanExecutor.Restore
 					if (filesToProcessTask.Result.FailedFiles.Count > 0)
 					{
 						StringBuilder sb = new StringBuilder();
-						sb.AppendLine("Scanning failes for the following drives/files/directories:");
+						sb.AppendLine("Scanning failed for the following drives/files/directories:");
 						foreach (var entry in filesToProcessTask.Result.FailedFiles)
 							sb.AppendLine(string.Format("  Path: {0} - Reason: {1}", entry.Key, entry.Value));
 						Warn(sb.ToString());
@@ -298,7 +325,14 @@ namespace Teltec.Backup.PlanExecutor.Restore
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Processing files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during processing files");
+					}
 
 					if (versionerTask.IsFaulted || versionerTask.IsCanceled)
 					{
@@ -330,12 +364,46 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			}
 
 			//
-			// Transfer
+			// Transfer files
 			//
 
 			{
 				Task transferTask = agent.Start();
-				await transferTask;
+
+				{
+					var message = string.Format("Transfer files started.");
+					Info(message);
+				}
+
+				try
+				{
+					await transferTask;
+				}
+				catch (Exception ex)
+				{
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Transfer files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during transfer files");
+					}
+
+					if (transferTask.IsFaulted || transferTask.IsCanceled)
+					{
+						if (transferTask.IsCanceled)
+							OnCancelation(agent, restore, ex); // transferTask.Exception
+						else
+							OnFailure(agent, restore, ex); // transferTask.Exception
+						return;
+					}
+				}
+
+				{
+					var message = string.Format("Transfer files finished.");
+					Info(message);
+				}
 			}
 
 			OnFinish(agent, restore);
@@ -451,7 +519,11 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			{
 				if (disposing && _shouldDispose)
 				{
-					RestoreAgent = null;
+					if (RestoreAgent != null)
+					{
+						RestoreAgent.Dispose();
+						RestoreAgent = null;
+					}
 
 					if (Versioner != null)
 					{

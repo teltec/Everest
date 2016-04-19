@@ -10,8 +10,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.PlanExecutor.Versioning;
+using Teltec.Common.Extensions;
 using Teltec.Common.Utils;
 using Teltec.Storage;
+using Teltec.Storage.Backend;
 using Teltec.Storage.Implementations.S3;
 using Teltec.Storage.Versioning;
 using Models = Teltec.Backup.Data.Models;
@@ -47,6 +49,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 	{
 		public BackupOperationStatus Status;
 		public string Message;
+		public TransferStatus TransferStatus; // Only matters when Status == BackupOperationStatus.UPDATE
 	}
 
 	public sealed class BackupOperationOptions
@@ -121,7 +124,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 
 		protected IncrementalFileVersioner Versioner; // IDisposable
 		protected BackupOperationOptions Options;
-		protected CustomBackupAgent BackupAgent;
+		protected CustomBackupAgent BackupAgent; // IDisposable
 
 		public override void Start(out TransferResults results)
 		{
@@ -141,6 +144,8 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				TransferAgent.Dispose();
 			if (TransferListControl != null)
 				TransferListControl.ClearTransfers();
+			if (BackupAgent != null)
+				BackupAgent.Dispose();
 			if (Versioner != null)
 				Versioner.Dispose();
 
@@ -148,7 +153,11 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			// Setup agents.
 			//
 			AWSCredentials awsCredentials = new BasicAWSCredentials(s3account.AccessKey, s3account.SecretKey);
-			TransferAgent = new S3AsyncTransferAgent(awsCredentials, s3account.BucketName);
+			TransferAgentOptions options = new TransferAgentOptions
+			{
+				UploadChunkSizeInBytes = Teltec.Backup.Settings.Properties.Current.UploadChunkSize * 1024 * 1024,
+			};
+			TransferAgent = new S3TransferAgent(options, awsCredentials, s3account.BucketName, CancellationTokenSource.Token);
 			TransferAgent.RemoteRootDir = TransferAgent.PathBuilder.CombineRemotePath("TELTEC_BKP",
 				Backup.BackupPlan.StorageAccount.Hostname);
 
@@ -167,9 +176,9 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			DoBackup(BackupAgent, Backup, Options);
 		}
 
-		public Task DeleteVersionedFile(string sourcePath, IFileVersion version, object identifier)
+		public void DeleteVersionedFile(string sourcePath, IFileVersion version, object identifier)
 		{
-			return TransferAgent.DeleteVersionedFile(sourcePath, version, identifier);
+			TransferAgent.DeleteVersionedFile(sourcePath, version, identifier);
 		}
 
 		protected void RegisterResultsEventHandlers(Models.Backup backup, TransferResults results)
@@ -198,7 +207,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				var message = string.Format("Failed {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
-				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.FAILED });
 			};
 			results.Canceled += (object sender, TransferFileProgressArgs args, Exception ex) =>
 			{
@@ -210,7 +219,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				var message = string.Format("Canceled {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
-				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.CANCELED });
 			};
 			results.Completed += (object sender, TransferFileProgressArgs args) =>
 			{
@@ -221,11 +230,11 @@ namespace Teltec.Backup.PlanExecutor.Backup
 
 				var message = string.Format("Completed {0}", args.FilePath);
 				Info(message);
-				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message });
+				OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.COMPLETED });
 
 				Models.BackupPlan plan = Backup.BackupPlan; //backupedFile.Backup.BackupPlan;
 
-				if (plan.PurgeOptions.IsTypeCustom && plan.PurgeOptions.EnabledKeepNumberOfVersions)
+				if (plan.PurgeOptions != null && plan.PurgeOptions.IsTypeCustom && plan.PurgeOptions.EnabledKeepNumberOfVersions)
 				{
 					// Purge the oldest versioned files if the count of versions exceeds the maximum specified for the Backup Plan.
 					IList<Models.BackupedFile> previousVersions = daoBackupedFile.GetCompleteByPlanAndPath(plan, args.FilePath);
@@ -286,11 +295,6 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				logger.Info("There are no synced files to associate to Backup Plan {0}", backup.BackupPlan.Name);
 		}
 
-		protected Task ExecuteOnBackround(Action action)
-		{
-			return AsyncHelper.ExecuteOnBackround(action);
-		}
-
 		protected async void DoBackup(CustomBackupAgent agent, Models.Backup backup, BackupOperationOptions options)
 		{
 			OnStart(agent, backup);
@@ -316,7 +320,14 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Scanning files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during scanning files");
+					}
 
 					if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
 					{
@@ -334,7 +345,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 					if (filesToProcessTask.Result.FailedFiles.Count > 0)
 					{
 						StringBuilder sb = new StringBuilder();
-						sb.AppendLine("Scanning failes for the following drives/files/directories:");
+						sb.AppendLine("Scanning failed for the following drives/files/directories:");
 						foreach (var entry in filesToProcessTask.Result.FailedFiles)
 							sb.AppendLine(string.Format("  Path: {0} - Reason: {1}", entry.Key, entry.Value));
 						Warn(sb.ToString());
@@ -352,7 +363,15 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			//
 
 			{
-				Task updateSyncedFilesTask = ExecuteOnBackround(() => { DoUpdateSyncedFiles(backup, filesToProcess); });
+				Task updateSyncedFilesTask = ExecuteOnBackround(() =>
+					{
+						DoUpdateSyncedFiles(backup, filesToProcess);
+					}, CancellationTokenSource.Token);
+
+				{
+					var message = string.Format("Update of synced files started.");
+					Info(message);
+				}
 
 				try
 				{
@@ -360,7 +379,14 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Update of synced files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during update of synced files");
+					}
 
 					if (updateSyncedFilesTask.IsFaulted || updateSyncedFilesTask.IsCanceled)
 					{
@@ -371,6 +397,11 @@ namespace Teltec.Backup.PlanExecutor.Backup
 							OnFailure(agent, backup, ex); // updateSyncedFilesTask.Exception
 						return;
 					}
+				}
+
+				{
+					var message = string.Format("Update of synced files finished.");
+					Info(message);
 				}
 			}
 
@@ -394,7 +425,14 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught exception");
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Processing files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during processing files");
+					}
 
 					if (versionerTask.IsFaulted || versionerTask.IsCanceled)
 					{
@@ -426,12 +464,46 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			}
 
 			//
-			// Transfer
+			// Transfer files
 			//
 
 			{
 				Task transferTask = agent.Start();
-				await transferTask;
+
+				{
+					var message = string.Format("Transfer files started.");
+					Info(message);
+				}
+
+				try
+				{
+					await transferTask;
+				}
+				catch (Exception ex)
+				{
+					if (ex.IsCancellation())
+					{
+						logger.Warn("Transfer files was canceled.");
+					}
+					else
+					{
+						logger.Log(LogLevel.Error, ex, "Caught exception during transfer files");
+					}
+
+					if (transferTask.IsFaulted || transferTask.IsCanceled)
+					{
+						if (transferTask.IsCanceled)
+							OnCancelation(agent, backup, ex); // transferTask.Exception
+						else
+							OnFailure(agent, backup, ex); // transferTask.Exception
+						return;
+					}
+				}
+
+				{
+					var message = string.Format("Transfer files finished.");
+					Info(message);
+				}
 			}
 
 			OnFinish(agent, backup);
@@ -447,6 +519,12 @@ namespace Teltec.Backup.PlanExecutor.Backup
 		{
 			agent.Cancel();
 			CancellationTokenSource.Cancel();
+		}
+
+		private Task ExecuteOnBackround(Action action, CancellationToken token)
+		{
+			return Task.Run(action, token);
+			//return AsyncHelper.ExecuteOnBackround(action, token);
 		}
 
 		#endregion
@@ -483,6 +561,8 @@ namespace Teltec.Backup.PlanExecutor.Backup
 		public void OnFailure(CustomBackupAgent agent, Models.Backup backup, Exception exception)
 		{
 			IsRunning = false;
+
+			logger.Log(LogLevel.Error, exception, "Caught exception: {0}", exception.Message);
 
 			var message = string.Format("Backup failed: {0}", exception != null ? exception.Message : "Exception not informed");
 			Error(message);
@@ -546,7 +626,11 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			{
 				if (disposing && _shouldDispose)
 				{
-					BackupAgent = null;
+					if (BackupAgent != null)
+					{
+						BackupAgent.Dispose();
+						BackupAgent = null;
+					}
 
 					if (Versioner != null)
 					{

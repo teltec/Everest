@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using System;
 using System.Collections.Specialized;
 using System.Configuration;
@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Text.RegularExpressions;
+using Teltec.Common.Extensions;
 
 namespace PostInstaller.Databases
 {

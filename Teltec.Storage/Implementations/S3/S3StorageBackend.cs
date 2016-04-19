@@ -1,7 +1,7 @@
-using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.S3.Transfer;
 using Amazon.Util;
 using NLog;
 using System;
@@ -25,26 +25,34 @@ namespace Teltec.Storage.Implementations.S3
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		IAmazonS3 _s3Client; // IDisposable
+		TransferAgentOptions Options;
+		AmazonS3Client _s3Client; // IDisposable
+		AmazonS3Config _s3Config;
 		string _awsBuckeName;
 		bool _shouldDispose = false;
 		bool _isDisposed;
 
 		#region Constructors
 
-		public S3StorageBackend(AWSCredentials awsCredentials, string awsBucketName, RegionEndpoint region)
-			: this(new AmazonS3Client(awsCredentials, region), awsBucketName)
+		public S3StorageBackend(TransferAgentOptions options, AWSCredentials awsCredentials, AmazonS3Config s3Config, string awsBucketName)
 		{
 			this._shouldDispose = true;
-		}
 
-		public S3StorageBackend(IAmazonS3 s3Client, string awsBucketName)
-		{
-			this._s3Client = s3Client;
+			Options = options;
+			SanitizeOptions();
+
+			this._s3Config = s3Config;
+			this._s3Client = new AmazonS3Client(awsCredentials, s3Config);
 			this._awsBuckeName = awsBucketName;
 		}
 
 		#endregion
+
+		private void SanitizeOptions()
+		{
+			if (Options.UploadChunkSizeInBytes < AbsoluteMinPartSize)
+				Options.UploadChunkSizeInBytes = AbsoluteMinPartSize;
+		}
 
 		#region Upload
 
@@ -58,24 +66,30 @@ namespace Teltec.Storage.Implementations.S3
 		// > must be at least 5 MB in size, except the last part. There is
 		// > no size limit on the last part of your multipart upload.
 		//
-		public static readonly long MaxNumberOfParts = 10000;
-		public static readonly long MinPartSize = 5 * 1024 * 1024; // 1 MB = 2^20
+		public static readonly long AbsoluteMaxNumberOfParts = 10000;
+		public static readonly long AbsoluteMinPartSize = 5 * 1024 * 1024; // 5 MiB
 
-		public static long CalculatePartSize(long fileSize)
+		public static long CalculatePartSize(long fileSize, long minPartSize, long maxNumberOfParts)
 		{
-			double partSize = Math.Ceiling((double)fileSize / MaxNumberOfParts);
-			if (partSize < MinPartSize)
+			double partSize = Math.Ceiling((double)fileSize / maxNumberOfParts);
+			if (partSize < minPartSize)
 			{
-				partSize = MinPartSize;
+				partSize = minPartSize;
 			}
-
 			return (long)partSize;
 		}
 
-		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/LLuploadFileDotNet.html
+		public long CalculatePartSize(long fileSize)
+		{
+			// If fileSize > 48.828125 GiB (50 GB) (`AbsoluteMinPartSize * AbsoluteMaxNumberOfParts`),
+			// then partSize will be > 5 MiB (`AbsoluteMinPartSize`).
+			return CalculatePartSize(fileSize, Options.UploadChunkSizeInBytes, AbsoluteMaxNumberOfParts);
+		}
+
 		public override void UploadFile(string filePath, string keyName, object userData, CancellationToken cancellationToken)
 		{
-			CancelableFileStream inputStream = null;
+			if (cancellationToken != null)
+				cancellationToken.ThrowIfCancellationRequested();
 
 			TransferFileProgressArgs reusedProgressArgs = new TransferFileProgressArgs
 			{
@@ -86,16 +100,51 @@ namespace Teltec.Storage.Implementations.S3
 				FilePath = filePath,
 			};
 
-            // List to store upload part responses.
-            List<UploadPartResponse> uploadResponses = new List<UploadPartResponse>();
+			TransferUtility fileTransferUtility = null;  // IDisposable
 
-			InitiateMultipartUploadResponse initMultiPartResponse = null;
-
+			// REFERENCES:
+			//   https://docs.aws.amazon.com/AmazonS3/latest/dev/HLTrackProgressMPUDotNet.html
+			//   https://docs.aws.amazon.com/AmazonS3/latest/dev/LLuploadFileDotNet.html
 			try
 			{
-				// Attempt to read the file before anything else.
-				long contentLength = FileManager.UnsafeGetFileSize(filePath);
-				reusedProgressArgs.TotalBytes = contentLength;
+				long fileLength = ZetaLongPaths.ZlpIOHelper.GetFileLength(filePath);
+
+				TransferUtilityConfig xferConfig = new TransferUtilityConfig
+				{
+					ConcurrentServiceRequests = 10, // Maximum allowed concurrent requests for this file alone.
+					MinSizeBeforePartUpload = AbsoluteMinPartSize,
+				};
+
+				fileTransferUtility = new TransferUtility(this._s3Client, xferConfig);
+
+				// Step 1: Initialize.
+				// Use TransferUtilityUploadRequest to configure options.
+				TransferUtilityUploadRequest uploadRequest = new TransferUtilityUploadRequest
+				{
+					BucketName = this._awsBuckeName,
+					Key = keyName,
+					FilePath = filePath,
+					CannedACL = S3CannedACL.Private,
+					StorageClass = S3StorageClass.ReducedRedundancy,
+					PartSize = CalculatePartSize(fileLength),
+				};
+
+				uploadRequest.UploadProgressEvent += new EventHandler<UploadProgressArgs>(
+					(object sender, UploadProgressArgs e) =>
+					{
+						// Process event.
+						//logger.Debug("PROGRESS {0} -> {1}", filePath, e.ToString());
+
+						long delta = e.TransferredBytes - reusedProgressArgs.TransferredBytes;
+
+						// Report progress.
+						if (UploadProgressed != null)
+							UploadProgressed(reusedProgressArgs, () =>
+							{
+								reusedProgressArgs.DeltaTransferredBytes = delta;
+								reusedProgressArgs.TransferredBytes = e.TransferredBytes;
+							});
+					});
 
 				// Report start - before any possible failures.
 				if (UploadStarted != null)
@@ -104,105 +153,8 @@ namespace Teltec.Storage.Implementations.S3
 						reusedProgressArgs.State = TransferState.STARTED;
 					});
 
-				// Create the input stream to actually read the file.
-				inputStream = new CancelableFileStream(filePath, FileMode.Open, FileAccess.Read, cancellationToken);
-
-				bool isMultiPart = contentLength >= MinPartSize;
-				if (isMultiPart)
-				{
-					// Multipart upload.
-
-					// Step 1: Initialize.
-					InitiateMultipartUploadRequest initiateRequest = new InitiateMultipartUploadRequest
-					{
-						BucketName = this._awsBuckeName,
-						Key = keyName,
-						CannedACL = S3CannedACL.Private,
-						StorageClass = S3StorageClass.ReducedRedundancy,
-					};
-
-					initMultiPartResponse = this._s3Client.InitiateMultipartUpload(initiateRequest);
-
-					// Report 0% progress.
-					if (UploadProgressed != null)
-						UploadProgressed(reusedProgressArgs, () =>
-						{
-							reusedProgressArgs.State = TransferState.TRANSFERRING;
-						});
-
-					// Step 2: Upload Parts.
-					long filePosition = 0;
-
-					long partSize = CalculatePartSize(contentLength);
-					long partsTotal = (long)Math.Ceiling((decimal)contentLength / partSize);
-
-					for (int partNumber = 1; partNumber <= partsTotal; partNumber++)
-					{
-						if (cancellationToken != null)
-							cancellationToken.ThrowIfCancellationRequested();
-
-						UploadPartRequest uploadRequest = new UploadPartRequest
-						{
-							BucketName = this._awsBuckeName,
-							Key = keyName,
-							UploadId = initMultiPartResponse.UploadId,
-							PartNumber = partNumber,
-							PartSize = partSize, //Math.Min(contentLength - filePosition, MinPartSize),
-							//FilePosition = filePosition,
-							//FilePath = filePath,
-							InputStream = inputStream,
-						};
-
-						if (filePosition + MinPartSize >= contentLength)
-						{
-							uploadRequest.IsLastPart = true;
-							uploadRequest.PartSize = 0;
-						}
-
-						// Progress handler.
-						uploadRequest.StreamTransferProgress = (object sender, StreamTransferProgressArgs args) =>
-						{
-							filePosition = args.TransferredBytes;
-
-							// Report progress.
-							if (UploadProgressed != null)
-								UploadProgressed(reusedProgressArgs, () =>
-								{
-									reusedProgressArgs.TransferredBytes = filePosition;
-								});
-						};
-
-						// Upload part and add response to our list.
-						uploadResponses.Add(this._s3Client.UploadPart(uploadRequest));
-					}
-
-					// Step 3: complete.
-					CompleteMultipartUploadRequest completeRequest = new CompleteMultipartUploadRequest
-					{
-						BucketName = this._awsBuckeName,
-						Key = keyName,
-						UploadId = initMultiPartResponse.UploadId,
-						//PartETags = new List<PartETag>(uploadResponses)
-					};
-					completeRequest.AddPartETags(uploadResponses);
-
-					CompleteMultipartUploadResponse completeUploadResponse =
-						this._s3Client.CompleteMultipartUpload(completeRequest);
-				}
-				else
-				{
-					// Simple upload.
-					PutObjectRequest putRequest = new PutObjectRequest()
-					{
-						BucketName = this._awsBuckeName,
-						Key = keyName,
-						CannedACL = S3CannedACL.Private,
-						StorageClass = S3StorageClass.ReducedRedundancy,
-						InputStream = inputStream,
-					};
-
-					PutObjectResponse putResponse = this._s3Client.PutObject(putRequest);
-				}
+				// TODO(jweyrich): Make it interruptible - use UploadAsync?
+				fileTransferUtility.Upload(uploadRequest);
 
 				// Report completion.
 				if (UploadCompleted != null)
@@ -213,17 +165,7 @@ namespace Teltec.Storage.Implementations.S3
 			}
 			catch (OperationCanceledException exception)
 			{
-				logger.Info("Upload canceled.");
-				if (initMultiPartResponse != null)
-				{
-					AbortMultipartUploadRequest abortRequest = new AbortMultipartUploadRequest
-					{
-						BucketName = this._awsBuckeName,
-						Key = keyName,
-						UploadId = initMultiPartResponse.UploadId
-					};
-					this._s3Client.AbortMultipartUpload(abortRequest);
-				}
+				logger.Info("Upload canceled: {0}", filePath);
 
 				// Report cancelation.
 				if (UploadCanceled != null)
@@ -243,23 +185,12 @@ namespace Teltec.Storage.Implementations.S3
 					}
 					else
 					{
-						logger.Warn("Error occurred. Message:'{0}' when uploading object", amznException.Message);
+						logger.Warn("Error occurred during the upload of {0}\nMessage:'{1}'", filePath, amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred: {0}", exception.Message);
-				}
-
-				if (initMultiPartResponse != null)
-				{
-					AbortMultipartUploadRequest abortRequest = new AbortMultipartUploadRequest
-					{
-						BucketName = this._awsBuckeName,
-						Key = keyName,
-						UploadId = initMultiPartResponse.UploadId
-					};
-					this._s3Client.AbortMultipartUpload(abortRequest);
+					logger.Warn("Exception occurred during the upload of {0}\nException: {1}", filePath, exception.Message);
 				}
 
 				// Report failure.
@@ -271,13 +202,10 @@ namespace Teltec.Storage.Implementations.S3
 			}
 			finally
 			{
-				if (inputStream != null)
-				{
-					inputStream.Close();
-					inputStream.Dispose();
-				}
+				if (fileTransferUtility != null)
+					fileTransferUtility.Dispose();
 			}
-        }
+		}
 
 		#endregion
 
@@ -286,6 +214,9 @@ namespace Teltec.Storage.Implementations.S3
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/RetrievingObjectUsingNetSDK.html
 		public override void DownloadFile(string filePath, string keyName, object userData, CancellationToken cancellationToken)
 		{
+			if (cancellationToken != null)
+				cancellationToken.ThrowIfCancellationRequested();
+
 			TransferFileProgressArgs reusedProgressArgs = new TransferFileProgressArgs
 			{
 				UserData = userData,
@@ -352,6 +283,7 @@ namespace Teltec.Storage.Implementations.S3
 						if (DownloadProgressed != null)
 							DownloadProgressed(reusedProgressArgs, () =>
 							{
+								reusedProgressArgs.DeltaTransferredBytes = bytesRead;
 								reusedProgressArgs.TransferredBytes = filePosition;
 							});
 					}
@@ -379,7 +311,7 @@ namespace Teltec.Storage.Implementations.S3
 			}
 			catch (OperationCanceledException exception)
 			{
-				logger.Info("Download canceled.");
+				logger.Info("Download canceled: {0}", filePath);
 
 				// Report cancelation.
 				if (DownloadCanceled != null)
@@ -399,12 +331,12 @@ namespace Teltec.Storage.Implementations.S3
 					}
 					else
 					{
-						logger.Warn("Error occurred. Message:'{0}' when downloading object", amznException.Message);
+						logger.Warn("Error occurred during the download of {0}\nMessage:'{1}'", filePath, amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred: {0}", exception.Message);
+					logger.Warn("Exception occurred during the download of {0}\nException: {1}", filePath, exception.Message);
 				}
 
 				// Report failure.
@@ -423,6 +355,9 @@ namespace Teltec.Storage.Implementations.S3
 		// REFERENCE: http://docs.aws.amazon.com/AmazonS3/latest/dev/ListingObjectKeysUsingNetSDK.html
 		public override void List(string prefix, bool recursive, object userData, CancellationToken cancellationToken)
 		{
+			if (cancellationToken != null)
+				cancellationToken.ThrowIfCancellationRequested();
+
 			ListingProgressArgs reusedProgressArgs = new ListingProgressArgs
 			{
 				UserData = userData,
@@ -521,11 +456,13 @@ namespace Teltec.Storage.Implementations.S3
 					{
 						IEnumerable<S3Object> resultObjects = response.S3Objects;
 
+#if DEBUG
 						// Process response.
 						foreach (S3Object entry in resultObjects)
 						{
 							Console.WriteLine("Key = {0}, Size = {1}, LastModified = {2}", entry.Key, entry.Size, entry.LastModified);
 						}
+#endif
 
 						// If response is truncated, set the marker to get the next set of keys.
 						if (response.IsTruncated)
@@ -587,12 +524,12 @@ namespace Teltec.Storage.Implementations.S3
 					}
 					else
 					{
-						logger.Warn("Error occurred. Message:'{0}' when listing objects", amznException.Message);
+						logger.Warn("Error occurred during listing\nMessage:'{0}'", amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred: {0}", exception.Message);
+					logger.Warn("Exception occurred during listing\nException: {0}", exception.Message);
 				}
 
 				// Report failure.
@@ -610,6 +547,9 @@ namespace Teltec.Storage.Implementations.S3
 
 		public override void DeleteFile(string keyName, object userData, CancellationToken cancellationToken)
 		{
+			if (cancellationToken != null)
+				cancellationToken.ThrowIfCancellationRequested();
+
 			DeletionArgs reusedArgs = new DeletionArgs
 			{
 				UserData = userData,

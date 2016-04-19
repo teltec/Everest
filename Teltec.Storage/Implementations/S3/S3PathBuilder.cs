@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -29,8 +29,8 @@ namespace Teltec.Storage.Implementations.S3
 		//	[<LocalRootDirectory>\][<drive>[:]\][<directories>\][<filename>]
 		public override string BuildLocalPath(string remotePath, out string outVersion)
 		{
-			Assert.IsNotNullOrEmpty(remotePath);
-			Assert.IsNotNullOrEmpty(RemoteRootDirectory);
+			Assert.That(remotePath, Is.Not.Null.Or.Empty);
+			Assert.That(RemoteRootDirectory, Is.Not.Null.Or.Empty);
 
 			string remoteBaseDir = RemoteRootDirectory
 				+ (RemoteRootDirectory.EndsWith(RemoteDirectorySeparatorChar.ToString())

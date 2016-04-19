@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
@@ -43,7 +43,15 @@ namespace Teltec.Backup.PlanExecutor.Backup
 
 			// Load pending `BackupedFiles` from `Backup`.
 			IList<Models.BackupedFile> pendingFiles = daoBackupedFile.GetByBackupAndStatus(backup,
-				TransferStatus.STOPPED, TransferStatus.RUNNING);
+				// 1. We don't want to resume a file that FAILED.
+				// 2. We don't want to resume a file that was CANCELED.
+				// Theoretically, a CANCELED file should never be present in a backup that is still RUNNING,
+				// unless the backup was being CANCELED, and the PlanExecutor was terminated by some reason
+				// after it updated the files as CANCELED but before it got the chance to update the backup
+				// itself as CANCELED.
+				TransferStatus.STOPPED, // The transfer didn't begin.
+				TransferStatus.RUNNING  // The transfer did begin but did not complete.
+			);
 
 			cancellationToken.ThrowIfCancellationRequested();
 

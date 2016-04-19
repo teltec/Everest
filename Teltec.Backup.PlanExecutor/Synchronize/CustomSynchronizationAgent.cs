@@ -1,12 +1,12 @@
-﻿using Teltec.Backup.Data.Versioning;
+using Teltec.Backup.Data.Versioning;
 using Teltec.Storage;
-using Teltec.Storage.Agent;
+using Teltec.Storage.Backend;
 
 namespace Teltec.Backup.PlanExecutor.Synchronize
 {
 	public class CustomSynchronizationAgent : SynchronizationAgent<CustomVersionedFile>
 	{
-		public CustomSynchronizationAgent(IAsyncTransferAgent agent)
+		public CustomSynchronizationAgent(ITransferAgent agent)
 			: base(agent)
 		{
 		}

@@ -1,16 +1,22 @@
 ﻿-- Create database
 CREATE DATABASE [{{database_name}}]
  CONTAINMENT = NONE
+ -- NOTE: Collation Latin1_General_100_* uses the Latin1 General dictionary sorting rules,
+ --       code page 1252. Is case-insensitive and accent-sensitive. Collation uses the Latin1
+ --       General dictionary sorting rules and maps to code page 1252. Shows the version number
+ --       of the collation if it is a Windows collation: _90 or _100. Is case-sensitive (CS),
+ --       and accent-sensitive (AS).
+ COLLATE Latin1_General_100_CS_AS
 GO
 
 -- Alter database file properties
 ALTER DATABASE [{{database_name}}] MODIFY FILE
- ( NAME = N'{{database_name}}',  SIZE = 5120KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB )
+ ( NAME = N'{{database_name}}',  SIZE = 51200KB /* 50MB */ , MAXSIZE = UNLIMITED, FILEGROWTH = 51200KB /* 50MB */ )
 GO
 
 -- Alter database log properties
 ALTER DATABASE [{{database_name}}] MODIFY FILE
- ( NAME = N'{{database_name}}_log', SIZE = 6272KB , MAXSIZE = 2048GB , FILEGROWTH = 10%)
+ ( NAME = N'{{database_name}}_log', SIZE = 10240KB /* 10MB */ , MAXSIZE = 2048GB , FILEGROWTH = 10%)
 GO
 
 -- USE IT!

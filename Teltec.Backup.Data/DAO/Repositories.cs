@@ -37,6 +37,18 @@ namespace Teltec.Backup.Data.DAO
 
 	#endregion
 
+	public class NetworkCredentialRepository : BaseRepository<Models.NetworkCredential, Int32?>
+	{
+		public NetworkCredentialRepository()
+		{
+		}
+
+		public NetworkCredentialRepository(ISession session)
+			: base(session)
+		{
+		}
+	}
+
 	#region Schedule
 
 	public class PlanScheduleRepository : BaseRepository<Models.PlanSchedule, Int32?>
@@ -71,7 +83,6 @@ namespace Teltec.Backup.Data.DAO
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string isDeletedPropertyName = this.GetPropertyName((Models.BackupPlan x) => x.IsDeleted);
 			crit.Add(Restrictions.Eq(isDeletedPropertyName, false));
-			string lastRunAtPropertyName = this.GetPropertyName((Models.BackupPlan x) => x.LastRunAt);
 			return crit.List<Models.BackupPlan>();
 		}
 
@@ -168,9 +179,38 @@ namespace Teltec.Backup.Data.DAO
 			return crit.List<Models.BackupPlanFile>();
 		}
 
+		public IList<Models.BackupPlanFile> GetAllPendingByBackup(Models.Backup backup)
+		{
+			string bfModelName = typeof(Models.BackupedFile).Name;
+			string bfFilePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
+			string bfBackupIdPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
+			string bfTransferStatusPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
+
+			// REFERENCE: https://docs.jboss.org/hibernate/orm/3.5/reference/en-US/html/queryhql.html#queryhql-expressions
+			string queryString = string.Format(
+				"SELECT bpf"
+				+ " FROM {0} AS bf"
+				+ " INNER JOIN bf.{1} AS bpf"
+				+ " WHERE"
+				+ "   bf.{2} = :backupId"
+				+ "   AND bf.{3} != :transferStatusCompleted"
+				, bfModelName
+				, bfFilePropertyName
+				, bfBackupIdPropertyName
+				, bfTransferStatusPropertyName
+			);
+
+			IQuery query = Session.CreateQuery(queryString)
+				.SetParameter("backupId", backup.Id)
+				.SetParameter("transferStatusCompleted", TransferStatus.COMPLETED)
+				;
+
+			return query.List<Models.BackupPlanFile>();
+		}
+
 		public Models.BackupPlanFile GetByStorageAccountAndPath(Models.StorageAccount account, string path, bool ignoreCase = false)
 		{
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string storageAccountPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.StorageAccount);
 			crit.Add(Restrictions.Eq(storageAccountPropertyName, account));
@@ -186,7 +226,7 @@ namespace Teltec.Backup.Data.DAO
 		{
 			Assert.IsNotNull(plan);
 			Assert.IsNotNull(plan.Id);
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 
 			string modelName = typeof(Models.BackupPlanFile).Name;
 			string backupPlanPropertyName = this.GetPropertyName((Models.BackupPlanFile x) => x.BackupPlan);
@@ -204,12 +244,8 @@ namespace Teltec.Backup.Data.DAO
 			);
 
 			IQuery query = Session.CreateQuery(queryString)
-				//.SetParameter("modelName", modelName)
-				//.SetParameter("backupPlanPropertyName", backupPlanPropertyName)
 				.SetParameter("backupPlanId", plan.Id)
-				//.SetParameter("storageAccountPropertyName", storageAccountPropertyName)
 				.SetParameter("storageAccountId", plan.StorageAccount.Id)
-				//.SetParameter("pathPropertyName", pathPropertyName)
 				.SetParameter("path", path)
 				;
 
@@ -279,10 +315,53 @@ namespace Teltec.Backup.Data.DAO
 		//	};
 		//}
 
+		public bool IsLatestVersion(Models.BackupedFile file)
+		{
+			Models.BackupedFile found = GetLatestVersionCompleted(file.File);
+			return found == null || (found != null && found.Id.Value == file.Id.Value);
+		}
+
+		// NOTE: This may return a version that has not COMPLETED the transfer.
+		public Models.BackupedFile GetLatestVersion(Models.BackupPlanFile planFile)
+		{
+			return GetLatestVersionWithTransferStatus(planFile);
+		}
+
+		public Models.BackupedFile GetLatestVersionCompleted(Models.BackupPlanFile planFile)
+		{
+			return GetLatestVersionWithTransferStatus(planFile, new TransferStatus[] { TransferStatus.COMPLETED });
+		}
+
+		public Models.BackupedFile GetLatestVersionWithTransferStatus(Models.BackupPlanFile planFile, params TransferStatus[] statuses)
+		{
+			Assert.IsNotNull(planFile);
+			//Assert.IsFalse(IsTransient(Session, file));
+
+			ICriteria crit = Session.CreateCriteria(PersistentType);
+
+			string filePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
+			crit.Add(Restrictions.Eq(filePropertyName, planFile));
+
+			if (statuses != null && statuses.Length > 0)
+			{
+				string transferStatus = this.GetPropertyName((Models.BackupedFile x) => x.TransferStatus);
+				crit.Add(Restrictions.Eq(transferStatus, TransferStatus.COMPLETED));
+			}
+
+			//string idPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Id);
+			//crit.AddOrder(Order.Desc(idPropertyName));
+
+			string fileLastWrittenAtPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.FileLastWrittenAt);
+			crit.AddOrder(Order.Desc(fileLastWrittenAtPropertyName));
+
+			crit.SetMaxResults(1);
+			return crit.UniqueResult<Models.BackupedFile>(); // May return null
+		}
+
 		public Models.BackupedFile GetByBackupAndPath(Models.Backup backup, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(backup);
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
 			string filePropertyName = this.GetPropertyName((Models.BackupedFile x) => x.File);
@@ -311,7 +390,7 @@ namespace Teltec.Backup.Data.DAO
 		public IList<Models.BackupedFile> GetCompletedByStorageAccountAndPath(Models.StorageAccount account, string path, string version = null, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(account);
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 
 			string storageAccountPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.StorageAccount);
@@ -340,7 +419,7 @@ namespace Teltec.Backup.Data.DAO
 		public IList<Models.BackupedFile> GetCompleteByPlanAndPath(Models.BackupPlan plan, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(plan);
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 
 			// By status
@@ -390,7 +469,6 @@ namespace Teltec.Backup.Data.DAO
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string isDeletedPropertyName = this.GetPropertyName((Models.RestorePlan x) => x.IsDeleted);
 			crit.Add(Restrictions.Eq(isDeletedPropertyName, false));
-			string lastRunAtPropertyName = this.GetPropertyName((Models.RestorePlan x) => x.LastRunAt);
 			return crit.List<Models.RestorePlan>();
 		}
 
@@ -515,7 +593,7 @@ namespace Teltec.Backup.Data.DAO
 		public Models.RestoredFile GetByRestoreAndPath(Models.Restore restore, string path, bool ignoreCase = false)
 		{
 			Assert.IsNotNull(restore);
-			Assert.IsNotNullOrEmpty(path);
+			Assert.That(path, Is.Not.Null.Or.Empty);
 			ICriteria crit = Session.CreateCriteria(PersistentType);
 			string restorePropertyName = this.GetPropertyName((Models.RestoredFile x) => x.Restore);
 			string filePropertyName = this.GetPropertyName((Models.RestoredFile x) => x.File);

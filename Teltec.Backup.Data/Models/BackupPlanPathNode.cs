@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using Teltec.Common.Utils;
 
 namespace Teltec.Backup.Data.Models
 {
@@ -70,14 +71,14 @@ namespace Teltec.Backup.Data.Models
 		public virtual BackupPlanPathNode Parent
 		{
 			get { return _Parent; }
-			set { _Parent = value; }
+			set { SetField(ref _Parent, value); }
 		}
 
 		private EntryType _Type;
 		public virtual EntryType Type
 		{
 			get { return _Type; }
-			set { _Type = value; }
+			set { SetField(ref _Type, value); }
 		}
 
 		public const int NameMaxLen = 255;
@@ -85,7 +86,7 @@ namespace Teltec.Backup.Data.Models
 		public virtual string Name
 		{
 			get { return _Name; }
-			set { _Name = value; }
+			set { SetField(ref _Name, value); }
 		}
 
 		public const int PathMaxLen = 1024;
@@ -93,7 +94,7 @@ namespace Teltec.Backup.Data.Models
 		public virtual string Path
 		{
 			get { return _Path; }
-			set { _Path = value; }
+			set { SetField(ref _Path, StringUtils.NormalizeUsingPreferredForm(value)); }
 		}
 
 		private IList<BackupPlanPathNode> _SubNodes = new List<BackupPlanPathNode>();

@@ -1,17 +1,24 @@
-﻿using Microsoft.Win32.TaskScheduler;
+using Microsoft.Win32.TaskScheduler;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Configuration.Install;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Principal;
 using System.ServiceProcess;
-using System.Threading;
 using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Ipc.Protocol;
+using Teltec.Backup.Ipc.TcpSocket;
 using Models = Teltec.Backup.Data.Models;
+using Teltec.Common.Extensions;
+using System.Text;
+using Teltec.Common.Threading;
+using Teltec.Backup.Logging;
+using Teltec.Common;
+using System.Net.Sockets;
 
 namespace Teltec.Backup.Scheduler
 {
@@ -19,89 +26,12 @@ namespace Teltec.Backup.Scheduler
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+		private ISynchronizeInvoke SynchronizingObject = new MockSynchronizeInvoke();
+		private ServerHandler Handler;
+
 		private const int RefreshCommand = 205;
 
-		#region Trap application termination
-
-		/// <summary>
-		///  Event set when the process is terminated.
-		/// </summary>
-		static readonly ManualResetEvent TerminationRequestedEvent = new ManualResetEvent(false);
-
-		/// <summary>
-		/// Event set when the process terminates.
-		/// </summary>
-		static readonly ManualResetEvent TerminationCompletedEvent = new ManualResetEvent(false);
-
-		static Unmanaged.HandlerRoutine Handler;
-
-		static bool OnConsoleEvent(Unmanaged.CtrlTypes reason)
-		{
-			Console.WriteLine("Exiting system due to external CTRL-C, or process kill, or shutdown");
-
-			// Signal termination
-			TerminationRequestedEvent.Set();
-
-			// Wait for cleanup
-			TerminationCompletedEvent.WaitOne();
-
-			// Shutdown right away so there are no lingering threads
-			Environment.Exit(1);
-
-			// Don't run other handlers, just exit.
-			return true;
-		}
-
-		static void CatchSpecialConsoleEvents()
-		{
-			// NOTE: Should NOT use `Console.CancelKeyPress` because it does NOT detect some events: window closing, shutdown, etc.
-
-			// Handle special events like: Ctrl+C, window close, kill, shutdown, etc.
-			Handler += new Unmanaged.HandlerRoutine(OnConsoleEvent);
-
-			Unmanaged.SetConsoleCtrlHandler(Handler, true);
-		}
-
-		#endregion
-
-		//static ServiceProcessInstaller ProcessInstaller;
-		//static System.ServiceProcess.ServiceInstaller ServiceInstaller;
-
-		static void SelfStart(bool run = false)
-		{
-			string serviceName = Assembly.GetExecutingAssembly().GetName().Name;
-
-			ServiceInstaller installer = new ServiceInstaller(serviceName);
-			installer.StartService();
-		}
-
-		static void SelfInstall(bool run = false)
-		{
-			ManagedInstallerClass.InstallHelper(new string[] { Assembly.GetExecutingAssembly().Location });
-
-			//string servicePath = Assembly.GetExecutingAssembly().Location;
-			//string serviceName = Assembly.GetExecutingAssembly().GetName().Name;
-			//
-			//ServiceInstaller installer = new ServiceInstaller(serviceName);
-			//installer.DesiredAccess = ServiceAccessRights.AllAccess;
-			//installer.BinaryPath = servicePath;
-			//installer.DependsOn = new[] {
-			//	"MSSQL$SQLEXPRESS"
-			//	//"MSSQLSERVER"
-			//};
-			//
-			//installer.InstallAndStart();
-		}
-
-		static void SelfUninstall()
-		{
-			ManagedInstallerClass.InstallHelper(new string[] { "/u", Assembly.GetExecutingAssembly().Location });
-
-			//string serviceName = Assembly.GetExecutingAssembly().GetName().Name;
-
-			//ServiceInstaller installer = new ServiceInstaller(serviceName);
-			//installer.Uninstall();
-		}
+		#region Main
 
 		static void Main(string[] args)
 		{
@@ -125,6 +55,8 @@ namespace Teltec.Backup.Scheduler
 
 		static void UnsafeMain(string[] args)
 		{
+			LoggingHelper.ChangeFilenamePostfix("scheduler");
+
 			if (System.Environment.UserInteractive)
 			{
 				if (args.Length > 0)
@@ -133,32 +65,36 @@ namespace Teltec.Backup.Scheduler
 					{
 						case "-install":
 						case "-i":
-							SelfInstall();
+							ServiceHelper.SelfInstall();
 							logger.Info("Service installed");
-							SelfStart();
+							ServiceHelper.SelfStart();
 							break;
 						case "-uninstall":
 						case "-u":
-							SelfUninstall();
+							ServiceHelper.SelfUninstall();
 							logger.Info("Service uninstalled");
 							break;
 					}
 				}
 				else
 				{
-					CatchSpecialConsoleEvents();
+					ConsoleAppHelper.CatchSpecialConsoleEvents();
 
 					Service instance = new Service();
 					instance.OnStart(args);
 
-					// Sleep until termination
-					TerminationRequestedEvent.WaitOne();
+					// If initialization failed, then cleanup/OnStop is already done.
+					if (instance.ExitCode == 0)
+					{
+						// Sleep until termination
+						ConsoleAppHelper.TerminationRequestedEvent.WaitOne();
 
-					// Do any cleanups here...
-					instance.OnStop();
+						// Do any cleanups here...
+						instance.OnStop();
 
-					// Set this to terminate immediately (if not set, the OS will eventually kill the process)
-					TerminationCompletedEvent.Set();
+						// Set this to terminate immediately (if not set, the OS will eventually kill the process)
+						ConsoleAppHelper.TerminationCompletedEvent.Set();
+					}
 				}
 			}
 			else
@@ -167,7 +103,7 @@ namespace Teltec.Backup.Scheduler
 			}
 		}
 
-		#region Service implementation
+		#endregion
 
 		public Service()
 		{
@@ -175,12 +111,26 @@ namespace Teltec.Backup.Scheduler
 
 			ServiceName = typeof(Teltec.Backup.Scheduler.Service).Namespace;
 			CanShutdown = true;
+
+			Handler = new ServerHandler(SynchronizingObject);
+			Handler.OnControlPlanQuery += OnControlPlanQuery;
+			Handler.OnControlPlanRun += OnControlPlanRun;
+			Handler.OnControlPlanResume += OnControlPlanResume;
+			Handler.OnControlPlanCancel += OnControlPlanCancel;
+			Handler.OnControlPlanKill += OnControlPlanKill;
+		}
+
+		private void InitializeComponent()
+		{
+
 		}
 
 		private string BuildTaskName(Models.ISchedulablePlan plan)
 		{
 			return plan.ScheduleParamName;
 		}
+
+		#region Triggers
 
 		private Trigger[] BuildTriggers(Models.ISchedulablePlan plan)
 		{
@@ -238,33 +188,36 @@ namespace Teltec.Backup.Scheduler
 
 									WeeklyTrigger wt = tr as WeeklyTrigger;
 
+									// IMPORTANT: The default constructed `WeeklyTrigger` sets Sunday.
+									wt.DaysOfWeek = 0;
+
 									Models.PlanScheduleDayOfWeek matchDay = null;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Monday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Monday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Monday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Tuesday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Tuesday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Tuesday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Wednesday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Wednesday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Wednesday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Thursday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Thursday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Thursday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Friday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Friday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Friday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Saturday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Saturday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Saturday;
 
-									matchDay = schedule.OccursAtDaysOfWeek.First(p => p.DayOfWeek == DayOfWeek.Sunday);
+									matchDay = schedule.OccursAtDaysOfWeek.SingleOrDefault(p => p.DayOfWeek == DayOfWeek.Sunday);
 									if (matchDay != null)
 										wt.DaysOfWeek |= DaysOfTheWeek.Sunday;
 
@@ -404,6 +357,20 @@ namespace Teltec.Backup.Scheduler
 			return triggers.ToArray();
 		}
 
+		#endregion
+
+		// Summary:
+		//     Returns whether we have Administrator privileges or not.
+		public static bool IsElevated
+		{
+			get
+			{
+				return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+			}
+		}
+
+		#region Scheduling
+
 		private Task FindScheduledTask(string taskName)
 		{
 			using (TaskService ts = new TaskService())
@@ -428,20 +395,11 @@ namespace Teltec.Backup.Scheduler
 			return HasScheduledTask(BuildTaskName(plan));
 		}
 
-		// Summary:
-		//     Returns whether we have Administrator privileges or not.
-		public static bool IsElevated
-		{
-			get
-			{
-				return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
-			}
-		}
-
 		private void SchedulePlanExecution(Models.ISchedulablePlan plan, bool reschedule = false)
 		{
 			string taskName = BuildTaskName(plan);
 
+			// Get the service on the local machine
 			using (TaskService ts = new TaskService())
 			{
 				// Find if there's already a task for the informed plan.
@@ -449,6 +407,12 @@ namespace Teltec.Backup.Scheduler
 
 				if (existingTask != null)
 				{
+					// Check if the plan changed after the existing task was scheduled.
+					// It's important to convert the DateTime's to the same TimeZone before comparing them.
+					bool changed = plan.UpdatedAt.ToLocalTime() > existingTask.Definition.RegistrationInfo.Date.ToLocalTime();
+					if (!changed)
+						return;
+
 					if (plan.IsRunManually)
 					{
 						Info("{0} is already scheduled - Deleting schedule because it's now Manual.", taskName);
@@ -478,16 +442,15 @@ namespace Teltec.Backup.Scheduler
 						return;
 					}
 				}
-			}
 
-			Info("Scheduling task {0}", taskName);
+				Info("Scheduling task {0} (plan last changed at {1})", taskName,
+					plan.UpdatedAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ssK"));
 
-			// Get the service on the local machine
-			using (TaskService ts = new TaskService())
-			{
-				// Create a new task definition and assign properties
+				// If the task doesn't exist yet, create a new task definition and assign properties
 				// This task will require Task Scheduler 2.0 (Windows >= Vista or Server >= 2008) or newer.
-				TaskDefinition td = ts.NewTask();
+				TaskDefinition td = existingTask != null
+					? existingTask.Definition
+					: ts.NewTask();
 
 				// Run this task even if the user is NOT logged on.
 				if (td.LowestSupportedVersion == TaskCompatibility.V1)
@@ -521,10 +484,18 @@ namespace Teltec.Backup.Scheduler
 
 				td.RegistrationInfo.Author = string.Format(@"{0}\{1}", Environment.UserDomainName, Environment.UserName);
 
-				string description = string.Format("This task was automatically created by the {0} service", typeof(Teltec.Backup.Scheduler.Service).Namespace);
+				// We identify the Scheduled task needs an update if this Date is older than `SchedulablePlan.UpdatedAt`.
+				td.RegistrationInfo.Date = DateTime.UtcNow;
+
+				string description = string.Format(
+					"This task was automatically {0} by the {1} service at {2}",
+					existingTask != null ? "updated" : "created",
+					typeof(Teltec.Backup.Scheduler.Service).Namespace,
+					td.RegistrationInfo.Date.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ssK"));
 				td.RegistrationInfo.Description = description;
 
 				// Create triggers to fire the task when planned.
+				td.Triggers.Clear();
 				td.Triggers.AddRange(BuildTriggers(plan));
 
 				bool isBackup = plan is Models.BackupPlan;
@@ -534,15 +505,350 @@ namespace Teltec.Backup.Scheduler
 
 				// Create an action that will launch the PlanExecutor
 				string planType = isBackup ? "backup" : isRestore ? "restore" : string.Empty;
-				string executorCwd = GetExecutableDirectoryPath();
-				string executorPath = string.Format(@"{0}\{1}", executorCwd, "Teltec.Backup.PlanExecutor.exe");
-				string executorArgs = string.Format("-t {0} -p {1}", planType, plan.ScheduleParamId);
-				td.Actions.Add(new ExecAction(executorPath, executorArgs, executorCwd));
+				PlanExecutorEnv env = BuildPlanExecutorEnv(planType, plan.ScheduleParamId, false);
+				td.Actions.Clear();
+				td.Actions.Add(new ExecAction(env.Path, env.Arguments, env.Cwd));
 
 				// Register the task in the root folder
-				ts.RootFolder.RegisterTaskDefinition(taskName, td, TaskCreation.CreateOrUpdate, null, null, TaskLogonType.InteractiveToken, null);
+				const string username = "SYSTEM";
+				const string password = null;
+				const TaskLogonType logonType = TaskLogonType.ServiceAccount;
+				ts.RootFolder.RegisterTaskDefinition(taskName, td, TaskCreation.CreateOrUpdate, username, password, logonType);
 			}
 		}
+
+		#endregion
+
+		private struct PlanExecutorEnv
+		{
+			public string Path;
+			public string Arguments;
+			public string Cwd;
+		}
+
+		private void ValidatePlanType(string planType)
+		{
+			if (!planType.Equals("backup") && !planType.Equals("restore"))
+				throw new ArgumentException("Invalid plan type", "planType");
+		}
+
+		private PlanExecutorEnv BuildPlanExecutorEnv(string planType, Int32 planId, bool resume)
+		{
+			ValidatePlanType(planType);
+
+			string clientName = Commands.BuildClientName(planType, planId);
+
+			PlanExecutorEnv env = new PlanExecutorEnv();
+			env.Cwd = GetExecutableDirectoryPath();
+			env.Path = Path.Combine(env.Cwd, "Teltec.Backup.PlanExecutor.exe");
+
+			StringBuilder sb = new StringBuilder(255);
+			sb.AppendFormat(" --client-name={0}", clientName);
+			sb.AppendFormat(" -t {0}", planType);
+			sb.AppendFormat(" -p {0}", planId);
+			if (resume)
+				sb.Append(" --resume");
+
+			env.Arguments = sb.ToString();
+
+			return env;
+		}
+
+		#region Remote messages
+
+		private void OnControlPlanQuery(object sender, ServerCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+
+			ValidatePlanType(planType);
+
+			bool isRunning = IsPlanRunning(planType, planId);
+			bool needsResume = false;
+			bool isFinished = false;
+
+			bool isBackup = planType.Equals("backup");
+			bool isRestore = planType.Equals("restore");
+
+			// Report to GUI.
+			Commands.GuiReportPlanStatus report = new Commands.GuiReportPlanStatus();
+
+			if (isBackup)
+			{
+				BackupRepository daoBackup = new BackupRepository();
+				Models.Backup latest = daoBackup.GetLatestByPlan(new Models.BackupPlan { Id = planId });
+
+				needsResume = latest != null && latest.NeedsResume();
+				isFinished = latest != null && latest.IsFinished();
+
+				if (isRunning)
+					report.StartedAt = latest.StartedAt;
+				else if (isFinished)
+					report.FinishedAt = latest.FinishedAt;
+			}
+			else if (isRestore)
+			{
+				RestoreRepository daoRestore = new RestoreRepository();
+				Models.Restore latest = daoRestore.GetLatestByPlan(new Models.RestorePlan { Id = planId });
+
+				needsResume = latest != null && latest.NeedsResume();
+				isFinished = latest != null && latest.IsFinished();
+
+				if (isRunning)
+					report.StartedAt = latest.StartedAt;
+				else if (isFinished)
+					report.FinishedAt = latest.FinishedAt;
+			}
+
+			bool isInterrupted = !isRunning && needsResume;
+
+			Commands.OperationStatus status;
+			// The condition order below is important because more than one flag might be true.
+			if (isInterrupted)
+				status = Commands.OperationStatus.INTERRUPTED;
+			else if (needsResume)
+				status = Commands.OperationStatus.RESUMED;
+			else if (isRunning)
+				status = Commands.OperationStatus.STARTED;
+			else
+				status = Commands.OperationStatus.NOT_RUNNING;
+
+			report.Status = status;
+
+			Handler.Send(e.Context, Commands.GuiReportOperationStatus(planType, planId, report));
+		}
+
+		private void OnControlPlanRun(object sender, ServerCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+
+			if (IsPlanRunning(planType, planId))
+			{
+				string msg = Commands.ReportError(0, "{0} plan #{1} is already running", planType.ToTitleCase(), planId);
+				Handler.Send(e.Context, msg);
+				return;
+			}
+
+			bool isBackup = planType.Equals("backup");
+			bool isRestore = planType.Equals("restore");
+			const bool isResume = false;
+
+			bool didRun = false;
+			if (isBackup)
+				didRun = RunBackupPlan(e.Context, planId, isResume);
+			else if (isRestore)
+				didRun = RunRestorePlan(e.Context, planId, isResume);
+		}
+
+		private void OnControlPlanResume(object sender, ServerCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+
+			if (IsPlanRunning(planType, planId))
+			{
+				string msg = Commands.ReportError(0, "{0} plan #{1} is already running", planType.ToTitleCase(), planId);
+				Handler.Send(e.Context, msg);
+				return;
+			}
+
+			bool isBackup = planType.Equals("backup");
+			bool isRestore = planType.Equals("restore");
+			const bool isResume = true;
+
+			bool didRun = false;
+			if (isBackup)
+				didRun = RunBackupPlan(e.Context, planId, isResume);
+			else if (isRestore)
+				didRun = RunRestorePlan(e.Context, planId, isResume);
+		}
+
+		private void OnControlPlanCancel(object sender, ServerCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+
+			if (!IsPlanRunning(planType, planId))
+			{
+				string msg = Commands.ReportError(0, "{0} plan #{1} is not running", planType.ToTitleCase(), planId);
+				Handler.Send(e.Context, msg);
+				return;
+			}
+
+			// Send to executor
+			string executorClientName = Commands.BuildClientName(planType, planId);
+			ClientState executor = Handler.GetClientState(executorClientName);
+			if (executor == null)
+			{
+				string msg = Commands.ReportError(0, "Executor for {0} plan #{1} doesn't seem to be running",
+					planType.ToTitleCase(), planId);
+				Handler.Send(e.Context, msg);
+				return;
+			}
+
+			Handler.Send(executor.Context, Commands.ExecutorCancelPlan());
+		}
+
+		private void KillAllSubProcesses()
+		{
+			foreach (var entry in RunningBackups)
+				entry.Value.Kill();
+			RunningBackups.Clear();
+
+			foreach (var entry in RunningRestores)
+				entry.Value.Kill();
+			RunningRestores.Clear();
+		}
+
+		private void OnControlPlanKill(object sender, ServerCommandEventArgs e)
+		{
+			string planType = e.Command.GetArgumentValue<string>("planType");
+			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
+
+			Process processToBeKilled = null;
+			bool isBackup = planType.Equals("backup");
+			bool isRestore = planType.Equals("restore");
+
+			if (isBackup)
+				RunningBackups.TryGetValue(planId, out processToBeKilled);
+			else if (isRestore)
+				RunningRestores.TryGetValue(planId, out processToBeKilled);
+
+			if (processToBeKilled == null)
+			{
+				string msg = Commands.ReportError(0, "{0} plan #{1} is not running", planType.ToTitleCase(), planId);
+				Handler.Send(e.Context, msg);
+				return;
+			}
+
+			processToBeKilled.Kill();
+
+			if (isBackup)
+				RunningBackups.Remove(planId);
+			else if (isRestore)
+				RunningRestores.Remove(planId);
+		}
+
+		#endregion
+
+		#region Sub-Process
+
+		private Dictionary<Int32, Process> RunningBackups = new Dictionary<Int32, Process>();
+		private Dictionary<Int32, Process> RunningRestores = new Dictionary<Int32, Process>();
+
+		private bool IsPlanRunning(string planType, Int32 planId)
+		{
+			ValidatePlanType(planType);
+
+			if (planType.Equals("backup"))
+				return IsBackupPlanRunning(planId);
+			else if (planType.Equals("restore"))
+				return IsRestorePlanRunning(planId);
+
+			return false;
+		}
+
+		private bool IsRestorePlanRunning(Int32 planId)
+		{
+			return RunningRestores.ContainsKey(planId);
+		}
+
+		private bool IsBackupPlanRunning(Int32 planId)
+		{
+			return RunningBackups.ContainsKey(planId);
+		}
+
+		private bool RunRestorePlan(Server.ClientContext context, Int32 planId, bool resume)
+		{
+			PlanExecutorEnv env = BuildPlanExecutorEnv("restore", planId, resume);
+			EventHandler onExit = delegate(object sender, EventArgs e)
+			{
+				RunningRestores.Remove(planId);
+				//Process process = (Process)sender;
+				//if (process.ExitCode != 0)
+				//{
+				//	Handler.Send(context, Commands.ReportError("FAILED"));
+				//}
+			};
+			try
+			{
+				Process process = StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
+				RunningRestores.Add(planId, process);
+				return true;
+			}
+			catch (Exception ex)
+			{
+				Handler.Send(context, Commands.ReportError(0, ex.Message));
+				return false;
+			}
+		}
+
+		private bool RunBackupPlan(Server.ClientContext context, Int32 planId, bool resume)
+		{
+			PlanExecutorEnv env = BuildPlanExecutorEnv("backup", planId, resume);
+			EventHandler onExit = delegate(object sender, EventArgs e)
+				{
+					RunningBackups.Remove(planId);
+					//Process process = (Process)sender;
+					//if (process.ExitCode != 0)
+					//{
+					//	Handler.Send(context, Commands.ReportError("FAILED"));
+					//}
+				};
+			try
+			{
+				Process process = StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
+				RunningBackups.Add(planId, process);
+				return true;
+			}
+			catch (Exception ex)
+			{
+				Handler.Send(context, Commands.ReportError(0, ex.Message));
+				return false;
+			}
+		}
+
+		private Process StartSubProcess(string filename, string arguments, string cwd, EventHandler onExit = null)
+		{
+			//
+			// CITATIONS:
+			//
+			//   The LocalSystem account is a predefined local account used by the service control manager.
+			//   It has extensive privileges on the local computer, and acts as the computer on the network.
+			//
+			//   - The registry key HKEY_CURRENT_USER is associated with the default user, not the current user.
+			//     To access another user's profile, impersonate the user, then access HKEY_CURRENT_USER.
+			//   - The service presents the computer's credentials to remote servers.
+			//
+			// REFERENCE: https://msdn.microsoft.com/en-us/library/ms684190(VS.85).aspx
+			//
+			try
+			{
+				ProcessStartInfo info = new ProcessStartInfo(filename, arguments);
+				info.WorkingDirectory = cwd;
+#if DEBUG
+				info.CreateNoWindow = true;
+#else
+				info.CreateNoWindow = false;
+#endif
+				Process process = new Process();
+				process.StartInfo = info;
+				process.EnableRaisingEvents = true;
+				if (onExit != null)
+					process.Exited += onExit;
+				logger.Info("Starting sub-process {0} {1}", filename, arguments);
+				process.Start();
+				return process;
+			}
+			catch (Exception ex)
+			{
+				logger.Log(LogLevel.Error, ex, "Failed to start sub-process {0} {1}", filename, arguments);
+				throw ex;
+			}
+		}
+
+		#endregion
 
 		List<Models.ISchedulablePlan> AllSchedulablePlans = new List<Models.ISchedulablePlan>();
 
@@ -553,8 +859,8 @@ namespace Teltec.Backup.Scheduler
 			BackupPlanRepository daoBackupPlans = new BackupPlanRepository();
 			RestorePlanRepository daoRestorePlans = new RestorePlanRepository();
 
-			AllSchedulablePlans.AddRange(daoBackupPlans.GetAll());
-			AllSchedulablePlans.AddRange(daoRestorePlans.GetAll());
+			AllSchedulablePlans.AddRange(daoBackupPlans.GetAllActive());
+			AllSchedulablePlans.AddRange(daoRestorePlans.GetAllActive());
 
 			// TODO(jweyrich): Currently does not DELETE existing tasks for plans that no longer exist.
 			// TODO(jweyrich): Currently does not CHECK if an existing plan schedule has been changed.
@@ -579,8 +885,25 @@ namespace Teltec.Backup.Scheduler
 
 			Info("Time to check for changes...");
 
-			ReloadPlansAndReschedule();
+			try
+			{
+				ReloadPlansAndReschedule();
+			}
+			catch (Exception ex)
+			{
+				if (Environment.UserInteractive)
+				{
+					string message = string.Format(
+						"Caught a fatal exception ({0}). Check the log file for more details.",
+						ex.Message);
+					//if (Process.GetCurrentProcess().MainWindowHandle != IntPtr.Zero)
+					//	MessageBox.Show(message);
+				}
+				logger.Log(LogLevel.Fatal, ex, "Caught a fatal exception");
+			}
 		}
+
+		#region Service
 
 		protected override void OnStart(string[] args)
 		{
@@ -605,9 +928,21 @@ namespace Teltec.Backup.Scheduler
 			//serviceStatus.dwCurrentState = ServiceState.Running;
 			//ServiceInstaller.SetServiceStatus(this.ServiceHandle, ref serviceStatus);
 
-			Info("Service was started.");
-
 			ReloadPlansAndReschedule();
+
+			try
+			{
+				Handler.Start(Commands.IPC_DEFAULT_HOST, Commands.IPC_DEFAULT_PORT);
+			}
+			catch (Exception ex)
+			{
+				Error("Couldn't start the server: {0}", ex.Message);
+				base.ExitCode = 1; // Signal the initialization failed.
+				base.Stop();
+				return;
+			}
+
+			Info("Service was started.");
 
 			// Start timer only after the plans were already loaded and rescheduled.
 			start_timer();
@@ -618,7 +953,18 @@ namespace Teltec.Backup.Scheduler
 			base.OnStop();
 
 			Info("Service is stopping...");
-			timer.Stop();
+
+			if (timer.Enabled)
+				timer.Stop();
+
+			KillAllSubProcesses();
+
+			if (Handler != null && Handler.IsRunning)
+			{
+				Handler.RequestStop();
+				Handler.Wait();
+			}
+
 			Info("Service was stopped.");
 		}
 
@@ -720,9 +1066,25 @@ namespace Teltec.Backup.Scheduler
 
 		#endregion
 
-		private void InitializeComponent()
-		{
+		#region Dispose Pattern Implementation
 
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				if (Handler != null)
+				{
+					Handler.Dispose();
+					Handler = null;
+				}
+			}
+			base.Dispose(disposing);
 		}
+
+		#endregion
 	}
 }

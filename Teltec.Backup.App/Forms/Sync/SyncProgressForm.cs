@@ -1,11 +1,9 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
-using System.Windows.Forms;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.PlanExecutor.Synchronize;
 using Teltec.Common.Utils;
 using Teltec.Storage;
-using Teltec.Common.Extensions;
 using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.App.Forms.Sync
@@ -194,6 +192,7 @@ namespace Teltec.Backup.App.Forms.Sync
 						this.lblRemoteDirectory.Text = RunningOperation.RemoteRootDirectory;
 						this.llblRunNow.Text = LBL_RUNNOW_STOPPED;
 						this.lblStatus.Text = status == SyncOperationStatus.Canceled ? LBL_STATUS_CANCELED : LBL_STATUS_FAILED;
+						this.lblFilesSynced.Text = LBL_FILESSYNCED_STOPPED;
 
 						timer1.Stop();
 						timer1.Enabled = false;
@@ -240,7 +239,7 @@ namespace Teltec.Backup.App.Forms.Sync
 		private void UpdateDuration(SyncOperationStatus status)
 		{
 			Assert.IsNotNull(RunningOperation);
-			var duration = !status.IsEnded()
+			var duration = !status.IsEnded() || !RunningOperation.FinishedAt.HasValue
 				? DateTime.UtcNow - RunningOperation.StartedAt.Value
 				: RunningOperation.FinishedAt.Value - RunningOperation.StartedAt.Value;
 			lblDuration.Text = TimeSpanUtils.GetReadableTimespan(duration);

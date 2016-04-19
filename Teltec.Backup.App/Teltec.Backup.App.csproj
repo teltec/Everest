@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿		<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -11,7 +11,7 @@
     <AssemblyName>Teltec.Backup.App</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>ef7f2709</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>2b0f3f29</NuGetPackageImportStamp>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -78,8 +78,12 @@
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AWSSDK, Version=2.3.51.0, Culture=neutral, PublicKeyToken=9f476d3089b52be3, processorArchitecture=MSIL">
-      <HintPath>..\packages\AWSSDK.2.3.51.0\lib\net45\AWSSDK.dll</HintPath>
+    <Reference Include="AWSSDK.Core, Version=3.1.0.0, Culture=neutral, PublicKeyToken=885c28607f98e604, processorArchitecture=MSIL">
+      <HintPath>..\packages\AWSSDK.Core.3.1.5.0\lib\net45\AWSSDK.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AWSSDK.S3, Version=3.1.0.0, Culture=neutral, PublicKeyToken=885c28607f98e604, processorArchitecture=MSIL">
+      <HintPath>..\packages\AWSSDK.S3.3.1.3.13\lib\net45\AWSSDK.S3.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
@@ -90,8 +94,9 @@
       <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="FluentNHibernate">
-      <HintPath>..\packages\FluentNHibernate.2.0.1.0\lib\net40\FluentNHibernate.dll</HintPath>
+    <Reference Include="FluentNHibernate, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentNHibernate.2.0.3.0\lib\net40\FluentNHibernate.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="GlacialList">
       <HintPath>..\Libs\GlacialList.dll</HintPath>
@@ -107,31 +112,32 @@
       <HintPath>..\packages\NHibernate.4.0.4.4000\lib\net40\NHibernate.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="NLog, Version=4.1.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.1.0\lib\net45\NLog.dll</HintPath>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.2.3\lib\net45\NLog.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="nunit.framework">
-      <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
+    <Reference Include="nunit.framework, Version=3.2.0.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.3.2.0\lib\net45\nunit.framework.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="SimpleInjector, Version=3.0.5.0, Culture=neutral, PublicKeyToken=984cb50dea722e99, processorArchitecture=MSIL">
-      <HintPath>..\packages\SimpleInjector.3.0.5\lib\net45\SimpleInjector.dll</HintPath>
+    <Reference Include="SimpleInjector, Version=3.1.2.0, Culture=neutral, PublicKeyToken=984cb50dea722e99, processorArchitecture=MSIL">
+      <HintPath>..\packages\SimpleInjector.3.1.2\lib\net45\SimpleInjector.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Data.SQLite, Version=1.0.98.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Core.1.0.98.1\lib\net45\System.Data.SQLite.dll</HintPath>
+    <Reference Include="System.Data.SQLite, Version=1.0.99.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.99.0\lib\net45\System.Data.SQLite.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Data.SQLite.EF6, Version=1.0.98.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.EF6.1.0.98.1\lib\net45\System.Data.SQLite.EF6.dll</HintPath>
+    <Reference Include="System.Data.SQLite.EF6, Version=1.0.99.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.EF6.1.0.99.0\lib\net45\System.Data.SQLite.EF6.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Data.SQLite.Linq, Version=1.0.98.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Linq.1.0.98.1\lib\net45\System.Data.SQLite.Linq.dll</HintPath>
+    <Reference Include="System.Data.SQLite.Linq, Version=1.0.99.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.Linq.1.0.99.0\lib\net45\System.Data.SQLite.Linq.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Numerics" />
@@ -146,12 +152,23 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="ZetaLongPaths, Version=1.0.0.8, Culture=neutral, PublicKeyToken=b764f59068f31f38, processorArchitecture=MSIL">
-      <HintPath>..\packages\ZetaLongPaths.1.0.0.8\lib\net40-full\ZetaLongPaths.dll</HintPath>
+    <Reference Include="ZetaLongPaths, Version=1.0.0.9, Culture=neutral, PublicKeyToken=b764f59068f31f38, processorArchitecture=MSIL">
+      <HintPath>..\packages\ZetaLongPaths.1.0.0.9\lib\net40-full\ZetaLongPaths.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\DriveItem.cs" />
+    <Compile Include="Controls\DriveItemsBindingSource.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\DriveItemsComboBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\DriveItemsComboBox.Designer.cs">
+      <DependentUpon>DriveItemsComboBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\DriveItemsEnumerable.cs" />
     <Compile Include="Controls\EntryInfo.cs" />
     <Compile Include="Controls\EntryTreeNode.cs" />
     <Compile Include="Controls\FileSystemTreeNode.cs" />
@@ -170,6 +187,12 @@
     </Compile>
     <Compile Include="Controls\TextBoxOpenFileDialog.Designer.cs">
       <DependentUpon>TextBoxOpenFileDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\NetworkFolderBrowserDialog.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\NetworkFolderBrowserDialog.Designer.cs">
+      <DependentUpon>NetworkFolderBrowserDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\About\AboutForm.cs">
       <SubType>Form</SubType>
@@ -195,6 +218,20 @@
     <Compile Include="Forms\BackupPlan\BackupPlanPurgeOptionsForm.Designer.cs">
       <DependentUpon>BackupPlanPurgeOptionsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\NetworkCredentials\AddEditNetworkCredentialForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\NetworkCredentials\AddEditNetworkCredentialForm.Designer.cs">
+      <DependentUpon>AddEditNetworkCredentialForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\NetworkCredentials\NetworkCredentialsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\NetworkCredentials\NetworkCredentialsForm.Designer.cs">
+      <DependentUpon>NetworkCredentialsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\RemoteOperation.cs" />
+    <Compile Include="Forms\Formatters.cs" />
     <Compile Include="Forms\RestorePlan\RestorePlanSelectAccountForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -225,6 +262,12 @@
     </Compile>
     <Compile Include="Forms\RestorePlan\RestorePlanGiveNameForm.Designer.cs">
       <DependentUpon>RestorePlanGiveNameForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\S3\AmazonS3CreateBucketForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\S3\AmazonS3CreateBucketForm.Designer.cs">
+      <DependentUpon>AmazonS3CreateBucketForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\Schedule\ScheduleRecurringOptionsForm.cs">
       <SubType>Form</SubType>
@@ -348,8 +391,17 @@
     <EmbeddedResource Include="Forms\BackupPlan\BackupPlanListControl.resx">
       <DependentUpon>BackupPlanListControl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\NetworkCredentials\AddEditNetworkCredentialForm.resx">
+      <DependentUpon>AddEditNetworkCredentialForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\NetworkCredentials\NetworkCredentialsForm.resx">
+      <DependentUpon>NetworkCredentialsForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectAccountForm.resx">
       <DependentUpon>RestorePlanSelectAccountForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\S3\AmazonS3CreateBucketForm.resx">
+      <DependentUpon>AmazonS3CreateBucketForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\Schedule\SchedulablePlanForm.resx">
       <DependentUpon>SchedulablePlanForm.cs</DependentUpon>
@@ -459,6 +511,7 @@
     <ProjectReference Include="..\Teltec.Backup.PlanExecutor\Teltec.Backup.PlanExecutor.csproj">
       <Project>{0d704de4-13fe-4603-a903-6cd9939a2645}</Project>
       <Name>Teltec.Backup.PlanExecutor</Name>
+      <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\Teltec.Backup.Settings\Teltec.Backup.Settings.csproj">
       <Project>{6618ceb2-b807-4f56-8867-44572f71f189}</Project>
@@ -502,9 +555,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Forms\Backup\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Content Include="LICENSE.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -521,12 +572,12 @@ if "$(ConfigurationName)"=="Debug" (
 )
 </PreBuildEvent>
   </PropertyGroup>
-  <Import Project="..\packages\System.Data.SQLite.Core.1.0.98.1\build\net45\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.98.1\build\net45\System.Data.SQLite.Core.targets')" />
+  <Import Project="..\packages\System.Data.SQLite.Core.1.0.99.0\build\net45\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.99.0\build\net45\System.Data.SQLite.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.98.1\build\net45\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.98.1\build\net45\System.Data.SQLite.Core.targets'))" />
+    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.99.0\build\net45\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.99.0\build\net45\System.Data.SQLite.Core.targets'))" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

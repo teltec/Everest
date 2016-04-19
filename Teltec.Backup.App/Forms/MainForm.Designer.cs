@@ -1,4 +1,4 @@
-﻿namespace Teltec.Backup.App.Forms
+namespace Teltec.Backup.App.Forms
 {
     partial class MainForm
     {
@@ -6,19 +6,6 @@
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
 
         #region Windows Form Designer generated code
 
@@ -36,13 +23,14 @@
 			this.restorePlansToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.synchronizeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tpgBackupPlans = new System.Windows.Forms.TabPage();
 			this.backupPlanListControl1 = new Teltec.Backup.App.Forms.BackupPlan.BackupPlanListControl();
 			this.tpgRestorePlans = new System.Windows.Forms.TabPage();
 			this.restorePlanListControl1 = new Teltec.Backup.App.Forms.RestorePlan.RestorePlanListControl();
-			this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.networkCredentialsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.tabControl1.SuspendLayout();
 			this.tpgBackupPlans.SuspendLayout();
@@ -103,6 +91,7 @@
 			// optionsToolStripMenuItem
 			// 
 			this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.networkCredentialsToolStripMenuItem,
             this.synchronizeToolStripMenuItem,
             this.settingsToolStripMenuItem});
 			this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
@@ -112,9 +101,16 @@
 			// synchronizeToolStripMenuItem
 			// 
 			this.synchronizeToolStripMenuItem.Name = "synchronizeToolStripMenuItem";
-			this.synchronizeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.synchronizeToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
 			this.synchronizeToolStripMenuItem.Text = "Synchronize";
 			this.synchronizeToolStripMenuItem.Click += new System.EventHandler(this.synchronizeToolStripMenuItem_Click);
+			// 
+			// settingsToolStripMenuItem
+			// 
+			this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+			this.settingsToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+			this.settingsToolStripMenuItem.Text = "Settings";
+			this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
 			// 
 			// aboutToolStripMenuItem
 			// 
@@ -175,12 +171,12 @@
 			this.restorePlanListControl1.Size = new System.Drawing.Size(656, 284);
 			this.restorePlanListControl1.TabIndex = 0;
 			// 
-			// settingsToolStripMenuItem
+			// networkCredentialsToolStripMenuItem
 			// 
-			this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-			this.settingsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-			this.settingsToolStripMenuItem.Text = "Settings";
-			this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
+			this.networkCredentialsToolStripMenuItem.Name = "networkCredentialsToolStripMenuItem";
+			this.networkCredentialsToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+			this.networkCredentialsToolStripMenuItem.Text = "Network Credentials";
+			this.networkCredentialsToolStripMenuItem.Click += new System.EventHandler(this.networkCredentialsToolStripMenuItem_Click);
 			// 
 			// MainForm
 			// 
@@ -223,6 +219,7 @@
 		private System.Windows.Forms.ToolStripMenuItem synchronizeToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem networkCredentialsToolStripMenuItem;
     }
 }
 

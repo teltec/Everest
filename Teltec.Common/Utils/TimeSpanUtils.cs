@@ -18,10 +18,10 @@ namespace Teltec.Common.Utils
 		{
 			// Formats and its cutoffs based on totalseconds
 			var cutoff = new SortedList<long, string> {
-				{ 60,				"{3:S}"			},
-				{ 60 * 60,			"{2:M}, {3:S}"	},
-				{ 24 * 60 * 60,		"{1:H}, {2:M}"	},
-				{ Int64.MaxValue,	"{0:D}, {1:H}"	},
+				{ 60,				"{3:S}"							},
+				{ 60 * 60,			"{2:M}, {3:S}"					},
+				{ 24 * 60 * 60,		"{1:H}, {2:M}, {3:S}"			},
+				{ Int64.MaxValue,	"{0:D}, {1:H}, {2:M}, {3:S}"	},
 			};
 
 			// Find nearest best match
@@ -87,7 +87,7 @@ namespace Teltec.Common.Utils
 						fmt = String.Format(new HMSFormatter("{0} days", "{0} day"), "{0}", arg);
 						break;
 					default:
-						// plural/ singular
+						// plural/singular
 						fmt = String.Format((int)arg > 1 ? _plural : _singular, arg);  // watch the cast to int here...
 						break;
 				}

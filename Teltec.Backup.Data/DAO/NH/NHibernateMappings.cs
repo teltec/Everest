@@ -47,7 +47,16 @@ namespace Teltec.Backup.Data.DAO.NH
 
 			HasMany(p => p.Files)
 				.KeyColumn("storage_account_id")
-				.Cascade.AllDeleteOrphan()
+				// Cascade everything except Refresh.
+				.Cascade.Delete()
+				.Cascade.DeleteOrphan()
+				.Cascade.Evict()
+				.Cascade.Lock()
+				.Cascade.Merge()
+				.Cascade.Persist()
+				//.Cascade.Refresh()
+				.Cascade.Replicate()
+				.Cascade.SaveUpdate()
 				.AsBag()
 				;
 
@@ -93,6 +102,39 @@ namespace Teltec.Backup.Data.DAO.NH
 	}
 
 	#endregion
+
+	class NetworkCredentialMap : ClassMap<Models.NetworkCredential>
+	{
+		public NetworkCredentialMap()
+		{
+			Table("network_credentials");
+
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_network_credentials");
+
+			Map(p => p.MountPoint)
+				.Column("mount_point")
+				.Not.Nullable()
+				.Length(Models.NetworkCredential.MountPointMaxLen)
+				;
+
+			Map(p => p.Path)
+				.Column("path")
+				.Not.Nullable()
+				.Length(Models.NetworkCredential.PathMaxLen)
+				;
+
+			Map(p => p.Login)
+				.Column("login")
+				.Not.Nullable()
+				.Length(Models.NetworkCredential.LoginMaxLen)
+				;
+
+			Map(p => p.Password)
+				.Column("password")
+				.Length(Models.NetworkCredential.PasswordMaxLen)
+				;
+		}
+	}
 
 	#region Plan Schedule
 
@@ -276,6 +318,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				.AsBag()
 				;
 
+			Map(p => p.UpdatedAt)
+				.Column("updated_at")
+				.Not.Nullable()
+				//.CustomType<TimestampType>()
+				;
+
 			Map(p => p.ScheduleType)
 				.Column("schedule_type")
 				.Not.Nullable()
@@ -397,8 +445,14 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupedFileMap()
 		{
-			string UNIQUE_KEY = "uk_backuped_file"; // (storage_account_id, backup_plan_file_id, backup_id)
-			string INDEX_BACKUP_PATH_XFERSTATUS = "idx_backup_path_xferstatus"; // (backup_id, backup_plan_file_id, transfer_status)
+			// This UQ needs the following columns:
+			//   - backup_plan_file_id  : because that's the only way to identify the file;
+			//   - file_last_written_at : because Sync can't deduce backup IDs;
+			//   - storage_account_id   : because we need to distinguish between accounts - the same file can be o multiple accounts;
+			//   - transfer_status      : ...
+			//   - backup_id            : because the same file can FAIL in two consecutive backups;
+			string UNIQUE_KEY = "uk_backuped_file"; // (backup_plan_file_id, file_last_written_at, storage_account_id, transfer_status, backup_id)
+			string INDEX_BACKUP_PATH_XFERSTATUS = "idx_backup_path_xferstatus"; // (backup_plan_file_id, backup_id, transfer_status)
 			string INDEX_BACKUP_XFERSTATUS = "idx_backup_xferstatus"; // (backup_id, transfer_status)
 
 			Table("backuped_files");
@@ -436,6 +490,13 @@ namespace Teltec.Backup.Data.DAO.NH
 				.UniqueKey(UNIQUE_KEY)
 				;
 
+			References(fk => fk.Synchronization)
+				.Column("synchronization_id")
+				.Nullable()
+				.Cascade.None()
+				//.Access.ReadOnly()
+				;
+
 			References(fk => fk.File)
 				.Column("backup_plan_file_id")
 				// IMPORTANT: This property cannot be `NOT NULL` because `Cascade.AllDeleteOrphan`
@@ -459,13 +520,21 @@ namespace Teltec.Backup.Data.DAO.NH
 			Map(p => p.FileLastWrittenAt)
 				.Column("file_last_written_at")
 				.Nullable()
+				.UniqueKey(UNIQUE_KEY)
 				//.CustomType<TimestampType>()
+				;
+
+			Map(p => p.FileLastChecksum)
+				.Column("file_last_checksum")
+				.Nullable()
+				.Length(20) // SHA-1 is 160 bits long (20 bytes)
 				;
 
 			Map(p => p.TransferStatus)
 				.Column("transfer_status")
 				.Not.Nullable()
 				.CustomType<GenericEnumMapper<TransferStatus>>()
+				.UniqueKey(UNIQUE_KEY)
 				.Index(INDEX_BACKUP_PATH_XFERSTATUS)
 				.Index(INDEX_BACKUP_XFERSTATUS)
 				;
@@ -483,9 +552,11 @@ namespace Teltec.Backup.Data.DAO.NH
 	{
 		public BackupPlanFileMap()
 		{
-			string UNIQUE_KEY_PLAN_PATH = "uk_backup_plan_path"; // (backup_plan_id, path)
 			string UNIQUE_KEY_PLAN_PATHNODE = "uk_backup_plan_path_node"; // (backup_plan_id, path_node_id)
 			string INDEX_PATHNODE = "idx_path_node"; // (path_node_id)
+			// IMPORTANT: Warning! The maximum key length is 900 bytes.
+			// http://stackoverflow.com/questions/12717317/900-byte-index-size-limit-in-character-length
+			string INDEX_PLAN_PATH = "idx_backup_plan_path"; // (backup_plan_id, path)
 
 			Table("backup_plan_files");
 
@@ -495,8 +566,8 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Column("backup_plan_id")
 				.Nullable() // Nullable because Sync creates files with this property set to NULL.
 				.Cascade.None()
-				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
 				.UniqueKey(UNIQUE_KEY_PLAN_PATHNODE)
+				.Index(INDEX_PLAN_PATH)
 				;
 
 			Map(p => p.StorageAccountType)
@@ -517,7 +588,7 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Column("path")
 				.Not.Nullable()
 				.Length(Models.BackupPlanSourceEntry.PathMaxLen)
-				.UniqueKey(UNIQUE_KEY_PLAN_PATH)
+				.Index(INDEX_PLAN_PATH)
 				;
 
 			Map(p => p.LastSize)
@@ -698,6 +769,12 @@ namespace Teltec.Backup.Data.DAO.NH
 				.KeyColumn("restore_plan_id")
 				.Cascade.AllDeleteOrphan()
 				.AsBag()
+				;
+
+			Map(p => p.UpdatedAt)
+				.Column("updated_at")
+				.Not.Nullable()
+				//.CustomType<TimestampType>()
 				;
 
 			Map(p => p.ScheduleType)

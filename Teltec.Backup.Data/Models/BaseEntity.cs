@@ -1,4 +1,4 @@
-﻿using Teltec.Backup.Data.DAO.NH;
+using Teltec.Backup.Data.DAO.NH;
 using Teltec.Common;
 
 namespace Teltec.Backup.Data.Models
