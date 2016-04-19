@@ -1,3 +1,4 @@
+using log4net.Config;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -107,6 +108,8 @@ namespace Teltec.Backup.PlanExecutor
 			string cwd = AppDomain.CurrentDomain.BaseDirectory;
 			Directory.SetCurrentDirectory(cwd ?? ".");
 			logger.Info("Current directory is {0}", cwd);
+
+			XmlConfigurator.ConfigureAndWatch(new FileInfo("log4net.config"));
 
 			if (!IsReleaseVersion && System.Environment.UserInteractive)
 				ConsoleAppHelper.CatchSpecialConsoleEvents();
