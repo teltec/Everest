@@ -10,8 +10,9 @@ namespace Teltec.Backup.App.Controls
 			InitializeComponent();
 
 			openFileDialog1.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+			openFileDialog1.FileName = "";
 			// TODO(jweyrich): At some point, handle OpenFileDialog filters for binary files on other platforms as well.
-			openFileDialog1.Filter = "Executable files (*.exe)|Batch files (*.bat)";
+			openFileDialog1.Filter = "All supported files (*.exe, *.bat)|*.exe;*.bat|Executable files (*.exe)|*.exe|Batch files (*.bat)|*.bat";
 		}
 
 		private void tbPath_Enter(object sender, EventArgs e)
