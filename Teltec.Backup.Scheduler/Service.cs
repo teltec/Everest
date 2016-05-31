@@ -9,16 +9,16 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Principal;
 using System.ServiceProcess;
+using System.Text;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Ipc.Protocol;
 using Teltec.Backup.Ipc.TcpSocket;
-using Models = Teltec.Backup.Data.Models;
-using Teltec.Common.Extensions;
-using System.Text;
-using Teltec.Common.Threading;
 using Teltec.Backup.Logging;
 using Teltec.Common;
-using System.Net.Sockets;
+using Teltec.Common.Extensions;
+using Teltec.Common.Threading;
+using Teltec.Common.Utils;
+using Models = Teltec.Backup.Data.Models;
 
 namespace Teltec.Backup.Scheduler
 {
@@ -513,7 +513,14 @@ namespace Teltec.Backup.Scheduler
 				const string username = "SYSTEM";
 				const string password = null;
 				const TaskLogonType logonType = TaskLogonType.ServiceAccount;
-				ts.RootFolder.RegisterTaskDefinition(taskName, td, TaskCreation.CreateOrUpdate, username, password, logonType);
+				try
+				{
+					ts.RootFolder.RegisterTaskDefinition(taskName, td, TaskCreation.CreateOrUpdate, username, password, logonType);
+				}
+				catch (Exception ex)
+				{
+					logger.Error("Failed to create/update scheduled task ({0}): {1}", taskName, ex.Message);
+				}
 			}
 		}
 
@@ -773,7 +780,7 @@ namespace Teltec.Backup.Scheduler
 			};
 			try
 			{
-				Process process = StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
+				Process process = ProcessUtils.StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
 				RunningRestores.Add(planId, process);
 				return true;
 			}
@@ -798,7 +805,7 @@ namespace Teltec.Backup.Scheduler
 				};
 			try
 			{
-				Process process = StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
+				Process process = ProcessUtils.StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
 				RunningBackups.Add(planId, process);
 				return true;
 			}
@@ -806,45 +813,6 @@ namespace Teltec.Backup.Scheduler
 			{
 				Handler.Send(context, Commands.ReportError(0, ex.Message));
 				return false;
-			}
-		}
-
-		private Process StartSubProcess(string filename, string arguments, string cwd, EventHandler onExit = null)
-		{
-			//
-			// CITATIONS:
-			//
-			//   The LocalSystem account is a predefined local account used by the service control manager.
-			//   It has extensive privileges on the local computer, and acts as the computer on the network.
-			//
-			//   - The registry key HKEY_CURRENT_USER is associated with the default user, not the current user.
-			//     To access another user's profile, impersonate the user, then access HKEY_CURRENT_USER.
-			//   - The service presents the computer's credentials to remote servers.
-			//
-			// REFERENCE: https://msdn.microsoft.com/en-us/library/ms684190(VS.85).aspx
-			//
-			try
-			{
-				ProcessStartInfo info = new ProcessStartInfo(filename, arguments);
-				info.WorkingDirectory = cwd;
-#if DEBUG
-				info.CreateNoWindow = true;
-#else
-				info.CreateNoWindow = false;
-#endif
-				Process process = new Process();
-				process.StartInfo = info;
-				process.EnableRaisingEvents = true;
-				if (onExit != null)
-					process.Exited += onExit;
-				logger.Info("Starting sub-process {0} {1}", filename, arguments);
-				process.Start();
-				return process;
-			}
-			catch (Exception ex)
-			{
-				logger.Log(LogLevel.Error, ex, "Failed to start sub-process {0} {1}", filename, arguments);
-				throw ex;
 			}
 		}
 

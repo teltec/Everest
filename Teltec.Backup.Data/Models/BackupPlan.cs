@@ -4,7 +4,7 @@ using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.Data.Models
 {
-	public class BackupPlan : SchedulablePlan
+	public class BackupPlan : SchedulablePlan<BackupPlan>
 	{
 		public override Type GetVirtualType()
 		{

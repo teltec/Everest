@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Windows.Forms;
+using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.App.Controls
 {
@@ -13,13 +14,17 @@ namespace Teltec.Backup.App.Controls
 			openFileDialog1.FileName = "";
 			// TODO(jweyrich): At some point, handle OpenFileDialog filters for binary files on other platforms as well.
 			openFileDialog1.Filter = "All supported files (*.exe, *.bat)|*.exe;*.bat|Executable files (*.exe)|*.exe|Batch files (*.bat)|*.bat";
+
+			// Bindings.
+			tbPath.DataBindings.Add(new Binding("Text", this,
+				this.GetPropertyName((TextBoxOpenFileDialog x) => x.Text), false, DataSourceUpdateMode.OnPropertyChanged));
 		}
 
 		private void tbPath_Enter(object sender, EventArgs e)
 		{
 			if (string.IsNullOrEmpty(tbPath.Text))
 			{
-				LetUserSelectFile();
+				//LetUserSelectFile();
 			}
 		}
 

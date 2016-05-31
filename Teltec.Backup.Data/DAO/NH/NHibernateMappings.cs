@@ -103,6 +103,8 @@ namespace Teltec.Backup.Data.DAO.NH
 
 	#endregion
 
+	#region Network credentials
+
 	class NetworkCredentialMap : ClassMap<Models.NetworkCredential>
 	{
 		public NetworkCredentialMap()
@@ -135,6 +137,8 @@ namespace Teltec.Backup.Data.DAO.NH
 				;
 		}
 	}
+
+	#endregion
 
 	#region Plan Schedule
 
@@ -230,6 +234,103 @@ namespace Teltec.Backup.Data.DAO.NH
 			Map(p => p.OccursAtDayOfMonth)
 				.Column("occurs_at_day_of_month")
 				;
+		}
+	}
+
+	#endregion
+
+	#region Plan Config
+
+	class PlanConfigMap : ClassMap<Models.PlanConfig>
+	{
+		public PlanConfigMap()
+		{
+			Table("plan_configs");
+
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_plan_configs");
+
+			HasMany(p => p.Actions)
+				.KeyColumn("plan_config_id")
+				.Cascade.AllDeleteOrphan()
+				.AsBag()
+				;
+		}
+	}
+
+	#endregion
+
+	#region Plan Actions
+
+	class PlanActionMap : ClassMap<Models.PlanAction>
+	{
+		public PlanActionMap()
+		{
+			Table("plan_actions");
+
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_plan_actions");
+
+			References(fk => fk.PlanConfig)
+				.Column("plan_config_id")
+				.Not.Nullable()
+				;
+
+			Map(p => p.Type)
+				.Column("type")
+				.Not.Nullable()
+				.ReadOnly().Access.None()
+				.CustomType<GenericEnumMapper<Models.PlanActionTypeEnum>>()
+				.Index("idx_type")
+				;
+
+			Map(p => p.TriggerType)
+				.Column("trigger_type")
+				.CustomType<GenericEnumMapper<Models.PlanTriggerTypeEnum>>()
+				;
+
+			Map(p => p.IsEnabled)
+				.Column("is_enabled")
+				.Not.Nullable()
+				.Default("0") // "0" means false
+				;
+
+			Map(p => p.ConsiderShouldExecute)
+				.Column("consider_should_execute")
+				.Not.Nullable()
+				.Default("0") // "0" means false
+				;
+
+			Map(p => p.AbortIfExecutionFails)
+				.Column("abort_if_execution_fails")
+				.Not.Nullable()
+				.Default("0") // "0" means false
+				;
+
+			DiscriminateSubClassesOnColumn("type");
+		}
+	}
+
+	class PlanActionExecuteCommandMap : SubclassMap<Models.PlanActionExecuteCommand>
+	{
+		public PlanActionExecuteCommandMap()
+		{
+			DiscriminatorValue(Models.PlanActionTypeEnum.EXECUTE_COMMAND);
+
+			Join("plan_action_execute_commands", x =>
+			{
+				x.KeyColumn("id");
+
+				x.Map(p => p.Command)
+					.Column("command")
+					.Nullable()
+					.Length(Models.PlanActionExecuteCommand.CommandMaxLen)
+					;
+
+				x.Map(p => p.Arguments)
+					.Column("arguments")
+					.Nullable()
+					.Length(Models.PlanActionExecuteCommand.ArgumentsMaxLen)
+					;
+			});
 		}
 	}
 
@@ -361,6 +462,14 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Column("is_deleted")
 				.Not.Nullable()
 				.Default("0") // "0" means false
+				;
+
+			References(fk => fk.Config)
+				.Column("plan_config_id")
+				.Not.LazyLoad() // Load immediately
+				.Fetch.Join() // Tell it use to use a JOIN clause.
+				.Cascade.All()
+				.Not.Nullable()
 				;
 		}
 	}
@@ -806,6 +915,14 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Column("is_deleted")
 				.Not.Nullable()
 				.Default("0") // "0" means false
+				;
+
+			References(fk => fk.Config)
+				.Column("plan_config_id")
+				.Not.LazyLoad() // Load immediately
+				.Fetch.Join() // Tell it use to use a JOIN clause.
+				.Cascade.All()
+				.Not.Nullable()
 				;
 		}
 	}

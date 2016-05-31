@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Teltec.Common.Extensions;
 
 namespace Teltec.Backup.Data.Models
 {
-	public class RestorePlan : SchedulablePlan
+	public class RestorePlan : SchedulablePlan<RestorePlan>
 	{
 		public override Type GetVirtualType()
 		{

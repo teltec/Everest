@@ -2,8 +2,10 @@ using System;
 
 namespace Teltec.Backup.Data.Models
 {
+	// TODO(jweyrich: Improvement - We could move these properties to PlanConfig, and replace all uses of `ISchedulablePlan` by `SchedulablePlan`.
 	public interface ISchedulablePlan
 	{
+		PlanConfig Config { get; }
 		DateTime UpdatedAt { get; set; }
 		Int32 ScheduleParamId { get; }
 		string ScheduleParamName { get; }
@@ -14,7 +16,7 @@ namespace Teltec.Backup.Data.Models
 		bool IsRecurring { get; }
 	}
 
-	public abstract class SchedulablePlan : BaseEntity<Int32?>, ISchedulablePlan
+	public abstract class SchedulablePlan<ConcretePlanType> : BaseEntity<Int32?>, ISchedulablePlan
 	{
 		public static readonly string TaskNamePrefix = "TeltecCloudBackup-";
 
@@ -27,53 +29,16 @@ namespace Teltec.Backup.Data.Models
 			set { SetField(ref _Id, value); }
 		}
 
-		#region Name
+		#region ISchedulablePlan
 
-		public const int NameMaxLen = 128;
-		private String _Name;
-		public virtual String Name
+		private PlanConfig _Config = new PlanConfig();
+		public virtual PlanConfig Config
 		{
-			get { return _Name; }
-			set { SetField(ref _Name, value); }
+			get { return _Config; }
+			set { SetField(ref _Config, value); }
 		}
 
-		#endregion
-
-		#region Account
-
-		private EStorageAccountType _StorageAccountType;
-		public virtual EStorageAccountType StorageAccountType
-		{
-			get { return _StorageAccountType; }
-			set { SetField(ref _StorageAccountType, value); }
-		}
-
-		//private int _StorageAccountId;
-		//public virtual int StorageAccountId
-		//{
-		//	get { return _StorageAccountId; }
-		//	set { SetField(ref _StorageAccountId, value); }
-		//}
-
-		//public static ICloudStorageAccount GetStorageAccount(BackupPlan plan, ICloudStorageAccount dao)
-		//{
-		//	switch (plan.StorageAccountType)
-		//	{
-		//		default:
-		//			throw new ArgumentException("Unhandled StorageAccountType", "plan");
-		//		case EStorageAccountType.AmazonS3:
-		//			return dao.Get(plan.StorageAccountId);
-		//	}
-		//}
-
-		private StorageAccount _StorageAccount;
-		public virtual StorageAccount StorageAccount
-		{
-			get { return _StorageAccount; }
-			set { SetField(ref _StorageAccount, value); }
-		}
-
-		#endregion
+		#region Schedule
 
 		private DateTime _UpdatedAt; // Last date this entity was updated.
 		public virtual DateTime UpdatedAt
@@ -81,8 +46,6 @@ namespace Teltec.Backup.Data.Models
 			get { return _UpdatedAt; }
 			set { SetField(ref _UpdatedAt, value); }
 		}
-
-		#region Schedule
 
 		public virtual Int32 ScheduleParamId
 		{
@@ -132,6 +95,56 @@ namespace Teltec.Backup.Data.Models
 		public virtual bool IsRecurring
 		{
 			get { return ScheduleType == ScheduleTypeEnum.RECURRING; }
+		}
+
+		#endregion
+
+		#endregion
+
+		#region Name
+
+		public const int NameMaxLen = 128;
+		private String _Name;
+		public virtual String Name
+		{
+			get { return _Name; }
+			set { SetField(ref _Name, value); }
+		}
+
+		#endregion
+
+		#region Account
+
+		private EStorageAccountType _StorageAccountType;
+		public virtual EStorageAccountType StorageAccountType
+		{
+			get { return _StorageAccountType; }
+			set { SetField(ref _StorageAccountType, value); }
+		}
+
+		//private int _StorageAccountId;
+		//public virtual int StorageAccountId
+		//{
+		//	get { return _StorageAccountId; }
+		//	set { SetField(ref _StorageAccountId, value); }
+		//}
+
+		//public static ICloudStorageAccount GetStorageAccount(BackupPlan plan, ICloudStorageAccount dao)
+		//{
+		//	switch (plan.StorageAccountType)
+		//	{
+		//		default:
+		//			throw new ArgumentException("Unhandled StorageAccountType", "plan");
+		//		case EStorageAccountType.AmazonS3:
+		//			return dao.Get(plan.StorageAccountId);
+		//	}
+		//}
+
+		private StorageAccount _StorageAccount;
+		public virtual StorageAccount StorageAccount
+		{
+			get { return _StorageAccount; }
+			set { SetField(ref _StorageAccount, value); }
 		}
 
 		#endregion

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Teltec.Backup.Data.DAO;
+using Teltec.Backup.Data.Models;
 using Teltec.Backup.Ipc.Protocol;
 using Teltec.Backup.Ipc.TcpSocket;
 using Teltec.Backup.Logging;
@@ -302,10 +303,30 @@ namespace Teltec.Backup.PlanExecutor
 
 			MapAllNetworkDrives();
 
+			plan.Config.WireUpActions(); // IMPORTANT: Must be invoked before raising any plan event.
+
+			#region Pre-action event
+
+			try
+			{
+				bool actionSuccess = plan.Config.OnBeforePlanStarts(new PlanEventArgs { Plan = plan });
+				if (!actionSuccess)
+				{
+					logger.Warn("Pre-action did not succeed.");
+					Environment.Exit(1);
+				}
+			}
+			catch (Exception ex)
+			{
+				Handler.Send(Commands.ReportError(0, ex.Message));
+			}
+
+			#endregion
+
 			bool ok = RunOperation(selectedPlanType, plan);
 			if (!ok)
 			{
-				Console.Error.WriteLine("Operation did not run.");
+				logger.Error("Operation did not run.");
 				Environment.Exit(1);
 			}
 
@@ -331,6 +352,24 @@ namespace Teltec.Backup.PlanExecutor
 			Console.WriteLine("Operation finished.");
 
 			Handler.Client.WaitUntilDone();
+
+			#region Post-action event
+
+			try
+			{
+				bool actionSuccess = plan.Config.OnAfterPlanFinishes(new PlanEventArgs { Plan = plan, OperationResult = TransferResults.OverallStatus });
+				if (!actionSuccess)
+				{
+					logger.Warn("Post-action did not succeed.");
+					Environment.Exit(1);
+				}
+			}
+			catch (Exception ex)
+			{
+				Handler.Send(Commands.ReportError(0, ex.Message));
+			}
+
+			#endregion
 
 #if DEBUG
 			// Wait 10 seconds before exiting, just for debugging purposes.
