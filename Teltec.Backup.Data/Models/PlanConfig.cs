@@ -79,6 +79,10 @@ namespace Teltec.Backup.Data.Models
 		{
 			foreach (PlanAction action in Actions)
 			{
+				// Skip disabled actions.
+				if (!action.IsEnabled)
+					continue;
+
 				Func<object, PlanEventArgs, bool> executeActionFunc = (object sender, PlanEventArgs e) =>
 				{
 					action.ShouldExecute = e.OperationResult == TransferStatus.COMPLETED;
