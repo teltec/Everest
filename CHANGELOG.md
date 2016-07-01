@@ -2,6 +2,64 @@
 
 This CHANGELOG attemps to follow most conventions established by http://keepachangelog.com/.
 
+
+## [0.8.0] - 2016-07-01
+
+### Added
+
+- Working implementation of triggerable plan actions;
+- S3: Logged exceptions related to file transfer operations now contain
+  file path information;
+- Executor: Attempt to log AWS SDK metrics using log4net;
+- Data: Add debug helper function to BackupPlanFile;
+
+### Changed
+
+- Updated dependencies;
+- Long paths aren't currently supported by the AWSSDK;
+- Executor: Unmount and remount mapped drives that were mapped using a
+  different credential than the one informed by the user. This
+  may happen if the mapped drive was mounted manually by the
+  user or automatically by the system prior to running the
+  backup/restore operation;
+- Data: Store Synchronization ID on the BackupedFile;
+- Database: Change collation to be Case Sensitive and Accent
+  sensitive;
+  WARNING: Even if you MODIFY the DATABASE, PKs and UQs
+  won't be affected, keeping the previous collation;
+- Data: Tune the database to create the DB file with 50MB and also grow
+  its size by 50MB. The log file now starts at 10MB and grows 10%;
+- Catch more exceptions during file versioning;
+- Scheduler: Run tasks using the SYSTEM credentials;
+- Versioner: When a `BackupPlanPathNode` doesn't exist, it does not make
+  sense to lookup inner directories/files;
+
+### Fixed
+
+- Backup: Fix an UQ violation which may happen when the same file fails
+  in 2 consecutive backups - related to 7142371;
+- Executor: Strip the \\?\ prefix Windows uses for long paths (those > MAX_PATH);
+- GUI: Fix NPE after creating an account from the Backup Plan;
+- Data: Remove unnecessary UQ (BackupPlan, Path) from the BackupPlanFile's table;
+- Versioner: File versioning no longer updates `BackupPlanFiles` that have been
+  DELETED or REMOVED (this change may not be permanent - I was chasing
+  a bug that tried to insert/update files twice, and it apparently
+  solved it);
+- Versioner: Normalize file paths were needed;
+- Scheduler: Tasks that were scheduled to run on specific week days
+  wrongly run on Sunday as well;
+- Scheduler: Only schedule active tasks - tasks that were deleted
+  should not be scheduled;
+- Scheduler: Catch all exceptions during task scheduling;
+- Scheduler: Only re-schedule tasks for plans that have been changed;
+- Scheduler: Update task if it exists, otherwise create a new one;
+- GUI: Update status of UI controls under certain conditions;
+- Sync: Catch possible exceptions during INSERT/UPDATE operations and
+  log more details;
+- GUI: Fix OpenFileDialog filter;
+- IPC: Prevent invalid messages from propagating exceptions;
+
+
 ## [0.7.0] - 2016-01-08
 
 ### Added

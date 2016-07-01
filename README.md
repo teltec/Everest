@@ -6,7 +6,7 @@
 - Backup and restore plans;
 - Scheduled execution of backup and restore plans;
 - Synchronization;
-- Supports long paths (with more than 260 characters - Windows' MAX_PATH) -- Currently limited by lack of support from the AWSSDK - see https://github.com/aws/aws-sdk-net/issues/294;
+- Does not support long paths (with more than 260 characters - Windows' MAX_PATH) -- Currently limited by lack of support from the AWSSDK - see https://github.com/aws/aws-sdk-net/issues/294;
 - Automatic network shares mapping;
 - Runs backup/restore operations without requiring an active user session (a logged user);
 - Automatically deletes old backuped files;
@@ -24,18 +24,18 @@ You can read the entire changelog [here](CHANGELOG.md).
 
 ## Future Work
 
-- Support pre/post command execution;
 - Upload/Download retry policy (with exponential backoff) - See http://docs.aws.amazon.com/general/latest/gr/api-retries.html
 - Automatically send reports upon failure or completion;
 - Improve concurrency;
 - Limit bandwidth;
 - Restore files to a specified point in time;
 - Add lifecycle rules to transition to Glacier after a configurable amount of days - Note that object restoration from an archive can take up to five hours;
+- Attempt to make abstractions more developer friendly;
 
 ## Licensing Policy
 
 We try our best to comply with all requirements imposed by the licenses we directly or indirectly use.
-If you believe we have infringed a license, please, let us know by opening an issue in our GitHub repository.
+If you believe we have infringed a license, please, let us know by opening an issue in our GitHub repository or contacting us directly.
 
 CC-BY-SA-3.0
 	[Creative Commons Wiki - Best practices for attribution](https://wiki.creativecommons.org/wiki/Best_practices_for_attribution#Examples_of_attribution)
