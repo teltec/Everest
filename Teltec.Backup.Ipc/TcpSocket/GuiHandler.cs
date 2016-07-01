@@ -58,7 +58,19 @@ namespace Teltec.Backup.Ipc.TcpSocket
 		protected override bool HandleMessage(string message)
 		{
 			string errorMessage = null;
-			Message msg = new Message(message);
+			Message msg = null;
+
+			try
+			{
+				msg = new Message(message);
+			}
+			catch (Exception ex)
+			{
+				errorMessage = string.Format("Couldn't construct message: {0}", ex.Message);
+				logger.Warn(errorMessage);
+				Send(Commands.ReportError((int)Commands.ErrorCode.INVALID_CMD, errorMessage));
+				return false;
+			}
 
 			BoundCommand command = Commands.GuiParser.ParseMessage(msg, out errorMessage);
 			if (command == null)

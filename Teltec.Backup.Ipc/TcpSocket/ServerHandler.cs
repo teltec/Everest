@@ -195,7 +195,19 @@ namespace Teltec.Backup.Ipc.TcpSocket
 		private bool HandleMessage(Server.ClientContext context, string message)
 		{
 			string errorMessage = null;
-			Message msg = new Message(message);
+			Message msg = null;
+
+			try
+			{
+				msg = new Message(message);
+			}
+			catch (Exception ex)
+			{
+				errorMessage = string.Format("Couldn't construct message: {0}", ex.Message);
+				logger.Warn(errorMessage);
+				Send(context, Commands.ReportError((int)Commands.ErrorCode.INVALID_CMD, errorMessage));
+				return false;
+			}
 
 			BoundCommand command = Commands.ServerParser.ParseMessage(msg, out errorMessage);
 			if (command == null)
