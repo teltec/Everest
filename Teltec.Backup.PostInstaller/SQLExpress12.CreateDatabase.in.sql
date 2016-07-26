@@ -77,7 +77,7 @@ GRANT CONNECT TO [{{username}}]
 -- Alter database
 --
 
-ALTER DATABASE [{{database_name}}] SET COMPATIBILITY_LEVEL = 120
+ALTER DATABASE [{{database_name}}] SET COMPATIBILITY_LEVEL = 110
 GO
 
 IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))

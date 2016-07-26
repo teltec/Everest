@@ -1,5 +1,9 @@
 # Teltec Cloud Backup
 
+## Installation
+
+- After you install, you need to change the SQL Server authentication mode to "SQL Server and Windows Authentication mode". We may automate this in the future, but for now you have to do it manually.
+
 ## Features
 
 - Primarily designed for Amazon S3 and Windows;
