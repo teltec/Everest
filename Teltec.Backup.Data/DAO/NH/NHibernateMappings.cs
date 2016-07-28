@@ -780,6 +780,7 @@ namespace Teltec.Backup.Data.DAO.NH
 				//.LazyLoad(Laziness.Proxy)
 				.Cascade.None()
 				.UniqueKey(UNIQUE_KEY_ACCOUNT_PARENT_NAME)
+				.UniqueKey(UNIQUE_KEY_ACCOUNT_PATH)
 				.Index(INDEX_ACCOUNT_TYPE_NAME)
 				;
 
