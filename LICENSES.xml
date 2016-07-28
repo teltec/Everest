@@ -2,7 +2,7 @@
 <?xml-stylesheet href="LICENSES.xsl" type="text/xsl" ?>
 <global>
 	<dependencies>
-		<dependency title="AWSSDK - Core Runtime" name="AWSSDK.Core" version="3.1.7.0" license="Apache License 2.0" project-url="https://github.com/aws/aws-sdk-net">
+		<dependency title="AWSSDK - Core Runtime" name="AWSSDK.Core" version="3.1.9.1" license="Apache License 2.0" project-url="https://github.com/aws/aws-sdk-net">
 			Copyright 2008-2013 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 			Licensed under the Apache License, Version 2.0 (the "License"). You may not use
 			this file except in compliance with the License. A copy of the License is located at
@@ -14,7 +14,7 @@
 			CONDITIONS OF ANY KIND, either express or implied. See the License for the
 			specific language governing permissions and limitations under the License.
 		</dependency>
-		<dependency title="AWSSDK - Amazon Simple Storage Service" name="AWSSDK.S3" version="3.1.7.2" license="Apache License 2.0" project-url="https://github.com/aws/aws-sdk-net">
+		<dependency title="AWSSDK - Amazon Simple Storage Service" name="AWSSDK.S3" version="3.1.8.1" license="Apache License 2.0" project-url="https://github.com/aws/aws-sdk-net">
 			Copyright 2008-2013 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 			Licensed under the Apache License, Version 2.0 (the "License"). You may not use
 			this file except in compliance with the License. A copy of the License is located at
@@ -98,7 +98,7 @@
 		<dependency title="Microsoft BCL Build Components" name="Microsoft.Bcl.Build" version="1.0.21" license-ref="MSLT_dotnet_library_license" project-url="http://blogs.msdn.com/b/bclteam/p/bclbuild.aspx" />
 		<dependency title="Microsoft HTTP Client Libraries" name="Microsoft.Net.Http" version="2.2.29" license-ref="MSLT_dotnet_library_license" project-url="http://blogs.msdn.com/b/bclteam/p/httpclient.aspx" />
 		<dependency title="NHibernate" name="NHibernate" version="4.0.4.4000" license-ref="lgpl-2.1" project-url="https://github.com/nhibernate/nhibernate-core" />
-		<dependency title="NLog - Advanced .NET and Silverlight Logging" name="NLog" version="4.3.5" license="New BSD License" project-url="https://github.com/NLog/NLog">
+		<dependency title="NLog - Advanced .NET and Silverlight Logging" name="NLog" version="4.3.6.1" license="New BSD License" project-url="https://github.com/NLog/NLog">
 			Copyright (c) 2004-2016 Jaroslaw Kowalski &lt;jaak@jkowalski.net&gt;, Kim Christensen, Julian Verdurmen
 
 			All rights reserved.
@@ -174,7 +174,7 @@
 			IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 			CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		</dependency>
-		<dependency title="Simple Injector" name="SimpleInjector" version="3.1.5" license="MIT" project-url="https://github.com/simpleinjector/SimpleInjector">
+		<dependency title="Simple Injector" name="SimpleInjector" version="3.2.0" license="MIT" project-url="https://github.com/simpleinjector/SimpleInjector">
 			﻿Copyright (c) 2013 - 2015 Simple Injector Contributors
 
 			Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
@@ -203,7 +203,7 @@
 			THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		</dependency>
 		<dependency title="Glacial ListView Control" name="glacial-listview" version="1.3" license-ref="cpol_1_02" project-url="http://www.codeproject.com/Articles/4012/C-List-View-v" />
-		<dependency title="Zeta Long Paths" name="ZetaLongPaths" version="1.0.0.10" license="MIT" project-url="https://github.com/UweKeim/ZetaLongPaths/">
+		<dependency title="Zeta Long Paths" name="ZetaLongPaths" version="1.0.0.11" license="MIT" project-url="https://github.com/UweKeim/ZetaLongPaths/">
 			The MIT License (MIT)
 
 			Copyright (c) 2015 Uwe Keim http://uwe.co

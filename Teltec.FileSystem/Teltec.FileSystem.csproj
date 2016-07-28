@@ -42,8 +42,8 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="ZetaLongPaths, Version=1.0.0.10, Culture=neutral, PublicKeyToken=b764f59068f31f38, processorArchitecture=MSIL">
-      <HintPath>..\packages\ZetaLongPaths.1.0.0.10\lib\net40-full\ZetaLongPaths.dll</HintPath>
+    <Reference Include="ZetaLongPaths, Version=1.0.0.11, Culture=neutral, PublicKeyToken=b764f59068f31f38, processorArchitecture=MSIL">
+      <HintPath>..\packages\ZetaLongPaths.1.0.0.11\lib\net40-full\ZetaLongPaths.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
