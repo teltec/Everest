@@ -42,11 +42,41 @@ namespace Teltec.Storage.Implementations.S3
 			SanitizeOptions();
 
 			this._s3Config = s3Config;
+			this._s3Config.RegionEndpoint = GetBucketEndpoint(awsCredentials, awsBucketName);
 			this._s3Client = new AmazonS3Client(awsCredentials, s3Config);
 			this._awsBuckeName = awsBucketName;
 		}
 
 		#endregion
+
+		private Amazon.RegionEndpoint GetBucketEndpoint(AWSCredentials awsCredentials, string awsBucketName)
+		{
+			Amazon.RegionEndpoint defaultResult = Amazon.RegionEndpoint.USEast1;
+			Amazon.RegionEndpoint result = null;
+			AmazonS3Client temporaryS3Client = null;
+
+			try
+			{
+				temporaryS3Client = new AmazonS3Client(awsCredentials, Amazon.RegionEndpoint.USEast1);
+				GetBucketLocationResponse bucketRegionResponse = temporaryS3Client.GetBucketLocation(awsBucketName);
+				result = Amazon.RegionEndpoint.GetBySystemName(bucketRegionResponse.Location.Value);
+				if (result == null || string.IsNullOrEmpty(result.SystemName))
+					result = defaultResult;
+				logger.Debug("The '{0}' bucket is located in the '{1}' region.", awsBucketName, result.DisplayName);
+			}
+			catch (Exception)
+			{
+				logger.Log(LogLevel.Warn, "Failed to discover the bucket location for '{0}'. Assuming '{1}'.", awsBucketName, defaultResult.DisplayName);
+				result = defaultResult;
+			}
+			finally
+			{
+				if (temporaryS3Client != null)
+					temporaryS3Client.Dispose();
+			}
+
+			return result;
+		}
 
 		private void SanitizeOptions()
 		{

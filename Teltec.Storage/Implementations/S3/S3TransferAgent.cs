@@ -32,7 +32,7 @@ namespace Teltec.Storage.Implementations.S3
 			return new AmazonS3Config
 			{
 				//ConnectionLimit = 50,
-				RegionEndpoint = Amazon.RegionEndpoint.USEast1,
+				RegionEndpoint = Amazon.RegionEndpoint.USEast1, // IMPORTANT: Should be updated dynamically later based on the bucket location!
 				BufferSize = 1 * 1024 * 1024, // 1 MiB
 			};
 		}
