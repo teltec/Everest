@@ -211,16 +211,16 @@ namespace Teltec.Storage.Implementations.S3
 					AmazonS3Exception amznException = exception as AmazonS3Exception;
 					if (amznException.ErrorCode != null && (amznException.ErrorCode.Equals("InvalidAccessKeyId") || amznException.ErrorCode.Equals("InvalidSecurity")))
 					{
-						logger.Warn("Check the provided AWS Credentials.");
+						logger.Log(LogLevel.Warn, "Check the provided AWS Credentials.");
 					}
 					else
 					{
-						logger.Warn("Error occurred during the upload of {0}\nMessage:'{1}'", filePath, amznException.Message);
+						logger.Log(LogLevel.Warn, "Error occurred during the upload of {0}\nMessage:'{1}'", filePath, amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred during the upload of {0}\nException: {1}", filePath, exception.Message);
+					logger.Log(LogLevel.Warn, "Exception occurred during the upload of {0}\nException: {1}", filePath, exception.Message);
 				}
 
 				// Report failure.
@@ -357,16 +357,16 @@ namespace Teltec.Storage.Implementations.S3
 					AmazonS3Exception amznException = exception as AmazonS3Exception;
 					if (amznException.ErrorCode != null && (amznException.ErrorCode.Equals("InvalidAccessKeyId") || amznException.ErrorCode.Equals("InvalidSecurity")))
 					{
-						logger.Warn("Check the provided AWS Credentials.");
+						logger.Log(LogLevel.Warn, "Check the provided AWS Credentials.");
 					}
 					else
 					{
-						logger.Warn("Error occurred during the download of {0}\nMessage:'{1}'", filePath, amznException.Message);
+						logger.Log(LogLevel.Warn, "Error occurred during the download of {0}\nMessage:'{1}'", filePath, amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred during the download of {0}\nException: {1}", filePath, exception.Message);
+					logger.Log(LogLevel.Warn, "Exception occurred during the download of {0}\nException: {1}", filePath, exception.Message);
 				}
 
 				// Report failure.
@@ -550,16 +550,16 @@ namespace Teltec.Storage.Implementations.S3
 					AmazonS3Exception amznException = exception as AmazonS3Exception;
 					if (amznException.ErrorCode != null && (amznException.ErrorCode.Equals("InvalidAccessKeyId") || amznException.ErrorCode.Equals("InvalidSecurity")))
 					{
-						logger.Warn("Check the provided AWS Credentials.");
+						logger.Log(LogLevel.Warn, "Check the provided AWS Credentials.");
 					}
 					else
 					{
-						logger.Warn("Error occurred during listing\nMessage:'{0}'", amznException.Message);
+						logger.Log(LogLevel.Warn, "Error occurred during listing\nMessage:'{0}'", amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred during listing\nException: {0}", exception.Message);
+					logger.Log(LogLevel.Warn, "Exception occurred during listing\nException: {0}", exception.Message);
 				}
 
 				// Report failure.
@@ -628,16 +628,16 @@ namespace Teltec.Storage.Implementations.S3
 					AmazonS3Exception amznException = exception as AmazonS3Exception;
 					if (amznException.ErrorCode != null && (amznException.ErrorCode.Equals("InvalidAccessKeyId") || amznException.ErrorCode.Equals("InvalidSecurity")))
 					{
-						logger.Warn("Check the provided AWS Credentials.");
+						logger.Log(LogLevel.Warn, "Check the provided AWS Credentials.");
 					}
 					else
 					{
-						logger.Warn("Error occurred. Message:'{0}' when deleting object", amznException.Message);
+						logger.Log(LogLevel.Warn, "Error occurred. Message:'{0}' when deleting object", amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred: {0}", exception.Message);
+					logger.Log(LogLevel.Warn, "Exception occurred: {0}", exception.Message);
 				}
 
 				// Report failure.
@@ -724,16 +724,16 @@ namespace Teltec.Storage.Implementations.S3
 					AmazonS3Exception amznException = exception as AmazonS3Exception;
 					if (amznException.ErrorCode != null && (amznException.ErrorCode.Equals("InvalidAccessKeyId") || amznException.ErrorCode.Equals("InvalidSecurity")))
 					{
-						logger.Warn("Check the provided AWS Credentials.");
+						logger.Log(LogLevel.Warn, "Check the provided AWS Credentials.");
 					}
 					else
 					{
-						logger.Warn("Error occurred. Message:'{0}' when deleting object", amznException.Message);
+						logger.Log(LogLevel.Warn, "Error occurred. Message:'{0}' when deleting object", amznException.Message);
 					}
 				}
 				else
 				{
-					logger.Warn("Exception occurred: {0}", exception.Message);
+					logger.Log(LogLevel.Warn, "Exception occurred: {0}", exception.Message);
 				}
 
 				// Report failure.
