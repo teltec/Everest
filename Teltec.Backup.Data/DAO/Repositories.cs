@@ -354,6 +354,9 @@ namespace Teltec.Backup.Data.DAO
 			string fileLastWrittenAtPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.FileLastWrittenAt);
 			crit.AddOrder(Order.Desc(fileLastWrittenAtPropertyName));
 
+			string backupPropertyName = this.GetPropertyName((Models.BackupedFile x) => x.Backup);
+			crit.AddOrder(Order.Desc(backupPropertyName));
+
 			crit.SetMaxResults(1);
 			return crit.UniqueResult<Models.BackupedFile>(); // May return null
 		}
