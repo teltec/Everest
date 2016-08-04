@@ -168,6 +168,12 @@ namespace Teltec.Backup.PlanExecutor.Backup
 
 			RegisterResultsEventHandlers(Backup, BackupAgent.Results);
 
+			Report.PlanType = "backup";
+			Report.PlanName = Backup.BackupPlan.Name;
+			Report.BucketName = s3account.BucketName;
+			Report.HostName = Backup.BackupPlan.StorageAccount.Hostname;
+			Report.TransferResults = BackupAgent.Results;
+
 			results = BackupAgent.Results;
 
 			//
@@ -606,6 +612,10 @@ namespace Teltec.Backup.PlanExecutor.Backup
 					OnUpdate(new BackupOperationEvent { Status = BackupOperationStatus.Finished, Message = message });
 					break;
 			}
+
+			Report.StartedAt = Backup.StartedAt;
+			Report.FinishedAt = Backup.FinishedAt.Value;
+			Report.TransferStatus = agent.Results.OverallStatus;
 		}
 
 		#endregion

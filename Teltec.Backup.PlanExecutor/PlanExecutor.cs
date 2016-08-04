@@ -6,12 +6,14 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
 using Teltec.Backup.Data.Models;
 using Teltec.Backup.Ipc.Protocol;
 using Teltec.Backup.Ipc.TcpSocket;
 using Teltec.Backup.Logging;
 using Teltec.Backup.PlanExecutor.Backup;
+using Teltec.Backup.PlanExecutor.Report;
 using Teltec.Backup.PlanExecutor.Restore;
 using Teltec.Common;
 using Teltec.Common.Threading;
@@ -367,6 +369,41 @@ namespace Teltec.Backup.PlanExecutor
 			catch (Exception ex)
 			{
 				Handler.Send(Commands.ReportError(0, ex.Message));
+			}
+
+			#endregion
+
+			#region Report
+
+			BaseOperationReport report = RunningOperation.Report;
+			BaseOperationReportSender reportSender = new BaseOperationReportSender(report);
+			try
+			{
+				string mailRecipientName = "Jardel Weyrich";
+				string mailRecipientAddress = "jardel@teltecsolutions.com.br";
+
+				TransferStatus status = report.TransferStatus;
+				switch (status)
+				{
+					default:
+						logger.Info("Will not send report email because this operation terminated with status {0}", status.ToString());
+						break;
+					case TransferStatus.COMPLETED:
+					case TransferStatus.FAILED:
+						{
+							logger.Info("Sending a report email for {0} with status {1}", report.PlanType, report.TransferStatus.ToString());
+							string mailSubjectTemplate = status == TransferStatus.COMPLETED ? reportSender.MailSubjectFormatSuccess : reportSender.MailSubjectFormatFailed;
+							string mailSubject = string.Format(mailSubjectTemplate, "");
+							Task<bool> result = reportSender.SendInProduction(mailRecipientName, mailRecipientAddress, mailSubject);
+							result.Wait();
+							logger.Info("Report email {0}", result.Result ? "was successfully sent" : string.Format("failed to be sent: {0}", reportSender.ReasonMessage));
+							break;
+						}
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.Log(LogLevel.Warn, ex, "Failed to send report: ", ex.Message);
 			}
 
 			#endregion

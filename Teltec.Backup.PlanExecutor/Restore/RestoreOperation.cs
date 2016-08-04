@@ -157,6 +157,12 @@ namespace Teltec.Backup.PlanExecutor.Restore
 
 			RegisterResultsEventHandlers(Restore, RestoreAgent.Results);
 
+			Report.PlanType = "restore";
+			Report.PlanName = Restore.RestorePlan.Name;
+			Report.BucketName = s3account.BucketName;
+			Report.HostName = Restore.RestorePlan.StorageAccount.Hostname;
+			Report.TransferResults = RestoreAgent.Results;
+
 			results = RestoreAgent.Results;
 
 			//
@@ -499,6 +505,10 @@ namespace Teltec.Backup.PlanExecutor.Restore
 					OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Finished, Message = message });
 					break;
 			}
+
+			Report.StartedAt = Restore.StartedAt;
+			Report.FinishedAt = Restore.FinishedAt.Value;
+			Report.TransferStatus = agent.Results.OverallStatus;
 		}
 
 		#endregion

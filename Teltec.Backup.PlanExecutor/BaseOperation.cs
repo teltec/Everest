@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Teltec.Backup.PlanExecutor.Report;
 using Teltec.Common;
 using Teltec.Storage;
 using Teltec.Storage.Backend;
@@ -16,6 +17,7 @@ namespace Teltec.Backup.PlanExecutor
 
 		public ITransferMonitor TransferListControl; // May be IDisposable, but it's an external reference.
 		protected ITransferAgent TransferAgent; // IDisposable
+		public BaseOperationReport Report { get; protected set; }
 
 		#region Properties
 
@@ -55,6 +57,7 @@ namespace Teltec.Backup.PlanExecutor
 
 		protected BaseOperation()
 		{
+			Report = new BaseOperationReport();
 			CancellationTokenSource = new CancellationTokenSource();
 		}
 
