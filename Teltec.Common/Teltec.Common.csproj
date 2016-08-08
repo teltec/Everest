@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Collections\ObservableDictionary.cs" />
     <Compile Include="ConsoleAppHelper.cs" />
+    <Compile Include="Controls\EqualsBinding.cs" />
     <Compile Include="Extensions\ExceptionExtensions.cs" />
     <Compile Include="Extensions\ICollectionExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />

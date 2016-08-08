@@ -15,7 +15,7 @@ namespace Teltec.Common.Controls
 		{
 		}
 
-		public NegateBinding(string propertyName, object dataSource, string dataMember, bool formattingEnabled, DataSourceUpdateMode dataSourceUpdateMode)
+		protected NegateBinding(string propertyName, object dataSource, string dataMember, bool formattingEnabled, DataSourceUpdateMode dataSourceUpdateMode)
 		{
 			this.propertyName = propertyName;
 			this.dataSource = dataSource;

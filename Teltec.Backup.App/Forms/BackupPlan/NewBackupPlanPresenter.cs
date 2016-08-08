@@ -1,7 +1,7 @@
 using NLog;
 using System;
-using System.Text.RegularExpressions;
 using Teltec.Backup.App.Forms.Actions;
+using Teltec.Backup.App.Forms.Notification;
 using Teltec.Backup.App.Forms.Schedule;
 using Teltec.Backup.Data.DAO;
 using Teltec.Common.Extensions;
@@ -36,6 +36,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			RegisterFormClass(typeof(BackupPlanSelectSourceForm), options);
 			RegisterFormClass(typeof(SchedulablePlanForm<Models.BackupPlan>), options);
 			RegisterFormClass(typeof(BackupPlanPurgeOptionsForm), options);
+			RegisterFormClass(typeof(NotificationOptionsForm<Models.BackupPlan>), options);
 			RegisterFormClass(typeof(ExecuteCommandsForm), options);
 		}
 

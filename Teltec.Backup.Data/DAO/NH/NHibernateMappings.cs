@@ -239,6 +239,50 @@ namespace Teltec.Backup.Data.DAO.NH
 
 	#endregion
 
+	#region Plan Notification
+
+	class PlanNotificationMap : ClassMap<Models.PlanNotification>
+	{
+		public PlanNotificationMap()
+		{
+			Table("plan_notification");
+
+			Id(p => p.Id, "id").CustomGeneratedBy("seq_plan_notification");
+
+			Map(p => p.WhenToNotify)
+				.Column("when_to_notify")
+				.CustomType<GenericEnumMapper<Models.PlanNotification.TriggerCondition>>()
+				;
+
+			Map(p => p.IsNotificationEnabled)
+				.Column("is_notification_enabled")
+				.Not.Nullable()
+				.Default("0") // "0" means false
+				;
+
+			Map(p => p.EmailAddress)
+				.Column("email_address")
+				.Not.Nullable()
+				.Length(Models.PlanNotification.EmailAddressMaxLen)
+				;
+
+			Map(p => p.FullName)
+				.Column("full_name")
+				.Not.Nullable()
+				.Length(Models.PlanNotification.FullNameMaxLen)
+				;
+
+			Map(p => p.Subject)
+				.Column("subject")
+				.Not.Nullable()
+				.Length(Models.PlanNotification.SubjectMaxLen)
+				;
+		}
+	}
+
+
+	#endregion
+
 	#region Plan Config
 
 	class PlanConfigMap : ClassMap<Models.PlanConfig>
@@ -444,6 +488,13 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Fetch.Join() // Tell it use to use a JOIN clause.
 				.Cascade.All()
 				.Nullable()
+				;
+
+			References(fk => fk.Notification)
+				.Column("plan_notification_id")
+				.LazyLoad() // Do not load immediately
+				.Cascade.All()
+				.Not.Nullable()
 				;
 
 			Map(p => p.LastRunAt)
@@ -898,6 +949,13 @@ namespace Teltec.Backup.Data.DAO.NH
 				.Nullable()
 				//.LazyLoad(Laziness.Proxy)
 				.Cascade.All()
+				;
+
+			References(fk => fk.Notification)
+				.Column("plan_notification_id")
+				.LazyLoad() // Do not load immediately
+				.Cascade.All()
+				.Not.Nullable()
 				;
 
 			Map(p => p.LastRunAt)

@@ -230,6 +230,12 @@
     <Compile Include="Forms\NetworkCredentials\NetworkCredentialsForm.Designer.cs">
       <DependentUpon>NetworkCredentialsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\Notification\NotificationOptionsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Notification\NotificationOptionsForm.Designer.cs">
+      <DependentUpon>NotificationOptionsForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\RemoteOperation.cs" />
     <Compile Include="Forms\Formatters.cs" />
     <Compile Include="Forms\RestorePlan\RestorePlanSelectAccountForm.cs">
@@ -396,6 +402,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\NetworkCredentials\NetworkCredentialsForm.resx">
       <DependentUpon>NetworkCredentialsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Notification\NotificationOptionsForm.resx">
+      <DependentUpon>NotificationOptionsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RestorePlan\RestorePlanSelectAccountForm.resx">
       <DependentUpon>RestorePlanSelectAccountForm.cs</DependentUpon>

@@ -5,12 +5,14 @@ namespace Teltec.Backup.Data.Models
 	// TODO(jweyrich: Improvement - We could move these properties to PlanConfig, and replace all uses of `ISchedulablePlan` by `SchedulablePlan`.
 	public interface ISchedulablePlan
 	{
+		string GetConcretePlanTypeName();
 		PlanConfig Config { get; }
 		DateTime UpdatedAt { get; set; }
 		Int32 ScheduleParamId { get; }
 		string ScheduleParamName { get; }
 		ScheduleTypeEnum ScheduleType { get; set; }
 		PlanSchedule Schedule { get; set; }
+		PlanNotification Notification { get; set; }
 		bool IsRunManually { get; }
 		bool IsSpecific { get; }
 		bool IsRecurring { get; }
@@ -31,12 +33,25 @@ namespace Teltec.Backup.Data.Models
 
 		#region ISchedulablePlan
 
+		public abstract string GetConcretePlanTypeName();
+
 		private PlanConfig _Config = new PlanConfig();
 		public virtual PlanConfig Config
 		{
 			get { return _Config; }
 			set { SetField(ref _Config, value); }
 		}
+
+		#region Notification
+
+		private PlanNotification _Notification = new PlanNotification();
+		public virtual PlanNotification Notification
+		{
+			get { return _Notification; }
+			set { SetField(ref _Notification, value); }
+		}
+
+		#endregion
 
 		#region Schedule
 

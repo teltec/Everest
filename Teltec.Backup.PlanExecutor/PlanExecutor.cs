@@ -8,7 +8,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
-using Teltec.Backup.Data.Models;
 using Teltec.Backup.Ipc.Protocol;
 using Teltec.Backup.Ipc.TcpSocket;
 using Teltec.Backup.Logging;
@@ -311,7 +310,7 @@ namespace Teltec.Backup.PlanExecutor
 
 			try
 			{
-				bool actionSuccess = plan.Config.OnBeforePlanStarts(new PlanEventArgs { Plan = plan });
+				bool actionSuccess = plan.Config.OnBeforePlanStarts(new Models.PlanEventArgs { Plan = plan });
 				if (!actionSuccess)
 				{
 					logger.Warn("Pre-action did not succeed.");
@@ -359,7 +358,7 @@ namespace Teltec.Backup.PlanExecutor
 
 			try
 			{
-				bool actionSuccess = plan.Config.OnAfterPlanFinishes(new PlanEventArgs { Plan = plan, OperationResult = TransferResults.OverallStatus });
+				bool actionSuccess = plan.Config.OnAfterPlanFinishes(new Models.PlanEventArgs { Plan = plan, OperationResult = TransferResults.OverallStatus });
 				if (!actionSuccess)
 				{
 					logger.Warn("Post-action did not succeed.");
@@ -375,12 +374,9 @@ namespace Teltec.Backup.PlanExecutor
 
 			#region Report
 
-			BaseOperationReport report = RunningOperation.Report;
-			BaseOperationReportSender reportSender = new BaseOperationReportSender(report);
-			try
+			if (plan.Notification != null && plan.Notification.IsNotificationEnabled)
 			{
-				string mailRecipientName = "Jardel Weyrich";
-				string mailRecipientAddress = "jardel@teltecsolutions.com.br";
+				BaseOperationReport report = RunningOperation.Report;
 
 				TransferStatus status = report.TransferStatus;
 				switch (status)
@@ -389,21 +385,27 @@ namespace Teltec.Backup.PlanExecutor
 						logger.Info("Will not send report email because this operation terminated with status {0}", status.ToString());
 						break;
 					case TransferStatus.COMPLETED:
-					case TransferStatus.FAILED:
+						switch (plan.Notification.WhenToNotify)
 						{
-							logger.Info("Sending a report email for {0} with status {1}", report.PlanType, report.TransferStatus.ToString());
-							string mailSubjectTemplate = status == TransferStatus.COMPLETED ? reportSender.MailSubjectFormatSuccess : reportSender.MailSubjectFormatFailed;
-							string mailSubject = string.Format(mailSubjectTemplate, "");
-							Task<bool> result = reportSender.SendInProduction(mailRecipientName, mailRecipientAddress, mailSubject);
-							result.Wait();
-							logger.Info("Report email {0}", result.Result ? "was successfully sent" : string.Format("failed to be sent: {0}", reportSender.ReasonMessage));
-							break;
+							default: throw new InvalidOperationException(string.Format("Invalid TriggerCondition: {0}", plan.Notification.WhenToNotify.ToString()));
+							case Models.PlanNotification.TriggerCondition.ALWAYS:
+								SendReportByEmail(report, plan.Notification);
+								break;
+							case Models.PlanNotification.TriggerCondition.FAILED:
+								break;
 						}
+						break;
+					case TransferStatus.FAILED:
+						switch (plan.Notification.WhenToNotify)
+						{
+							default: throw new InvalidOperationException(string.Format("Invalid TriggerCondition: {0}", plan.Notification.WhenToNotify.ToString()));
+							case Models.PlanNotification.TriggerCondition.ALWAYS:
+							case Models.PlanNotification.TriggerCondition.FAILED:
+								SendReportByEmail(report, plan.Notification);
+								break;
+						}
+						break;
 				}
-			}
-			catch (Exception ex)
-			{
-				logger.Log(LogLevel.Warn, ex, "Failed to send report: ", ex.Message);
 			}
 
 			#endregion
@@ -412,6 +414,35 @@ namespace Teltec.Backup.PlanExecutor
 			// Wait 10 seconds before exiting, just for debugging purposes.
 			Thread.Sleep(10000);
 #endif
+		}
+
+		private void SendReportByEmail(BaseOperationReport report, Models.PlanNotification notification)
+		{
+			string statusStr = "unknown";
+			switch (report.TransferStatus)
+			{
+				case TransferStatus.COMPLETED: statusStr = "completed";	break;
+				case TransferStatus.FAILED: statusStr = "completed with warnings"; break;
+				case TransferStatus.CANCELED: statusStr = "canceled"; break;
+			}
+
+			string mailRecipientAddress = notification.EmailAddress;
+			string mailRecipientName = notification.FullName;
+			string mailSubject = notification.GetFormattedSubject(report.PlanName, report.PlanType, statusStr);
+
+			logger.Info("Sending a report email for {0} with status {1}", report.PlanType, report.TransferStatus.ToString());
+
+			try
+			{
+				BaseOperationReportSender reportSender = new BaseOperationReportSender(report);
+				Task<bool> result = reportSender.Send(mailRecipientName, mailRecipientAddress, mailSubject);
+				result.Wait();
+				logger.Info("Report email {0}", result.Result ? "was successfully sent" : string.Format("failed to be sent: {0}", reportSender.ReasonMessage));
+			}
+			catch (Exception ex)
+			{
+				logger.Log(LogLevel.Warn, ex, "Failed to send report: ", ex.Message);
+			}
 		}
 
 		private bool RunOperation(PlanTypeEnum planType, object plan)

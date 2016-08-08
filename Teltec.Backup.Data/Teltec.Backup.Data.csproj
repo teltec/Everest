@@ -111,6 +111,7 @@
     <Compile Include="Models\EntryType.cs" />
     <Compile Include="Models\EStorageAccountType.cs" />
     <Compile Include="Models\NetworkCredential.cs" />
+    <Compile Include="Models\PlanNotification.cs" />
     <Compile Include="Models\PlanActionExecuteCommand.cs" />
     <Compile Include="Models\PlanAction.cs" />
     <Compile Include="Models\PlanConfig.cs" />

@@ -1,5 +1,6 @@
 using NLog;
 using System;
+using Teltec.Backup.App.Forms.Notification;
 using Teltec.Backup.App.Forms.Schedule;
 using Teltec.Backup.Data.DAO;
 using Teltec.Forms.Wizard;
@@ -34,6 +35,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 			RegisterFormClass(typeof(RestorePlanGiveNameForm), options);
 			RegisterFormClass(typeof(RestorePlanSelectSourceForm), options);
 			RegisterFormClass(typeof(SchedulablePlanForm<Models.RestorePlan>), options);
+			RegisterFormClass(typeof(NotificationOptionsForm<Models.RestorePlan>), options);
 		}
 
 		public override void OnFormClosed()

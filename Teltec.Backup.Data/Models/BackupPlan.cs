@@ -6,6 +6,11 @@ namespace Teltec.Backup.Data.Models
 {
 	public class BackupPlan : SchedulablePlan<BackupPlan>
 	{
+		public override string GetConcretePlanTypeName()
+		{
+			return "Backup";
+		}
+
 		public override Type GetVirtualType()
 		{
 			return this.GetType();
