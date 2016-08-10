@@ -1,4 +1,4 @@
-﻿using NHibernate;
+using NHibernate;
 using NLog;
 using NUnit.Framework;
 using System;
@@ -19,28 +19,32 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		CancellationToken CancellationToken;
+		private CancellationToken CancellationToken;
+		public FileVersionerResults Results { get; private set; }
 
 		public RestoreFileVersioner(CancellationToken cancellationToken)
 		{
 			CancellationToken = cancellationToken;
+			Results = new FileVersionerResults();
 		}
 
-		public async Task NewRestore(Models.Restore restore, LinkedList<CustomVersionedFile> files)
+		public async Task<FileVersionerResults> NewRestore(Models.Restore restore, LinkedList<CustomVersionedFile> files)
 		{
-			await DoRestore(restore, files, true);
+			return await DoRestore(restore, files, true);
 		}
 
-		public async Task ResumeRestore(Models.Restore restore, LinkedList<CustomVersionedFile> files)
+		public async Task<FileVersionerResults> ResumeRestore(Models.Restore restore, LinkedList<CustomVersionedFile> files)
 		{
-			await DoRestore(restore, files, false);
+			return await DoRestore(restore, files, false);
 		}
 
-		public async Task DoRestore(Models.Restore restore, LinkedList<CustomVersionedFile> files, bool newRestore)
+		public async Task<FileVersionerResults> DoRestore(Models.Restore restore, LinkedList<CustomVersionedFile> files, bool newRestore)
 		{
 			Assert.IsNotNull(restore);
 			Assert.AreEqual(TransferStatus.RUNNING, restore.Status);
 			Assert.IsNotNull(files);
+
+			Results.Reset();
 
 			await ExecuteOnBackround(() =>
 			{
@@ -54,6 +58,8 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 				Save();
 			}, CancellationToken);
+
+			return Results;
 		}
 
 		private Task ExecuteOnBackround(Action action, CancellationToken token)

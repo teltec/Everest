@@ -252,7 +252,7 @@ namespace Teltec.Backup.PlanExecutor
 					switch (ex.NativeErrorCode)
 					{
 						case NetworkDriveMapper.ERROR_ALREADY_ASSIGNED:
-							string userName = null;
+							//string userName = null;
 							string remotePath = MappedDriveResolver.ResolveToRootUNC(cred.MountPoint);
 							string credentialUsed = MappedDriveResolver.GetCredentialUsedToMapNetworkDrive(cred.MountPoint);
 							reason = string.Format("It's already mounted to {0} by {1}", remotePath, credentialUsed);
@@ -374,6 +374,9 @@ namespace Teltec.Backup.PlanExecutor
 
 			#region Report
 
+			// Aggregate report results (from vesioner, transfer, etc).
+			RunningOperation.Report.AggregateResults();
+
 			if (plan.Notification != null && plan.Notification.IsNotificationEnabled)
 			{
 				BaseOperationReport report = RunningOperation.Report;
@@ -421,9 +424,15 @@ namespace Teltec.Backup.PlanExecutor
 			string statusStr = "unknown";
 			switch (report.TransferStatus)
 			{
-				case TransferStatus.COMPLETED: statusStr = "completed";	break;
-				case TransferStatus.FAILED: statusStr = "completed with warnings"; break;
-				case TransferStatus.CANCELED: statusStr = "canceled"; break;
+				case TransferStatus.COMPLETED:
+					statusStr = report.HasErrorMessages ? "completed with warnings" : "completed";
+					break;
+				case TransferStatus.FAILED:
+					statusStr = "failed";
+					break;
+				case TransferStatus.CANCELED:
+					statusStr = "canceled";
+					break;
 			}
 
 			string mailRecipientAddress = notification.EmailAddress;

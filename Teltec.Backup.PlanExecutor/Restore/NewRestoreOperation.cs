@@ -1,4 +1,5 @@
-﻿using NLog;
+using NLog;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,6 +40,10 @@ namespace Teltec.Backup.PlanExecutor.Restore
 			scanner.FileAdded += (object sender, CustomVersionedFile file) =>
 			{
 				logger.Debug("ADDED: File {0} @ {1}", file.Path, file.Version);
+			};
+			scanner.EntryScanFailed += (object sender, string path, string message, Exception ex) =>
+			{
+				logger.Debug("FAILED: {0} - Reason: {1}", path, message);
 			};
 #endif
 

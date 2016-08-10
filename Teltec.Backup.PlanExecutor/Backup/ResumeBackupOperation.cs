@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Teltec.Backup.Data.DAO;
+using Teltec.Backup.PlanExecutor.Versioning;
 using Teltec.Common.Extensions;
 using Teltec.Storage;
 using Models = Teltec.Backup.Data.Models;
@@ -69,7 +70,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			}, CancellationTokenSource.Token);
 		}
 
-		protected override Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess)
+		protected override Task<FileVersionerResults> DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess)
 		{
 			return Versioner.ResumeVersion(backup, filesToProcess);
 		}

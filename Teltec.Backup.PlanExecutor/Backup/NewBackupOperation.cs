@@ -1,4 +1,5 @@
-﻿using NLog;
+using NLog;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,6 +40,10 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			{
 				logger.Debug("ADDED: File {0}", file);
 			};
+			scanner.EntryScanFailed += (object sender, string path, string message, Exception ex) =>
+			{
+				logger.Debug("FAILED: {0} - Reason: {1}", path, message);
+			};
 #endif
 
 			scanner.Scan();
@@ -54,7 +59,7 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			}, CancellationTokenSource.Token);
 		}
 
-		protected override Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess)
+		protected override Task<FileVersionerResults> DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess)
 		{
 			return Versioner.NewVersion(backup, filesToProcess);
 		}

@@ -168,6 +168,7 @@
     <Compile Include="Synchronize\SyncOperation.cs" />
     <Compile Include="Versioning\DefaultPathScanner.cs" />
     <Compile Include="Versioning\DefaultRestoreScanner.cs" />
+    <Compile Include="Versioning\FileVersionerResults.cs" />
     <Compile Include="Versioning\IncrementalFileVersioner.cs" />
     <Compile Include="Versioning\RestoreFileVersioner.cs" />
   </ItemGroup>

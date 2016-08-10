@@ -29,27 +29,31 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		private CancellationToken CancellationToken;
+		public FileVersionerResults Results { get; private set; }
 
 		public IncrementalFileVersioner(CancellationToken cancellationToken)
 		{
 			CancellationToken = cancellationToken;
+			Results = new FileVersionerResults();
 		}
 
-		public async Task NewVersion(Models.Backup backup, LinkedList<string> files)
+		public async Task<FileVersionerResults> NewVersion(Models.Backup backup, LinkedList<string> files)
 		{
-			await DoVersion(backup, files, true);
+			return await DoVersion(backup, files, true);
 		}
 
-		public async Task ResumeVersion(Models.Backup backup, LinkedList<string> files)
+		public async Task<FileVersionerResults> ResumeVersion(Models.Backup backup, LinkedList<string> files)
 		{
-			await DoVersion(backup, files, false);
+			return await DoVersion(backup, files, false);
 		}
 
-		public async Task DoVersion(Models.Backup backup, LinkedList<string> filePaths, bool newVersion)
+		public async Task<FileVersionerResults> DoVersion(Models.Backup backup, LinkedList<string> filePaths, bool newVersion)
 		{
 			Assert.IsNotNull(backup);
 			Assert.AreEqual(TransferStatus.RUNNING, backup.Status);
 			Assert.IsNotNull(filePaths);
+
+			Results.Reset();
 
 			await ExecuteOnBackround(() =>
 			{
@@ -73,7 +77,11 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "File versioning FAILED with an exception: {0}", ex.Message);
+					string message = string.Format("File versioning FAILED with an exception: {0}", ex.Message);
+
+					Results.OnError(this, message);
+					logger.Log(LogLevel.Error, ex, message);
+
 					throw ex;
 				}
 				finally
@@ -83,6 +91,8 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						session.Disconnect();
 				}
 			}, CancellationToken);
+
+			return Results;
 		}
 
 		private Task ExecuteOnBackround(Action action, CancellationToken token)
@@ -339,18 +349,35 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 
 							entry.LastWrittenAt = fileLastWrittenAt;
 							entry.LastSize = fileLength;
+						}
+						catch (Exception ex)
+						{
+							string message = string.Format("Caught an exception while retrieving file properties: {0}", ex.Message);
 
+							Results.OnFileFailed(this, new FileVersionerEventArgs { FilePath = entry.Path, FileSize = 0 }, message);
+							logger.Warn(message);
+
+							throw ex;
+						}
+
+						try
+						{
 							// Skip files larger than `MAX_FILESIZE_TO_HASH`.
-							int result = BigInteger.Compare(fileLength, MAX_FILESIZE_TO_HASH);
+							int result = BigInteger.Compare(entry.LastSize, MAX_FILESIZE_TO_HASH);
 							if (result < 0)
 								entry.LastChecksum = CalculateHashForFile(entry.Path);
 						}
 						catch (Exception ex)
 						{
-							logger.Warn("Caught an exception while retrieving file properties \"{0}\": {1}",
-								entry.Path, ex.Message);
+							string message = string.Format("Caught an exception while calculating the file hash: {0}", ex.Message);
+
+							Results.OnFileFailed(this, new FileVersionerEventArgs { FilePath = entry.Path, FileSize = 0 }, message);
+							logger.Warn(message);
+
 							throw ex;
 						}
+
+						Results.OnFileCompleted(this, new FileVersionerEventArgs { FilePath = entry.Path, FileSize = entry.LastSize });
 					}
 
 					//
@@ -640,9 +667,13 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						}
 						catch (Exception ex)
 						{
-							logger.Log(LogLevel.Error, ex, "BUG: Failed to create/update {0} => {1}",
+							string message = string.Format("BUG: Failed to create/update {0} => {1}",
 								typeof(Models.BackupPlanPathNode).Name,
 								CustomJsonSerializer.SerializeObject(entry, 1));
+
+							Results.OnError(this, message);
+							logger.Log(LogLevel.Error, ex, message);
+
 							throw ex;
 						}
 
@@ -671,9 +702,12 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						}
 						catch (Exception ex)
 						{
-							logger.Log(LogLevel.Error, ex, "BUG: Failed to insert/update {0} => {1}",
+							string message = string.Format("BUG: Failed to insert/update {0} => {1}",
 								typeof(Models.BackupPlanFile).Name,
 								CustomJsonSerializer.SerializeObject(entry, 1));
+
+							Results.OnError(this, message);
+							logger.Log(LogLevel.Error, ex, message);
 
 							logger.Error("Dump of failed object: {0}", entry.DumpMe());
 							throw ex;
@@ -759,9 +793,13 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							}
 							catch (Exception ex)
 							{
-								logger.Log(LogLevel.Error, ex, "BUG: Failed to update {0} => {1} ",
+								string message = string.Format("BUG: Failed to update {0} => {1} ",
 									typeof(Models.BackupPlanFile).Name,
 									CustomJsonSerializer.SerializeObject(file, 1));
+
+								Results.OnError(this, message);
+								logger.Log(LogLevel.Error, ex, message);
+
 								throw ex;
 							}
 
@@ -795,9 +833,13 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 						}
 						catch (Exception ex)
 						{
-							logger.Log(LogLevel.Error, ex, "BUG: Failed to update {0} => {1}",
+							string message = string.Format("BUG: Failed to update {0} => {1}",
 								typeof(Models.Backup).Name,
 								CustomJsonSerializer.SerializeObject(Backup, 1));
+
+							Results.OnError(this, message);
+							logger.Log(LogLevel.Error, ex, message);
+
 							throw ex;
 						}
 					}
@@ -811,13 +853,21 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				}
 				catch (OperationCanceledException)
 				{
-					logger.Warn("Operation cancelled");
+					string message = "Operation cancelled";
+
+					Results.OnError(this, message);
+					logger.Warn(message);
+
 					tx.Rollback(); // Rollback the transaction
 					throw;
 				}
 				catch (Exception ex)
 				{
-					logger.Log(LogLevel.Error, ex, "Caught Exception");
+					string message = string.Format("Caught Exception: {0}", ex.Message);
+
+					Results.OnError(this, message);
+					logger.Log(LogLevel.Error, ex, message);
+
 					tx.Rollback(); // Rollback the transaction
 					throw;
 				}

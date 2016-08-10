@@ -53,6 +53,8 @@ namespace Teltec.Storage
 				_Failed = 0;
 				_Canceled = 0;
 				_Completed = 0;
+
+				_BytesTotal = 0;
 				_BytesFailed = 0;
 				_BytesCanceled = 0;
 				_BytesCompleted = 0;
@@ -93,6 +95,14 @@ namespace Teltec.Storage
 			ActiveTransfers = new ObservableDictionary<string, TransferFileProgressArgs>();
 			ActiveDeletions = new ObservableDictionary<string, DeletionArgs>();
 			ErrorMessages = new List<string>();
+		}
+
+		internal void Reset(int pending)
+		{
+			Stats.Reset(pending);
+			ActiveTransfers.Clear();
+			ActiveDeletions.Clear();
+			ErrorMessages.Clear();
 		}
 
 		#region Transfers

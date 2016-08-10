@@ -16,10 +16,12 @@ namespace Teltec.Storage
 
 		protected ITransferAgent TransferAgent { get; private set; }
 
+		public TransferResults Results { get; private set; }
+
 		public AbstractAgent(ITransferAgent agent)
 		{
-			Results = new TransferResults();
 			TransferAgent = agent;
+			Results = new TransferResults();
 		}
 
 		private string _FilesAsDelimitedString;
@@ -60,8 +62,6 @@ namespace Teltec.Storage
 				return _EstimatedTransferSize;
 			}
 		}
-
-		public TransferResults Results { get; private set; }
 
 		protected void RegisterUploadEventHandlers()
 		{
@@ -191,9 +191,9 @@ namespace Teltec.Storage
 			}
 		}
 
-		public async Task Start()
+		public async Task<TransferResults> Start()
 		{
-			Results.Stats.Reset(Files.Count());
+			Results.Reset(Files.Count());
 
 			RenewCancellationToken();
 
@@ -225,6 +225,8 @@ namespace Teltec.Storage
 					}
 				}
 			});
+
+			return Results;
 		}
 
 		public abstract void DoImplementation(IVersionedFile file, object userData);

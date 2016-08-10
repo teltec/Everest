@@ -70,8 +70,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				}
 				catch (Exception ex)
 				{
-					string message = string.Format("Failed to scan entry \"{0}\" - {1}", entry.Path, ex.Message);
-					logger.Log(LogLevel.Error, ex, message);
+					HandleException(entry.Type, entry.Path, ex);
 				}
 			}
 
@@ -178,6 +177,9 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 					message = string.Format("Failed to scan file \"{0}\" - {1}", path, ex.Message);
 					break;
 			}
+
+			if (EntryScanFailed != null)
+				EntryScanFailed(this, path, message, ex);
 
 			if (!string.IsNullOrEmpty(message))
 			{

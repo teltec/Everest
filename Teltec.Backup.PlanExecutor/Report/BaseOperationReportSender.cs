@@ -52,7 +52,7 @@ namespace Teltec.Backup.PlanExecutor.Report
 					{ "Total", Report.TransferResults.Stats.Total },
 					{ "Pending", Report.TransferResults.Stats.Pending },
 					{ "Running", Report.TransferResults.Stats.Running },
-					{ "Failed", Report.TransferResults.Stats.Failed },
+					{ "Failed", Report.VersionerResults.Stats.Failed + Report.TransferResults.Stats.Failed },
 					{ "Canceled", Report.TransferResults.Stats.Canceled },
 					{ "Completed", Report.TransferResults.Stats.Completed },
 
@@ -64,7 +64,7 @@ namespace Teltec.Backup.PlanExecutor.Report
 					{ "CompletedSize", FileSizeUtils.FileSizeToString(Report.TransferResults.Stats.BytesCompleted) },
 
 					// Errors
-					{ "ErrorMessages", Report.TransferResults.ErrorMessages },
+					{ "ErrorMessages", Report.ErrorMessages },
 				};
 
 				string json = JsonConvert.SerializeObject(values);

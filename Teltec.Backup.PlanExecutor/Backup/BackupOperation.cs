@@ -281,14 +281,14 @@ namespace Teltec.Backup.PlanExecutor.Backup
 		}
 
 		protected abstract Task<PathScanResults<string>> GetFilesToProcess(Models.Backup backup);
-		protected abstract Task DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess);
+		protected abstract Task<FileVersionerResults> DoVersionFiles(Models.Backup backup, LinkedList<string> filesToProcess);
 
 		// Update specific `BackupPlanFile`s that exist and are NOT yet associated to a `BackupPlan`.
 		protected void DoUpdateSyncedFiles(Models.Backup backup, LinkedList<string> filesToProcess)
 		{
 			BackupPlanFileRepository dao = new BackupPlanFileRepository();
 
-			int totalUpdates = 0;
+			long totalUpdates = 0;
 			foreach (var path in filesToProcess)
 			{
 				// There's NO NEED to SELECT and UPDATE if we can UPDATE directly using a WHERE clause.
@@ -328,11 +328,17 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				{
 					if (ex.IsCancellation())
 					{
-						logger.Warn("Scanning files was canceled.");
+						string message = string.Format("Scanning files was canceled.");
+
+						Report.ErrorMessages.Add(message);
+						logger.Warn(message);
 					}
 					else
 					{
-						logger.Log(LogLevel.Error, ex, "Caught exception during scanning files");
+						string message = string.Format("Caught exception during scanning files: {0}", ex.Message);
+
+						Report.ErrorMessages.Add(message);
+						logger.Log(LogLevel.Error, ex, message);
 					}
 
 					if (filesToProcessTask.IsFaulted || filesToProcessTask.IsCanceled)
@@ -348,6 +354,9 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				filesToProcess = filesToProcessTask.Result.Files;
 
 				{
+					foreach (var entry in filesToProcessTask.Result.FailedFiles)
+						Report.ErrorMessages.Add(entry.Value);
+
 					if (filesToProcessTask.Result.FailedFiles.Count > 0)
 					{
 						StringBuilder sb = new StringBuilder();
@@ -387,11 +396,17 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				{
 					if (ex.IsCancellation())
 					{
-						logger.Warn("Update of synced files was canceled.");
+						string message = string.Format("Update of synced files was canceled.");
+
+						Report.ErrorMessages.Add(message);
+						logger.Warn(message);
 					}
 					else
 					{
-						logger.Log(LogLevel.Error, ex, "Caught exception during update of synced files");
+						string message = string.Format("Caught exception during update of synced files: {0}", ex.Message);
+
+						Report.ErrorMessages.Add(message);
+						logger.Log(LogLevel.Error, ex, message);
 					}
 
 					if (updateSyncedFilesTask.IsFaulted || updateSyncedFilesTask.IsCanceled)
@@ -416,7 +431,8 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			//
 
 			{
-				Task versionerTask = DoVersionFiles(backup, filesToProcess);
+				Task<FileVersionerResults> versionerTask = DoVersionFiles(backup, filesToProcess);
+				Report.VersionerResults = versionerTask.Result;
 
 				{
 					var message = string.Format("Processing files started.");
@@ -433,11 +449,17 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				{
 					if (ex.IsCancellation())
 					{
-						logger.Warn("Processing files was canceled.");
+						string message = string.Format("Processing files was canceled.");
+
+						Report.ErrorMessages.Add(message);
+						logger.Warn(message);
 					}
 					else
 					{
-						logger.Log(LogLevel.Error, ex, "Caught exception during processing files");
+						string message = string.Format("Caught exception during processing files: {0}", ex.Message);
+
+						Report.ErrorMessages.Add(message);
+						logger.Log(LogLevel.Error, ex, message);
 					}
 
 					if (versionerTask.IsFaulted || versionerTask.IsCanceled)
@@ -474,7 +496,8 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			//
 
 			{
-				Task transferTask = agent.Start();
+				Task<TransferResults> transferTask = agent.Start();
+				Report.TransferResults = transferTask.Result;
 
 				{
 					var message = string.Format("Transfer files started.");
@@ -489,11 +512,17 @@ namespace Teltec.Backup.PlanExecutor.Backup
 				{
 					if (ex.IsCancellation())
 					{
-						logger.Warn("Transfer files was canceled.");
+						string message = string.Format("Transfer files was canceled.");
+
+						Report.TransferResults.ErrorMessages.Add(message);
+						logger.Warn(message);
 					}
 					else
 					{
-						logger.Log(LogLevel.Error, ex, "Caught exception during transfer files");
+						string message = string.Format("Caught exception during transfer files: {0}", ex.Message);
+
+						Report.TransferResults.ErrorMessages.Add(message);
+						logger.Log(LogLevel.Error, ex, message);
 					}
 
 					if (transferTask.IsFaulted || transferTask.IsCanceled)
@@ -555,6 +584,8 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			IsRunning = false;
 
 			var message = string.Format("Backup canceled: {0}", exception != null ? exception.Message : "Exception not informed");
+
+			Report.ErrorMessages.Add(message);
 			Error(message);
 			//StatusInfo.Update(BackupStatusLevel.ERROR, message);
 
@@ -571,6 +602,8 @@ namespace Teltec.Backup.PlanExecutor.Backup
 			logger.Log(LogLevel.Error, exception, "Caught exception: {0}", exception.Message);
 
 			var message = string.Format("Backup failed: {0}", exception != null ? exception.Message : "Exception not informed");
+
+			Report.ErrorMessages.Add(message);
 			Error(message);
 			//StatusInfo.Update(BackupStatusLevel.ERROR, message);
 
