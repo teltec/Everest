@@ -177,6 +177,7 @@ namespace Teltec.Backup.App.Forms.S3
 			// Renew cancellation token if was already used.
 			if (CancellationTokenSource.IsCancellationRequested)
 			{
+				CancellationTokenSource.Dispose();
 				CancellationTokenSource = new CancellationTokenSource();
 			}
 
@@ -232,6 +233,24 @@ namespace Teltec.Backup.App.Forms.S3
 
 			return remoteObjects;
 		}
+
+		#region Dispose Pattern Implementation
+
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing && (components != null))
+			{
+				components.Dispose();
+				CancellationTokenSource.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+
+		#endregion
 	}
 
 	public class AmazonS3AccountSaveEventArgs : EventArgs

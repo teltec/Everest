@@ -907,7 +907,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			{
 				if (disposing && _shouldDispose)
 				{
-					// Nop.
+					HashAlgo.Dispose();
 				}
 				this._isDisposed = true;
 			}

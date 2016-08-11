@@ -527,7 +527,7 @@ namespace Teltec.Backup.Ipc.TcpSocket
 
 				TryBeginReceive(clientContext); // Start receiving.
 			}
-			catch (ObjectDisposedException ex)
+			catch (ObjectDisposedException)
 			{
 				// Socket was already closed.
 
@@ -732,6 +732,16 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				{
 					RequestStop();
 					Wait();
+
+					ServerFinished.Dispose();
+
+					// Events
+					InternalConnectedEvent.Dispose();
+					ConnectedEvent.Dispose();
+					DisconnectedEvent.Dispose();
+					MessageReceivedEvent.Dispose();
+					MessageSentEvent.Dispose();
+
 					this._isDisposed = true;
 				}
 			}

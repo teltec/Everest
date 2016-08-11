@@ -66,7 +66,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							}
 					}
 				}
-				catch (OperationCanceledException ex)
+				catch (OperationCanceledException)
 				{
 					throw ex; // Rethrow!
 				}

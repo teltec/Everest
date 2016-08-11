@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Teltec.Common.Threading
 {
-	public class AsyncResult : IAsyncResult
+	public class AsyncResult : IAsyncResult, IDisposable
 	{
 		internal object _AsyncState = null;
 		public object AsyncState
@@ -37,6 +37,39 @@ namespace Teltec.Common.Threading
 			get { return _Exception; }
 			internal set { _Exception = value; }
 		}
+
+		#region Dispose Pattern Implementation
+
+		bool _shouldDispose = true;
+		bool _isDisposed;
+
+		/// <summary>
+		/// Implements the Dispose pattern
+		/// </summary>
+		/// <param name="disposing">Whether this object is being disposed via a call to Dispose
+		/// or garbage collected.</param>
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!this._isDisposed)
+			{
+				if (disposing && _shouldDispose)
+				{
+					_AsyncWaitHandle.Dispose();
+				}
+				this._isDisposed = true;
+			}
+		}
+
+		/// <summary>
+		/// Disposes of all managed and unmanaged resources.
+		/// </summary>
+		public void Dispose()
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 
 	//

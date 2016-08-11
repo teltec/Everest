@@ -1,4 +1,4 @@
-﻿//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 //
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 //
@@ -442,7 +442,10 @@ namespace System.Threading.Tasks.Schedulers
 		/// <summary>Initiates shutdown of the scheduler.</summary>
 		public void Dispose()
 		{
-			_disposeCancellation.Cancel();
+			if (!_disposeCancellation.IsCancellationRequested)
+				_disposeCancellation.Cancel();
+			_disposeCancellation.Dispose();
+			_blockingTaskQueue.Dispose();
 		}
 
 		/// <summary>Creates and activates a new scheduling queue for this scheduler.</summary>

@@ -4,13 +4,13 @@ using Teltec.Backup.Ipc.Protocol;
 
 namespace Teltec.Backup.App.Forms
 {
-	internal sealed class RemoteOperation
+	internal sealed class RemoteOperation : IDisposable
 	{
 		public bool RequestedInitialInfo = false;
 		public bool GotInitialInfo = false;
 
 		public bool StartedDurationTimer = false;
-		private Timer DurationTimer;
+		private readonly Timer DurationTimer; // IDisposable
 
 		public bool IsRunning { get { return !Status.IsEnded(); } }
 		public Commands.OperationStatus Status;
@@ -20,9 +20,9 @@ namespace Teltec.Backup.App.Forms
 		public DateTime? FinishedAt = null;
 		//public bool OperationNeedsResume { get { return Status == Commands.OperationStatus.INTERRUPTED; } }
 
-		public RemoteOperation(System.ComponentModel.IContainer components, System.EventHandler timerTick)
+		public RemoteOperation(System.EventHandler timerTick)
 		{
-			DurationTimer = new System.Windows.Forms.Timer(components);
+			DurationTimer = new System.Windows.Forms.Timer();
 			DurationTimer.Interval = 1000;
 			DurationTimer.Tick += new System.EventHandler(timerTick);
 		}
@@ -52,5 +52,38 @@ namespace Teltec.Backup.App.Forms
 			StartedAt = null;
 			FinishedAt = null;
 		}
+
+		#region Dispose Pattern Implementation
+
+		bool _shouldDispose = true;
+		bool _isDisposed;
+
+		/// <summary>
+		/// Implements the Dispose pattern
+		/// </summary>
+		/// <param name="disposing">Whether this object is being disposed via a call to Dispose
+		/// or garbage collected.</param>
+		private void Dispose(bool disposing)
+		{
+			if (!this._isDisposed)
+			{
+				if (disposing && _shouldDispose)
+				{
+					DurationTimer.Dispose();
+				}
+				this._isDisposed = true;
+			}
+		}
+
+		/// <summary>
+		/// Disposes of all managed and unmanaged resources.
+		/// </summary>
+		public void Dispose()
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 }

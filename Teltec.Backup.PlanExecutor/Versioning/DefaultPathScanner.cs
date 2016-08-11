@@ -64,7 +64,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							}
 					}
 				}
-				catch (OperationCanceledException ex)
+				catch (OperationCanceledException)
 				{
 					throw ex; // Rethrow!
 				}
@@ -108,7 +108,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				if (FileAdded != null)
 					FileAdded(this, item);
 			}
-			catch (OperationCanceledException ex)
+			catch (OperationCanceledException)
 			{
 				throw ex; // Rethrow!
 			}
@@ -151,7 +151,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				foreach (var subdir in directories)
 					AddDirectory(subdir);
 			}
-			catch (OperationCanceledException ex)
+			catch (OperationCanceledException)
 			{
 				throw ex; // Rethrow!
 			}

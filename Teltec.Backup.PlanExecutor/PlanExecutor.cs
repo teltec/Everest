@@ -941,6 +941,8 @@ namespace Teltec.Backup.PlanExecutor
 						Handler.Dispose();
 						Handler = null;
 					}
+
+					RunningOperationEndedEvent.Dispose();
 				}
 				this._isDisposed = true;
 			}

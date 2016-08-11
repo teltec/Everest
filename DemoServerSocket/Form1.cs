@@ -20,11 +20,6 @@ namespace ServerSocketSim
 			Handler.Server.Disconnected += Server_Disconnected;
 		}
 
-		~Form1()
-		{
-			Handler.Dispose();
-		}
-
 		void Server_Disconnected(object sender, ServerConnectedEventArgs e)
 		{
 			AppendToHistory("CLIENT DISCONNECTED: {0}", e.Context.ClientKey);

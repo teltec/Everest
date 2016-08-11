@@ -63,7 +63,9 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 
 				Models.BackupPlan plan = Model as Models.BackupPlan;
 
-				CurrentOperation = new RemoteOperation(this.components, DurationTimer_Tick);
+				if (CurrentOperation != null)
+					CurrentOperation.Dispose();
+				CurrentOperation = new RemoteOperation(DurationTimer_Tick);
 				CurrentOperation.Status = Commands.OperationStatus.NOT_RUNNING;
 				CurrentOperation.LastRunAt = plan.LastRunAt;
 				CurrentOperation.LastSuccessfulRunAt = plan.LastSuccessfulRunAt;
@@ -478,6 +480,11 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 			{
 				components.Dispose();
 				DetachEventHandlers();
+
+				if (CurrentOperation != null) {
+					CurrentOperation.Dispose();
+					CurrentOperation = null;
+				}
 			}
 			base.Dispose(disposing);
 		}

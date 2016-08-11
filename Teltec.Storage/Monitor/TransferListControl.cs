@@ -1,4 +1,4 @@
-﻿using GlacialComponents.Controls;
+using GlacialComponents.Controls;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -101,13 +101,13 @@ namespace Teltec.Storage.Monitor
 			Progress,
 		}
 
-		internal class TransferEntry
+		internal class TransferEntry : IDisposable
 		{
 			internal TransferFileProgressArgs Data;
-			internal Label Path;
-			internal Label Remaining;
-			internal Label Message;
-			internal ProgressBar Progress;
+			internal Label Path; // IDisposable
+			internal Label Remaining; // IDisposable
+			internal Label Message; // IDisposable
+			internal ProgressBar Progress; // IDisposable
 			internal GLItem Item; // ATTENTION: Circular-reference!
 			internal ToolTip Tooltip;
 			internal Exception Exception;
@@ -162,6 +162,58 @@ namespace Teltec.Storage.Monitor
 				//TransferListControl parent = entry.Item.Parent as TransferListControl;
 				entry.Item.Selected = true;
 			}
+
+			#region Dispose Pattern Implementation
+
+			bool _shouldDispose = true;
+			bool _isDisposed;
+
+			/// <summary>
+			/// Implements the Dispose pattern
+			/// </summary>
+			/// <param name="disposing">Whether this object is being disposed via a call to Dispose
+			/// or garbage collected.</param>
+			protected virtual void Dispose(bool disposing)
+			{
+				if (!this._isDisposed)
+				{
+					if (disposing && _shouldDispose)
+					{
+						if (Path != null)
+						{
+							Path.Dispose();
+							Path = null;
+						}
+						if (Remaining != null)
+						{
+							Remaining.Dispose();
+							Remaining = null;
+						}
+						if (Message != null)
+						{
+							Message.Dispose();
+							Message = null;
+						}
+						if (Progress != null)
+						{
+							Progress.Dispose();
+							Progress = null;
+						}
+					}
+					this._isDisposed = true;
+				}
+			}
+
+			/// <summary>
+			/// Disposes of all managed and unmanaged resources.
+			/// </summary>
+			public void Dispose()
+			{
+				this.Dispose(true);
+				GC.SuppressFinalize(this);
+			}
+
+			#endregion
 		}
 
 		// List of transfers indexed by their source paths.

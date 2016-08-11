@@ -105,5 +105,23 @@ namespace ClientSocketSim
 			lbxHistory.Items.Add(string.Format(format, args));
 			lbxHistory.SelectedIndex = lbxHistory.Items.Count - 1;
 		}
+
+		#region Dispose Pattern Implementation
+
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing && (components != null))
+			{
+				components.Dispose();
+				Client.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+
+		#endregion
 	}
 }

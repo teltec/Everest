@@ -113,5 +113,23 @@ namespace DemoTransferPerformance
 
 			IsRunning = false;
 		}
+
+		#region Dispose Pattern Implementation
+
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing && (components != null))
+			{
+				components.Dispose();
+				CancellationTokenSource.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+
+		#endregion
 	}
 }

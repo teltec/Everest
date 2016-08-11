@@ -614,8 +614,21 @@ namespace Teltec.Backup.Ipc.TcpSocket
 				{
 					DestroyWorkerThread();
 					CloseSocket(Context);
+
+					ClientFinished.Dispose();
+
+					// Events
+					InternalConnectedEvent.Dispose();
+					ConnectedEvent.Dispose();
+					DisconnectedEvent.Dispose();
+					MessageReceivedEvent.Dispose();
+					MessageSentEvent.Dispose();
+					ConnectionFailedEvent.Dispose();
+					InternalNeedsReconnectionEvent.Dispose();
+					NeedsReconnectionEvent.Dispose();
+
+					this._isDisposed = true;
 				}
-				this._isDisposed = true;
 			}
 		}
 
