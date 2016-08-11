@@ -197,16 +197,16 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 				var message = string.Format("Found {0} files ({1} bytes)", filesCount, filesSize);
 				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });
 			};
-			TransferAgent.ListingCanceled += (object sender, ListingProgressArgs e, Exception ex) =>
+			TransferAgent.ListingCanceled += (object sender, ListingProgressArgs e) =>
 			{
-				var message = string.Format("Canceled: {0}", ex != null ? ex.Message : "Unknown reason");
+				var message = string.Format("Canceled: {0}", e.Exception != null ? e.Exception.Message : "Unknown reason");
 				Info(message);
 				//StatusInfo.Update(SyncStatusLevel.INFO, message);
 				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });
 			};
-			TransferAgent.ListingFailed += (object sender, ListingProgressArgs e, Exception ex) =>
+			TransferAgent.ListingFailed += (object sender, ListingProgressArgs e) =>
 			{
-				var message = string.Format("Failed: {0}", ex != null ? ex.Message : "Unknown reason");
+				var message = string.Format("Failed: {0}", e.Exception != null ? e.Exception.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(SyncStatusLevel.ERROR, message);
 				OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.ListingUpdated, Message = message });

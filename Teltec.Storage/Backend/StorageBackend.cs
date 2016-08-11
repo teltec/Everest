@@ -6,19 +6,19 @@ namespace Teltec.Storage.Backend
 {
 	public delegate void TransferStartedDelegate(TransferFileProgressArgs e, Action action = null);
 	public delegate void TransferProgressedDelegate(TransferFileProgressArgs e, Action action = null);
-	public delegate void TransferFailedDelegate(TransferFileProgressArgs e, Exception ex, Action action = null);
-	public delegate void TransferCanceledDelegate(TransferFileProgressArgs e, Exception ex, Action action = null);
+	public delegate void TransferFailedDelegate(TransferFileProgressArgs e, Action action = null);
+	public delegate void TransferCanceledDelegate(TransferFileProgressArgs e, Action action = null);
 	public delegate void TransferCompletedDelegate(TransferFileProgressArgs e, Action action = null);
 
 	public delegate void ListingStartedDelegate(ListingProgressArgs e, Action action = null);
 	public delegate void ListingProgressedDelegate(ListingProgressArgs e, Action action = null);
-	public delegate void ListingFailedDelegate(ListingProgressArgs e, Exception ex, Action action = null);
-	public delegate void ListingCanceledDelegate(ListingProgressArgs e, Exception ex, Action action = null);
+	public delegate void ListingFailedDelegate(ListingProgressArgs e, Action action = null);
+	public delegate void ListingCanceledDelegate(ListingProgressArgs e, Action action = null);
 	public delegate void ListingCompletedDelegate(ListingProgressArgs e, Action action = null);
 
 	public delegate void DeletionStartedDelegate(DeletionArgs e, Action action = null);
-	public delegate void DeletionFailedDelegate(DeletionArgs e, Exception ex, Action action = null);
-	public delegate void DeletionCanceledDelegate(DeletionArgs e, Exception ex, Action action = null);
+	public delegate void DeletionFailedDelegate(DeletionArgs e, Action action = null);
+	public delegate void DeletionCanceledDelegate(DeletionArgs e, Action action = null);
 	public delegate void DeletionCompletedDelegate(DeletionArgs e, Action action = null);
 
 	public abstract class StorageBackend : IStorageBackend

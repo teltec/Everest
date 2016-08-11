@@ -58,24 +58,24 @@ namespace Teltec.Storage.Backend
 						UploadFileProgress.Invoke(this, args);
 				});
 			};
-			Implementation.UploadCanceled += (TransferFileProgressArgs args, Exception ex, Action action) =>
+			Implementation.UploadCanceled += (TransferFileProgressArgs args, Action action) =>
 			{
 				EventDispatcher.Invoke(() =>
 				{
 					if (action != null)
 						action.Invoke();
 					if (UploadFileCanceled != null)
-						UploadFileCanceled.Invoke(this, args, ex);
+						UploadFileCanceled.Invoke(this, args);
 				});
 			};
-			Implementation.UploadFailed += (TransferFileProgressArgs args, Exception ex, Action action) =>
+			Implementation.UploadFailed += (TransferFileProgressArgs args, Action action) =>
 			{
 				EventDispatcher.Invoke(() =>
 				{
 					if (action != null)
 						action.Invoke();
 					if (UploadFileFailed != null)
-						UploadFileFailed.Invoke(this, args, ex);
+						UploadFileFailed.Invoke(this, args);
 				});
 			};
 			Implementation.UploadCompleted += (TransferFileProgressArgs args, Action action) =>
@@ -115,24 +115,24 @@ namespace Teltec.Storage.Backend
 						DownloadFileProgress.Invoke(this, args);
 				});
 			};
-			Implementation.DownloadCanceled += (TransferFileProgressArgs args, Exception ex, Action action) =>
+			Implementation.DownloadCanceled += (TransferFileProgressArgs args, Action action) =>
 			{
 				EventDispatcher.Invoke(() =>
 				{
 					if (action != null)
 						action.Invoke();
 					if (DownloadFileCanceled != null)
-						DownloadFileCanceled.Invoke(this, args, ex);
+						DownloadFileCanceled.Invoke(this, args);
 				});
 			};
-			Implementation.DownloadFailed += (TransferFileProgressArgs args, Exception ex, Action action) =>
+			Implementation.DownloadFailed += (TransferFileProgressArgs args, Action action) =>
 			{
 				EventDispatcher.Invoke(() =>
 				{
 					if (action != null)
 						action.Invoke();
 					if (DownloadFileFailed != null)
-						DownloadFileFailed.Invoke(this, args, ex);
+						DownloadFileFailed.Invoke(this, args);
 				});
 			};
 			Implementation.DownloadCompleted += (TransferFileProgressArgs args, Action action) =>
@@ -172,24 +172,24 @@ namespace Teltec.Storage.Backend
 						ListingProgress.Invoke(this, args);
 				});
 			};
-			Implementation.ListingCanceled += (ListingProgressArgs args, Exception ex, Action action) =>
+			Implementation.ListingCanceled += (ListingProgressArgs args, Action action) =>
 			{
 				EventDispatcher.Invoke(() =>
 				{
 					if (action != null)
 						action.Invoke();
 					if (ListingCanceled != null)
-						ListingCanceled.Invoke(this, args, ex);
+						ListingCanceled.Invoke(this, args);
 				});
 			};
-			Implementation.ListingFailed += (ListingProgressArgs args, Exception ex, Action action) =>
+			Implementation.ListingFailed += (ListingProgressArgs args, Action action) =>
 			{
 				EventDispatcher.Invoke(() =>
 				{
 					if (action != null)
 						action.Invoke();
 					if (ListingFailed != null)
-						ListingFailed.Invoke(this, args, ex);
+						ListingFailed.Invoke(this, args);
 				});
 			};
 			Implementation.ListingCompleted += (ListingProgressArgs args, Action action) =>
@@ -219,24 +219,24 @@ namespace Teltec.Storage.Backend
 						DeleteFileStarted.Invoke(this, args);
 				});
 			};
-			Implementation.DeletionCanceled += (DeletionArgs args, Exception ex, Action action) =>
+			Implementation.DeletionCanceled += (DeletionArgs args, Action action) =>
 			{
 				EventDispatcher.Invoke(() =>
 				{
 					if (action != null)
 						action.Invoke();
 					if (DeleteFileCanceled != null)
-						DeleteFileCanceled.Invoke(this, args, ex);
+						DeleteFileCanceled.Invoke(this, args);
 				});
 			};
-			Implementation.DeletionFailed += (DeletionArgs args, Exception ex, Action action) =>
+			Implementation.DeletionFailed += (DeletionArgs args, Action action) =>
 			{
 				EventDispatcher.Invoke(() =>
 				{
 					if (action != null)
 						action.Invoke();
 					if (DeleteFileFailed != null)
-						DeleteFileFailed.Invoke(this, args, ex);
+						DeleteFileFailed.Invoke(this, args);
 				});
 			};
 			Implementation.DeletionCompleted += (DeletionArgs args, Action action) =>

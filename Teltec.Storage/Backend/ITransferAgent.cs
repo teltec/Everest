@@ -5,11 +5,11 @@ using Teltec.Storage.Versioning;
 namespace Teltec.Storage.Backend
 {
 	public delegate void TransferFileProgressHandler(object sender, TransferFileProgressArgs e);
-	public delegate void TransferFileExceptionHandler(object sender, TransferFileProgressArgs e, Exception ex);
+	public delegate void TransferFileExceptionHandler(object sender, TransferFileProgressArgs e);
 	public delegate void ListingProgressHandler(object sender, ListingProgressArgs e);
-	public delegate void ListingExceptionHandler(object sender, ListingProgressArgs e, Exception ex);
+	public delegate void ListingExceptionHandler(object sender, ListingProgressArgs e);
 	public delegate void DeleteFileProgressHandler(object sender, DeletionArgs e);
-	public delegate void DeleteFileExceptionHandler(object sender, DeletionArgs e, Exception ex);
+	public delegate void DeleteFileExceptionHandler(object sender, DeletionArgs e);
 
 	public interface ITransferAgent : IDisposable
 	{

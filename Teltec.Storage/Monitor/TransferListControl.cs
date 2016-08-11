@@ -255,25 +255,25 @@ namespace Teltec.Storage.Monitor
 			OnChangedTransferState(entry);
 		}
 
-		public void TransferFailed(object sender, TransferFileProgressArgs args, Exception e)
+		public void TransferFailed(object sender, TransferFileProgressArgs args)
 		{
 			string key = args.FilePath;
 			TransferEntry entry = Transfers[key];
 			if (entry == null)
 				return;
 			Debug.Assert(entry.Data.State == TransferState.FAILED);
-			entry.Exception = e;
+			entry.Exception = args.Exception;
 			OnChangedTransferState(entry);
 		}
 
-		public void TransferCanceled(object sender, TransferFileProgressArgs args, Exception e)
+		public void TransferCanceled(object sender, TransferFileProgressArgs args)
 		{
 			string key = args.FilePath;
 			TransferEntry entry = Transfers[key];
 			if (entry == null)
 				return;
 			Debug.Assert(entry.Data.State == TransferState.CANCELED);
-			entry.Exception = e;
+			entry.Exception = args.Exception;
 			OnChangedTransferState(entry);
 		}
 

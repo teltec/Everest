@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Backup.Data.DAO;
@@ -92,12 +92,12 @@ namespace Teltec.Backup.App.Forms.Schedule
 			}
 		}
 
-		void form_ConfirmEvent(Form sender, CancelEventArgs e)
+		void form_ConfirmEvent(object sender, CancelEventArgs e)
 		{
 			// TODO: save instance? The cascade should take care of it on `NewBackupPlanPresenter` and others.
 		}
 
-		void form_CancelEvent(Form sender, EventArgs e)
+		void form_CancelEvent(object sender, EventArgs e)
 		{
 			daoSchedule.Refresh(Plan.Schedule);
 		}

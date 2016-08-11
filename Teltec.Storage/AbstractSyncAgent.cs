@@ -73,13 +73,13 @@ namespace Teltec.Storage
 			{
 				Results.OnProgress(this, e);
 			};
-			TransferAgent.ListingCanceled += (object sender, ListingProgressArgs e, Exception ex) =>
+			TransferAgent.ListingCanceled += (object sender, ListingProgressArgs e) =>
 			{
-				Results.OnCanceled(this, e, ex);
+				Results.OnCanceled(this, e);
 			};
-			TransferAgent.ListingFailed += (object sender, ListingProgressArgs e, Exception ex) =>
+			TransferAgent.ListingFailed += (object sender, ListingProgressArgs e) =>
 			{
-				Results.OnFailed(this, e, ex);
+				Results.OnFailed(this, e);
 			};
 			TransferAgent.ListingCompleted += (object sender, ListingProgressArgs e) =>
 			{

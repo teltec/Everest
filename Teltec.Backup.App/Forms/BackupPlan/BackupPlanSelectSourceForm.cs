@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -27,7 +27,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 				//loadingPanel.Visible = false;
 			};
 
-			this.ModelChangedEvent += (Teltec.Forms.Wizard.WizardForm sender, Teltec.Forms.Wizard.WizardForm.ModelChangedEventArgs e) =>
+			this.ModelChangedEvent += (object sender, Teltec.Forms.Wizard.WizardForm.ModelChangedEventArgs e) =>
 			{
 				Models.BackupPlan plan = e.Model as Models.BackupPlan;
 				// Lazily select nodes that match entries from `plan.SelectedSources`.
@@ -59,7 +59,7 @@ namespace Teltec.Backup.App.Forms.BackupPlan
 		protected override void OnBeforeNextOrFinish(object sender, CancelEventArgs e)
 		{
 			Models.BackupPlan plan = Model as Models.BackupPlan;
-			
+
 			ICollection<Models.BackupPlanSourceEntry> entries = tvFiles.GetCheckedTagData().ToBackupPlanSourceEntry(plan, _dao);
 			plan.SelectedSources.Clear();
 			plan.SelectedSources.AddRange(entries);

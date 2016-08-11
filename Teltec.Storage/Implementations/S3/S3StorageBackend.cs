@@ -199,10 +199,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report cancelation.
 				if (UploadCanceled != null)
-					UploadCanceled(reusedProgressArgs, exception, () =>
+				{
+					reusedProgressArgs.Exception = exception;
+					UploadCanceled(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.CANCELED;
 					});
+				}
 			}
 			catch (Exception exception)
 			{
@@ -225,10 +228,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report failure.
 				if (UploadFailed != null)
-					UploadFailed(reusedProgressArgs, exception, () =>
+				{
+					reusedProgressArgs.Exception = exception;
+					UploadFailed(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.FAILED;
 					});
+				}
 			}
 			finally
 			{
@@ -345,10 +351,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report cancelation.
 				if (DownloadCanceled != null)
-					DownloadCanceled(reusedProgressArgs, exception, () =>
+				{
+					reusedProgressArgs.Exception = exception;
+					DownloadCanceled(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.CANCELED;
 					});
+				}
 			}
 			catch (Exception exception)
 			{
@@ -371,10 +380,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report failure.
 				if (DownloadFailed != null)
-					DownloadFailed(reusedProgressArgs, exception, () =>
+				{
+					reusedProgressArgs.Exception = exception;
+					DownloadFailed(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.FAILED;
 					});
+				}
 			}
 		}
 
@@ -538,10 +550,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report cancelation.
 				if (ListingCanceled != null)
-					ListingCanceled(reusedProgressArgs, exception, () =>
+				{
+					reusedProgressArgs.Exception = exception;
+					ListingCanceled(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.CANCELED;
 					});
+				}
 			}
 			catch (Exception exception)
 			{
@@ -564,10 +579,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report failure.
 				if (ListingFailed != null)
-					ListingFailed(reusedProgressArgs, exception, () =>
+				{
+					reusedProgressArgs.Exception = exception;
+					ListingFailed(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.FAILED;
 					});
+				}
 			}
 		}
 
@@ -616,10 +634,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report cancelation.
 				if (DeletionCanceled != null)
-					DeletionCanceled(reusedArgs, exception, () =>
+				{
+					reusedArgs.Exception = exception;
+					DeletionCanceled(reusedArgs, () =>
 					{
 						// ...
 					});
+				}
 			}
 			catch (Exception exception)
 			{
@@ -642,10 +663,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report failure.
 				if (DeletionFailed != null)
-					DeletionFailed(reusedArgs, exception, () =>
+				{
+					reusedArgs.Exception = exception;
+					DeletionFailed(reusedArgs, () =>
 					{
 						// ...
 					});
+				}
 			}
 		}
 
@@ -686,10 +710,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report cancelation.
 				if (DeletionCanceled != null)
-					DeletionCanceled(reusedArgs, exception, () =>
+				{
+					reusedArgs.Exception = exception;
+					DeletionCanceled(reusedArgs, () =>
 					{
 						// ...
 					});
+				}
 			}
 			catch (DeleteObjectsException exception)
 			{
@@ -712,10 +739,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report failure.
 				if (DeletionFailed != null)
-					DeletionFailed(reusedArgs, exception, () =>
+				{
+					reusedArgs.Exception = exception;
+					DeletionFailed(reusedArgs, () =>
 					{
 						// ...
 					});
+				}
 			}
 			catch (Exception exception)
 			{
@@ -738,10 +768,13 @@ namespace Teltec.Storage.Implementations.S3
 
 				// Report failure.
 				if (DeletionFailed != null)
-					DeletionFailed(reusedArgs, exception, () =>
+				{
+					reusedArgs.Exception = exception;
+					DeletionFailed(reusedArgs, () =>
 					{
 						// ...
 					});
+				}
 			}
 		}
 

@@ -204,9 +204,9 @@ namespace Teltec.Backup.App.Forms.S3
 					}
 				}
 			};
-			transferAgent.ListingFailed += (object sender2, ListingProgressArgs e2, Exception ex) =>
+			transferAgent.ListingFailed += (object sender2, ListingProgressArgs e2) =>
 			{
-				//var message = string.Format("Failed: {0}", ex != null ? ex.Message : "Unknown reason");
+				//var message = string.Format("Failed: {0}", e2.Exception != null ? e2.Exception.Message : "Unknown reason");
 				//logger.Warn(message);
 			};
 

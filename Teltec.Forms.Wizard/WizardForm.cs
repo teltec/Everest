@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 using Teltec.Common;
@@ -147,9 +147,9 @@ namespace Teltec.Forms.Wizard
 			}
 		}
 
-		public delegate void ModelChangedEventHandler(WizardForm sender, ModelChangedEventArgs e);
-		public delegate void WizardActionEventHandler(WizardForm sender, EventArgs e);
-		public delegate void WizardCancellableActionEventHandler(WizardForm sender, CancelEventArgs e);
+		public delegate void ModelChangedEventHandler(object sender, ModelChangedEventArgs e);
+		public delegate void WizardActionEventHandler(object sender, EventArgs e);
+		public delegate void WizardCancellableActionEventHandler(object sender, CancelEventArgs e);
 
 		public event ModelChangedEventHandler ModelChangedEvent;
 		public event WizardActionEventHandler FormClosedEvent;

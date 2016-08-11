@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -21,11 +21,11 @@ namespace Teltec.Backup.App.Forms.Schedule
 			//
 			// Recurrency
 			//
-			
+
 			// Reset controls
 			rbtnOccursAt.Checked = false;
 			rbtnOccursAt.Checked = false;
-			
+
 			// Setup controls
 			if (this.Schedule.RecurrencyDailyFrequencyType.HasValue)
 			{
@@ -43,7 +43,7 @@ namespace Teltec.Backup.App.Forms.Schedule
 						break;
 				}
 			}
-			
+
 			//
 			// Weekly
 			//
@@ -164,12 +164,12 @@ namespace Teltec.Backup.App.Forms.Schedule
 				new { Checked = this.WeeklyDaysChecked[3].Value, DayOfWeek = DayOfWeek.Thursday  },
 				new { Checked = this.WeeklyDaysChecked[4].Value, DayOfWeek = DayOfWeek.Friday    },
 				new { Checked = this.WeeklyDaysChecked[5].Value, DayOfWeek = DayOfWeek.Saturday  },
-				new { Checked = this.WeeklyDaysChecked[6].Value, DayOfWeek = DayOfWeek.Sunday    },	
+				new { Checked = this.WeeklyDaysChecked[6].Value, DayOfWeek = DayOfWeek.Sunday    },
 			};
 
 			// Remove any saved days.
 			this.Schedule.OccursAtDaysOfWeek.Clear();
-			
+
 			// Re-add only the currently selected days.
 			foreach (var day in days)
 			{
@@ -196,7 +196,7 @@ namespace Teltec.Backup.App.Forms.Schedule
 			// Daily frequency
 			if (!this.Schedule.RecurrencyDailyFrequencyType.HasValue)
 			{
-				//rbtnOccursAt.Checked = true; // Select "Occurs at" 
+				//rbtnOccursAt.Checked = true; // Select "Occurs at"
 				this.Schedule.RecurrencyDailyFrequencyType = Models.DailyFrequencyTypeEnum.SPECIFIC;
 			}
 
@@ -396,7 +396,7 @@ namespace Teltec.Backup.App.Forms.Schedule
 
 			this.CancelEvent += form_CancelEvent;
 			this.ConfirmEvent += form_ConfirmEvent;
-			
+
 			// Setup defaults and data bindings
 			this.ModelChangedEvent += (sender, args) =>
 			{
@@ -493,14 +493,14 @@ namespace Teltec.Backup.App.Forms.Schedule
 			}
 		}
 
-		public delegate void ModelChangedEventHandler(Form sender, ModelChangedEventArgs e);
-		public delegate void FormActionEventHandler(Form sender, EventArgs e);
-		public delegate void FormCancellableActionEventHandler(Form sender, CancelEventArgs e);
+		public delegate void ModelChangedEventHandler(object sender, ModelChangedEventArgs e);
+		public delegate void FormActionEventHandler(object sender, EventArgs e);
+		public delegate void FormCancelableActionEventHandler(object sender, CancelEventArgs e);
 
 		public event ModelChangedEventHandler ModelChangedEvent;
 		public event FormActionEventHandler CancelEvent;
-		public event FormCancellableActionEventHandler ConfirmEvent;
-		public event FormCancellableActionEventHandler BeforeConfirmEvent;
+		public event FormCancelableActionEventHandler ConfirmEvent;
+		public event FormCancelableActionEventHandler BeforeConfirmEvent;
 
 		protected virtual void OnModelChanged(object sender, ModelChangedEventArgs e)
 		{
@@ -651,12 +651,12 @@ namespace Teltec.Backup.App.Forms.Schedule
 
 		#endregion
 
-		protected virtual void form_CancelEvent(Form sender, EventArgs e)
+		protected virtual void form_CancelEvent(object sender, EventArgs e)
 		{
 			OnCancel();
 		}
 
-		protected virtual void form_ConfirmEvent(Form sender, EventArgs e)
+		protected virtual void form_ConfirmEvent(object sender, EventArgs e)
 		{
 			FormToModel();
 

@@ -78,21 +78,21 @@ namespace Teltec.Storage
 				Results.Stats.BytesCompleted += e.DeltaTransferredBytes;
 				Results.OnProgress(this, e);
 			};
-			TransferAgent.UploadFileCanceled += (object sender, TransferFileProgressArgs e, Exception ex) =>
+			TransferAgent.UploadFileCanceled += (object sender, TransferFileProgressArgs e) =>
 			{
 				Results.Stats.Running -= 1;
 				Results.Stats.Canceled += 1;
 				Results.Stats.BytesCanceled += e.TotalBytes;
 				//Results.Stats.BytesCompleted -= e.TransferredBytes;
-				Results.OnCanceled(this, e, ex);
+				Results.OnCanceled(this, e);
 			};
-			TransferAgent.UploadFileFailed += (object sender, TransferFileProgressArgs e, Exception ex) =>
+			TransferAgent.UploadFileFailed += (object sender, TransferFileProgressArgs e) =>
 			{
 				Results.Stats.Running -= 1;
 				Results.Stats.Failed += 1;
 				Results.Stats.BytesFailed += e.TotalBytes;
 				//Results.Stats.BytesCompleted -= e.TransferredBytes;
-				Results.OnFailed(this, e, ex);
+				Results.OnFailed(this, e);
 			};
 			TransferAgent.UploadFileCompleted += (object sender, TransferFileProgressArgs e) =>
 			{
@@ -116,21 +116,21 @@ namespace Teltec.Storage
 				Results.Stats.BytesCompleted += e.DeltaTransferredBytes;
 				Results.OnProgress(this, e);
 			};
-			TransferAgent.DownloadFileCanceled += (object sender, TransferFileProgressArgs e, Exception ex) =>
+			TransferAgent.DownloadFileCanceled += (object sender, TransferFileProgressArgs e) =>
 			{
 				Results.Stats.Running -= 1;
 				Results.Stats.Canceled += 1;
 				Results.Stats.BytesCanceled += e.TotalBytes;
 				//Results.Stats.BytesCompleted -= e.TransferredBytes;
-				Results.OnCanceled(this, e, ex);
+				Results.OnCanceled(this, e);
 			};
-			TransferAgent.DownloadFileFailed += (object sender, TransferFileProgressArgs e, Exception ex) =>
+			TransferAgent.DownloadFileFailed += (object sender, TransferFileProgressArgs e) =>
 			{
 				Results.Stats.Running -= 1;
 				Results.Stats.Failed += 1;
 				Results.Stats.BytesFailed += e.TotalBytes;
 				//Results.Stats.BytesCompleted -= e.TransferredBytes;
-				Results.OnFailed(this, e, ex);
+				Results.OnFailed(this, e);
 			};
 			TransferAgent.DownloadFileCompleted += (object sender, TransferFileProgressArgs e) =>
 			{
@@ -147,13 +147,13 @@ namespace Teltec.Storage
 			{
 				Results.OnDeleteStarted(this, e);
 			};
-			TransferAgent.DeleteFileCanceled += (object sender, DeletionArgs e, Exception ex) =>
+			TransferAgent.DeleteFileCanceled += (object sender, DeletionArgs e) =>
 			{
-				Results.OnDeleteCanceled(this, e, ex);
+				Results.OnDeleteCanceled(this, e);
 			};
-			TransferAgent.DeleteFileFailed += (object sender, DeletionArgs e, Exception ex) =>
+			TransferAgent.DeleteFileFailed += (object sender, DeletionArgs e) =>
 			{
-				Results.OnDeleteFailed(this, e, ex);
+				Results.OnDeleteFailed(this, e);
 			};
 			TransferAgent.DeleteFileCompleted += (object sender, DeletionArgs e) =>
 			{

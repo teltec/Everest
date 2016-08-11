@@ -97,6 +97,13 @@ namespace Teltec.Storage
 			get { return _FilePath; }
 			set { SetField(ref _FilePath, value); }
 		}
+
+		private Exception _Exception;
+		public Exception Exception
+		{
+			get { return _Exception; }
+			set { SetField(ref _Exception, value); }
+		}
 	}
 
 	public class ListingObject
@@ -135,6 +142,13 @@ namespace Teltec.Storage
 			get { return _Objects; }
 			set { SetField(ref _Objects, value); }
 		}
+
+		private Exception _Exception;
+		public Exception Exception
+		{
+			get { return _Exception; }
+			set { SetField(ref _Exception, value); }
+		}
 	}
 
 	public class DeletionArgs : ObservableEventArgs
@@ -151,6 +165,13 @@ namespace Teltec.Storage
 		{
 			get { return _FilePath; }
 			set { SetField(ref _FilePath, value); }
+		}
+
+		private Exception _Exception;
+		public Exception Exception
+		{
+			get { return _Exception; }
+			set { SetField(ref _Exception, value); }
 		}
 	}
 }

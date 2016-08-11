@@ -102,27 +102,27 @@ namespace Teltec.Forms.Wizard
 			return form;
 		}
 
-		protected virtual void form_FormClosedEvent(WizardForm sender, EventArgs e)
+		protected virtual void form_FormClosedEvent(object sender, EventArgs e)
 		{
 			OnFormClosed();
 		}
 
-		protected virtual void form_CancelEvent(WizardForm sender, EventArgs e)
+		protected virtual void form_CancelEvent(object sender, EventArgs e)
 		{
 			OnCancel();
 		}
 
-		protected virtual void form_FinishEvent(WizardForm sender, EventArgs e)
+		protected virtual void form_FinishEvent(object sender, EventArgs e)
 		{
 			OnFinish();
 		}
 
-		protected virtual void form_PreviousEvent(WizardForm sender, EventArgs e)
+		protected virtual void form_PreviousEvent(object sender, EventArgs e)
 		{
 			MoveToPrevious();
 		}
 
-		protected virtual void form_NextEvent(WizardForm sender, EventArgs e)
+		protected virtual void form_NextEvent(object sender, EventArgs e)
 		{
 			MoveToNext();
 		}

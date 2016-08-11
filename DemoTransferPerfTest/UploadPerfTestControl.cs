@@ -82,16 +82,16 @@ namespace DemoTransferPerformance
 			{
 				stats.Begin();
 			};
-			xferAgent.UploadFileCanceled += (object sender1, TransferFileProgressArgs e1, Exception ex) =>
+			xferAgent.UploadFileCanceled += (object sender1, TransferFileProgressArgs e1) =>
 			{
 				stats.End();
 				string message = "Canceled file upload";
 				MessageBox.Show(message, "Transfer canceled", MessageBoxButtons.OK, MessageBoxIcon.Information);
 			};
-			xferAgent.UploadFileFailed += (object sender1, TransferFileProgressArgs e1, Exception ex) =>
+			xferAgent.UploadFileFailed += (object sender1, TransferFileProgressArgs e1) =>
 			{
 				stats.End();
-				string message = string.Format("Failed to upload file: {0}\n{1}", ex.GetType().Name, ex.Message);
+				string message = string.Format("Failed to upload file: {0}\n{1}", e1.Exception.GetType().Name, e1.Exception.Message);
 				MessageBox.Show(message, "Transfer failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			};
 			xferAgent.UploadFileCompleted += (object sender1, TransferFileProgressArgs e1) =>

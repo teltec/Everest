@@ -1,4 +1,4 @@
-﻿namespace Teltec.Backup.App.Forms.S3
+namespace Teltec.Backup.App.Forms.S3
 {
     partial class AmazonS3AccountForm
     {

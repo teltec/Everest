@@ -142,24 +142,24 @@ namespace Teltec.Storage
 				Monitor.TransferCompleted(this, args);
 		}
 
-		internal void OnCanceled(object sender, TransferFileProgressArgs args, Exception exception)
+		internal void OnCanceled(object sender, TransferFileProgressArgs args)
 		{
 			RemoveActiveTransfer(args.FilePath);
-			ErrorMessages.Add(string.Format("{0} canceled: {1}", args.FilePath, exception.Message));
+			ErrorMessages.Add(string.Format("{0} canceled: {1}", args.FilePath, args.Exception.Message));
 			if (Canceled != null)
-				Canceled.Invoke(sender, args, exception);
+				Canceled.Invoke(sender, args);
 			if (Monitor != null)
-				Monitor.TransferCanceled(this, args, exception);
+				Monitor.TransferCanceled(this, args);
 		}
 
-		internal void OnFailed(object sender, TransferFileProgressArgs args, Exception exception)
+		internal void OnFailed(object sender, TransferFileProgressArgs args)
 		{
 			RemoveActiveTransfer(args.FilePath);
-			ErrorMessages.Add(string.Format("{0} failed: {1}", args.FilePath, exception.Message));
+			ErrorMessages.Add(string.Format("{0} failed: {1}", args.FilePath, args.Exception.Message));
 			if (Failed != null)
-				Failed.Invoke(sender, args, exception);
+				Failed.Invoke(sender, args);
 			if (Monitor != null)
-				Monitor.TransferFailed(this, args, exception);
+				Monitor.TransferFailed(this, args);
 		}
 
 		private void AddActiveTransfer(string key, TransferFileProgressArgs value)
@@ -212,24 +212,24 @@ namespace Teltec.Storage
 			//	Monitor.DeleteCompleted(this, args);
 		}
 
-		internal void OnDeleteCanceled(object sender, DeletionArgs args, Exception exception)
+		internal void OnDeleteCanceled(object sender, DeletionArgs args)
 		{
 			RemoveActiveDeletion(args.FilePath);
-			ErrorMessages.Add(string.Format("Deleting {0} canceled: {1}", args.FilePath, exception.Message));
+			ErrorMessages.Add(string.Format("Deleting {0} canceled: {1}", args.FilePath, args.Exception.Message));
 			if (DeleteCanceled != null)
-				DeleteCanceled.Invoke(sender, args, exception);
+				DeleteCanceled.Invoke(sender, args);
 			//if (Monitor != null)
-			//	Monitor.DeleteCanceled(this, args, exception);
+			//	Monitor.DeleteCanceled(this, args);
 		}
 
-		internal void OnDeleteFailed(object sender, DeletionArgs args, Exception exception)
+		internal void OnDeleteFailed(object sender, DeletionArgs args)
 		{
 			RemoveActiveDeletion(args.FilePath);
-			ErrorMessages.Add(string.Format("Deleting {0} failed: {1}", args.FilePath, exception.Message));
+			ErrorMessages.Add(string.Format("Deleting {0} failed: {1}", args.FilePath, args.Exception.Message));
 			if (DeleteFailed != null)
-				DeleteFailed.Invoke(sender, args, exception);
+				DeleteFailed.Invoke(sender, args);
 			//if (Monitor != null)
-			//	Monitor.DeleteFailed(this, args, exception);
+			//	Monitor.DeleteFailed(this, args);
 		}
 
 		private void AddActiveDeletion(string key, DeletionArgs value)

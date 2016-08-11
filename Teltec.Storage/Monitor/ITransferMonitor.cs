@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Teltec.Storage.Monitor
 {
@@ -8,8 +8,8 @@ namespace Teltec.Storage.Monitor
 		void TransferAdded(object sender, TransferFileProgressArgs args);
 		void TransferStarted(object sender, TransferFileProgressArgs args);
 		void TransferProgress(object sender, TransferFileProgressArgs args);
-		void TransferFailed(object sender, TransferFileProgressArgs args, Exception e);
-		void TransferCanceled(object sender, TransferFileProgressArgs args, Exception e);
+		void TransferFailed(object sender, TransferFileProgressArgs args);
+		void TransferCanceled(object sender, TransferFileProgressArgs args);
 		void TransferCompleted(object sender, TransferFileProgressArgs args);
 	}
 }

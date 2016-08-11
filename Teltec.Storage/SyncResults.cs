@@ -67,18 +67,18 @@ namespace Teltec.Storage
 				Completed.Invoke(sender, args);
 		}
 
-		internal void OnCanceled(object sender, ListingProgressArgs args, Exception exception)
+		internal void OnCanceled(object sender, ListingProgressArgs args)
 		{
-			ErrorMessages.Add(string.Format("Listing canceled: {0}", exception.Message));
+			ErrorMessages.Add(string.Format("Listing canceled: {0}", args.Exception.Message));
 			if (Canceled != null)
-				Canceled.Invoke(sender, args, exception);
+				Canceled.Invoke(sender, args);
 		}
 
-		internal void OnFailed(object sender, ListingProgressArgs args, Exception exception)
+		internal void OnFailed(object sender, ListingProgressArgs args)
 		{
-			ErrorMessages.Add(string.Format("Listing failed: {0}", exception.Message));
+			ErrorMessages.Add(string.Format("Listing failed: {0}", args.Exception.Message));
 			if (Failed != null)
-				Failed.Invoke(sender, args, exception);
+				Failed.Invoke(sender, args);
 		}
 	}
 }

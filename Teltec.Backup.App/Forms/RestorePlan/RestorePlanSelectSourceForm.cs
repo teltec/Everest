@@ -28,7 +28,7 @@ namespace Teltec.Backup.App.Forms.RestorePlan
 				//loadingPanel.Visible = false;
 			};
 
-			this.ModelChangedEvent += (Teltec.Forms.Wizard.WizardForm sender, Teltec.Forms.Wizard.WizardForm.ModelChangedEventArgs e) =>
+			this.ModelChangedEvent += (object sender, Teltec.Forms.Wizard.WizardForm.ModelChangedEventArgs e) =>
 			{
 				Models.RestorePlan plan = e.Model as Models.RestorePlan;
 				tvFiles.StorageAccount = plan.StorageAccount;

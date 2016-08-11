@@ -175,26 +175,26 @@ namespace Teltec.Backup.PlanExecutor.Restore
 		{
 			RestoredFileRepository daoRestoredFile = new RestoredFileRepository();
 			BackupedFileRepository daoBackupedFile = new BackupedFileRepository();
-			results.Failed += (object sender, TransferFileProgressArgs args, Exception ex) =>
+			results.Failed += (object sender, TransferFileProgressArgs args) =>
 			{
 				Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(restore, args.FilePath);
 				restoredFile.TransferStatus = TransferStatus.FAILED;
 				restoredFile.UpdatedAt = DateTime.UtcNow;
 				daoRestoredFile.Update(restoredFile);
 
-				var message = string.Format("Failed {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
+				var message = string.Format("Failed {0} - {1}", args.FilePath, args.Exception != null ? args.Exception.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
 				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.FAILED });
 			};
-			results.Canceled += (object sender, TransferFileProgressArgs args, Exception ex) =>
+			results.Canceled += (object sender, TransferFileProgressArgs args) =>
 			{
 				Models.RestoredFile restoredFile = daoRestoredFile.GetByRestoreAndPath(restore, args.FilePath);
 				restoredFile.TransferStatus = TransferStatus.CANCELED;
 				restoredFile.UpdatedAt = DateTime.UtcNow;
 				daoRestoredFile.Update(restoredFile);
 
-				var message = string.Format("Canceled {0} - {1}", args.FilePath, ex != null ? ex.Message : "Unknown reason");
+				var message = string.Format("Canceled {0} - {1}", args.FilePath, args.Exception != null ? args.Exception.Message : "Unknown reason");
 				Warn(message);
 				//StatusInfo.Update(BackupStatusLevel.ERROR, message);
 				OnUpdate(new RestoreOperationEvent { Status = RestoreOperationStatus.Updated, Message = message, TransferStatus = TransferStatus.CANCELED });
