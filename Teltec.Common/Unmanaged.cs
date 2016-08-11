@@ -6,14 +6,22 @@ namespace Teltec.Common
 	{
 		#region Trap console application events
 
-		/// <summary>
-		/// Adds or removes an application-defined HandlerRoutine function from the list of handler functions for the calling process
-		/// </summary>
-		/// <param name="handler">A pointer to the application-defined HandlerRoutine function to be added or removed. This parameter can be NULL.</param>
-		/// <param name="add">If this parameter is TRUE, the handler is added; if it is FALSE, the handler is removed.</param>
-		/// <returns>If the function succeeds, the return value is true.</returns>
-		[DllImport("Kernel32")]
-		public static extern bool SetConsoleCtrlHandler(HandlerRoutine handler, bool add);
+		internal static class NativeMethods
+		{
+			/// <summary>
+			/// Adds or removes an application-defined HandlerRoutine function from the list of handler functions for the calling process
+			/// </summary>
+			/// <param name="handler">A pointer to the application-defined HandlerRoutine function to be added or removed. This parameter can be NULL.</param>
+			/// <param name="add">If this parameter is TRUE, the handler is added; if it is FALSE, the handler is removed.</param>
+			/// <returns>If the function succeeds, the return value is true.</returns>
+			[DllImport("Kernel32")]
+			public static extern bool SetConsoleCtrlHandler(HandlerRoutine handler, bool add);
+		}
+
+		public static bool SetConsoleCtrlHandler(HandlerRoutine handler, bool add)
+		{
+			return NativeMethods.SetConsoleCtrlHandler(handler, add);
+		}
 
 		/// <summary>
 		/// The console close handler delegate.

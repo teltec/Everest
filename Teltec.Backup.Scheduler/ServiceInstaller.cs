@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -26,43 +26,47 @@ namespace Teltec.Backup.Scheduler
 		public static readonly int STANDARD_RIGHTS_REQUIRED = 0xF0000;
 		public static readonly int SERVICE_WIN32_OWN_PROCESS = 0x00000010;
 
-		#region Memory
-
-		[DllImport("kernel32.dll", EntryPoint = "RtlFillMemory", SetLastError = false)]
-		public static extern void FillMemory(IntPtr destination, uint length, byte fill);
-
-		#endregion
-
 		#region Service
 
-		[DllImport("advapi32.dll", EntryPoint = "OpenSCManagerW", ExactSpelling = true, CharSet = CharSet.Unicode, SetLastError = true)]
-		public static extern IntPtr OpenSCManager(string machineName, string databaseName, ScmAccessRights dwDesiredAccess);
+		internal static class NativeMethods
+		{
+			#region Memory
 
-		[DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-		public static extern IntPtr OpenService(IntPtr hSCManager, string lpServiceName, ServiceAccessRights dwDesiredAccess);
+			[DllImport("kernel32.dll", EntryPoint = "RtlFillMemory", SetLastError = false)]
+			public static extern void FillMemory(IntPtr destination, uint length, byte fill);
 
-		[DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-		public static extern IntPtr CreateService(IntPtr hSCManager, string lpServiceName, string lpDisplayName, ServiceAccessRights dwDesiredAccess, int dwServiceType, ServiceBootFlag dwStartType, ServiceError dwErrorControl, string lpBinaryPathName, string lpLoadOrderGroup, IntPtr lpdwTagId, string lpDependencies, string lpServiceStartName, string lpPassword);
+			#endregion
 
-		[DllImport("advapi32.dll", SetLastError = true)]
-		[return: MarshalAs(UnmanagedType.Bool)]
-		public static extern bool CloseServiceHandle(IntPtr hSCObject);
+			[DllImport("advapi32.dll", EntryPoint = "OpenSCManagerW", ExactSpelling = true, CharSet = CharSet.Unicode, SetLastError = true)]
+			public static extern IntPtr OpenSCManager(string machineName, string databaseName, ScmAccessRights dwDesiredAccess);
 
-		[DllImport("advapi32.dll")]
-		public static extern int QueryServiceStatus(IntPtr hService, ServiceStatus lpServiceStatus);
+			[DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+			public static extern IntPtr OpenService(IntPtr hSCManager, string lpServiceName, ServiceAccessRights dwDesiredAccess);
 
-		[DllImport("advapi32.dll", SetLastError = true)]
-		public static extern bool SetServiceStatus(IntPtr hService, ref ServiceStatus lpServiceStatus);
+			[DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+			public static extern IntPtr CreateService(IntPtr hSCManager, string lpServiceName, string lpDisplayName, ServiceAccessRights dwDesiredAccess, int dwServiceType, ServiceBootFlag dwStartType, ServiceError dwErrorControl, string lpBinaryPathName, string lpLoadOrderGroup, IntPtr lpdwTagId, string lpDependencies, string lpServiceStartName, string lpPassword);
 
-		[DllImport("advapi32.dll", SetLastError = true)]
-		[return: MarshalAs(UnmanagedType.Bool)]
-		public static extern bool DeleteService(IntPtr hService);
+			[DllImport("advapi32.dll", SetLastError = true)]
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool CloseServiceHandle(IntPtr hSCObject);
 
-		[DllImport("advapi32.dll")]
-		public static extern int ControlService(IntPtr hService, ServiceControl dwControl, ServiceStatus lpServiceStatus);
+			[DllImport("advapi32.dll")]
+			public static extern int QueryServiceStatus(IntPtr hService, ServiceStatus lpServiceStatus);
 
-		[DllImport("advapi32.dll", SetLastError = true)]
-		public static extern int StartService(IntPtr hService, int dwNumServiceArgs, int lpServiceArgVectors);
+			[DllImport("advapi32.dll", SetLastError = true)]
+			public static extern bool SetServiceStatus(IntPtr hService, ref ServiceStatus lpServiceStatus);
+
+			[DllImport("advapi32.dll", SetLastError = true)]
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool DeleteService(IntPtr hService);
+
+			[DllImport("advapi32.dll")]
+			public static extern int ControlService(IntPtr hService, ServiceControl dwControl, ServiceStatus lpServiceStatus);
+
+			[DllImport("advapi32.dll", SetLastError = true)]
+			[return: MarshalAs(UnmanagedType.Bool)]
+			public static extern bool StartService(IntPtr hService, int dwNumServiceArgs, int lpServiceArgVectors);
+		}
 
 		#endregion
 
@@ -87,24 +91,24 @@ namespace Teltec.Backup.Scheduler
 
 			try
 			{
-				IntPtr service = OpenService(scm, ServiceName, ServiceAccessRights.AllAccess);
+				IntPtr service = NativeMethods.OpenService(scm, ServiceName, ServiceAccessRights.AllAccess);
 				if (service == IntPtr.Zero)
 					throw new ApplicationException("Service not installed.");
 
 				try
 				{
 					StopService(service);
-					if (!DeleteService(service))
+					if (!NativeMethods.DeleteService(service))
 						throw new ApplicationException("Could not delete service: " + GetLastErrorMessage());
 				}
 				finally
 				{
-					CloseServiceHandle(service);
+					NativeMethods.CloseServiceHandle(service);
 				}
 			}
 			finally
 			{
-				CloseServiceHandle(scm);
+				NativeMethods.CloseServiceHandle(scm);
 			}
 		}
 
@@ -114,17 +118,17 @@ namespace Teltec.Backup.Scheduler
 
 			try
 			{
-				IntPtr service = OpenService(scm, ServiceName, ServiceAccessRights.QueryStatus);
+				IntPtr service = NativeMethods.OpenService(scm, ServiceName, ServiceAccessRights.QueryStatus);
 
 				if (service == IntPtr.Zero)
 					return false;
 
-				CloseServiceHandle(service);
+				NativeMethods.CloseServiceHandle(service);
 				return true;
 			}
 			finally
 			{
-				CloseServiceHandle(scm);
+				NativeMethods.CloseServiceHandle(scm);
 			}
 		}
 
@@ -154,14 +158,14 @@ namespace Teltec.Backup.Scheduler
 
 			try
 			{
-				IntPtr service = OpenService(scm, ServiceName, ServiceAccessRights.AllAccess);
+				IntPtr service = NativeMethods.OpenService(scm, ServiceName, ServiceAccessRights.AllAccess);
 
 				// Create it if it doesn't exist yet.
 				if (service == IntPtr.Zero)
 				{
 					string lpDependencies = BuildDependencies();
 
-					service = CreateService(
+					service = NativeMethods.CreateService(
 						scm, ServiceName, DisplayName,
 						DesiredAccess, ServiceType,
 						StartType, ErrorControl, BinaryPath,
@@ -177,12 +181,12 @@ namespace Teltec.Backup.Scheduler
 				}
 				finally
 				{
-					CloseServiceHandle(service);
+					NativeMethods.CloseServiceHandle(service);
 				}
 			}
 			finally
 			{
-				CloseServiceHandle(scm);
+				NativeMethods.CloseServiceHandle(scm);
 			}
 		}
 
@@ -192,7 +196,7 @@ namespace Teltec.Backup.Scheduler
 
 			try
 			{
-				IntPtr service = OpenService(scm, ServiceName, ServiceAccessRights.QueryStatus | ServiceAccessRights.Start);
+				IntPtr service = NativeMethods.OpenService(scm, ServiceName, ServiceAccessRights.QueryStatus | ServiceAccessRights.Start);
 				if (service == IntPtr.Zero)
 					throw new ApplicationException("Could not open service.");
 
@@ -202,12 +206,12 @@ namespace Teltec.Backup.Scheduler
 				}
 				finally
 				{
-					CloseServiceHandle(service);
+					NativeMethods.CloseServiceHandle(service);
 				}
 			}
 			finally
 			{
-				CloseServiceHandle(scm);
+				NativeMethods.CloseServiceHandle(scm);
 			}
 		}
 
@@ -217,7 +221,7 @@ namespace Teltec.Backup.Scheduler
 
 			try
 			{
-				IntPtr service = OpenService(scm, ServiceName, ServiceAccessRights.QueryStatus | ServiceAccessRights.Stop);
+				IntPtr service = NativeMethods.OpenService(scm, ServiceName, ServiceAccessRights.QueryStatus | ServiceAccessRights.Stop);
 				if (service == IntPtr.Zero)
 					throw new ApplicationException("Could not open service.");
 
@@ -227,21 +231,25 @@ namespace Teltec.Backup.Scheduler
 				}
 				finally
 				{
-					CloseServiceHandle(service);
+					NativeMethods.CloseServiceHandle(service);
 				}
 			}
 			finally
 			{
-				CloseServiceHandle(scm);
+				NativeMethods.CloseServiceHandle(scm);
 			}
 		}
 
 		private void StartService(IntPtr service)
 		{
 			ServiceStatus status = new ServiceStatus();
-			int result = StartService(service, 0, 0);
-			if (result == 0)
-				logger.Error(GetLastErrorMessage());
+			bool result = NativeMethods.StartService(service, 0, 0);
+			if (!result)
+			{
+				string message = GetLastErrorMessage();
+				logger.Error(message);
+				throw new ApplicationException(message);
+			}
 
 			var changedStatus = WaitForServiceStatus(service, ServiceState.StartPending, ServiceState.Running);
 			if (!changedStatus)
@@ -251,7 +259,7 @@ namespace Teltec.Backup.Scheduler
 		private void StopService(IntPtr service)
 		{
 			ServiceStatus status = new ServiceStatus();
-			ControlService(service, ServiceControl.Stop, status);
+			NativeMethods.ControlService(service, ServiceControl.Stop, status);
 			var changedStatus = WaitForServiceStatus(service, ServiceState.StopPending, ServiceState.Stopped);
 			if (!changedStatus)
 				throw new ApplicationException("Unable to stop service");
@@ -263,7 +271,7 @@ namespace Teltec.Backup.Scheduler
 
 			try
 			{
-				IntPtr service = OpenService(scm, ServiceName, ServiceAccessRights.QueryStatus);
+				IntPtr service = NativeMethods.OpenService(scm, ServiceName, ServiceAccessRights.QueryStatus);
 				if (service == IntPtr.Zero)
 					return ServiceState.NotFound;
 
@@ -273,12 +281,12 @@ namespace Teltec.Backup.Scheduler
 				}
 				finally
 				{
-					CloseServiceHandle(service);
+					NativeMethods.CloseServiceHandle(service);
 				}
 			}
 			finally
 			{
-				CloseServiceHandle(scm);
+				NativeMethods.CloseServiceHandle(scm);
 			}
 		}
 
@@ -286,7 +294,7 @@ namespace Teltec.Backup.Scheduler
 		{
 			ServiceStatus status = new ServiceStatus();
 
-			if (QueryServiceStatus(service, status) == 0)
+			if (NativeMethods.QueryServiceStatus(service, status) == 0)
 				throw new ApplicationException("Failed to query service status.");
 
 			return status.dwCurrentState;
@@ -310,7 +318,7 @@ namespace Teltec.Backup.Scheduler
 		{
 			ServiceStatus status = new ServiceStatus();
 
-			QueryServiceStatus(service, status);
+			NativeMethods.QueryServiceStatus(service, status);
 			if (status.dwCurrentState == desiredStatus)
 				return true;
 
@@ -334,7 +342,7 @@ namespace Teltec.Backup.Scheduler
 
 				// Check the status again.
 
-				if (QueryServiceStatus(service, status) == 0)
+				if (NativeMethods.QueryServiceStatus(service, status) == 0)
 				{
 					logger.Error(GetLastErrorMessage());
 					break;
@@ -372,7 +380,7 @@ namespace Teltec.Backup.Scheduler
 
 		private IntPtr OpenSCManager(ScmAccessRights rights)
 		{
-			IntPtr scm = OpenSCManager(MachineName, null, rights);
+			IntPtr scm = NativeMethods.OpenSCManager(MachineName, null, rights);
 			if (scm == IntPtr.Zero)
 				throw new ApplicationException("Could not connect to service control manager: " + GetLastErrorMessage());
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 
 namespace Teltec.Common
@@ -21,22 +21,22 @@ namespace Teltec.Common
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
 		public struct TV_ITEM
 		{
-			public int mask;
-			public IntPtr hItem;
-			public int state;
-			public int stateMask;
-			public IntPtr /* LPTSTR */ pszText;
-			public int cchTextMax;
-			public int iImage;
-			public int iSelectedImage;
-			public int cChildren;
-			public IntPtr lParam;
+			internal int mask;
+			internal IntPtr hItem;
+			internal int state;
+			internal int stateMask;
+			internal IntPtr /* LPTSTR */ pszText;
+			internal int cchTextMax;
+			internal int iImage;
+			internal int iSelectedImage;
+			internal int cChildren;
+			internal IntPtr lParam;
 		}
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
-		public static extern IntPtr SendMessage(HandleRef hWnd, int Msg, IntPtr wParam, IntPtr lParam);
+		internal static extern IntPtr SendMessage(HandleRef hWnd, int Msg, IntPtr wParam, IntPtr lParam);
 
 		[DllImport("user32.dll", CharSet = CharSet.Auto)]
-		public static extern IntPtr SendMessage(HandleRef hWnd, int Msg, IntPtr wParam, ref TV_ITEM lParam);
+		internal static extern IntPtr SendMessage(HandleRef hWnd, int Msg, IntPtr wParam, ref TV_ITEM lParam);
 	}
 }
