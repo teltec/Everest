@@ -43,7 +43,7 @@ namespace Teltec.Common.Utils
 			catch (Exception ex)
 			{
 				logger.Log(LogLevel.Error, ex, "Failed to start sub-process {0} {1}", filename, arguments);
-				throw ex;
+				throw;
 			}
 		}
 	}

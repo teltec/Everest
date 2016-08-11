@@ -231,7 +231,7 @@ namespace Teltec.Backup.Data.DAO.NH
 			catch (Exception ex)
 			{
 				logger.Log(LogLevel.Fatal, ex, "SCHEMA VALIDATION ERROR");
-				throw ex;
+				throw;
 			}
 			finally
 			{

@@ -357,7 +357,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							Results.OnFileFailed(this, new FileVersionerEventArgs { FilePath = entry.Path, FileSize = 0 }, message);
 							logger.Warn(message);
 
-							throw ex;
+							throw;
 						}
 
 						try
@@ -374,7 +374,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							Results.OnFileFailed(this, new FileVersionerEventArgs { FilePath = entry.Path, FileSize = 0 }, message);
 							logger.Warn(message);
 
-							throw ex;
+							throw;
 						}
 
 						Results.OnFileCompleted(this, new FileVersionerEventArgs { FilePath = entry.Path, FileSize = entry.LastSize });
@@ -674,7 +674,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							Results.OnError(this, message);
 							logger.Log(LogLevel.Error, ex, message);
 
-							throw ex;
+							throw;
 						}
 
 						batchProcessor.ProcessBatch(session);
@@ -710,7 +710,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							logger.Log(LogLevel.Error, ex, message);
 
 							logger.Error("Dump of failed object: {0}", entry.DumpMe());
-							throw ex;
+							throw;
 						}
 
 						batchProcessor.ProcessBatch(session);
@@ -763,7 +763,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							logger.Log(LogLevel.Error, ex, "BUG: Failed to insert/update {0} => {1}",
 								typeof(Models.BackupedFile).Name,
 								CustomJsonSerializer.SerializeObject(backupedFile, 1));
-							throw ex;
+							throw;
 						}
 
 						//backupedFiles.Add(backupedFile);
@@ -800,7 +800,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 								Results.OnError(this, message);
 								logger.Log(LogLevel.Error, ex, message);
 
-								throw ex;
+								throw;
 							}
 
 							batchProcessor.ProcessBatch(session);
@@ -840,7 +840,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 							Results.OnError(this, message);
 							logger.Log(LogLevel.Error, ex, message);
 
-							throw ex;
+							throw;
 						}
 					}
 

@@ -397,7 +397,7 @@ namespace Teltec.Backup.PlanExecutor.Synchronize
 									CustomJsonSerializer.SerializeObject(entry, 1));
 
 							logger.Error("Dump of failed object: {0}", entry.DumpMe());
-							throw ex;
+							throw;
 						}
 
 						bool didCommit = batchProcessor.ProcessBatch(tx);

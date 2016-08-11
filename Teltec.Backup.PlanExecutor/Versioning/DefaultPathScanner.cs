@@ -66,7 +66,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 				}
 				catch (OperationCanceledException)
 				{
-					throw ex; // Rethrow!
+					throw; // Rethrow!
 				}
 				catch (Exception ex)
 				{
@@ -110,7 +110,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			}
 			catch (OperationCanceledException)
 			{
-				throw ex; // Rethrow!
+				throw; // Rethrow!
 			}
 			catch (Exception ex)
 			{
@@ -153,7 +153,7 @@ namespace Teltec.Backup.PlanExecutor.Versioning
 			}
 			catch (OperationCanceledException)
 			{
-				throw ex; // Rethrow!
+				throw; // Rethrow!
 			}
 			catch (Exception ex)
 			{
