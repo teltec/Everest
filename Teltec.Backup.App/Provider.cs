@@ -24,7 +24,7 @@ namespace Teltec.Backup.App
 			get
 			{
 				if (_Handler == null)
-					throw new NullReferenceException("Forgot to call Provider.BuildHandler?");
+					throw new InvalidOperationException("Forgot to call Provider.BuildHandler?");
 				return _Handler;
 			}
 		}

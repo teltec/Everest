@@ -24,6 +24,7 @@ namespace Teltec.Backup.Ipc.Protocol
 			Command = command;
 			if (Command.HasArguments)
 				ArgumentValues = new Dictionary<string, object>(Command.NumArguments);
+			IsDirty = true;
 		}
 
 		public void InvokeHandler(object sender, EventArgs e)
@@ -55,6 +56,7 @@ namespace Teltec.Backup.Ipc.Protocol
 			}
 
 			ArgumentValues.Add(argName, argValue);
+			IsDirty = true;
 			return this;
 		}
 
@@ -106,7 +108,10 @@ namespace Teltec.Backup.Ipc.Protocol
 			return (T)ArgumentValues[argName];
 		}
 
-		public override string ToString()
+		protected bool IsDirty;
+		protected string BuiltCommand;
+
+		protected void Build()
 		{
 			Stack<Command> commandStack = new Stack<Command>();
 			// Stack commands until there is no parent.
@@ -118,7 +123,11 @@ namespace Teltec.Backup.Ipc.Protocol
 
 			int numCommands = commandStack.Count;
 			if (numCommands == 0)
-				return null;
+			{
+				BuiltCommand = null;
+				IsDirty = false;
+				return;
+			}
 
 			// Then unstack them and add to a list.
 			// For example: CONTROL PLAN RUN 1
@@ -148,7 +157,7 @@ namespace Teltec.Backup.Ipc.Protocol
 						if (!passedArgType.IsSameOrSubclass(acceptedArgType))
 						{
 							throw new InvalidOperationException(string.Format(
-								"Command {0} requires argument {0} of type {1}",
+								"Command {0} requires argument {1} of type {2}",
 								cmd.Name, acceptedArgName, acceptedArgType.ToString()));
 						}
 
@@ -169,7 +178,16 @@ namespace Teltec.Backup.Ipc.Protocol
 			}
 
 			// Then transform it into a valid command string.
-			return string.Join(" ", commandList);
+			BuiltCommand = string.Join(" ", commandList);
+			IsDirty = false;
+		}
+
+		public override string ToString()
+		{
+			if (IsDirty)
+				Build();
+
+			return BuiltCommand;
 		}
 	}
 }

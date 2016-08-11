@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Teltec.Storage;
 
 namespace Teltec.Backup.Data.Models
