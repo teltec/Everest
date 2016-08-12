@@ -33,9 +33,10 @@ namespace DemoTransferPerformance
 			// 
 			// uploadPerfTestControl1
 			// 
+			this.uploadPerfTestControl1.AutoSize = true;
 			this.uploadPerfTestControl1.Location = new System.Drawing.Point(12, 12);
 			this.uploadPerfTestControl1.Name = "uploadPerfTestControl1";
-			this.uploadPerfTestControl1.Size = new System.Drawing.Size(290, 100);
+			this.uploadPerfTestControl1.Size = new System.Drawing.Size(290, 135);
 			this.uploadPerfTestControl1.TabIndex = 0;
 			// 
 			// Form1
@@ -47,6 +48,7 @@ namespace DemoTransferPerformance
 			this.Name = "Form1";
 			this.Text = "Form1";
 			this.ResumeLayout(false);
+			this.PerformLayout();
 
 		}
 

@@ -50,8 +50,10 @@ namespace DemoTransferPerformance
 				UploadChunkSizeInBytes = 1 * 1024 * 1024,
 			};
 
-			BasicAWSCredentials credentials = new BasicAWSCredentials("CHANGEME", "CHANGEME");
-			string bucketName = "CHANGEME";
+			string accessKey = txtAccessKey.Text.Trim();
+			string secretKey = txtSecretKey.Text.Trim();
+			string bucketName = txtBucketName.Text.Trim();
+			BasicAWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
 			string localFilePath = txtFilePath.Text;
 			bool fileInformed = !string.IsNullOrEmpty(localFilePath);
 			bool fileExists = fileInformed && FileManager.FileExists(localFilePath);
