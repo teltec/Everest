@@ -139,6 +139,8 @@ namespace Teltec.Storage.Implementations.S3
 			{
 				long fileLength = ZetaLongPaths.ZlpIOHelper.GetFileLength(filePath);
 
+				reusedProgressArgs.TotalBytes = fileLength;
+
 				TransferUtilityConfig xferConfig = new TransferUtilityConfig
 				{
 					ConcurrentServiceRequests = 10, // Maximum allowed concurrent requests for this file alone.
@@ -171,6 +173,7 @@ namespace Teltec.Storage.Implementations.S3
 						if (UploadProgressed != null)
 							UploadProgressed(reusedProgressArgs, () =>
 							{
+								reusedProgressArgs.State = TransferState.TRANSFERRING;
 								reusedProgressArgs.DeltaTransferredBytes = delta;
 								reusedProgressArgs.TransferredBytes = e.TransferredBytes;
 							});
@@ -200,9 +203,9 @@ namespace Teltec.Storage.Implementations.S3
 				// Report cancelation.
 				if (UploadCanceled != null)
 				{
-					reusedProgressArgs.Exception = exception;
 					UploadCanceled(reusedProgressArgs, () =>
 					{
+						reusedProgressArgs.Exception = exception;
 						reusedProgressArgs.State = TransferState.CANCELED;
 					});
 				}
@@ -229,10 +232,10 @@ namespace Teltec.Storage.Implementations.S3
 				// Report failure.
 				if (UploadFailed != null)
 				{
-					reusedProgressArgs.Exception = exception;
 					UploadFailed(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.FAILED;
+						reusedProgressArgs.Exception = exception;
 					});
 				}
 			}
@@ -295,8 +298,8 @@ namespace Teltec.Storage.Implementations.S3
 					if (DownloadProgressed != null)
 						DownloadProgressed(reusedProgressArgs, () =>
 						{
-							reusedProgressArgs.TotalBytes = downloadResponse.ContentLength;
 							reusedProgressArgs.State = TransferState.TRANSFERRING;
+							reusedProgressArgs.TotalBytes = downloadResponse.ContentLength;
 						});
 
 					string requestId = downloadResponse.ResponseMetadata.RequestId;
@@ -352,10 +355,10 @@ namespace Teltec.Storage.Implementations.S3
 				// Report cancelation.
 				if (DownloadCanceled != null)
 				{
-					reusedProgressArgs.Exception = exception;
 					DownloadCanceled(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.CANCELED;
+						reusedProgressArgs.Exception = exception;
 					});
 				}
 			}
@@ -381,10 +384,10 @@ namespace Teltec.Storage.Implementations.S3
 				// Report failure.
 				if (DownloadFailed != null)
 				{
-					reusedProgressArgs.Exception = exception;
 					DownloadFailed(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.FAILED;
+						reusedProgressArgs.Exception = exception;
 					});
 				}
 			}
@@ -551,10 +554,10 @@ namespace Teltec.Storage.Implementations.S3
 				// Report cancelation.
 				if (ListingCanceled != null)
 				{
-					reusedProgressArgs.Exception = exception;
 					ListingCanceled(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.CANCELED;
+						reusedProgressArgs.Exception = exception;
 					});
 				}
 			}
@@ -580,10 +583,10 @@ namespace Teltec.Storage.Implementations.S3
 				// Report failure.
 				if (ListingFailed != null)
 				{
-					reusedProgressArgs.Exception = exception;
 					ListingFailed(reusedProgressArgs, () =>
 					{
 						reusedProgressArgs.State = TransferState.FAILED;
+						reusedProgressArgs.Exception = exception;
 					});
 				}
 			}
@@ -616,7 +619,7 @@ namespace Teltec.Storage.Implementations.S3
 				if (DeletionStarted != null)
 					DeletionStarted(reusedArgs, () =>
 					{
-						// ...
+						reusedArgs.State = TransferState.STARTED;
 					});
 
 				this._s3Client.DeleteObject(request);
@@ -625,7 +628,7 @@ namespace Teltec.Storage.Implementations.S3
 				if (DeletionCompleted != null)
 					DeletionCompleted(reusedArgs, () =>
 					{
-						// ...
+						reusedArgs.State = TransferState.COMPLETED;
 					});
 			}
 			catch (OperationCanceledException exception)
@@ -635,10 +638,10 @@ namespace Teltec.Storage.Implementations.S3
 				// Report cancelation.
 				if (DeletionCanceled != null)
 				{
-					reusedArgs.Exception = exception;
 					DeletionCanceled(reusedArgs, () =>
 					{
-						// ...
+						reusedArgs.State = TransferState.CANCELED;
+						reusedArgs.Exception = exception;
 					});
 				}
 			}
@@ -664,10 +667,10 @@ namespace Teltec.Storage.Implementations.S3
 				// Report failure.
 				if (DeletionFailed != null)
 				{
-					reusedArgs.Exception = exception;
 					DeletionFailed(reusedArgs, () =>
 					{
-						// ...
+						reusedArgs.State = TransferState.FAILED;
+						reusedArgs.Exception = exception;
 					});
 				}
 			}
@@ -692,7 +695,7 @@ namespace Teltec.Storage.Implementations.S3
 				if (DeletionStarted != null)
 					DeletionStarted(reusedArgs, () =>
 					{
-						// ...
+						reusedArgs.State = TransferState.STARTED;
 					});
 
 				this._s3Client.DeleteObjects(request);
@@ -701,7 +704,7 @@ namespace Teltec.Storage.Implementations.S3
 				if (DeletionCompleted != null)
 					DeletionCompleted(reusedArgs, () =>
 					{
-						// ...
+						reusedArgs.State = TransferState.COMPLETED;
 					});
 			}
 			catch (OperationCanceledException exception)
@@ -711,10 +714,10 @@ namespace Teltec.Storage.Implementations.S3
 				// Report cancelation.
 				if (DeletionCanceled != null)
 				{
-					reusedArgs.Exception = exception;
 					DeletionCanceled(reusedArgs, () =>
 					{
-						// ...
+						reusedArgs.State = TransferState.CANCELED;
+						reusedArgs.Exception = exception;
 					});
 				}
 			}
@@ -740,10 +743,10 @@ namespace Teltec.Storage.Implementations.S3
 				// Report failure.
 				if (DeletionFailed != null)
 				{
-					reusedArgs.Exception = exception;
 					DeletionFailed(reusedArgs, () =>
 					{
-						// ...
+						reusedArgs.State = TransferState.FAILED;
+						reusedArgs.Exception = exception;
 					});
 				}
 			}
@@ -769,10 +772,10 @@ namespace Teltec.Storage.Implementations.S3
 				// Report failure.
 				if (DeletionFailed != null)
 				{
-					reusedArgs.Exception = exception;
 					DeletionFailed(reusedArgs, () =>
 					{
-						// ...
+						reusedArgs.State = TransferState.FAILED;
+						reusedArgs.Exception = exception;
 					});
 				}
 			}

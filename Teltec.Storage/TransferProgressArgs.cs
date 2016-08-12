@@ -37,8 +37,8 @@ namespace Teltec.Storage
 			set
 			{
 				SetField(ref _TotalBytes, value);
-				PercentDone = ToPercent(TransferredBytes, TotalBytes);
-				RemainingBytes = _TotalBytes - TransferredBytes;
+				PercentDone = ToPercent(_TransferredBytes, _TotalBytes);
+				RemainingBytes = _TotalBytes - _TransferredBytes;
 			}
 		}
 
@@ -158,6 +158,13 @@ namespace Teltec.Storage
 		{
 			get { return _UserData; }
 			set { SetField(ref _UserData, value); }
+		}
+
+		private TransferState _State;
+		public TransferState State
+		{
+			get { return _State; }
+			set { SetField(ref _State, value); }
 		}
 
 		private string _FilePath;

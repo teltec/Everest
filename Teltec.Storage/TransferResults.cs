@@ -121,7 +121,7 @@ namespace Teltec.Storage
 			if (Started != null)
 				Started.Invoke(sender, args);
 			if (Monitor != null)
-				Monitor.TransferAdded(this, args);
+				Monitor.TransferStarted(this, args);
 		}
 
 		internal void OnProgress(object sender, TransferFileProgressArgs args)

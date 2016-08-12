@@ -226,21 +226,12 @@ namespace Teltec.Storage.Monitor
 			this.Transfers.Clear();
 		}
 
-		public void TransferAdded(object sender, TransferFileProgressArgs args)
-		{
-			string key = args.FilePath;
-			TransferEntry entry = new TransferEntry(args);
-			AddItemToList(entry);
-			OnChangedTransferState(entry);
-		}
-
 		public void TransferStarted(object sender, TransferFileProgressArgs args)
 		{
 			string key = args.FilePath;
-			TransferEntry entry = Transfers[key];
-			if (entry == null)
-				return;
+			TransferEntry entry = new TransferEntry(args);
 			Debug.Assert(entry.Data.State == TransferState.STARTED);
+			AddItemToList(entry);
 			OnChangedTransferState(entry);
 		}
 
