@@ -12,16 +12,16 @@ namespace Teltec.Backup.Data.Models
 		public BackupedFile(Backup backup, BackupPlanFile file)
 			: this()
 		{
-			Backup = backup;
-			File = file;
+			_Backup = backup;
+			_File = file;
 		}
 
 		public BackupedFile(Backup backup, BackupPlanFile file, Synchronization sync)
 			: this()
 		{
-			Backup = backup;
-			File = file;
-			Synchronization = sync;
+			_Backup = backup;
+			_File = file;
+			_Synchronization = sync;
 		}
 
 		private Int64? _Id;

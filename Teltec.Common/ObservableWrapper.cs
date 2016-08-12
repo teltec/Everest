@@ -1,4 +1,4 @@
-﻿
+
 namespace Teltec.Common
 {
 	public class ObservableWrapper<T> : ObservableObject
@@ -12,7 +12,7 @@ namespace Teltec.Common
 
 		public ObservableWrapper(T initial)
 		{
-			Value = initial;
+			_Value = initial;
 		}
 
 		public static implicit operator ObservableWrapper<T>(T v)

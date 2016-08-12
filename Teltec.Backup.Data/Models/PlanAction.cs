@@ -19,7 +19,11 @@ namespace Teltec.Backup.Data.Models
 	public abstract class PlanAction : BaseEntity<Int32?>
 	{
 		public PlanAction() { }
-		public PlanAction(PlanTriggerTypeEnum triggerType) { TriggerType = triggerType;  }
+
+		public PlanAction(PlanTriggerTypeEnum triggerType)
+		{
+			_TriggerType = triggerType;
+		}
 
 		private Int32? _Id;
 		public virtual Int32? Id

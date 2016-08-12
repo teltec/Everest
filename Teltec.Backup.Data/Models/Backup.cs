@@ -13,8 +13,8 @@ namespace Teltec.Backup.Data.Models
 		public Backup(BackupPlan plan)
 			: this()
 		{
-			BackupPlan = plan;
-			//StatusInfo = new BackupStatusInfo();
+			_BackupPlan = plan;
+			//_StatusInfo = new BackupStatusInfo();
 		}
 
 		private Int32? _Id;

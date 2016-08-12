@@ -13,7 +13,7 @@ namespace Teltec.Backup.Data.Models
 		public Restore(RestorePlan plan)
 			: this()
 		{
-			RestorePlan = plan;
+			_RestorePlan = plan;
 			//StatusInfo = new RestoreStatusInfo();
 		}
 

@@ -22,33 +22,33 @@ namespace Teltec.Backup.Data.Models
 
 		public BackupPlanFile()
 		{
-			Versions = new List<BackupedFile>();
+			_Versions = new List<BackupedFile>();
 		}
 
 		public BackupPlanFile(StorageAccount account)
 			: this()
 		{
-			StorageAccountType = account.Type;
-			StorageAccount = account;
+			_StorageAccountType = account.Type;
+			_StorageAccount = account;
 		}
 
 		public BackupPlanFile(StorageAccount account, string path)
 			: this(account)
 		{
-			Path = path;
+			_Path = path;
 		}
 
 		public BackupPlanFile(BackupPlan plan)
 			: this(plan.StorageAccount)
 		{
-			BackupPlan = plan;
+			_BackupPlan = plan;
 		}
 
 		public BackupPlanFile(BackupPlan plan, string path)
 			: this(plan.StorageAccount)
 		{
-			BackupPlan = plan;
-			Path = path;
+			_BackupPlan = plan;
+			_Path = path;
 		}
 
 		private Int64? _Id;

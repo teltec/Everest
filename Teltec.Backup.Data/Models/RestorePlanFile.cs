@@ -25,13 +25,13 @@ namespace Teltec.Backup.Data.Models
 		public RestorePlanFile(RestorePlan plan)
 			: this()
 		{
-			RestorePlan = plan;
+			_RestorePlan = plan;
 		}
 
 		public RestorePlanFile(RestorePlan plan, string path)
 			: this(plan)
 		{
-			Path = path;
+			_Path = path;
 		}
 
 		private Int64? _Id;

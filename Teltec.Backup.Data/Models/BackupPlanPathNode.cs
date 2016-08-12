@@ -13,15 +13,15 @@ namespace Teltec.Backup.Data.Models
 		public BackupPlanPathNode(BackupPlanFile planFile, EntryType type, string name, string path, BackupPlanPathNode parent)
 			: this()
 		{
-			StorageAccountType = planFile.StorageAccountType;
-			StorageAccount = planFile.StorageAccount;
-			Type = type;
+			_StorageAccountType = planFile.StorageAccountType;
+			_StorageAccount = planFile.StorageAccount;
+			_Type = type;
 			// Only assign `PlanFile` if this is for a node that represents a FILE.
-			if (Type == EntryType.FILE)
-				PlanFile = planFile;
-			Name = name;
-			Path = path;
-			Parent = parent;
+			if (_Type == EntryType.FILE)
+				_PlanFile = planFile;
+			_Name = name;
+			_Path = path;
+			_Parent = parent;
 		}
 
 		private Int64? _Id;

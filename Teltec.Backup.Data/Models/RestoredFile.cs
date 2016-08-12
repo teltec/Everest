@@ -12,9 +12,9 @@ namespace Teltec.Backup.Data.Models
 		public RestoredFile(Restore restore, RestorePlanFile file, Models.BackupedFile backupedFile)
 			: this()
 		{
-			Restore = restore;
-			File = file;
-			BackupedFile = backupedFile;
+			_Restore = restore;
+			_File = file;
+			_BackupedFile = backupedFile;
 		}
 
 		private Int64? _Id;
