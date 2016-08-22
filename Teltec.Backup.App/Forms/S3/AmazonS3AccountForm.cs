@@ -116,6 +116,11 @@ namespace Teltec.Backup.App.Forms.S3
 			return hasValidDisplayName && hasValidAccessKey && hasValidSecretKey;
 		}
 
+		// TODO(jweyrich): We could create a visual component containing the ComboBox to
+		//                 abstract away the complexity of dealing with AWS S3. Idea:
+		//                 - Have a property to configure S3 credentials;
+		//                 - Have a property to enable/disable creation of buckets;
+		//                 - Have an event to detect when the selection changed;
 		private void cbBucketName_DropDown(object sender, EventArgs e)
 		{
 			if (!HasValidCredentials())
