@@ -52,6 +52,24 @@
     <Compile Include="Collections\ObservableDictionary.cs" />
     <Compile Include="ConsoleAppHelper.cs" />
     <Compile Include="Controls\EqualsBinding.cs" />
+    <Compile Include="Controls\NetworkFolderBrowserDialog.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\NetworkFolderBrowserDialog.Designer.cs">
+      <DependentUpon>NetworkFolderBrowserDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\TextBoxSelectFileDialog.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\TextBoxSelectFileDialog.Designer.cs">
+      <DependentUpon>TextBoxSelectFileDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\TextBoxSelectFolderDialog.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\TextBoxSelectFolderDialog.Designer.cs">
+      <DependentUpon>TextBoxSelectFolderDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="Extensions\ExceptionExtensions.cs" />
     <Compile Include="Extensions\ICollectionExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
@@ -107,6 +125,12 @@
   <ItemGroup>
     <EmbeddedResource Include="Controls\AdvancedTreeView.resx">
       <DependentUpon>AdvancedTreeView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\TextBoxSelectFileDialog.resx">
+      <DependentUpon>TextBoxSelectFileDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\TextBoxSelectFolderDialog.resx">
+      <DependentUpon>TextBoxSelectFolderDialog.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

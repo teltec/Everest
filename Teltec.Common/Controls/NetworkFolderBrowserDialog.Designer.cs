@@ -1,4 +1,4 @@
-namespace Teltec.Backup.App.Controls
+namespace Teltec.Common.Controls
 {
 	partial class NetworkFolderBrowserDialog
 	{

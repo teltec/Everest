@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace Teltec.Backup.App.Controls
+namespace Teltec.Common.Controls
 {
 	public partial class NetworkFolderBrowserDialog : UserControl
 	{

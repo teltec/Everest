@@ -17,6 +17,9 @@ namespace Teltec.Backup.App.Forms.Actions
 		private Models.PlanActionExecuteCommand BeforeAction = new Models.PlanActionExecuteCommand(PlanTriggerTypeEnum.BEFORE_PLAN_STARTS);
 		private Models.PlanActionExecuteCommand AfterAction = new Models.PlanActionExecuteCommand(PlanTriggerTypeEnum.AFTER_PLAN_FINISHES);
 
+		// TODO(jweyrich): At some point, handle OpenFileDialog filters for binary files on other platforms as well.
+		private readonly string FileFilter = "All supported files (*.exe, *.bat)|*.exe;*.bat|Executable files (*.exe)|*.exe|Batch files (*.bat)|*.bat";
+
 		/// <summary>
 		/// Clean up any resources being used.
 		/// </summary>
@@ -34,6 +37,9 @@ namespace Teltec.Backup.App.Forms.Actions
 		public ExecuteCommandsForm()
 		{
 			InitializeComponent();
+
+			txtFodBefore.Filter = FileFilter;
+			txtFodAfter.Filter = FileFilter;
 
 			this.ModelChangedEvent += (sender, args) =>
 			{

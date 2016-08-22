@@ -182,18 +182,6 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\EntryTreeNodeData.cs" />
-    <Compile Include="Controls\TextBoxOpenFileDialog.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\TextBoxOpenFileDialog.Designer.cs">
-      <DependentUpon>TextBoxOpenFileDialog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\NetworkFolderBrowserDialog.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\NetworkFolderBrowserDialog.Designer.cs">
-      <DependentUpon>NetworkFolderBrowserDialog.cs</DependentUpon>
-    </Compile>
     <Compile Include="Forms\About\AboutForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -379,9 +367,6 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Controls\TextBoxOpenFileDialog.resx">
-      <DependentUpon>TextBoxOpenFileDialog.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Forms\About\AboutForm.resx">
       <DependentUpon>AboutForm.cs</DependentUpon>
     </EmbeddedResource>
