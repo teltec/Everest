@@ -105,9 +105,6 @@ namespace Teltec.Backup.App.Forms
 
 		#region Dispose Pattern Implementation
 
-		bool _shouldDispose = true;
-		bool _isDisposed;
-
 		/// <summary>
 		/// Clean up any resources being used.
 		/// </summary>
