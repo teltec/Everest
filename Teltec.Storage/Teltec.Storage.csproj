@@ -111,9 +111,9 @@
     <Compile Include="Versioning\IVersionedFile.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Teltec.Backup.Logging\Teltec.Backup.Logging.csproj">
+    <ProjectReference Include="..\Teltec.Everest.Logging\Teltec.Everest.Logging.csproj">
       <Project>{b77226a6-5fdb-4e24-87df-49c64a9b1454}</Project>
-      <Name>Teltec.Backup.Logging</Name>
+      <Name>Teltec.Everest.Logging</Name>
     </ProjectReference>
     <ProjectReference Include="..\Teltec.Common\Teltec.Common.csproj">
       <Project>{2894aae3-e8c9-4eb5-82d4-66ed6dcad810}</Project>

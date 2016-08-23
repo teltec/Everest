@@ -1,4 +1,4 @@
-# Teltec Cloud Backup
+# Everest
 
 ## Installation
 

@@ -91,9 +91,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Teltec.Backup.Ipc\Teltec.Backup.Ipc.csproj">
+    <ProjectReference Include="..\Teltec.Everest.Ipc\Teltec.Everest.Ipc.csproj">
       <Project>{e0f1bb0e-7c53-4215-bbe8-133de93d5905}</Project>
-      <Name>Teltec.Backup.Ipc</Name>
+      <Name>Teltec.Everest.Ipc</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

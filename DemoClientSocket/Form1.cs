@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 using System.Windows.Forms;
-using Teltec.Backup.Ipc.TcpSocket;
+using Teltec.Everest.Ipc.TcpSocket;
 
 namespace ClientSocketSim
 {
