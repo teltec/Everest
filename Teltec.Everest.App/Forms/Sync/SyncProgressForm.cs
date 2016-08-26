@@ -1,8 +1,8 @@
 using NUnit.Framework;
 using System;
+using Teltec.Common.Utils;
 using Teltec.Everest.Data.DAO;
 using Teltec.Everest.PlanExecutor.Synchronize;
-using Teltec.Common.Utils;
 using Teltec.Storage;
 using Models = Teltec.Everest.Data.Models;
 
@@ -106,7 +106,9 @@ namespace Teltec.Everest.App.Forms.Sync
 				// FIXME: Re-enable before starting the backup because it's not an async task.
 				this.llblRunNow.Enabled = true;
 
-				RunningOperation.Start(out OperationResults);
+				RunningOperation.Start();
+
+				OperationResults = RunningOperation.Report.SyncResults;
 			}
 		}
 

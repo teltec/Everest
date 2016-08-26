@@ -22,6 +22,12 @@ using Models = Teltec.Everest.Data.Models;
 
 namespace Teltec.Everest.Scheduler
 {
+	public enum PlanTypeEnum
+	{
+		BACKUP = 0,
+		RESTORE = 1,
+	}
+
 	public partial class Service : ServiceBase
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
@@ -504,7 +510,11 @@ namespace Teltec.Everest.Scheduler
 					throw new InvalidOperationException("Unhandled plan type");
 
 				// Create an action that will launch the PlanExecutor
-				string planType = isBackup ? "backup" : isRestore ? "restore" : string.Empty;
+				string planType = isBackup
+					? PlanTypeEnum.BACKUP.ToString().ToLowerInvariant()
+					: isRestore
+						? PlanTypeEnum.RESTORE.ToString().ToLowerInvariant()
+						: string.Empty;
 				PlanExecutorEnv env = BuildPlanExecutorEnv(planType, plan.ScheduleParamId, false);
 				td.Actions.Clear();
 				td.Actions.Add(new ExecAction(env.Path, env.Arguments, env.Cwd));
@@ -535,7 +545,7 @@ namespace Teltec.Everest.Scheduler
 
 		private void ValidatePlanType(string planType)
 		{
-			if (!planType.Equals("backup") && !planType.Equals("restore"))
+			if (!planType.Equals(PlanTypeEnum.BACKUP.ToString().ToLowerInvariant()) && !planType.Equals(PlanTypeEnum.RESTORE.ToString().ToLowerInvariant()))
 				throw new ArgumentException("Invalid plan type", "planType");
 		}
 
@@ -574,8 +584,8 @@ namespace Teltec.Everest.Scheduler
 			bool needsResume = false;
 			bool isFinished = false;
 
-			bool isBackup = planType.Equals("backup");
-			bool isRestore = planType.Equals("restore");
+			bool isBackup = planType.Equals(PlanTypeEnum.BACKUP.ToString().ToLowerInvariant());
+			bool isRestore = planType.Equals(PlanTypeEnum.RESTORE.ToString().ToLowerInvariant());
 
 			// Report to GUI.
 			Commands.GuiReportPlanStatus report = new Commands.GuiReportPlanStatus();
@@ -637,8 +647,8 @@ namespace Teltec.Everest.Scheduler
 				return;
 			}
 
-			bool isBackup = planType.Equals("backup");
-			bool isRestore = planType.Equals("restore");
+			bool isBackup = planType.Equals(PlanTypeEnum.BACKUP.ToString().ToLowerInvariant());
+			bool isRestore = planType.Equals(PlanTypeEnum.RESTORE.ToString().ToLowerInvariant());
 			const bool isResume = false;
 
 			bool didRun = false;
@@ -660,8 +670,8 @@ namespace Teltec.Everest.Scheduler
 				return;
 			}
 
-			bool isBackup = planType.Equals("backup");
-			bool isRestore = planType.Equals("restore");
+			bool isBackup = planType.Equals(PlanTypeEnum.BACKUP.ToString().ToLowerInvariant());
+			bool isRestore = planType.Equals(PlanTypeEnum.RESTORE.ToString().ToLowerInvariant());
 			const bool isResume = true;
 
 			bool didRun = false;
@@ -714,8 +724,8 @@ namespace Teltec.Everest.Scheduler
 			Int32 planId = e.Command.GetArgumentValue<Int32>("planId");
 
 			Process processToBeKilled = null;
-			bool isBackup = planType.Equals("backup");
-			bool isRestore = planType.Equals("restore");
+			bool isBackup = planType.Equals(PlanTypeEnum.BACKUP.ToString().ToLowerInvariant());
+			bool isRestore = planType.Equals(PlanTypeEnum.RESTORE.ToString().ToLowerInvariant());
 
 			if (isBackup)
 				RunningBackups.TryGetValue(planId, out processToBeKilled);
@@ -748,9 +758,10 @@ namespace Teltec.Everest.Scheduler
 		{
 			ValidatePlanType(planType);
 
-			if (planType.Equals("backup"))
+			if (planType.Equals(PlanTypeEnum.BACKUP .ToString().ToLowerInvariant()))
 				return IsBackupPlanRunning(planId);
-			else if (planType.Equals("restore"))
+
+			if (planType.Equals(PlanTypeEnum.RESTORE.ToString().ToLowerInvariant()))
 				return IsRestorePlanRunning(planId);
 
 			return false;
@@ -768,7 +779,7 @@ namespace Teltec.Everest.Scheduler
 
 		private bool RunRestorePlan(Server.ClientContext context, Int32 planId, bool resume)
 		{
-			PlanExecutorEnv env = BuildPlanExecutorEnv("restore", planId, resume);
+			PlanExecutorEnv env = BuildPlanExecutorEnv(PlanTypeEnum.RESTORE.ToString().ToLowerInvariant(), planId, resume);
 			EventHandler onExit = delegate(object sender, EventArgs e)
 			{
 				RunningRestores.Remove(planId);
@@ -793,7 +804,7 @@ namespace Teltec.Everest.Scheduler
 
 		private bool RunBackupPlan(Server.ClientContext context, Int32 planId, bool resume)
 		{
-			PlanExecutorEnv env = BuildPlanExecutorEnv("backup", planId, resume);
+			PlanExecutorEnv env = BuildPlanExecutorEnv(PlanTypeEnum.BACKUP.ToString().ToLowerInvariant(), planId, resume);
 			EventHandler onExit = delegate(object sender, EventArgs e)
 				{
 					RunningBackups.Remove(planId);

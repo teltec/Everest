@@ -3,21 +3,30 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Teltec.Everest.PlanExecutor.Report;
 using Teltec.Common;
-using Teltec.Storage;
 using Teltec.Storage.Backend;
 using Teltec.Storage.Monitor;
 
 namespace Teltec.Everest.PlanExecutor
 {
-	public abstract class BaseOperation<TResults> : ObservableObject, IDisposable where TResults : IResults
+	public interface IBaseOperation : IDisposable
+	{
+		bool IsRunning { get; }
+
+		IBaseOperationReport GetReport();
+		void Start();
+		void SendReport();
+		void DoEvents();
+		void Cancel();
+	}
+
+	public abstract class BaseOperation<TReport> : ObservableObject, IBaseOperation where TReport : BaseOperationReport, new()
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		public ITransferMonitor TransferListControl; // May be IDisposable, but it's an external reference.
 		protected ITransferAgent TransferAgent; // IDisposable
-		public BaseOperationReport Report { get; protected set; }
+		public TReport Report { get; protected set; }
 
 		#region Properties
 
@@ -29,15 +38,27 @@ namespace Teltec.Everest.PlanExecutor
 
 		#endregion
 
-		public void DoEvents()
+		protected BaseOperation()
+		{
+			Report = new TReport();
+			CancellationTokenSource = new CancellationTokenSource();
+		}
+
+		public IBaseOperationReport GetReport()
+		{
+			return Report;
+		}
+
+		public abstract void Start();
+		public abstract void SendReport();
+
+		public virtual void DoEvents()
 		{
 			if (TransferAgent == null)
 				return;
 
 			TransferAgent.EventDispatcher.DoEvents();
 		}
-
-		public abstract void Start(out TResults results);
 
 		#region Task
 
@@ -54,12 +75,6 @@ namespace Teltec.Everest.PlanExecutor
 		}
 
 		#endregion
-
-		protected BaseOperation()
-		{
-			Report = new BaseOperationReport();
-			CancellationTokenSource = new CancellationTokenSource();
-		}
 
 		#region Logging
 

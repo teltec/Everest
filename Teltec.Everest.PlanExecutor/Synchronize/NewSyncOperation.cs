@@ -1,4 +1,5 @@
-﻿using NLog;
+using NLog;
+using System;
 using Models = Teltec.Everest.Data.Models;
 
 namespace Teltec.Everest.PlanExecutor.Synchronize
@@ -18,6 +19,15 @@ namespace Teltec.Everest.PlanExecutor.Synchronize
 			: base(options)
 		{
 			Synchronization = sync;
+		}
+
+		#endregion
+
+		#region Report
+
+		public override void SendReport()
+		{
+			throw new NotImplementedException();
 		}
 
 		#endregion

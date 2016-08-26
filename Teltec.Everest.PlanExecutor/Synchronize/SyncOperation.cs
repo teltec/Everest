@@ -8,11 +8,11 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Teltec.Common.Extensions;
+using Teltec.Common.Utils;
 using Teltec.Everest.Data.DAO;
 using Teltec.Everest.Data.DAO.NH;
 using Teltec.Everest.PlanExecutor.Serialization;
-using Teltec.Common.Extensions;
-using Teltec.Common.Utils;
 using Teltec.Stats;
 using Teltec.Storage;
 using Teltec.Storage.Backend;
@@ -54,13 +54,23 @@ namespace Teltec.Everest.PlanExecutor.Synchronize
 		// ...
 	}
 
-	public abstract class SyncOperation : BaseOperation<SyncResults>
+	public enum SyncOperationState
+	{
+		UNKNOWN = 0,
+		STARTING,
+		SYNCHRONIZING_FILES,
+		SAVING_TO_DATABASE,
+		FINISHING,
+	}
+
+	public abstract class SyncOperation : BaseOperation<SyncOperationReport>
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
 		protected readonly SynchronizationRepository _daoSynchronization = new SynchronizationRepository();
 
 		protected Models.Synchronization Synchronization;
+		protected SyncOperationState CurrentState = SyncOperationState.UNKNOWN;
 
 		#region Properties
 
@@ -104,6 +114,12 @@ namespace Teltec.Everest.PlanExecutor.Synchronize
 
 		#endregion
 
+		#region Report
+
+		// ...
+
+		#endregion
+
 		#region Transfer
 
 		protected SyncOperationOptions Options;
@@ -125,7 +141,7 @@ namespace Teltec.Everest.PlanExecutor.Synchronize
 			CancellationTokenSource.Cancel();
 		}
 
-		public override void Start(out SyncResults results)
+		public override void Start()
 		{
 			Assert.IsFalse(IsRunning);
 			Assert.IsNotNull(Synchronization);
@@ -161,7 +177,11 @@ namespace Teltec.Everest.PlanExecutor.Synchronize
 
 			RegisterEventHandlers(Synchronization);
 
-			results = SyncAgent.Results;
+			Report.PlanType = "synchronization";
+			Report.PlanName = "No plan";
+			Report.BucketName = s3account.BucketName;
+			Report.HostName = Synchronization.StorageAccount.Hostname;
+			Report.SyncResults = SyncAgent.Results;
 
 			//
 			// Start the sync.
@@ -456,109 +476,120 @@ namespace Teltec.Everest.PlanExecutor.Synchronize
 
 		protected async void DoSynchronization(CustomSynchronizationAgent agent, Models.Synchronization sync, SyncOperationOptions options)
 		{
-			OnStart(agent, sync);
-
-			//
-			// Synchronization
-			//
-
+			try
 			{
-				Task syncTask = agent.Start(TransferAgent.RemoteRootDir, true);
+				CurrentState = SyncOperationState.STARTING;
+				OnStart(agent, sync);
 
-				{
-					var message = string.Format("Synchronizing files started.");
-					Info(message);
-					//StatusInfo.Update(SyncStatusLevel.INFO, message);
-					OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Started, Message = message });
-				}
+				//
+				// Synchronization
+				//
 
-				try
+				CurrentState = SyncOperationState.SYNCHRONIZING_FILES;
 				{
-					await syncTask;
-				}
-				catch (Exception ex)
-				{
-					if (ex.IsCancellation())
+					Task syncTask = agent.Start(TransferAgent.RemoteRootDir, true);
+
 					{
-						logger.Warn("Synchronizing files was canceled.");
-					}
-					else
-					{
-						logger.Log(LogLevel.Error, ex, "Caught exception during synchronizing files");
+						var message = string.Format("Synchronizing files started.");
+						Info(message);
+						//StatusInfo.Update(SyncStatusLevel.INFO, message);
+						OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Started, Message = message });
 					}
 
-					if (syncTask.IsFaulted || syncTask.IsCanceled)
+					try
 					{
-						if (syncTask.IsCanceled)
-							OnCancelation(agent, sync, ex); // syncTask.Exception
+						await syncTask;
+					}
+					catch (Exception ex)
+					{
+						if (ex.IsCancellation())
+						{
+							logger.Warn("Synchronizing files was canceled.");
+						}
 						else
-							OnFailure(agent, sync, ex); // syncTask.Exception
-						return;
+						{
+							logger.Log(LogLevel.Error, ex, "Caught exception during synchronizing files");
+						}
+
+						if (syncTask.IsFaulted || syncTask.IsCanceled)
+						{
+							if (syncTask.IsCanceled)
+								OnCancelation(agent, sync, ex); // syncTask.Exception
+							else
+								OnFailure(agent, sync, ex); // syncTask.Exception
+							return;
+						}
+					}
+
+					{
+						var message = string.Format("Synchronizing files finished.");
+						Info(message);
+						//StatusInfo.Update(SyncStatusLevel.INFO, message);
+						//OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Finished, Message = message });
+					}
+
+					{
+						var message = string.Format("Estimated synchronization size: {0} files, {1}",
+							RemoteObjects.Count(), FileSizeUtils.FileSizeToString(agent.Results.Stats.TotalSize));
+						Info(message);
 					}
 				}
 
+				//
+				// Database files saving
+				//
+
+				CurrentState = SyncOperationState.SAVING_TO_DATABASE;
 				{
-					var message = string.Format("Synchronizing files finished.");
-					Info(message);
-					//StatusInfo.Update(SyncStatusLevel.INFO, message);
-					//OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Finished, Message = message });
+					Task saveTask = ExecuteOnBackround(() =>
+						{
+							// Save everything.
+							Save(CancellationTokenSource.Token);
+						}, CancellationTokenSource.Token);
+
+					{
+						var	message = string.Format("Database files saving started.");
+						Info(message);
+					}
+
+					try
+					{
+						await saveTask;
+					}
+					catch (Exception ex)
+					{
+						if (ex.IsCancellation())
+						{
+							logger.Warn("Database files saving was canceled.");
+						}
+						else
+						{
+							logger.Log(LogLevel.Error, ex, "Caught exception during database files saving");
+						}
+
+						if (saveTask.IsFaulted || saveTask.IsCanceled)
+						{
+							if (saveTask.IsCanceled)
+								OnCancelation(agent, sync, ex); // saveTask.Exception
+							else
+								OnFailure(agent, sync, ex); // saveTask.Exception
+							return;
+						}
+					}
+
+					{
+						var message = string.Format("Database files saving finished.");
+						Info(message);
+					}
 				}
 
-				{
-					var message = string.Format("Estimated synchronization size: {0} files, {1}",
-						RemoteObjects.Count(), FileSizeUtils.FileSizeToString(agent.Results.Stats.TotalSize));
-					Info(message);
-				}
+				CurrentState = SyncOperationState.FINISHING;
+				OnFinish(agent, sync);
 			}
-
-			//
-			// Database files saving
-			//
-
+			catch (Exception ex)
 			{
-				Task saveTask = ExecuteOnBackround(() =>
-					{
-						// Save everything.
-						Save(CancellationTokenSource.Token);
-					}, CancellationTokenSource.Token);
-
-				{
-					var	message = string.Format("Database files saving started.");
-					Info(message);
-				}
-
-				try
-				{
-					await saveTask;
-				}
-				catch (Exception ex)
-				{
-					if (ex.IsCancellation())
-					{
-						logger.Warn("Database files saving was canceled.");
-					}
-					else
-					{
-						logger.Log(LogLevel.Error, ex, "Caught exception during database files saving");
-					}
-
-					if (saveTask.IsFaulted || saveTask.IsCanceled)
-					{
-						if (saveTask.IsCanceled)
-							OnCancelation(agent, sync, ex); // saveTask.Exception
-						else
-							OnFailure(agent, sync, ex); // saveTask.Exception
-						return;
-					}
-				}
-
-				{
-					var message = string.Format("Database files saving finished.");
-					Info(message);
-				}
+				OnFinish(agent, sync, ex);
 			}
-
-			OnFinish(agent, sync);
 		}
 
 		private Task ExecuteOnBackround(Action action, CancellationToken token)
@@ -612,43 +643,67 @@ namespace Teltec.Everest.PlanExecutor.Synchronize
 			OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Failed, Message = message });
 		}
 
-		public void OnFinish(CustomSynchronizationAgent agent, Models.Synchronization sync)
+		public void OnFinish(CustomSynchronizationAgent agent, Models.Synchronization sync, Exception ex = null)
 		{
 			IsRunning = false;
 
-			SyncResults.Statistics stats = agent.Results.Stats;
-
-			var message = string.Format("Synchronization finished! Stats: {0} files", stats.FileCount);
-			Info(message);
-			//StatusInfo.Update(SyncStatusLevel.OK, message);
-
-			// TODO(jweyrich): Handle overall failure and cancelation during Sync?
-			sync.DidComplete();
-			_daoSynchronization.Update(sync);
-			OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Finished, Message = message });
-
-/*
-			switch (agent.Results.OverallStatus)
-			//switch (sync.Status)
+			switch (CurrentState)
 			{
-				default: throw new InvalidOperationException("Unexpected TransferStatus");
-				case TransferStatus.CANCELED:
-					sync.WasCanceled();
-					_daoSynchronization.Update(sync);
-					OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Canceled, Message = message });
-					break;
-				case TransferStatus.FAILED:
-					sync.DidFail();
-					_daoSynchronization.Update(sync);
-					OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Failed, Message = message });
-					break;
-				case TransferStatus.COMPLETED:
-					sync.DidComplete();
-					_daoSynchronization.Update(sync);
-					OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Finished, Message = message });
-					break;
+				default:
+					{
+						var message = string.Format("Synchronization failed: {0}", ex.Message);
+						Warn(message);
+						//StatusInfo.Update(SyncStatusLevel.WARN, message);
+						Report.AddErrorMessage(ex.Message);
+
+						Report.OperationStatus = OperationStatus.FAILED;
+						sync.DidFail();
+						_daoSynchronization.Update(sync);
+						OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Failed, Message = message });
+
+						break;
+					}
+				case SyncOperationState.FINISHING:
+					{
+						SyncResults.Statistics stats = agent.Results.Stats;
+						var message = string.Format("Synchronization finished! Stats: {0} files", stats.FileCount);
+						Info(message);
+						//StatusInfo.Update(SyncStatusLevel.OK, message);
+
+						// TODO(jweyrich): Handle overall failure and cancelation during Sync?
+						sync.DidComplete();
+						_daoSynchronization.Update(sync);
+						OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Finished, Message = message });
+
+						/*
+						switch (agent.Results.OverallStatus)
+						//switch (sync.Status)
+						{
+							default: throw new InvalidOperationException("Unexpected TransferStatus");
+							case TransferStatus.CANCELED:
+								Report.OperationStatus = OperationStatus.CANCELED;
+								sync.WasCanceled();
+								_daoSynchronization.Update(sync);
+								OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Canceled, Message = message });
+								break;
+							case TransferStatus.FAILED:
+								Report.OperationStatus = OperationStatus.FAILED;
+								sync.DidFail();
+								_daoSynchronization.Update(sync);
+								OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Failed, Message = message });
+								break;
+							case TransferStatus.COMPLETED:
+								Report.OperationStatus = OperationStatus.COMPLETED;
+								sync.DidComplete();
+								_daoSynchronization.Update(sync);
+								OnUpdate(new SyncOperationEvent { Status = SyncOperationStatus.Finished, Message = message });
+								break;
+						}
+						*/
+
+						break;
+					}
 			}
-*/
 		}
 
 		#endregion

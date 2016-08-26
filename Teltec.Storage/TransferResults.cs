@@ -97,7 +97,7 @@ namespace Teltec.Storage
 			ErrorMessages = new List<string>();
 		}
 
-		internal void Reset(int pending)
+		public void Reset(int pending)
 		{
 			Stats.Reset(pending);
 			ActiveTransfers.Clear();

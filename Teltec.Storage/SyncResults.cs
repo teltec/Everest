@@ -25,7 +25,7 @@ namespace Teltec.Storage
 			public Int64 TotalSize { get { return _TotalSize; } set { _TotalSize = value; } }
 			public int SavedFileCount { get { return _SavedFileCount; } set { _SavedFileCount = value; } }
 
-			internal void Reset()
+			public void Reset()
 			{
 				_SavedFileCount = 0;
 				_FileCount = 0;
@@ -47,6 +47,12 @@ namespace Teltec.Storage
 		{
 			Stats = new Statistics();
 			ErrorMessages = new List<string>();
+		}
+
+		public void Reset()
+		{
+			Stats.Reset();
+			ErrorMessages.Clear();
 		}
 
 		internal void OnStarted(object sender, ListingProgressArgs args)
