@@ -12,22 +12,6 @@ namespace Teltec.Everest.PlanExecutor
 {
 	public class BaseOperationHelper
 	{
-		public class FailedToMountNetworkDrive : Exception
-		{
-			public FailedToMountNetworkDrive(string message)
-				: base(message)
-			{
-			}
-		}
-
-		public class FailedToExecuteUserDefinedAction : Exception
-		{
-			public FailedToExecuteUserDefinedAction(string message)
-				: base(message)
-			{
-			}
-		}
-
 		static readonly Logger logger = LogManager.GetCurrentClassLogger();
 		private readonly Models.ISchedulablePlan Plan;
 
@@ -38,6 +22,14 @@ namespace Teltec.Everest.PlanExecutor
 		}
 
 		#region Network drive mapping
+
+		public class FailedToMountNetworkDrive : Exception
+		{
+			public FailedToMountNetworkDrive(string message)
+				: base(message)
+			{
+			}
+		}
 
 		private DriveInfo GetDriveInfo(string drive)
 		{
@@ -119,7 +111,15 @@ namespace Teltec.Everest.PlanExecutor
 
 		#endregion
 
-		#region Pre-actions
+		#region User defined actions
+
+		public class FailedToExecuteUserDefinedAction : Exception
+		{
+			public FailedToExecuteUserDefinedAction(string message)
+				: base(message)
+			{
+			}
+		}
 
 		public void ExecutePreActions()
 		{
@@ -137,10 +137,6 @@ namespace Teltec.Everest.PlanExecutor
 				throw;
 			}
 		}
-
-		#endregion
-
-		#region Post-actions
 
 		public void ExecutePostActions(TransferResults xferResults)
 		{
