@@ -13,6 +13,14 @@ namespace Teltec.Everest.Data.Models
 			: this()
 		{
 			_Backup = backup;
+			if (_Backup != null)
+			{
+				if (_Backup.BackupPlan != null && _Backup.BackupPlan.StorageAccount != null)
+				{
+					_StorageAccountType = _Backup.BackupPlan.StorageAccountType;
+					_StorageAccount = _Backup.BackupPlan.StorageAccount;
+				}
+			}
 			_File = file;
 		}
 
