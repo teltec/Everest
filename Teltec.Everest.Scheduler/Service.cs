@@ -791,7 +791,7 @@ namespace Teltec.Everest.Scheduler
 			};
 			try
 			{
-				Process process = ProcessUtils.StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
+				Process process = ProcessUtils.StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit, false, false, true);
 				RunningRestores.Add(planId, process);
 				return true;
 			}
@@ -816,7 +816,7 @@ namespace Teltec.Everest.Scheduler
 				};
 			try
 			{
-				Process process = ProcessUtils.StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit);
+				Process process = ProcessUtils.StartSubProcess(env.Path, env.Arguments, env.Cwd, onExit, false, false, true);
 				RunningBackups.Add(planId, process);
 				return true;
 			}

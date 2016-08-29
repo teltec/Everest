@@ -8,7 +8,7 @@ namespace Teltec.Common.Utils
 	{
 		private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-		public static Process StartSubProcess(string filename, string arguments, string cwd, EventHandler onExit = null)
+		public static Process StartSubProcess(string filename, string arguments, string cwd, EventHandler onExit = null, bool redirectStdin = false, bool redirectStdout = false, bool redirectStderr = false)
 		{
 			//
 			// CITATIONS:
@@ -26,6 +26,13 @@ namespace Teltec.Common.Utils
 			{
 				ProcessStartInfo info = new ProcessStartInfo(filename, arguments);
 				info.WorkingDirectory = cwd;
+
+				info.RedirectStandardInput = redirectStdin;
+				info.RedirectStandardOutput = redirectStdout;
+				info.RedirectStandardError = redirectStderr;
+
+				if (redirectStdin || redirectStdout || redirectStderr)
+					info.UseShellExecute = false;
 #if DEBUG
 				info.CreateNoWindow = true;
 #else
