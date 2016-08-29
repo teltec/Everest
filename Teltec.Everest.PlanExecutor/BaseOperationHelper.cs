@@ -44,7 +44,7 @@ namespace Teltec.Everest.PlanExecutor
 			DriveInfo[] drivesInUse = DriveInfo.GetDrives();
 			foreach (DriveInfo d in drivesInUse)
 			{
-				if (d.RootDirectory.FullName.Equals(drive))
+				if (d.RootDirectory.FullName.StartsWith(drive))
 					return d;
 			}
 			return null;
