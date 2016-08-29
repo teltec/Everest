@@ -53,7 +53,7 @@ namespace Teltec.FileSystem
 				string lpUserID,
 				Connect dwFlags,
 
-				[MarshalAs(UnmanagedType.LPWStr)] // Do this for all the following string fields
+				//[MarshalAs(UnmanagedType.LPWStr)] // Using `LPWStr` makes  `WNetUseConnection` return error code 1200.
 				string lpAccessName,
 				string lpBufferSize,
 				string lpResult
@@ -129,7 +129,7 @@ namespace Teltec.FileSystem
 				public ResourceDisplayType dwDisplayType = 0;
 				public ResourceUsage dwUsage = 0;
 
-				[MarshalAs(UnmanagedType.LPWStr)] // Do this for all the following string fields
+				//[MarshalAs(UnmanagedType.LPWStr)] // Using `LPWStr` makes  `WNetUseConnection` return error code 1200.
 				public string lpLocalName = "";
 				public string lpRemoteName = "";
 				public string lpComment = "";
