@@ -1,4 +1,3 @@
-using log4net.Config;
 using NLog;
 using System;
 using System.ComponentModel;
@@ -107,7 +106,8 @@ namespace Teltec.Everest.PlanExecutor
 			Directory.SetCurrentDirectory(cwd ?? ".");
 			logger.Info("Current directory is {0}", cwd);
 
-			XmlConfigurator.ConfigureAndWatch(new FileInfo("log4net.config"));
+			// log4net - We are using NLog, so we should adapt the following.
+			//XmlConfigurator.ConfigureAndWatch(new FileInfo("log4net.config"));
 
 			if (!IsReleaseVersion && System.Environment.UserInteractive)
 				ConsoleAppHelper.CatchSpecialConsoleEvents();

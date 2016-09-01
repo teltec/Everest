@@ -93,7 +93,6 @@
 			See the License for the specific language governing permissions and
 			limitations under the License.
 		</dependency>
-		<dependency title="log4net" name="log4net" version="1.2.15" license-ref="Apache-2.0" project-url="http://logging.apache.org/log4net/" />
 		<dependency title="Microsoft BCL Portability Pack" name="Microsoft.Bcl" version="1.1.10" license-ref="MSLT_dotnet_library_license" project-url="http://go.microsoft.com/fwlink/?LinkID=280057" />
 		<dependency title="Microsoft BCL Build Components" name="Microsoft.Bcl.Build" version="1.0.21" license-ref="MSLT_dotnet_library_license" project-url="http://blogs.msdn.com/b/bclteam/p/bclbuild.aspx" />
 		<dependency title="Microsoft HTTP Client Libraries" name="Microsoft.Net.Http" version="2.2.29" license-ref="MSLT_dotnet_library_license" project-url="http://blogs.msdn.com/b/bclteam/p/httpclient.aspx" />
