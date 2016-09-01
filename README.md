@@ -1,8 +1,19 @@
-# Everest
+![everest logo](everest-logo-small.png)
 
-## Installation
+## What is Everest?
 
-- After you install, you need to change the SQL Server authentication mode to "SQL Server and Windows Authentication mode". We may automate this in the future, but for now you have to do it manually.
+Everest is an Open Source software that aims to help you automate your Backup and Restore operations.
+
+## Requirements
+
+- .NET Framework 4.5
+- SQL Server 2012 Express
+- Windows
+
+## Installation notes
+
+- The Windows user you're using to install Everest must have administrative rights on your instance of SQL Server Express. We may improve this by asking the user during the installation process to provide database details (host, credentials, etc);
+- After you install, you need to change the SQL Server authentication mode to "SQL Server and Windows Authentication mode". We may automate this in the future, but for now you have to do it manually;
 
 ## Features
 
@@ -10,10 +21,10 @@
 - Backup and restore plans;
 - Scheduled execution of backup and restore plans;
 - Synchronization;
-- Does not support long paths (with more than 260 characters - Windows' MAX_PATH) -- Currently limited by lack of support from the AWSSDK - see https://github.com/aws/aws-sdk-net/issues/294;
 - Automatic network shares mapping;
 - Runs backup/restore operations without requiring an active user session (a logged user);
-- Automatically deletes old backuped files;
+- Automatically deletes old backuped files (adjustable);
+- Automatically sends reports upon failure or completion;
 
 ## Changelog
 
@@ -28,32 +39,31 @@ You can read the entire changelog [here](CHANGELOG.md).
 
 ## Future Work
 
-- Upload/Download retry policy (with exponential backoff) - See http://docs.aws.amazon.com/general/latest/gr/api-retries.html
-- Automatically send reports upon failure or completion;
-- Improve concurrency;
-- Limit bandwidth;
+- Support long paths (>260 characters - Windows' MAX_PATH) -- Currently limited by lack of support from the AWSSDK - see https://github.com/aws/aws-sdk-net/issues/294;
+- Write unit tests;
+- Attempt to make abstractions more developer friendly;
+- Do not backup files of user-specified types;
+- Upload and download retry policy with exponential backoff - See http://docs.aws.amazon.com/general/latest/gr/api-retries.html
+- Bandwidth throttling;
 - Restore files to a specified point in time;
 - Add lifecycle rules to transition to Glacier after a configurable amount of days - Note that object restoration from an archive can take up to five hours;
-- Attempt to make abstractions more developer friendly;
+- Versions for Linux and OS X?
+
+## How to contribute
+
+1. Fork the repository;
+2. Clone your repository: `git clone <repo-url>`;
+3. Execute `install-nuget-dependencies.run`;
+4. Create a new branch for your changes: `git checkout -b my-branch-name`;
+5. Make your changes and commit: `git add file1 file2` and `git commit -m 'Describe your changes.'`;
+6. Push the branch to your fork: `git push origin my-branch-name`;
+7. Open a Pull Request;
 
 ## Licensing Policy
 
-We try our best to comply with all requirements imposed by the licenses we directly or indirectly use.
+We try our best to comply with all requirements imposed by the licenses from code and libraries we directly or indirectly use.
 If you believe we have infringed a license, please, let us know by opening an issue in our GitHub repository or contacting us directly.
-
-CC-BY-SA-3.0
-	[Creative Commons Wiki - Best practices for attribution](https://wiki.creativecommons.org/wiki/Best_practices_for_attribution#Examples_of_attribution)
-	[GPL compatibility use cases - Sharing computer code between GPL software and CC-BY-SA communities](https://wiki.creativecommons.org/wiki/GPL_compatibility_use_cases#Sharing_computer_code_between_GPL_software_and_CC-BY-SA_communities)
-	[Stack Exchange Blog - Attribution Required](https://blog.stackexchange.com/2009/06/attribution-required/)
-Microsoft
-	Code samples from MSDN - [Microsoft Developer Services Agreement](https://msdn.microsoft.com/en-us/cc300389.aspx#D) requires [Microsoft Limited Public License](http://opensource.org/licenses/MS-PL)
-AWS
-	[AWS Site Terms](http://aws.amazon.com/terms/)
 
 ## License
 
-TODO
-
-## Copyright
-
-Copyright (C) 2015 Teltec Solutions Ltda.
+Still to be defined.

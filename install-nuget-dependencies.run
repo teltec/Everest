@@ -1,0 +1,17 @@
+nuget install ./DemoClientSocket/packages.config
+nuget install ./DemoServerSocket/packages.config
+nuget install ./DemoTransferPerfTest/packages.config
+nuget install ./DemoTransferS3/packages.config
+nuget install ./Installer/packages.config
+nuget install ./Teltec.Common/packages.config
+nuget install ./Teltec.Everest.App/packages.config
+nuget install ./Teltec.Everest.Data/packages.config
+nuget install ./Teltec.Everest.Ipc/packages.config
+nuget install ./Teltec.Everest.Logging/packages.config
+nuget install ./Teltec.Everest.PlanExecutor/packages.config
+nuget install ./Teltec.Everest.PostInstaller/packages.config
+nuget install ./Teltec.Everest.Scheduler/packages.config
+nuget install ./Teltec.Everest.Settings/packages.config
+nuget install ./Teltec.FileSystem/packages.config
+nuget install ./Teltec.Stats/packages.config
+nuget install ./Teltec.Storage/packages.config
