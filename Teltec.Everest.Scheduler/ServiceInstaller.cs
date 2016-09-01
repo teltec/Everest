@@ -338,6 +338,8 @@ namespace Teltec.Everest.Scheduler
 				else if (dwWaitTime > 10000)
 					dwWaitTime = 10000;
 
+				//logger.Debug("dwWaitTime = " + dwWaitTime);
+
 				Thread.Sleep(dwWaitTime);
 
 				// Check the status again.

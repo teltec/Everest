@@ -1,4 +1,4 @@
-﻿-- Create database
+-- Create database
 CREATE DATABASE [{{database_name}}]
  CONTAINMENT = NONE
  -- NOTE: Collation Latin1_General_100_* uses the Latin1 General dictionary sorting rules,
@@ -173,5 +173,5 @@ GO
 ALTER DATABASE [{{database_name}}] SET DELAYED_DURABILITY = DISABLED
 GO
 
-ALTER DATABASE [{{database_name}}] SET  READ_WRITE
+ALTER DATABASE [{{database_name}}] SET READ_WRITE
 GO

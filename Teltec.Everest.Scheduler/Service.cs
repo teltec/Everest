@@ -75,7 +75,33 @@ namespace Teltec.Everest.Scheduler
 							logger.Info("Service installed");
 							ServiceHelper.SelfStart();
 							break;
-						case "-uninstall":
+                        case "-r":
+                        case "-reinstall":
+                            try
+                            {
+                                ServiceHelper.SelfUninstall();
+                                logger.Info("Service uninstalled");
+                            }
+                            catch (Exception ex)
+                            {
+                                if (ex.InnerException is Win32Exception)
+                                {
+                                    Win32Exception win32ex = ex.InnerException as Win32Exception;
+                                    if (win32ex.NativeErrorCode != 0x424) // 0x424: ERROR_SERVICE_DOES_NOT_EXIST
+                                        throw;
+                                }
+                                else
+                                {
+                                    throw;
+                                }
+                            }
+                            
+                            ServiceHelper.SelfInstall();
+                            logger.Info("Service installed");
+                            ServiceHelper.SelfStart();
+
+                            break;
+                        case "-uninstall":
 						case "-u":
 							ServiceHelper.SelfUninstall();
 							logger.Info("Service uninstalled");
