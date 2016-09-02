@@ -21,9 +21,79 @@ namespace DemoTransferS3
 			Info("Initialized.");
 
 			txtSourceDirectory.RootFolder = Environment.SpecialFolder.MyComputer;
-			tbAccessKey.Text = "CHANGE_ME";
-			tbBucketName.Text = "CHANGE_ME";
-			tbSecretKey.Text = "CHANGE_ME";
+
+			LoadSettings();
+		}
+
+		private static readonly string SettingsFileName = "settings.properties";
+		private Dictionary<string, string> Settings = new Dictionary<string, string>();
+
+		private string GetSetting(string key)
+		{
+			string value;
+			Settings.TryGetValue(key, out value);
+			return value;
+		}
+
+		private void SetSetting(string key, string value)
+		{
+			Settings[key] = value;
+		}
+
+		public void LoadSettings()
+		{
+			bool loaded = Settings.ReadFromFile(SettingsFileName);
+
+			if (loaded)
+			{
+				tbAccessKey.Text = GetSetting("AccessKey");
+				tbSecretKey.Text = GetSetting("SecretKey");
+				tbBucketName.Text = GetSetting("BucketName");
+				txtSourceDirectory.Text = GetSetting("SourceDirectory");
+			}
+		}
+
+		public void SaveSettings()
+		{
+			SetSetting("AccessKey", tbAccessKey.Text);
+			SetSetting("SecretKey", tbSecretKey.Text);
+			SetSetting("BucketName", tbBucketName.Text);
+			SetSetting("SourceDirectory", txtSourceDirectory.Text);
+
+			Settings.WriteToFile(SettingsFileName);
+		}
+
+		private bool ValidateForm()
+		{
+			if (string.IsNullOrWhiteSpace(tbAccessKey.Text))
+			{
+				tbAccessKey.Focus();
+				goto invalid;
+			}
+
+			if (string.IsNullOrWhiteSpace(tbSecretKey.Text))
+			{
+				tbSecretKey.Focus();
+				goto invalid;
+			}
+
+			if (string.IsNullOrWhiteSpace(tbBucketName.Text))
+			{
+				tbBucketName.Focus();
+				goto invalid;
+			}
+
+			if (string.IsNullOrWhiteSpace(txtSourceDirectory.Text))
+			{
+				txtSourceDirectory.Focus();
+				goto invalid;
+			}
+
+			return true;
+
+		invalid:
+			MessageBox.Show("Please, fill all required fields.", "", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+			return false;
 		}
 
 		#region Form events
@@ -41,6 +111,8 @@ namespace DemoTransferS3
 			}
 			else
 			{
+				if (!ValidateForm())
+					return;
 				_Operation = OperationType.BACKUP;
 				btnBackup.Text = "Cancel";
 				DoRun();
@@ -60,6 +132,8 @@ namespace DemoTransferS3
 			}
 			else
 			{
+				if (!ValidateForm())
+					return;
 				_Operation = OperationType.RESTORE;
 				btnRestore.Text = "Cancel";
 				DoRun();
@@ -87,6 +161,8 @@ namespace DemoTransferS3
 		private async void DoRun()
 		{
 			_IsRunning = true;
+
+			SaveSettings();
 
 			AsyncHelper.SettingsMaxThreadCount = Decimal.ToInt32(nudParallelism.Value);
 

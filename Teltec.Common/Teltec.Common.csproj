@@ -70,6 +70,7 @@
     <Compile Include="Controls\TextBoxSelectFolderDialog.Designer.cs">
       <DependentUpon>TextBoxSelectFolderDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Extensions\DictionaryExtensions.cs" />
     <Compile Include="Extensions\ExceptionExtensions.cs" />
     <Compile Include="Extensions\ICollectionExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
