@@ -262,19 +262,19 @@ namespace Teltec.Everest.Data.DAO.NH
 
 			Map(p => p.EmailAddress)
 				.Column("email_address")
-				.Not.Nullable()
+				//.Not.Nullable()
 				.Length(Models.PlanNotification.EmailAddressMaxLen)
 				;
 
 			Map(p => p.FullName)
 				.Column("full_name")
-				.Not.Nullable()
+				//.Not.Nullable()
 				.Length(Models.PlanNotification.FullNameMaxLen)
 				;
 
 			Map(p => p.Subject)
 				.Column("subject")
-				.Not.Nullable()
+				//.Not.Nullable()
 				.Length(Models.PlanNotification.SubjectMaxLen)
 				;
 		}
