@@ -27,23 +27,75 @@ namespace Teltec.Storage
 			private int _Canceled = 0;
 			private int _Completed = 0;
 
-			public int Total { get { return _Total; } set { _Total = value; } }
-			public int Pending { get { return _Pending; } set { _Pending = value; } }
-			public int Running { get { return _Running; } set { _Running = value; } }
-			public int Failed { get { return _Failed; } set { _Failed = value; } }
-			public int Canceled { get { return _Canceled; } set { _Canceled = value; } }
-			public int Completed { get { return _Completed; } set { _Completed = value; } }
+			public int Total
+			{
+				get { return _Total; }
+				set { _Total = value; }
+			}
+
+			public int Pending
+			{
+				get { return _Pending; }
+				set { _Pending = value; }
+			}
+
+			public int Running
+			{
+				get { return _Running; }
+				set { _Running = value; }
+			}
+
+			public int Failed
+			{
+				get { return _Failed; }
+				set { _Failed = value; }
+			}
+
+			public int Canceled
+			{
+				get { return _Canceled; }
+				set { _Canceled = value; }
+			}
+
+			public int Completed
+			{
+				get { return _Completed; }
+				set { _Completed = value; }
+			}
 
 			private long _BytesTotal = 0;
 			private long _BytesFailed = 0;
 			private long _BytesCanceled = 0;
 			private long _BytesCompleted = 0;
 
-			public long BytesTotal { get { return _BytesTotal; } set { _BytesTotal = value; } }
-			public long BytesPending { get { return BytesTotal - BytesCompleted - BytesFailed - BytesCanceled; } }
-			public long BytesFailed { get { return _BytesFailed; } set { _BytesFailed = value; } }
-			public long BytesCanceled { get { return _BytesCanceled; } set { _BytesCanceled = value; } }
-			public long BytesCompleted { get { return _BytesCompleted; } set { _BytesCompleted = value; } }
+			public long BytesTotal
+			{
+				get { return _BytesTotal; }
+				set { _BytesTotal = value; }
+			}
+
+			public long BytesPending
+			{
+				get { return BytesTotal - BytesCompleted - BytesFailed - BytesCanceled; }
+			}
+
+			public long BytesFailed
+			{
+				get { return _BytesFailed; }
+				set { _BytesFailed = value; }
+			}
+
+			public long BytesCanceled
+			{
+				get { return _BytesCanceled; }
+				set { _BytesCanceled = value; }
+			}
+
+			public long BytesCompleted
+			{
+				get { return _BytesCompleted; }
+				set { _BytesCompleted = value; }
+			}
 
 			internal void Reset(int pending)
 			{

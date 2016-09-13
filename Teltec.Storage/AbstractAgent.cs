@@ -52,7 +52,7 @@ namespace Teltec.Storage
 		}
 
 		// In Bytes
-		private long _EstimatedTransferSize;
+		private long _EstimatedTransferSize = 0;
 		public long EstimatedTransferSize
 		{
 			get
@@ -193,8 +193,6 @@ namespace Teltec.Storage
 
 		public async Task<TransferResults> Start()
 		{
-			Results.Reset(Files.Count());
-
 			RenewCancellationToken();
 
 			await Task.Run(() =>

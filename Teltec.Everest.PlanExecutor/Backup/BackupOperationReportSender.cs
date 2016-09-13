@@ -16,7 +16,6 @@ namespace Teltec.Everest.PlanExecutor.Backup
 			RequestBody.Add("Pending", Report.TransferResults.Stats.Pending);
 			RequestBody.Add("Running", Report.TransferResults.Stats.Running);
 			RequestBody.Add("Failed", Report.VersionerResults.Stats.Failed + Report.TransferResults.Stats.Failed);
-
 			RequestBody.Add("Canceled", Report.TransferResults.Stats.Canceled);
 			RequestBody.Add("Completed", Report.TransferResults.Stats.Completed);
 

@@ -1,3 +1,4 @@
+using System;
 using System.Windows.Forms;
 
 namespace Teltec.Common.Utils
@@ -14,15 +15,25 @@ namespace Teltec.Common.Utils
 		//
 		public static long LongPow(long x, ulong pow)
 		{
-			long ret = 1;
-			while (pow != 0)
+			try
 			{
-				if ((pow & 1) == 1)
-					ret *= x;
-				x *= x;
-				pow >>= 1;
+				checked
+				{
+					long ret = 1;
+					while (pow != 0)
+					{
+						if ((pow & 1) == 1)
+							ret *= x;
+						x *= x;
+						pow >>= 1;
+					}
+					return ret;
+				}
 			}
-			return ret;
+			catch (OverflowException)
+			{
+				throw;
+			}
 		}
 
 		private static readonly long Byte = 1;
