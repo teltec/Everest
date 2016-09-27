@@ -1,3 +1,8 @@
+//
+// ORIGINAL CODE FROM https://code.msdn.microsoft.com/windowsdesktop/Samples-for-Parallel-b4b76364/sourcecode?fileId=44488&pathId=462437453
+// LICENSE: MS-LPL
+//
+
 //--------------------------------------------------------------------------
 //
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
@@ -14,9 +19,10 @@ using Monitor = System.Threading.Monitor;
 
 namespace System.Threading.Tasks.Schedulers
 {
-	// ORIGINAL CODE FROM https://msdn.microsoft.com/en-us/library/ee789351(v=vs.110).aspx
-	// Provides a task scheduler that ensures a maximum concurrency level while
-	// running on top of the thread pool.
+	/// <summary>
+	/// Provides a task scheduler that ensures a maximum concurrency level while
+	/// running on top of the ThreadPool.
+	/// </summary>
 	public class LimitedConcurrencyLevelTaskScheduler : TaskScheduler, IDynamicConcurrencyLevelScheduler
 	{
 		// Indicates whether the current thread is processing work items.
@@ -32,13 +38,18 @@ namespace System.Threading.Tasks.Schedulers
 		// Indicates whether the scheduler is currently processing work items.
 		private int _delegatesQueuedOrRunning = 0;
 
-		// Creates a new instance with the specified degree of parallelism.
+		/// <summary>
+		/// Initializes an instance of the LimitedConcurrencyLevelTaskScheduler class with the
+		/// specified degree of parallelism.
+		/// </summary>
+		/// <param name="maxDegreeOfParallelism">The maximum degree of parallelism provided by this scheduler.</param>
 		public LimitedConcurrencyLevelTaskScheduler(int maxDegreeOfParallelism)
 		{
 			UpdateMaximumConcurrencyLevel(maxDegreeOfParallelism);
 		}
 
-		// Queues a task to the scheduler.
+		/// <summary>Queues a task to the scheduler.</summary>
+		/// <param name="task">The task to be queued.</param>
 		protected sealed override void QueueTask(Task task)
 		{
 			// Add the task to the list of tasks to be processed.  If there aren't enough
@@ -90,7 +101,9 @@ namespace System.Threading.Tasks.Schedulers
 			}
 		}
 
-		// Inform the ThreadPool that there's work to be executed for this scheduler.
+		/// <summary>
+		/// Informs the ThreadPool that there's work to be executed for this scheduler.
+		/// </summary>
 		private void NotifyThreadPoolOfPendingWork()
 		{
 			ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -131,7 +144,10 @@ namespace System.Threading.Tasks.Schedulers
 			}, null);
 		}
 
-		// Attempts to execute the specified task on the current thread.
+		/// <summary>Attempts to execute the specified task on the current thread.</summary>
+		/// <param name="task">The task to be executed.</param>
+		/// <param name="taskWasPreviouslyQueued"></param>
+		/// <returns>Whether the task could be executed on the current thread.</returns>
 		protected sealed override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
 		{
 			// If this thread isn't already processing a task, we don't support inlining
@@ -153,14 +169,16 @@ namespace System.Threading.Tasks.Schedulers
 			}
 		}
 
-		// Attempt to remove a previously scheduled task from the scheduler.
+		/// <summary>Attempts to remove a previously scheduled task from the scheduler.</summary>
+		/// <param name="task">The task to be removed.</param>
+		/// <returns>Whether the task could be found and removed.</returns>
 		protected sealed override bool TryDequeue(Task task)
 		{
 			lock (_tasks)
 				return _tasks.Remove(task);
 		}
 
-		// Gets the maximum concurrency level supported by this scheduler.
+		/// <summary>Gets the maximum concurrency level supported by this scheduler.</summary>
 		public sealed override int MaximumConcurrencyLevel
 		{
 			get
@@ -176,7 +194,8 @@ namespace System.Threading.Tasks.Schedulers
 			Interlocked.Exchange(ref _maxDegreeOfParallelism, value);
 		}
 
-		// Gets an enumerable of the tasks currently scheduled on this scheduler.
+		/// <summary>Gets an enumerable of the tasks currently scheduled on this scheduler.</summary>
+		/// <returns>An enumerable of the tasks currently scheduled.</returns>
 		protected sealed override IEnumerable<Task> GetScheduledTasks()
 		{
 			bool lockTaken = false;
@@ -195,30 +214,4 @@ namespace System.Threading.Tasks.Schedulers
 			}
 		}
 	}
-	// The following is a portion of the output from a single run of the example:
-	//    'T' in task t1-4 on thread 3   'U' in task t1-4 on thread 3   'V' in task t1-4 on thread 3
-	//    'W' in task t1-4 on thread 3   'X' in task t1-4 on thread 3   'Y' in task t1-4 on thread 3
-	//    'Z' in task t1-4 on thread 3   '[' in task t1-4 on thread 3   '\' in task t1-4 on thread 3
-	//    ']' in task t1-4 on thread 3   '^' in task t1-4 on thread 3   '_' in task t1-4 on thread 3
-	//    '`' in task t1-4 on thread 3   'a' in task t1-4 on thread 3   'b' in task t1-4 on thread 3
-	//    'c' in task t1-4 on thread 3   'd' in task t1-4 on thread 3   'e' in task t1-4 on thread 3
-	//    'f' in task t1-4 on thread 3   'g' in task t1-4 on thread 3   'h' in task t1-4 on thread 3
-	//    'i' in task t1-4 on thread 3   'j' in task t1-4 on thread 3   'k' in task t1-4 on thread 3
-	//    'l' in task t1-4 on thread 3   'm' in task t1-4 on thread 3   'n' in task t1-4 on thread 3
-	//    'o' in task t1-4 on thread 3   'p' in task t1-4 on thread 3   ']' in task t1-2 on thread 4
-	//    '^' in task t1-2 on thread 4   '_' in task t1-2 on thread 4   '`' in task t1-2 on thread 4
-	//    'a' in task t1-2 on thread 4   'b' in task t1-2 on thread 4   'c' in task t1-2 on thread 4
-	//    'd' in task t1-2 on thread 4   'e' in task t1-2 on thread 4   'f' in task t1-2 on thread 4
-	//    'g' in task t1-2 on thread 4   'h' in task t1-2 on thread 4   'i' in task t1-2 on thread 4
-	//    'j' in task t1-2 on thread 4   'k' in task t1-2 on thread 4   'l' in task t1-2 on thread 4
-	//    'm' in task t1-2 on thread 4   'n' in task t1-2 on thread 4   'o' in task t1-2 on thread 4
-	//    'p' in task t1-2 on thread 4   'q' in task t1-2 on thread 4   'r' in task t1-2 on thread 4
-	//    's' in task t1-2 on thread 4   't' in task t1-2 on thread 4   'u' in task t1-2 on thread 4
-	//    'v' in task t1-2 on thread 4   'w' in task t1-2 on thread 4   'x' in task t1-2 on thread 4
-	//    'y' in task t1-2 on thread 4   'z' in task t1-2 on thread 4   '{' in task t1-2 on thread 4
-	//    '|' in task t1-2 on thread 4   '}' in task t1-2 on thread 4   '~' in task t1-2 on thread 4
-	//    'q' in task t1-4 on thread 3   'r' in task t1-4 on thread 3   's' in task t1-4 on thread 3
-	//    't' in task t1-4 on thread 3   'u' in task t1-4 on thread 3   'v' in task t1-4 on thread 3
-	//    'w' in task t1-4 on thread 3   'x' in task t1-4 on thread 3   'y' in task t1-4 on thread 3
-	//    'z' in task t1-4 on thread 3   '{' in task t1-4 on thread 3   '|' in task t1-4 on thread 3
 }

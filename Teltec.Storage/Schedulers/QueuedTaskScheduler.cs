@@ -1,3 +1,8 @@
+//
+// ORIGINAL CODE FROM https://code.msdn.microsoft.com/windowsdesktop/Samples-for-Parallel-b4b76364/sourcecode?fileId=44488&pathId=462437453
+// LICENSE: MS-LPL
+//
+
 //--------------------------------------------------------------------------
 //
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
