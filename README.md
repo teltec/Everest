@@ -66,12 +66,14 @@ If you believe we have infringed a license, please, let us know by opening an is
 
 ## License
 
-This software and its source code are released under the [Mozilla Public License Version 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
+This software and its source code are released under the [Mozilla Public License Version 2.0 (MPL 2.0)](https://www.mozilla.org/en-US/MPL/2.0/).
 
 It contains:
 - Various code snippets from Stack Overflow. These snippets were originally puslished under the [CC-BY-SA-3.0](https://creativecommons.org/licenses/by-sa/3.0/) license.
   We give proper credit to all of them, including Title, Author, Source (original link) and mention the license itself;
-- A few code samples from MSDN. These code samples were originally published under the [Microsoft Limited Public License](http://clrinterop.codeplex.com/license) imposed by the [Microsoft Developer Services Agreement](https://msdn.microsoft.com/en-us/cc300389.aspx#D). We do not claim copyright over Microsoft's work nor relicense their code samples under any other license;
+- A few code samples from MSDN. These code samples were originally published under the [Microsoft Limited Public License (MS-LPL)](http://clrinterop.codeplex.com/license) imposed by the [Microsoft Developer Services Agreement](https://msdn.microsoft.com/en-us/cc300389.aspx#D). We do not claim copyright over Microsoft's work nor relicense their code samples under any other license;
 - The [Amazon icon](http://www.iconarchive.com/show/cute-social-2014-icons-by-designbolts/Amazon-icon.html). This icon was originally published under the "Linkware" license by [DesignBolts.com](http://www.designbolts.com);
+- The [Glacial ListView](http://www.codeproject.com/Articles/4012/C-List-View-v) compiled library. This library was originally published under the [The Code Project Open License (CPOL)](http://www.codeproject.com/info/cpol10.aspx).
+  Glacial ListView - Copyright Glacial Components Software 2004 - http://www.glacialcomponents.com/
 
 For a complete list of dependencies and their licenses, please see [LICENSES.xml](LICENSES.xml).
