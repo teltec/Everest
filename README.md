@@ -53,7 +53,7 @@ You can read the entire changelog [here](CHANGELOG.md).
 
 1. Fork the repository;
 2. Clone your repository: `git clone <repo-url>`;
-3. Execute `install-nuget-dependencies.run`;
+3. Execute `install-nuget-dependencies.bat`;
 4. Create a new branch for your changes: `git checkout -b my-branch-name`;
 5. Make your changes and commit: `git add file1 file2` and `git commit -m 'Describe your changes.'`;
 6. Push the branch to your fork: `git push origin my-branch-name`;
