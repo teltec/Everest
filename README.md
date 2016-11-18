@@ -13,7 +13,7 @@ Everest is an Open Source software that aims to help you automate your Backup an
 ## Installation notes
 
 - The Windows user you're using to install Everest must have administrative rights on your instance of SQL Server Express. We may improve this by asking the user during the installation process to provide database details (host, credentials, etc);
-- After you install, you need to change the SQL Server authentication mode to "SQL Server and Windows Authentication mode". We may automate this in the future, but for now you have to do it manually;
+- After you install, you need to change the SQL Server authentication mode to "SQL Server and Windows Authentication mode" and then manually execute `"C:\Program Files (x86)\Teltec Solutions Ltda\Everest\PostInstaller.exe" -create`. We may automate this in the future, but for now you have to do it manually;
 
 ## Features
 
