@@ -33,7 +33,7 @@ This CHANGELOG attemps to follow most conventions established by http://keepacha
 - Storage: Fix issues related to transfer state and transfer file size. Caused
   remaining bytes not to be properly calculated;
 - Executor: Fix stats not showing total transfer bytes when the operation finishes.
-- Executor: Apparently, the `DriveInfo` returns names as "X:\", not as "X:";
+- Executor: Apparently, the `DriveInfo` returns names as "X:\\", not as "X:";
 - Installer: DELAYED_DURABILITY is only supported by SQL Server >= 2014.
 
 ## [0.8.0] - 2016-07-01
